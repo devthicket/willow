@@ -67,6 +67,7 @@ const NAV_TABS = [
             items: [
                 { label: "Debug & Testing", page: "debug-and-testing" },
                 { label: "ECS Integration", page: "ecs-integration" },
+                { label: "LLM Guide", page: "llm" },
             ]
         },
     ]},
@@ -107,6 +108,7 @@ const NAV_TABS = [
         { title: "Interactive", items: [
             { label: "Physics Shapes", page: "demos", anchor: "physics-shapes" },
             { label: "Rope Garden", page: "demos", anchor: "rope-garden" },
+            { label: "Underwater", page: "demos", anchor: "underwater" },
         ]},
     ]},
     { id: "tutorials", label: "Tutorials", sections: [
@@ -278,7 +280,25 @@ function navigateTo(page, anchor) {
     const iframeSrc = anchor
         ? `viewer.html?page=${page}#${anchor}`
         : `viewer.html?page=${page}`;
-    iframe.src = iframeSrc;
+
+    // If only the anchor changed (same page), setting iframe.src won't
+    // reload — just scroll within the already-loaded document instead.
+    const currentPage = new URL(iframe.src, location.href).searchParams.get("page");
+    if (currentPage === page && anchor) {
+        try {
+            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+            const target = iframeDoc.getElementById(anchor);
+            if (target) {
+                target.scrollIntoView({ behavior: "instant" });
+            } else {
+                iframe.src = iframeSrc;
+            }
+        } catch (e) {
+            iframe.src = iframeSrc;
+        }
+    } else {
+        iframe.src = iframeSrc;
+    }
 
     // Close mobile sidebar
     document.querySelector(".sidebar").classList.remove("open");
@@ -295,9 +315,27 @@ window.addEventListener("popstate", (e) => {
     }
 
     const iframe = document.getElementById("content-frame");
-    iframe.src = anchor
+    const iframeSrc = anchor
         ? `viewer.html?page=${page}#${anchor}`
         : `viewer.html?page=${page}`;
+
+    // Same-page anchor change: scroll within the already-loaded iframe.
+    const currentPage = new URL(iframe.src, location.href).searchParams.get("page");
+    if (currentPage === page && anchor) {
+        try {
+            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+            const target = iframeDoc.getElementById(anchor);
+            if (target) {
+                target.scrollIntoView({ behavior: "instant" });
+            } else {
+                iframe.src = iframeSrc;
+            }
+        } catch (e) {
+            iframe.src = iframeSrc;
+        }
+    } else {
+        iframe.src = iframeSrc;
+    }
 
     document.querySelectorAll(".nav-item a").forEach(a => {
         const href = a.getAttribute("href");

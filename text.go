@@ -295,30 +295,58 @@ func (tb *TextBlock) layoutTTF(f *TTFFont) {
 		return
 	}
 
-	// Word-wrap: split each paragraph into lines that fit within WrapWidth.
+	// Word-wrap: split each paragraph into lines that fit within WrapWidth,
+	// preserving original whitespace between words.
 	var out strings.Builder
 	paragraphs := strings.Split(tb.Content, "\n")
 	for pi, para := range paragraphs {
 		if pi > 0 {
 			out.WriteByte('\n')
 		}
-		words := strings.Fields(para)
+		if len(para) == 0 {
+			continue
+		}
+		// Find word spans preserving original spacing.
+		type span struct{ start, end int }
+		var words []span
+		i := 0
+		for i < len(para) {
+			// Skip spaces.
+			for i < len(para) && para[i] == ' ' {
+				i++
+			}
+			if i >= len(para) {
+				break
+			}
+			ws := i
+			for i < len(para) && para[i] != ' ' {
+				i++
+			}
+			words = append(words, span{ws, i})
+		}
 		if len(words) == 0 {
+			out.WriteString(para) // all spaces — preserve them
 			continue
 		}
 		lineStart := 0
-		for i := range words {
-			candidate := strings.Join(words[lineStart:i+1], " ")
+		for wi := range words {
+			// Candidate uses original text to preserve spacing.
+			candidate := para[words[lineStart].start:words[wi].end]
 			cw, _ := f.MeasureString(candidate)
-			if cw > tb.WrapWidth && i > lineStart {
-				// Flush accumulated line without the current word.
-				out.WriteString(strings.Join(words[lineStart:i], " "))
+			if cw > tb.WrapWidth && wi > lineStart {
+				// Emit line up to previous word end.
+				out.WriteString(para[words[lineStart].start:words[wi-1].end])
 				out.WriteByte('\n')
-				lineStart = i
+				lineStart = wi
 			}
 		}
-		// Flush remaining words on the last line.
-		out.WriteString(strings.Join(words[lineStart:], " "))
+		// Emit remaining words.
+		out.WriteString(para[words[lineStart].start:words[len(words)-1].end])
+		// Preserve any trailing spaces.
+		lastWordEnd := words[len(words)-1].end
+		if lastWordEnd < len(para) {
+			out.WriteString(para[lastWordEnd:])
+		}
 	}
 
 	wrapped := out.String()

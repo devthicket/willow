@@ -136,6 +136,21 @@ func subtreeBoundsWalk(n *Node, localTransform [6]float64, bounds *Rect, first *
 	if n.Type == NodeTypeMesh {
 		aabb = meshWorldAABB(n, localTransform)
 		hasAABB = aabb.Width > 0 || aabb.Height > 0
+	} else if n.Type == NodeTypeParticleEmitter && n.Emitter != nil && n.Emitter.alive > 0 {
+		pb := n.Emitter.bounds()
+		if pb.Width > 0 && pb.Height > 0 {
+			if n.Emitter.config.WorldSpace {
+				// Particle positions are already in world space; the
+				// localTransform only contributes the emitter's offset.
+				// Use the raw particle bounds directly.
+				aabb = pb
+			} else {
+				// Local-space particles: transform the bounds rectangle
+				// through the emitter's local transform.
+				aabb = transformRect(localTransform, pb)
+			}
+			hasAABB = true
+		}
 	} else {
 		w, h := nodeDimensions(n)
 		if w > 0 && h > 0 {
@@ -158,6 +173,25 @@ func subtreeBoundsWalk(n *Node, localTransform [6]float64, bounds *Rect, first *
 		childTransform := multiplyAffine(localTransform, childLocal)
 		subtreeBoundsWalk(child, childTransform, bounds, first)
 	}
+}
+
+// transformRect transforms an arbitrary Rect through an affine matrix and
+// returns the axis-aligned bounding box of the result.
+func transformRect(t [6]float64, r Rect) Rect {
+	a, b, c, d, tx, ty := t[0], t[2], t[1], t[3], t[4], t[5]
+	x0 := a*r.X + b*r.Y + tx
+	y0 := c*r.X + d*r.Y + ty
+	x1 := a*(r.X+r.Width) + b*r.Y + tx
+	y1 := c*(r.X+r.Width) + d*r.Y + ty
+	x2 := a*(r.X+r.Width) + b*(r.Y+r.Height) + tx
+	y2 := c*(r.X+r.Width) + d*(r.Y+r.Height) + ty
+	x3 := a*r.X + b*(r.Y+r.Height) + tx
+	y3 := c*r.X + d*(r.Y+r.Height) + ty
+	minX := math.Min(math.Min(x0, x1), math.Min(x2, x3))
+	minY := math.Min(math.Min(y0, y1), math.Min(y2, y3))
+	maxX := math.Max(math.Max(x0, x1), math.Max(x2, x3))
+	maxY := math.Max(math.Max(y0, y1), math.Max(y2, y3))
+	return Rect{X: minX, Y: minY, Width: maxX - minX, Height: maxY - minY}
 }
 
 // rectUnion returns the smallest Rect containing both a and b.
@@ -358,6 +392,7 @@ func emitNodeCommand(s *Scene, n *Node, transform [6]float64, alpha float64, tre
 				Type:               CommandParticle,
 				Transform:          affine32(particleTransform),
 				TextureRegion:      n.TextureRegion,
+				directImage:        n.customImage,
 				Color:              color32{float32(n.Color.R), float32(n.Color.G), float32(n.Color.B), float32(n.Color.A * alpha)},
 				BlendMode:          n.BlendMode,
 				RenderLayer:        n.RenderLayer,

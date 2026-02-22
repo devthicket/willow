@@ -119,6 +119,52 @@ func (e *ParticleEmitter) Config() *EmitterConfig {
 	return &e.config
 }
 
+// bounds returns the axis-aligned bounding box of all alive particles in the
+// emitter's coordinate space (local for local-space, world for world-space).
+// The returned rect includes particle scale so the full rendered extent is
+// covered. Returns a zero Rect when no particles are alive.
+func (e *ParticleEmitter) bounds() Rect {
+	if e.alive == 0 {
+		return Rect{}
+	}
+	// Region dimensions determine the rendered size of each particle.
+	rw := float64(e.config.Region.OriginalW)
+	rh := float64(e.config.Region.OriginalH)
+	if rw == 0 {
+		rw = 1 // WhitePixel fallback
+	}
+	if rh == 0 {
+		rh = 1
+	}
+
+	p := &e.particles[0]
+	halfW := rw * float64(p.scale) * 0.5
+	halfH := rh * float64(p.scale) * 0.5
+	minX, minY := p.x-halfW, p.y-halfH
+	maxX, maxY := p.x+halfW, p.y+halfH
+
+	for i := 1; i < e.alive; i++ {
+		p = &e.particles[i]
+		halfW = rw * float64(p.scale) * 0.5
+		halfH = rh * float64(p.scale) * 0.5
+		px0, py0 := p.x-halfW, p.y-halfH
+		px1, py1 := p.x+halfW, p.y+halfH
+		if px0 < minX {
+			minX = px0
+		}
+		if py0 < minY {
+			minY = py0
+		}
+		if px1 > maxX {
+			maxX = px1
+		}
+		if py1 > maxY {
+			maxY = py1
+		}
+	}
+	return Rect{X: minX, Y: minY, Width: maxX - minX, Height: maxY - minY}
+}
+
 // update advances particle simulation by dt seconds.
 func (e *ParticleEmitter) update(dt float64) {
 	gx := e.config.Gravity.X * dt
