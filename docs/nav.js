@@ -110,6 +110,7 @@ const NAV_TABS = [
             { label: "Rope Garden", page: "demos", anchor: "rope-garden" },
             { label: "Tween Gallery", page: "demos", anchor: "tween-gallery" },
             { label: "Filter Gallery", page: "demos", anchor: "filter-gallery" },
+            { label: "Lighting", page: "demos", anchor: "lighting" },
             { label: "Underwater", page: "demos", anchor: "underwater" },
         ]},
     ]},

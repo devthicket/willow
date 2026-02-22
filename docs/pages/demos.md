@@ -42,6 +42,14 @@ An interactive showcase of every built-in Willow filter. A whelp sprite sits in 
 
 <a href="demos/filtergallery/" target="_blank">Launch Demo</a> · <a href="https://github.com/phanxgames/willow/tree/main/demos/filtergallery" target="_blank">Source Code</a>
 
+## Lighting
+
+<a href="demos/lighting/" target="_blank"><img src="demos/lighting/thumbnail.png" alt="Lighting demo screenshot" width="640"></a>
+
+A dark dungeon scene showcasing the LightLayer system with heavy ambient darkness (96% opacity). Five colored torches flicker on pillars, three autonomous wisps drift through the scene, and a warm lantern follows the cursor. Click any torch to toggle it, or click empty space to spawn a temporary flash burst. Stone tiles, walls, crates, and gem clusters give the lighting something to reveal.
+
+<a href="demos/lighting/" target="_blank">Launch Demo</a> · <a href="https://github.com/phanxgames/willow/tree/main/demos/lighting" target="_blank">Source Code</a>
+
 ## Underwater
 
 <a href="demos/underwater/" target="_blank"><img src="demos/underwater/thumbnail.png" alt="Underwater demo screenshot" width="640"></a>
@@ -63,4 +71,5 @@ go run ./demos/ropegarden
 go run ./demos/underwater
 go run ./demos/filtergallery
 go run ./demos/tweengallery
+go run ./demos/lighting
 ```
