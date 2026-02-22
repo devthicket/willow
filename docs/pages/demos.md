@@ -26,6 +26,14 @@ A cable-untangling puzzle. Eight color-coded cables connect sockets on the left 
 
 <a href="demos/ropegarden/" target="_blank">Launch Demo</a> · <a href="https://github.com/phanxgames/willow/tree/main/demos/ropegarden" target="_blank">Source Code</a>
 
+## Tween Gallery
+
+<a href="demos/tweengallery/" target="_blank"><img src="demos/tweengallery/thumbnail.png" alt="Tween Gallery demo screenshot" width="640"></a>
+
+An interactive showcase of Willow's tween animation system. Five whelp sprites each demonstrate a different tween property — position, scale, rotation, alpha, and color. Click any of the 12 easing function buttons to see the selected curve applied to all five properties simultaneously. Animations loop automatically for easy comparison.
+
+<a href="demos/tweengallery/" target="_blank">Launch Demo</a> · <a href="https://github.com/phanxgames/willow/tree/main/demos/tweengallery" target="_blank">Source Code</a>
+
 ## Filter Gallery
 
 <a href="demos/filtergallery/" target="_blank"><img src="demos/filtergallery/thumbnail.png" alt="Filter Gallery demo screenshot" width="640"></a>
@@ -54,4 +62,5 @@ go run ./demos/physics
 go run ./demos/ropegarden
 go run ./demos/underwater
 go run ./demos/filtergallery
+go run ./demos/tweengallery
 ```
