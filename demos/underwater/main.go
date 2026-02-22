@@ -46,7 +46,6 @@ const (
 type demo struct {
 	scene *willow.Scene
 	time  float64
-	frame int
 
 	// Porthole tracking — move together with the cursor
 	maskChild         *willow.Node // circle inside underwater mask container
@@ -71,24 +70,12 @@ type demo struct {
 	burst        *willow.Node
 	burstTimer   float64
 	mouseWasDown bool
-
-	// Thumbnail capture
-	screenshotDone bool
 }
 
 func (d *demo) update() error {
 	dt := 1.0 / float64(ebiten.TPS())
 	d.time += dt
 	t := d.time
-	d.frame++
-
-	// Capture thumbnail at frame 60 for docs site.
-	if d.frame == 60 && !d.screenshotDone {
-		d.scene.ScreenshotDir = "docs/demos/underwater"
-		d.scene.Screenshot("thumbnail")
-		d.screenshotDone = true
-	}
-
 	// --- Track cursor for porthole + surface hole + ring ---
 	mx, my := ebiten.CursorPosition()
 	cx, cy := float64(mx), float64(my)

@@ -108,6 +108,7 @@ const NAV_TABS = [
         { title: "Interactive", items: [
             { label: "Physics Shapes", page: "demos", anchor: "physics-shapes" },
             { label: "Rope Garden", page: "demos", anchor: "rope-garden" },
+            { label: "Filter Gallery", page: "demos", anchor: "filter-gallery" },
             { label: "Underwater", page: "demos", anchor: "underwater" },
         ]},
     ]},

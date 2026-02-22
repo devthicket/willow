@@ -93,20 +93,10 @@ func main() {
 	}
 
 	var frame float64
-	screenshotDone := false
 
 	scene.SetUpdateFunc(func() error {
 		frame++
 		t := frame / 60.0
-
-		if frame == 30 && !screenshotDone {
-			scene.ScreenshotDir = "docs/demos/sprites10k"
-			scene.Screenshot("thumbnail")
-			screenshotDone = true
-		}
-		if frame == 32 {
-			return ebiten.Termination
-		}
 
 		for i := range sprites {
 			s := &sprites[i]

@@ -26,6 +26,14 @@ A cable-untangling puzzle. Eight color-coded cables connect sockets on the left 
 
 <a href="demos/ropegarden/" target="_blank">Launch Demo</a> · <a href="https://github.com/phanxgames/willow/tree/main/demos/ropegarden" target="_blank">Source Code</a>
 
+## Filter Gallery
+
+<a href="demos/filtergallery/" target="_blank"><img src="demos/filtergallery/thumbnail.png" alt="Filter Gallery demo screenshot" width="640"></a>
+
+An interactive showcase of every built-in Willow filter. A whelp sprite sits in the center with 10 toggle buttons below — click to activate filters individually or stack them together. Includes static filters (blur, sepia, outline, inline, pixel-perfect outline, grayscale, contrast) and animated ones (oscillating brightness, continuous hue rotation, palette cycling).
+
+<a href="demos/filtergallery/" target="_blank">Launch Demo</a> · <a href="https://github.com/phanxgames/willow/tree/main/demos/filtergallery" target="_blank">Source Code</a>
+
 ## Underwater
 
 <a href="demos/underwater/" target="_blank"><img src="demos/underwater/thumbnail.png" alt="Underwater demo screenshot" width="640"></a>
@@ -45,4 +53,5 @@ go run ./demos/sprites10k
 go run ./demos/physics
 go run ./demos/ropegarden
 go run ./demos/underwater
+go run ./demos/filtergallery
 ```
