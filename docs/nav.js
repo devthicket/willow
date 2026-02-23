@@ -72,6 +72,9 @@ const NAV_TABS = [
         },
     ]},
     { id: "examples", label: "Examples", sections: [
+        { title: "Intro", items: [
+            { label: "Intro", page: "examples-intro" },
+        ]},
         { title: "Basics", items: [
             { label: "Basic", page: "examples", anchor: "basic" },
             { label: "Shapes", page: "examples", anchor: "shapes" },
@@ -102,6 +105,9 @@ const NAV_TABS = [
         ]},
     ]},
     { id: "demos", label: "Demos", sections: [
+        { title: "Intro", items: [
+            { label: "Intro", page: "demos-intro" },
+        ]},
         { title: "Stress Tests", items: [
             { label: "10k Sprites", page: "demos", anchor: "10k-sprites" },
         ]},
@@ -126,7 +132,7 @@ let activeTabId = "docs";
 
 function getActivePage() {
     const params = new URLSearchParams(window.location.search);
-    return params.get("page") || "getting-started";
+    return params.get("page") || "what-is-willow";
 }
 
 function findTabForPage(page) {
