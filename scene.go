@@ -247,6 +247,11 @@ func (s *Scene) Update() {
 		s.testRunner.step(s)
 	}
 	s.processInput()
+
+	// Re-compute world transforms for any nodes added or moved during
+	// OnUpdate callbacks or input processing. Only dirty subtrees are
+	// traversed, so this is cheap when nothing changed.
+	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
 }
 
 func updateNodesAndParticles(n *Node, dt float64) {
