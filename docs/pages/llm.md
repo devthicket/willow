@@ -395,6 +395,20 @@ sprite := willow.NewSprite("preview", willow.TextureRegion{})
 sprite.SetCustomImage(img)
 ```
 
+### Dynamic Atlas (Runtime Packing)
+
+For many runtime-loaded images (10+) that should batch together, use `NewAtlas` + `Add`:
+
+```go
+atlas := willow.NewAtlas(willow.PackerConfig{PageWidth: 512, PageHeight: 512})
+region, err := atlas.Add("avatar", avatarImg)
+sprite := willow.NewSprite("avatar", region)
+```
+
+**Do NOT use dynamic atlas for a few images.** `SetCustomImage` or `RegisterPage` is simpler and wastes no VRAM. Dynamic atlas allocates full pages (e.g. 512x512 = 1 MB each). Only use it when per-image batch breaks are a measured performance problem.
+
+`Add` is idempotent  -  duplicate names return the existing region. `Remove` deletes the lookup entry but does not reclaim page space.
+
 ## BlendMode
 
 Set `node.BlendMode` for compositing effects:

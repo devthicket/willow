@@ -29,6 +29,7 @@ const NAV_TABS = [
             items: [
                 { label: "Solid-Color Sprites", page: "solid-color-sprites" },
                 { label: "Sprites & Atlas", page: "sprites-and-atlas" },
+                { label: "Dynamic Atlas", page: "dynamic-atlas" },
                 { label: "Camera & Viewport", page: "camera-and-viewport" },
                 { label: "Text & Fonts", page: "text-and-fonts" },
                 { label: "Tilemap Viewport", page: "tilemap-viewport" },

@@ -1,6 +1,7 @@
 package willow
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -280,6 +281,286 @@ func TestEnsureMagentaImage_Singleton(t *testing.T) {
 	w, h := img1.Bounds().Dx(), img1.Bounds().Dy()
 	if w != 1 || h != 1 {
 		t.Errorf("magenta image size = %dx%d, want 1x1", w, h)
+	}
+}
+
+// --- NewAtlas / Add tests ---
+
+func TestNewAtlas_Add_Basic(t *testing.T) {
+	resetAtlasManager()
+	defer resetAtlasManager()
+
+	atlas := NewAtlas(PackerConfig{PageWidth: 256, PageHeight: 256}.NoPadding())
+
+	img := ebiten.NewImage(32, 48)
+	r, err := atlas.Add("sprite1", img)
+	if err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+	if r.Width != 32 || r.Height != 48 {
+		t.Errorf("region size = %d×%d, want 32×48", r.Width, r.Height)
+	}
+	if r.OriginalW != 32 || r.OriginalH != 48 {
+		t.Errorf("originalSize = %d×%d, want 32×48", r.OriginalW, r.OriginalH)
+	}
+	if !atlas.Has("sprite1") {
+		t.Error("Has(sprite1) = false, want true")
+	}
+	if atlas.RegionCount() != 1 {
+		t.Errorf("RegionCount = %d, want 1", atlas.RegionCount())
+	}
+
+	// Region lookup should return the same values.
+	r2 := atlas.Region("sprite1")
+	if r2 != r {
+		t.Errorf("Region mismatch: %+v vs %+v", r2, r)
+	}
+}
+
+func TestNewAtlas_Add_DuplicateIdempotent(t *testing.T) {
+	resetAtlasManager()
+	defer resetAtlasManager()
+
+	atlas := NewAtlas(PackerConfig{PageWidth: 256, PageHeight: 256}.NoPadding())
+
+	img := ebiten.NewImage(16, 16)
+	r1, err := atlas.Add("dup", img)
+	if err != nil {
+		t.Fatalf("Add 1: %v", err)
+	}
+
+	r2, err := atlas.Add("dup", img)
+	if err != nil {
+		t.Fatalf("Add 2: %v", err)
+	}
+
+	if r1 != r2 {
+		t.Errorf("duplicate Add returned different regions: %+v vs %+v", r1, r2)
+	}
+	if atlas.RegionCount() != 1 {
+		t.Errorf("RegionCount = %d, want 1", atlas.RegionCount())
+	}
+}
+
+func TestNewAtlas_Add_MultipleSamePage(t *testing.T) {
+	resetAtlasManager()
+	defer resetAtlasManager()
+
+	atlas := NewAtlas(PackerConfig{PageWidth: 256, PageHeight: 256}.NoPadding())
+
+	img1 := ebiten.NewImage(32, 32)
+	img2 := ebiten.NewImage(64, 32)
+	r1, err := atlas.Add("a", img1)
+	if err != nil {
+		t.Fatalf("Add a: %v", err)
+	}
+	r2, err := atlas.Add("b", img2)
+	if err != nil {
+		t.Fatalf("Add b: %v", err)
+	}
+
+	if r1.Page != r2.Page {
+		t.Errorf("items on different pages: %d vs %d, want same", r1.Page, r2.Page)
+	}
+}
+
+func TestNewAtlas_Add_PageOverflow(t *testing.T) {
+	resetAtlasManager()
+	defer resetAtlasManager()
+
+	atlas := NewAtlas(PackerConfig{PageWidth: 32, PageHeight: 32}.NoPadding())
+
+	img1 := ebiten.NewImage(32, 32)
+	img2 := ebiten.NewImage(16, 16)
+	r1, err := atlas.Add("fill", img1)
+	if err != nil {
+		t.Fatalf("Add fill: %v", err)
+	}
+	r2, err := atlas.Add("overflow", img2)
+	if err != nil {
+		t.Fatalf("Add overflow: %v", err)
+	}
+
+	if r1.Page == r2.Page {
+		t.Error("items should be on different pages after overflow")
+	}
+}
+
+func TestNewAtlas_Add_AfterLoadAtlas(t *testing.T) {
+	resetAtlasManager()
+	defer resetAtlasManager()
+
+	scene := NewScene()
+	page := ebiten.NewImage(256, 256)
+	atlas, err := scene.LoadAtlas([]byte(singlePageJSON), []*ebiten.Image{page})
+	if err != nil {
+		t.Fatalf("Scene.LoadAtlas: %v", err)
+	}
+
+	staticCount := atlas.RegionCount()
+
+	// Dynamically add a region to the same atlas.
+	img := ebiten.NewImage(16, 16)
+	r, err := atlas.Add("dynamic1", img)
+	if err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+
+	if atlas.RegionCount() != staticCount+1 {
+		t.Errorf("RegionCount = %d, want %d", atlas.RegionCount(), staticCount+1)
+	}
+	if !atlas.Has("dynamic1") {
+		t.Error("Has(dynamic1) = false after Add")
+	}
+
+	// Dynamic page should be different from the static page index.
+	staticRegion := atlas.Region("hero.png")
+	if r.Page == staticRegion.Page {
+		t.Log("dynamic region shares page with static (may happen if packer reuses, but unlikely with defaults)")
+	}
+}
+
+func TestNewAtlas_Remove(t *testing.T) {
+	resetAtlasManager()
+	defer resetAtlasManager()
+
+	atlas := NewAtlas(PackerConfig{PageWidth: 256, PageHeight: 256}.NoPadding())
+
+	img := ebiten.NewImage(16, 16)
+	atlas.Add("removeme", img)
+
+	if !atlas.Has("removeme") {
+		t.Fatal("Has = false before Remove")
+	}
+
+	atlas.Remove("removeme")
+
+	if atlas.Has("removeme") {
+		t.Error("Has = true after Remove")
+	}
+	if atlas.RegionCount() != 0 {
+		t.Errorf("RegionCount = %d, want 0", atlas.RegionCount())
+	}
+}
+
+func TestNewAtlas_DefaultConfig(t *testing.T) {
+	resetAtlasManager()
+	defer resetAtlasManager()
+
+	atlas := NewAtlas()
+
+	img := ebiten.NewImage(8, 8)
+	_, err := atlas.Add("tiny", img)
+	if err != nil {
+		t.Fatalf("Add with default config: %v", err)
+	}
+	if !atlas.Has("tiny") {
+		t.Error("Has = false after Add with default config")
+	}
+}
+
+func TestNewAtlas_DefaultConfig_HasPadding(t *testing.T) {
+	resetAtlasManager()
+	defer resetAtlasManager()
+
+	// Default config should use padding=1. Verify by packing two items on the
+	// same shelf: second item should start at width+1 (padded), not width+0.
+	atlas := NewAtlas(PackerConfig{PageWidth: 256, PageHeight: 256})
+
+	img := ebiten.NewImage(10, 10)
+	r1, _ := atlas.Add("a", img)
+	r2, _ := atlas.Add("b", img)
+
+	// With padding=1, padded width is 11. Second item at x=11.
+	if r1.X != 0 {
+		t.Errorf("r1.X = %d, want 0", r1.X)
+	}
+	if r2.X != 11 {
+		t.Errorf("r2.X = %d, want 11 (10 + 1 padding)", r2.X)
+	}
+}
+
+func TestNewAtlas_Add_1x1Edge(t *testing.T) {
+	resetAtlasManager()
+	defer resetAtlasManager()
+
+	atlas := NewAtlas(PackerConfig{PageWidth: 256, PageHeight: 256})
+	img := ebiten.NewImage(1, 1)
+	_, err := atlas.Add("1x1", img)
+	if err != nil {
+		t.Fatalf("unexpected error for 1×1 image: %v", err)
+	}
+}
+
+func TestNewAtlas_Add_NilImageError(t *testing.T) {
+	resetAtlasManager()
+	defer resetAtlasManager()
+
+	atlas := NewAtlas()
+	_, err := atlas.Add("nil", nil)
+	if err == nil {
+		t.Error("expected error for nil image")
+	}
+}
+
+func TestNewAtlas_Add_OversizedError(t *testing.T) {
+	resetAtlasManager()
+	defer resetAtlasManager()
+
+	atlas := NewAtlas(PackerConfig{PageWidth: 32, PageHeight: 32, Padding: 1})
+	img := ebiten.NewImage(32, 32) // 32+1=33 > 32
+	_, err := atlas.Add("toobig", img)
+	if err == nil {
+		t.Error("expected error for oversized image with padding")
+	}
+}
+
+func TestNewAtlas_Add_ManyItems(t *testing.T) {
+	resetAtlasManager()
+	defer resetAtlasManager()
+
+	atlas := NewAtlas(PackerConfig{PageWidth: 256, PageHeight: 256, Padding: 1})
+
+	for i := 0; i < 50; i++ {
+		name := fmt.Sprintf("item_%d", i)
+		w := 8 + (i % 12)
+		h := 8 + ((i * 3) % 10)
+		img := ebiten.NewImage(w, h)
+		_, err := atlas.Add(name, img)
+		if err != nil {
+			t.Fatalf("Add %s (%d×%d): %v", name, w, h, err)
+		}
+	}
+
+	if atlas.RegionCount() != 50 {
+		t.Errorf("RegionCount = %d, want 50", atlas.RegionCount())
+	}
+}
+
+func TestNewAtlas_Add_SyncsPages(t *testing.T) {
+	resetAtlasManager()
+	defer resetAtlasManager()
+
+	atlas := NewAtlas(PackerConfig{PageWidth: 64, PageHeight: 64}.NoPadding())
+
+	img := ebiten.NewImage(16, 16)
+	r, err := atlas.Add("sync", img)
+	if err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+
+	pageIdx := int(r.Page)
+	if pageIdx >= len(atlas.Pages) {
+		t.Fatalf("atlas.Pages length %d, expected at least %d", len(atlas.Pages), pageIdx+1)
+	}
+	if atlas.Pages[pageIdx] == nil {
+		t.Error("atlas.Pages[pageIdx] is nil after Add")
+	}
+
+	// Verify it matches AtlasManager.
+	am := atlasManager()
+	if atlas.Pages[pageIdx] != am.Page(pageIdx) {
+		t.Error("atlas.Pages and AtlasManager disagree on page image")
 	}
 }
 

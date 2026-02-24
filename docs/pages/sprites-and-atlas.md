@@ -85,16 +85,34 @@ atlas, err := willow.LoadAtlas(jsonData, []*ebiten.Image{
 
 Each `TextureRegion` stores its `Page` index, so sprites from different pages render correctly.
 
-## Registering Pages
+## Standalone Images
 
-For bitmap fonts and tilemaps that reference atlas pages by index:
+For one-off images not in a pre-packed atlas:
 
 ```go
+// Option A: SetCustomImage (simplest for one-offs)
+sprite := willow.NewSprite("preview", willow.TextureRegion{})
+sprite.SetCustomImage(img)
+
+// Option B: RegisterPage + TextureRegion (for bitmap fonts, tilemaps)
 scene.RegisterPage(0, pageImage)
 ```
 
+## Dynamic Atlas (Runtime Packing)
+
+If you load many images at runtime and want them to batch together, use `NewAtlas` + `Add` to pack them onto shared pages:
+
+```go
+atlas := willow.NewAtlas(willow.PackerConfig{PageWidth: 512, PageHeight: 512})
+region, _ := atlas.Add("avatar", avatarImg)
+sprite := willow.NewSprite("avatar", region)
+```
+
+This is an **optional optimization**  -  only useful when you have enough runtime images (10+) that per-image batch breaks become measurable. For details on when to use it and page size guidance, see the dedicated page.
+
 ## Next Steps
 
+- [Dynamic Atlas](?page=dynamic-atlas)  -  runtime atlas packing for lazy asset loading
 - [Camera & Viewport](?page=camera-and-viewport)  -  viewport setup, follow, zoom, and culling
 - [Text & Fonts](?page=text-and-fonts)  -  bitmap and TTF text rendering
 

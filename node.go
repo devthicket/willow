@@ -432,6 +432,15 @@ func (n *Node) SetContent(s string) {
 	invalidateAncestorCache(n)
 }
 
+// SetFont changes the font on this text node's TextBlock and invalidates layout.
+// Panics if called on a node without a TextBlock (programmer error).
+func (n *Node) SetFont(f Font) {
+	n.TextBlock.Font = f
+	n.TextBlock.layoutDirty = true
+	n.TextBlock.sdfDirty = true
+	invalidateAncestorCache(n)
+}
+
 // SetGlobalOrder sets the node's global order and invalidates ancestor static caches.
 func (n *Node) SetGlobalOrder(o int) {
 	n.GlobalOrder = o
