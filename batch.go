@@ -73,8 +73,8 @@ func (s *Scene) submitSprite(target *ebiten.Image, cmd *RenderCommand, op *ebite
 	var page *ebiten.Image
 	if r.Page == magentaPlaceholderPage {
 		page = ensureMagentaImage()
-	} else if int(r.Page) < len(s.pages) {
-		page = s.pages[r.Page]
+	} else {
+		page = atlasManager().Page(int(r.Page))
 	}
 	if page == nil {
 		return
@@ -140,8 +140,8 @@ func (s *Scene) submitParticles(target *ebiten.Image, cmd *RenderCommand, op *eb
 		var page *ebiten.Image
 		if r.Page == magentaPlaceholderPage {
 			page = ensureMagentaImage()
-		} else if int(r.Page) < len(s.pages) {
-			page = s.pages[r.Page]
+		} else {
+			page = atlasManager().Page(int(r.Page))
 		}
 		if page == nil {
 			return
@@ -388,8 +388,8 @@ func (s *Scene) flushSpriteBatch(target *ebiten.Image, key batchKey) {
 	var page *ebiten.Image
 	if key.page == magentaPlaceholderPage {
 		page = ensureMagentaImage()
-	} else if int(key.page) < len(s.pages) {
-		page = s.pages[key.page]
+	} else {
+		page = atlasManager().Page(int(key.page))
 	}
 	if page == nil {
 		s.batchVerts = s.batchVerts[:0]
@@ -428,8 +428,8 @@ func (s *Scene) submitParticlesBatched(target *ebiten.Image, cmd *RenderCommand)
 	} else {
 		if r.Page == magentaPlaceholderPage {
 			srcImg = ensureMagentaImage()
-		} else if int(r.Page) < len(s.pages) {
-			srcImg = s.pages[r.Page]
+		} else {
+			srcImg = atlasManager().Page(int(r.Page))
 		}
 		if srcImg == nil {
 			return

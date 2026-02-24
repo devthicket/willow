@@ -349,7 +349,7 @@ func NewText(name string, content string, font Font) *Node {
 			Font:        font,
 			Color:       Color{1, 1, 1, 1},
 			layoutDirty: true,
-			ttfPage:     -1,
+			sdfPage:     -1,
 		},
 	}
 	nodeDefaults(n)

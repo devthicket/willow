@@ -522,24 +522,25 @@ willow.EmitterConfig{
 
 ## Text
 
-### TTF Fonts
+All fonts are `*SpriteFont`. The primary constructor is `NewFontFromTTF`:
 
 ```go
-font, err := willow.LoadTTFFont(ttfData, 24)  // returns (*TTFFont, error)
-label := willow.NewText("label", "Hello", font)  // returns *Node
+font, err := willow.NewFontFromTTF(ttfData, 80)  // returns (*SpriteFont, error)
+label := willow.NewText("label", "Hello", font)   // returns *Node
 scene.Root().AddChild(label)
 ```
 
-TTF fonts do **not** require `RegisterPage` — that's only needed for BitmapFont.
+`NewFontFromTTF` generates the SDF atlas and registers the page automatically — no `RegisterPage` call needed. Size is the rasterization size (higher = sharper when scaled up). Use 0 for the default (80px).
 
-### BitmapFont
+Set `SDFEffects` on the `TextBlock` (not the node) for outline, glow, and shadow. `nil` SDFEffects means plain fill only:
 
 ```go
-font, err := willow.LoadBitmapFontPage(fntData, 3)  // page index 3
-scene.RegisterPage(3, fontPageImage)
+label.TextBlock.SDFEffects = &willow.SDFEffects{
+    OutlineWidth: 2.0,
+    OutlineColor: willow.Color{R: 0, G: 0, B: 0, A: 1},
+}
+label.TextBlock.Invalidate()
 ```
-
-BitmapFont defaults to page index 0. If your atlas also uses page 0, they conflict.
 
 ### TextBlock Properties
 

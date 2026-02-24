@@ -48,17 +48,17 @@ Draggable, clickable rectangles showcasing hit testing and gesture handling. Dem
 <table>
 <tr>
 <td><a id="text"></a>
-<strong>Bitmap Font</strong><br>
+<strong>Bitmap & SDF Font</strong><br>
 <code>go run ./examples/text</code><br><br>
-Bitmap font text with alignment and wrapping options. Loads a BMFont file and renders text at different sizes and alignments.
+Bitmap font text with alignment and wrapping options, plus SDF text effects (outline, glow, shadow). Generates an SDF atlas PNG at startup and saves it to the example directory.
 </td>
 <td width="260"></td>
 </tr>
 <tr>
 <td><a id="ttf-text"></a>
-<strong>TTF Text</strong><br>
+<strong>TTF & SDF Text</strong><br>
 <code>go run ./examples/texttf</code><br><br>
-TrueType font rendering with outline support. Shows how to load a TTF file and render text with configurable outline thickness and color.
+TrueType font rendering with outline support, plus runtime SDF font generation from TTF. Shows SDF effects (outline, glow, shadow) alongside TTF text. Saves the generated SDF atlas PNG.
 </td>
 <td width="260"></td>
 </tr>

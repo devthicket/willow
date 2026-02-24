@@ -11,6 +11,8 @@
 
 Willow is a **retained-mode** 2D game framework built on [Ebitengine](https://ebitengine.org/) for Go. You build a tree of nodes — sprites, text, particles, meshes — and Willow traverses that tree each frame to produce optimized render commands for Ebitengine. You describe *what* to render by building a scene tree, not *how* to render by issuing draw commands yourself.
 
+Ebitengine itself is **immediate-mode** — every frame you must issue every draw command from scratch, and nothing persists between frames. Willow adds a retained-mode layer on top: your scene graph is the persistent state. Create a node once, set its properties, and it keeps rendering until you remove it. Under the hood Willow still walks the tree and re-submits draw commands to Ebitengine each frame, but that machinery is hidden from you. This is the same pattern used by engines like Unity, Godot, and PixiJS — a retained scene graph driving an immediate-mode renderer.
+
 ```
 Your Game             - gameplay, content, logic
 Willow                - scene graph, rendering, interaction

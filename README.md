@@ -22,7 +22,8 @@ Inspired by [Starling](https://gamua.com/starling/), Flash display lists, and [P
 
 ## What is Willow?
 
-Willow is a 2D game framework built on Ebitengine. It utlizies the retained-mode design pattern, which means you create a tree of nodes representing your game objects, and Willow handles passing the draw commands down to the Ebitengine.
+Willow is a 2D game framework built on Ebitengine. Ebitengine is immediate-mode - every frame you must issue every draw command from scratch, and nothing persists between frames. Willow adds a retained-mode layer on top: you create a tree of nodes representing your game objects, and Willow traverses that tree each frame to produce draw commands for Ebitengine. You describe *what* exists in your scene, not *how* to render it each frame. This is the same pattern used by engines like Unity, Godot, and PixiJS - a persistent scene graph driving an immediate-mode renderer.
+
 A main focus of Willow is performance - it is designed to minimize heap allocations and maximize batching, with features like subtree command caching for static content, and a zero-allocation-per-frame contract on the hot path. While managing the display tree does have a slight runtime cost, in some instances Willow can be faster than raw Ebitengine draw calls due to better batching and caching strategies.
 
 It sits between Ebitengine and your game:

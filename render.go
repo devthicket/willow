@@ -199,12 +199,7 @@ func (s *Scene) traverse(n *Node, treeOrder *int) {
 			}
 		case NodeTypeText:
 			if n.TextBlock != nil && n.TextBlock.Font != nil {
-				switch n.TextBlock.Font.(type) {
-				case *BitmapFont:
-					s.commands = emitBitmapTextCommands(n.TextBlock, n, viewWorld, s.commands, treeOrder)
-				case *TTFFont:
-					s.commands, s.pages = emitTTFTextCommand(n.TextBlock, n, viewWorld, s.commands, treeOrder, s.pages, &s.nextPage)
-				}
+				s.commands = emitSDFTextCommand(n.TextBlock, n, viewWorld, s.commands, treeOrder)
 			}
 			// NodeTypeContainer doesn't emit commands
 		}
@@ -654,12 +649,7 @@ func (s *Scene) emitNodeCommandInline(n *Node, treeOrder *int) {
 		s.commands = append(s.commands, cmd)
 	case NodeTypeText:
 		if n.TextBlock != nil && n.TextBlock.Font != nil {
-			switch n.TextBlock.Font.(type) {
-			case *BitmapFont:
-				s.commands = emitBitmapTextCommands(n.TextBlock, n, viewWorld, s.commands, treeOrder)
-			case *TTFFont:
-				s.commands, s.pages = emitTTFTextCommand(n.TextBlock, n, viewWorld, s.commands, treeOrder, s.pages, &s.nextPage)
-			}
+			s.commands = emitSDFTextCommand(n.TextBlock, n, viewWorld, s.commands, treeOrder)
 		}
 	}
 	// Mesh/Particle handled as "blocked" — won't reach here during cache build

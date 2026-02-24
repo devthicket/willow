@@ -218,6 +218,9 @@ func TestLoadAtlas_ManualTextureRegion(t *testing.T) {
 // --- Scene.LoadAtlas tests ---
 
 func TestScene_LoadAtlas_RegistersPages(t *testing.T) {
+	resetAtlasManager()
+	defer resetAtlasManager()
+
 	scene := NewScene()
 	page := ebiten.NewImage(256, 256)
 	_, err := scene.LoadAtlas([]byte(singlePageJSON), []*ebiten.Image{page})
@@ -225,12 +228,16 @@ func TestScene_LoadAtlas_RegistersPages(t *testing.T) {
 		t.Fatalf("Scene.LoadAtlas: %v", err)
 	}
 	// Page should be registered at index 0
-	if len(scene.pages) == 0 || scene.pages[0] != page {
+	am := atlasManager()
+	if am.PageCount() == 0 || am.Page(0) != page {
 		t.Error("atlas page not registered at expected index")
 	}
 }
 
 func TestScene_LoadAtlas_MultipleAtlases(t *testing.T) {
+	resetAtlasManager()
+	defer resetAtlasManager()
+
 	scene := NewScene()
 	page0 := ebiten.NewImage(256, 256)
 	atlas1, err := scene.LoadAtlas([]byte(singlePageJSON), []*ebiten.Image{page0})
@@ -245,18 +252,19 @@ func TestScene_LoadAtlas_MultipleAtlases(t *testing.T) {
 	}
 
 	// First atlas should use page 0, second atlas should use page 1 (offset)
+	am := atlasManager()
 	r1 := atlas1.Region("hero.png")
 	r2 := atlas2.Region("hero.png")
 	if r1.Page == r2.Page {
 		t.Errorf("both atlases use same page index %d, want different", r1.Page)
 	}
-	if scene.pages[0] != page0 {
+	if am.Page(0) != page0 {
 		t.Error("first atlas page not at index 0")
 	}
 	if r2.Page != 1 {
 		t.Errorf("second atlas region page = %d, want 1", r2.Page)
 	}
-	if scene.pages[1] != page1 {
+	if am.Page(1) != page1 {
 		t.Error("second atlas page not at index 1")
 	}
 }

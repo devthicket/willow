@@ -1,5 +1,10 @@
 // Package willow is a retained-mode 2D game framework for [Ebitengine].
 //
+// Ebitengine is immediate-mode: every frame you issue draw commands from
+// scratch, and nothing persists. Willow adds a retained-mode layer on top -
+// you build a persistent scene graph of nodes, and Willow traverses it each
+// frame to produce draw commands for Ebitengine.
+//
 // Willow provides the scene graph, transform hierarchy, sprite batching, input
 // handling, camera viewports, text rendering, particle systems, and more that
 // every non-trivial 2D game needs.

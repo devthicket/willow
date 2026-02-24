@@ -82,8 +82,6 @@ type Scene struct {
 	// Render state
 	commands      []RenderCommand
 	sortBuf       []RenderCommand
-	pages         []*ebiten.Image
-	nextPage      int        // next available page index for LoadAtlas
 	cullBounds    Rect       // current camera cull bounds (set per-camera during Draw)
 	cullActive    bool       // whether culling is active for the current camera
 	viewTransform [6]float64 // current camera view matrix for world-space particles
@@ -421,10 +419,7 @@ var globalDebug bool
 // RegisterPage stores an atlas page image at the given index.
 // The render compiler uses these to SubImage sprite regions.
 func (s *Scene) RegisterPage(index int, img *ebiten.Image) {
-	for len(s.pages) <= index {
-		s.pages = append(s.pages, nil)
-	}
-	s.pages[index] = img
+	atlasManager().RegisterPage(index, img)
 }
 
 // LoadAtlas parses TexturePacker JSON, registers atlas pages with the scene,
@@ -435,11 +430,11 @@ func (s *Scene) LoadAtlas(jsonData []byte, pages []*ebiten.Image) (*Atlas, error
 	if err != nil {
 		return nil, err
 	}
-	startIndex := s.nextPage
+	am := atlasManager()
+	startIndex := am.NextPage()
 	for i, page := range pages {
-		s.RegisterPage(startIndex+i, page)
+		am.RegisterPage(startIndex+i, page)
 	}
-	s.nextPage = startIndex + len(pages)
 	// Remap region page indices to account for startIndex offset.
 	if startIndex > 0 {
 		for name, r := range atlas.regions {

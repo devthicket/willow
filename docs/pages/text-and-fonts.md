@@ -1,6 +1,6 @@
 # Text & Fonts
 
-Willow supports two font backends: **BitmapFont** (BMFont format) and **TTFFont** (TrueType via Ebitengine's text/v2). Both implement the `Font` interface.
+All text in Willow renders through **SpriteFont** (Signed Distance Field). SDF fonts store distance-to-edge per pixel, enabling smooth scaling, outlines, glows, and drop shadows via a single shader pass. Willow supports both single-channel SDF and multi-channel MSDF.
 
 ## Font Interface
 
@@ -11,44 +11,69 @@ type Font interface {
 }
 ```
 
-## BitmapFont
+Implemented by `*SpriteFont`.
 
-Load a BMFont `.fnt` file (text format):
+## Creating an SDF Font
 
-```go
-fntData, _ := os.ReadFile("myfont.fnt")
-font, err := willow.LoadBitmapFont(fntData)
-```
-
-The font's atlas page defaults to page 0. Register the page image with the scene:
+The simplest way to get an SDF font from TTF/OTF data:
 
 ```go
-scene.RegisterPage(0, fontPageImage)
+font, err := willow.NewFontFromTTF(ttfData, 80)  // 80px rasterization size
 ```
 
-For multi-page fonts or when sharing page indices with other atlases:
+This generates an SDF atlas at runtime, registers the atlas page, and returns the font ready to use. Higher size = better quality when scaled up. Use 0 for the default (80px).
+
+## Advanced: Low-Level Constructors
+
+### Runtime Generation with Manual Page Registration
 
 ```go
-font, err := willow.LoadBitmapFontPage(fntData, 3)  // use page index 3
-scene.RegisterPage(3, fontPageImage)
+font, atlasImg, _, err := willow.LoadSpriteFontFromTTF(ttfData, willow.SDFGenOptions{
+    Size:          80,
+    DistanceRange: 8,
+    PageIndex:     2,
+})
+scene.RegisterPage(2, atlasImg)
 ```
 
-BitmapFont glyphs are rendered as individual sprites, fully batched with other sprites on the same atlas page. Supports ASCII fast-path (fixed array lookup) and Unicode extension (map lookup).
+### Loading Pre-generated SDF Atlas
 
-## TTFFont
-
-Load a TrueType font:
+Load a pre-generated SDF atlas (from the `sdfgen` CLI tool):
 
 ```go
-ttfData, _ := os.ReadFile("Roboto-Regular.ttf")
-font, err := willow.LoadTTFFont(ttfData, 24)  // 24px size
+metricsJSON, _ := os.ReadFile("font.json")
+font, err := willow.LoadSpriteFont(metricsJSON, 2) // page index 2
+scene.RegisterPage(2, atlasImage)
 ```
 
-TTFFont renders to a cached image (re-rendered only when the text or layout changes). For direct access to the Ebitengine text face:
+### Offline Generation
+
+The `cmd/sdfgen` CLI tool generates SDF atlases offline:
+
+```bash
+go run ./cmd/sdfgen -font input.ttf -size 80 -range 8 -out output
+```
+
+Produces `output.png` (atlas) and `output.json` (metrics).
+
+## SDF Effects
+
+Set `SDFEffects` on a TextBlock for outline, glow, and shadow:
 
 ```go
-face := font.Face()  // *text.GoTextFace
+node.TextBlock.SDFEffects = &willow.SDFEffects{
+    OutlineWidth:   2.0,
+    OutlineColor:   willow.Color{R: 0, G: 0, B: 0, A: 1},
+    GlowWidth:      3.0,
+    GlowColor:      willow.Color{R: 0.2, G: 0.5, B: 1, A: 0.6},
+    ShadowOffset:   willow.Vec2{X: 3, Y: 3},
+    ShadowColor:    willow.Color{R: 0, G: 0, B: 0, A: 0.7},
+    ShadowSoftness: 1.5,
+}
+node.TextBlock.Invalidate()
 ```
+
+All effects are rendered in a single shader pass — no multi-pass overhead.
 
 ## Creating Text Nodes
 
@@ -112,18 +137,6 @@ node.TextBlock.WrapWidth = 400  // wrap at 400 pixels
 node.TextBlock.Invalidate()
 ```
 
-## Text Outline
-
-Add an outline effect to text:
-
-```go
-node.TextBlock.Outline = &willow.Outline{
-    Color:     willow.Color{R: 0, G: 0, B: 0, A: 1},
-    Thickness: 2,
-}
-node.TextBlock.Invalidate()
-```
-
 ## Measuring Text
 
 ```go
@@ -138,5 +151,5 @@ lineH := font.LineHeight()
 
 ## Related
 
-- [Sprites & Atlas](?page=sprites-and-atlas) — atlas loading and page registration for bitmap fonts
+- [Sprites & Atlas](?page=sprites-and-atlas) — atlas loading and page registration
 - [Nodes](?page=nodes) — node types and visual properties

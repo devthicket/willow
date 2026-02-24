@@ -43,10 +43,14 @@ func TestSceneSetDebugMode(t *testing.T) {
 }
 
 func TestSceneRegisterPage(t *testing.T) {
+	resetAtlasManager()
+	defer resetAtlasManager()
+
 	s := NewScene()
 	s.RegisterPage(0, nil)
 	s.RegisterPage(2, nil)
-	if len(s.pages) != 3 {
-		t.Errorf("pages len = %d, want 3", len(s.pages))
+	am := atlasManager()
+	if am.PageCount() != 3 {
+		t.Errorf("PageCount = %d, want 3", am.PageCount())
 	}
 }

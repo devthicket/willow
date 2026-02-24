@@ -404,12 +404,7 @@ func emitNodeCommand(s *Scene, n *Node, transform [6]float64, alpha float64, tre
 		}
 	case NodeTypeText:
 		if n.TextBlock != nil && n.TextBlock.Font != nil {
-			switch n.TextBlock.Font.(type) {
-			case *BitmapFont:
-				s.commands = emitBitmapTextCommands(n.TextBlock, n, transform, s.commands, treeOrder)
-			case *TTFFont:
-				s.commands, s.pages = emitTTFTextCommand(n.TextBlock, n, transform, s.commands, treeOrder, s.pages, &s.nextPage)
-			}
+			s.commands = emitSDFTextCommand(n.TextBlock, n, transform, s.commands, treeOrder)
 		}
 	}
 }
