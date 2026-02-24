@@ -89,7 +89,9 @@ Each atlas page allocates `width * height * 4` bytes of VRAM:
 | 1024x1024 | 4 MB | Large set of varied sprites |
 | 2048x2048 | 16 MB | Many sprites that must all batch together |
 
-**Rule of thumb:** choose the smallest page size that fits your expected image set. If you're adding 8 small icons, a 256x256 page wastes far less VRAM than the 2048x2048 default.
+Page dimensions should be powers of two (256, 512, 1024, 2048). GPUs are optimized for power-of-two textures  -  non-power-of-two sizes may be padded internally, wasting VRAM and hurting cache performance.
+
+**Rule of thumb:** choose the smallest power-of-two page size that fits your expected image set. If you're adding 8 small icons, a 256x256 page wastes far less VRAM than the 2048x2048 default.
 
 ```go
 // For a small set of UI icons:
@@ -128,8 +130,8 @@ atlas := willow.NewAtlas(cfg)
 
 ## Next Steps
 
-- [Performance](?page=performance-overview)  -  batching details and optimization strategies
-- [CacheAsTree](?page=cache-as-tree)  -  command list caching for semi-static subtrees
+- [Camera & Viewport](?page=camera-and-viewport)  -  viewport setup, follow, zoom, and culling
+- [Text & Fonts](?page=text-and-fonts)  -  bitmap and TTF text rendering
 
 ## Related
 
