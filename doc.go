@@ -58,10 +58,11 @@
 // # Key features
 //
 // Willow includes cameras with follow/scroll-to/zoom, bitmap and TTF text
-// rendering, CPU-simulated particles, mesh/polygon/rope geometry, Kage
-// shader filters, texture caching, masking, blend modes, lighting layers,
-// tweens (via [gween]), and ECS integration (via [Donburi] adapter in
-// willow/ecs).
+// rendering (TTF via signed distance fields for resolution-independent
+// scaling with GPU-accelerated effects), CPU-simulated particles,
+// mesh/polygon/rope geometry, Kage shader filters, texture caching,
+// masking, blend modes, lighting layers, tweens (via [gween]), and ECS
+// integration (via [Donburi] adapter in willow/ecs).
 //
 // See the full docs for guides on each feature:
 // https://phanxgames.github.io/willow/
