@@ -4,7 +4,6 @@ package main
 
 import (
 	"log"
-	"math"
 	"math/rand/v2"
 
 	"github.com/phanxgames/willow"
@@ -108,7 +107,7 @@ func spawnShapes(container *willow.Node) {
 
 	// Pentagons.
 	for range numPentagons {
-		pent := willow.NewPolygon("pentagon", pentagonPoints(30))
+		pent := willow.NewRegularPolygon("pentagon", 5, 30)
 		pent.Color = willow.Color{R: rand.Float64(), G: rand.Float64(), B: rand.Float64(), A: 1}
 		pent.X = (rand.Float64() - 0.5) * screenW * 2
 		pent.Y = (rand.Float64() - 0.5) * screenH * 2
@@ -131,17 +130,4 @@ func spawnShapes(container *willow.Node) {
 		diamond.X = 45
 		pent.AddChild(diamond)
 	}
-}
-
-// pentagonPoints returns a regular pentagon centered at origin with the given radius.
-func pentagonPoints(radius float64) []willow.Vec2 {
-	pts := make([]willow.Vec2, 5)
-	for i := range pts {
-		angle := float64(i)*2*math.Pi/5 - math.Pi/2
-		pts[i] = willow.Vec2{
-			X: math.Cos(angle) * radius,
-			Y: math.Sin(angle) * radius,
-		}
-	}
-	return pts
 }

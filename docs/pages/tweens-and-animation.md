@@ -31,22 +31,19 @@ tween := willow.TweenRotation(node, math.Pi/2, 0.5, ease.InOutCubic)
 
 Each returns a `*TweenGroup`.
 
-## Updating Tweens
+## Auto-Ticking
 
-There is no global tween manager  -  you call `Update(dt)` yourself:
+Tweens on nodes that are part of a scene auto-tick every frame  -  no manual update loop needed:
 
 ```go
-var tween *willow.TweenGroup
+box := willow.NewSprite("box", willow.TextureRegion{})
+scene.Root().AddChild(box)
 
-// In your update function:
-scene.SetUpdateFunc(func() error {
-    dt := float32(1.0 / 60.0)  // or use actual delta time
-    if tween != nil && !tween.Done {
-        tween.Update(dt)
-    }
-    return nil
-})
+// This tween runs automatically  -  nothing else to do.
+tween := willow.TweenPosition(box, 500, 200, 2.0, ease.InOutQuad)
 ```
+
+The scene ticks all registered tweens during `Scene.Update()`, removes them when done, and cleans up automatically.
 
 ## TweenGroup
 
@@ -55,12 +52,13 @@ type TweenGroup struct {
     Done bool  // true when all tweens finished or target node disposed
 }
 
-func (g *TweenGroup) Update(dt float32)
+func (g *TweenGroup) Cancel()  // stop the tween early
 ```
 
 `Done` is automatically set to `true` when:
 - The tween reaches its target value
 - The target node is disposed (safe  -  no dangling pointer crashes)
+- `Cancel()` is called
 
 ## Easing Functions
 
@@ -83,20 +81,21 @@ See the [gween documentation](https://github.com/tanema/gween) for the full list
 
 ## Chaining Tweens
 
-To sequence tweens, start the next one when the current finishes:
+To sequence tweens, check `Done` in your update function and start the next:
 
 ```go
-var currentTween *willow.TweenGroup
+var current *willow.TweenGroup
 
-func startSequence() {
-    currentTween = willow.TweenPosition(node, 300, 200, 1.0, ease.InOutQuad)
-}
+scene.SetUpdateFunc(func() error {
+    if current != nil && current.Done {
+        // First tween finished  -  start the next.
+        current = willow.TweenAlpha(node, 0, 0.5, ease.Linear)
+    }
+    return nil
+})
 
-// In update:
-if currentTween != nil && currentTween.Done {
-    // Start next tween
-    currentTween = willow.TweenAlpha(node, 0, 0.5, ease.Linear)
-}
+// Kick off the chain.
+current = willow.TweenPosition(node, 300, 200, 1.0, ease.InOutQuad)
 ```
 
 ## Example
@@ -112,14 +111,8 @@ box.X = 100
 box.Y = 200
 scene.Root().AddChild(box)
 
-tween := willow.TweenPosition(box, 500, 200, 2.0, ease.InOutQuad)
-
-scene.SetUpdateFunc(func() error {
-    if !tween.Done {
-        tween.Update(1.0 / 60.0)
-    }
-    return nil
-})
+// Tween auto-ticks because box is already on the scene.
+willow.TweenPosition(box, 500, 200, 2.0, ease.InOutQuad)
 
 willow.Run(scene, willow.RunConfig{Title: "Tween Demo", Width: 640, Height: 480})
 ```

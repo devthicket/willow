@@ -8,7 +8,7 @@ A rope renders a textured strip along a path with configurable curve modes. Use 
 start := &willow.Vec2{X: 100, Y: 100}
 end := &willow.Vec2{X: 400, Y: 300}
 
-rope, ropeNode := willow.NewRope("cable", ropeImage, nil, willow.RopeConfig{
+rope := willow.NewRope("cable", ropeImage, nil, willow.RopeConfig{
     Width:     8,
     CurveMode: willow.RopeCurveCatenary,
     Segments:  30,
@@ -16,7 +16,7 @@ rope, ropeNode := willow.NewRope("cable", ropeImage, nil, willow.RopeConfig{
     End:       end,
     Sag:       50,
 })
-scene.Root().AddChild(ropeNode)
+scene.Root().AddChild(rope.Node())
 ```
 
 ## Curve Modes

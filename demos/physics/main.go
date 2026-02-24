@@ -61,15 +61,15 @@ func main() {
 
 		switch shapeType {
 		case 0: // Circle (24-gon)
-			node = newRegularPolygon("circle", 24, radius)
+			node = willow.NewRegularPolygon("circle", 24, radius)
 		case 1: // Square
-			node = newRegularPolygon("square", 4, radius)
+			node = willow.NewRegularPolygon("square", 4, radius)
 		case 2: // Triangle
-			node = newRegularPolygon("triangle", 3, radius)
+			node = willow.NewRegularPolygon("triangle", 3, radius)
 		case 3: // Pentagon
-			node = newRegularPolygon("pentagon", 5, radius)
+			node = willow.NewRegularPolygon("pentagon", 5, radius)
 		case 4: // Hexagon
-			node = newRegularPolygon("hexagon", 6, radius)
+			node = willow.NewRegularPolygon("hexagon", 6, radius)
 		}
 
 		node.Color = color
@@ -259,18 +259,4 @@ func explode(bodies []body, src int) {
 		b.vy += (ny - 0.5) * strength
 		b.flashTimer = int(float64(flashFrames) * (1.0 - dist/blastRadius))
 	}
-}
-
-// newRegularPolygon creates a regular polygon with the given number of sides
-// centered at (0,0) with the given radius.
-func newRegularPolygon(name string, sides int, radius float64) *willow.Node {
-	points := make([]willow.Vec2, sides)
-	for i := range points {
-		angle := 2*math.Pi*float64(i)/float64(sides) - math.Pi/2
-		points[i] = willow.Vec2{
-			X: radius * math.Cos(angle),
-			Y: radius * math.Sin(angle),
-		}
-	}
-	return willow.NewPolygon(name, points)
 }

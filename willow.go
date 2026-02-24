@@ -8,6 +8,52 @@ type Color struct {
 	R, G, B, A float64
 }
 
+// RGBA returns the alpha-premultiplied red, green, blue and alpha values
+// scaled to [0, 0xFFFF]. This satisfies the image/color.Color interface.
+func (c Color) RGBA() (r, g, b, a uint32) {
+	r = uint32(clamp01(c.R*c.A) * 0xffff)
+	g = uint32(clamp01(c.G*c.A) * 0xffff)
+	b = uint32(clamp01(c.B*c.A) * 0xffff)
+	a = uint32(clamp01(c.A) * 0xffff)
+	return
+}
+
+// ColorFromRGBA creates a Color from 8-bit RGBA components (0–255).
+// The returned Color is non-premultiplied with components in [0, 1].
+func ColorFromRGBA(r, g, b, a uint8) Color {
+	return Color{
+		R: float64(r) / 255,
+		G: float64(g) / 255,
+		B: float64(b) / 255,
+		A: float64(a) / 255,
+	}
+}
+
+// ColorFromHSV creates a Color from HSV values, all in [0, 1].
+// Hue wraps (0 and 1 are both red), saturation 0 is grayscale, value 0 is black.
+func ColorFromHSV(h, s, v float64) Color {
+	h6 := h * 6
+	i := int(h6)
+	f := h6 - float64(i)
+	p := v * (1 - s)
+	q := v * (1 - s*f)
+	t := v * (1 - s*(1-f))
+	switch i % 6 {
+	case 0:
+		return Color{R: v, G: t, B: p, A: 1}
+	case 1:
+		return Color{R: q, G: v, B: p, A: 1}
+	case 2:
+		return Color{R: p, G: v, B: t, A: 1}
+	case 3:
+		return Color{R: p, G: q, B: v, A: 1}
+	case 4:
+		return Color{R: t, G: p, B: v, A: 1}
+	default:
+		return Color{R: v, G: p, B: q, A: 1}
+	}
+}
+
 // ColorWhite is the default tint (no color modification).
 var ColorWhite = Color{1, 1, 1, 1}
 

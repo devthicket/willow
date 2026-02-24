@@ -455,6 +455,43 @@ func NewPolygon(name string, points []Vec2) *Node {
 	return NewMesh(name, white, verts, inds)
 }
 
+// NewRegularPolygon creates an untextured regular polygon with the given number
+// of sides, centered at the origin with the specified radius. The first vertex
+// points straight up (-Y). Minimum sides is 3.
+func NewRegularPolygon(name string, sides int, radius float64) *Node {
+	if sides < 3 {
+		sides = 3
+	}
+	pts := make([]Vec2, sides)
+	for i := range pts {
+		angle := float64(i)*2*math.Pi/float64(sides) - math.Pi/2
+		pts[i] = Vec2{
+			X: math.Cos(angle) * radius,
+			Y: math.Sin(angle) * radius,
+		}
+	}
+	return NewPolygon(name, pts)
+}
+
+// NewStar creates an untextured star polygon with the given number of points,
+// centered at the origin. outerR is the tip radius; innerR is the valley radius.
+// The first tip points straight up (-Y). Minimum points is 2.
+func NewStar(name string, outerR, innerR float64, points int) *Node {
+	if points < 2 {
+		points = 2
+	}
+	pts := make([]Vec2, points*2)
+	for i := range pts {
+		a := -math.Pi/2 + float64(i)*math.Pi/float64(points)
+		r := outerR
+		if i%2 == 1 {
+			r = innerR
+		}
+		pts[i] = Vec2{X: math.Cos(a) * r, Y: math.Sin(a) * r}
+	}
+	return NewPolygon(name, pts)
+}
+
 // NewPolygonTextured creates a textured polygon mesh. UVs are mapped to the
 // bounding box of the points, so (0,0)→top-left and (imgW,imgH)→bottom-right.
 func NewPolygonTextured(name string, img *ebiten.Image, points []Vec2) *Node {

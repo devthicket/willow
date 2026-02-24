@@ -106,6 +106,26 @@ node.OnUpdate = func(dt float64) {
 }
 ```
 
+## Interaction Callbacks
+
+Register interaction callbacks with setter methods. Each setter automatically enables `Interactable` on the node:
+
+```go
+node.OnClick(func(ctx willow.ClickContext) {
+    // handle click
+})
+
+node.OnDrag(func(ctx willow.DragContext) {
+    node.X += ctx.DeltaX
+    node.Y += ctx.DeltaY
+    node.Invalidate()
+})
+```
+
+Available setters: `OnClick`, `OnPointerDown`, `OnPointerUp`, `OnPointerMove`, `OnPointerEnter`, `OnPointerLeave`, `OnDragStart`, `OnDrag`, `OnDragEnd`, `OnPinch`. Pass `nil` to remove a callback.
+
+See [Events & Callbacks](?page=events-and-callbacks) for the full API including scene-level handlers.
+
 ## Custom Images
 
 For nodes that need a manually-managed image instead of an atlas region:

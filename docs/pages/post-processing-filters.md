@@ -30,17 +30,20 @@ Multiple filters chain in order  -  output of one feeds into the next.
 
 ### ColorMatrixFilter
 
-4x5 color matrix transformation (Kage shader):
+4x5 color matrix transformation (Kage shader). Setters return the filter for chaining:
 
 ```go
 cm := willow.NewColorMatrixFilter()
 cm.SetBrightness(0.2)    // [-1, 1]
 cm.SetContrast(1.5)      // 1 = normal, 0 = gray
 cm.SetSaturation(0)      // 1 = normal, 0 = grayscale
+cm.SetHueRotation(0.5)   // radians
+cm.SetGrayscale()         // equivalent to SetSaturation(0)
+cm.SetInvert()            // negate RGB channels
 sprite.Filters = []willow.Filter{cm}
 ```
 
-The `Matrix` field is a `[20]float64` in row-major order for direct manipulation.
+Each setter resets the matrix, so only the last one applied takes effect. For combined adjustments, manipulate the `Matrix` field directly  -  a `[20]float64` in row-major order.
 
 ### BlurFilter
 

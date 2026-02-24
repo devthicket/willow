@@ -408,8 +408,9 @@ func makeRopeTexture(col willow.Color, brightness float64) *ebiten.Image {
 		r := uint8(clamp01(col.R*b) * 255)
 		g := uint8(clamp01(col.G*b) * 255)
 		bl := uint8(clamp01(col.B*b) * 255)
+		c := willow.ColorFromRGBA(r, g, bl, 255)
 		for x := range ropeTexW {
-			img.Set(x, y, &pixelColor{r, g, bl, 255})
+			img.Set(x, y, c)
 		}
 	}
 	return img
@@ -423,11 +424,4 @@ func clamp01(v float64) float64 {
 		return 1
 	}
 	return v
-}
-
-// pixelColor implements color.Color for setting individual pixels.
-type pixelColor struct{ r, g, b, a uint8 }
-
-func (c *pixelColor) RGBA() (uint32, uint32, uint32, uint32) {
-	return uint32(c.r) * 257, uint32(c.g) * 257, uint32(c.b) * 257, uint32(c.a) * 257
 }

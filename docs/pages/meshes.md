@@ -36,8 +36,8 @@ mesh.InvalidateMeshAABB()  // call after modifying vertices
 A grid mesh that deforms a texture  -  useful for water, heat haze, or cloth effects:
 
 ```go
-grid, gridNode := willow.NewDistortionGrid("water", waterImage, 10, 8)
-scene.Root().AddChild(gridNode)
+grid := willow.NewDistortionGrid("water", waterImage, 10, 8)
+scene.Root().AddChild(grid.Node())
 ```
 
 ### Manipulating Vertices

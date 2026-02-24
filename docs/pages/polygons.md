@@ -19,6 +19,22 @@ texPoly := willow.NewPolygonTextured("shape", textureImg, []willow.Vec2{
 })
 ```
 
+## Regular Polygons and Stars
+
+For common shapes, use the built-in constructors instead of computing vertices manually:
+
+```go
+// Regular hexagon centered at origin with radius 50
+hex := willow.NewRegularPolygon("hexagon", 6, 50)
+hex.Color = willow.Color{R: 0, G: 1, B: 0, A: 1}
+
+// 5-pointed star with outer radius 60 and inner radius 25
+star := willow.NewStar("star", 60, 25, 5)
+star.Color = willow.Color{R: 1, G: 1, B: 0, A: 1}
+```
+
+`NewRegularPolygon` accepts any side count (minimum 3). The first vertex points straight up. `NewStar` alternates between outer tips and inner valleys.
+
 ## Updating Points
 
 Update the polygon's shape at runtime:

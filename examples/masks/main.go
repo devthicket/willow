@@ -97,14 +97,14 @@ func main() {
 			tile.ScaleY = 19
 			tile.X = float64(col) * 20
 			tile.Y = float64(row) * 20
-			tile.Color = hsvToColor(float64(col+row)/37.0, 0.82, 0.92)
+			tile.Color = willow.ColorFromHSV(float64(col+row)/37.0, 0.82, 0.92)
 			p0.AddChild(tile)
 		}
 	}
 
 	// Mask root is a container; star shape is its child so transforms apply.
 	maskRoot0 := willow.NewContainer("mask-root-0")
-	starShape := willow.NewPolygon("star", starPoints(140, 56, 5))
+	starShape := willow.NewStar("star", 140, 56, 5)
 	starShape.X = panelW / 2  // 150  -  centre of panel
 	starShape.Y = screenH / 2 // 240
 	starShape.Color = willow.Color{R: 1, G: 1, B: 1, A: 1}
@@ -282,45 +282,6 @@ func main() {
 		ShowFPS: showFPS,
 	}); err != nil {
 		log.Fatal(err)
-	}
-}
-
-// starPoints returns vertices for a numPoints-pointed star.
-// outerR is the tip radius; innerR is the valley radius.
-func starPoints(outerR, innerR float64, numPoints int) []willow.Vec2 {
-	pts := make([]willow.Vec2, numPoints*2)
-	for i := range pts {
-		a := -math.Pi/2 + float64(i)*math.Pi/float64(numPoints)
-		r := outerR
-		if i%2 == 1 {
-			r = innerR
-		}
-		pts[i] = willow.Vec2{X: math.Cos(a) * r, Y: math.Sin(a) * r}
-	}
-	return pts
-}
-
-// hsvToColor converts HSV (all in [0, 1]) to willow.Color.
-func hsvToColor(h, s, v float64) willow.Color {
-	h6 := h * 6
-	i := int(h6)
-	f := h6 - float64(i)
-	p := v * (1 - s)
-	q := v * (1 - s*f)
-	t := v * (1 - s*(1-f))
-	switch i % 6 {
-	case 0:
-		return willow.Color{R: v, G: t, B: p, A: 1}
-	case 1:
-		return willow.Color{R: q, G: v, B: p, A: 1}
-	case 2:
-		return willow.Color{R: p, G: v, B: t, A: 1}
-	case 3:
-		return willow.Color{R: p, G: q, B: v, A: 1}
-	case 4:
-		return willow.Color{R: t, G: p, B: v, A: 1}
-	default:
-		return willow.Color{R: v, G: p, B: q, A: 1}
 	}
 }
 

@@ -39,7 +39,7 @@ A rope renders a textured strip along a path with configurable curve modes:
 start := &willow.Vec2{X: 100, Y: 100}
 end := &willow.Vec2{X: 400, Y: 300}
 
-rope, ropeNode := willow.NewRope("cable", ropeImage, nil, willow.RopeConfig{
+rope := willow.NewRope("cable", ropeImage, nil, willow.RopeConfig{
     Width:     8,
     CurveMode: willow.RopeCurveCatenary,
     Segments:  30,
@@ -47,7 +47,7 @@ rope, ropeNode := willow.NewRope("cable", ropeImage, nil, willow.RopeConfig{
     End:       end,
     Sag:       50,
 })
-scene.Root().AddChild(ropeNode)
+scene.Root().AddChild(rope.Node())
 ```
 
 ### Curve Modes
@@ -89,8 +89,8 @@ rope.SetPoints([]willow.Vec2{{X: 0, Y: 0}, {X: 50, Y: 100}, {X: 100, Y: 0}})
 A grid mesh that deforms a texture:
 
 ```go
-grid, gridNode := willow.NewDistortionGrid("water", waterImage, 10, 8)
-scene.Root().AddChild(gridNode)
+grid := willow.NewDistortionGrid("water", waterImage, 10, 8)
+scene.Root().AddChild(grid.Node())
 ```
 
 ### Manipulating Vertices
@@ -130,6 +130,13 @@ poly.Color = willow.Color{R: 0, G: 1, B: 0, A: 1}
 texPoly := willow.NewPolygonTextured("shape", textureImg, []willow.Vec2{
     {X: 0, Y: 0}, {X: 200, Y: 0}, {X: 200, Y: 150}, {X: 0, Y: 150},
 })
+```
+
+For common shapes, use the built-in constructors:
+
+```go
+hex := willow.NewRegularPolygon("hexagon", 6, 50)   // 6 sides, radius 50
+star := willow.NewStar("star", 60, 25, 5)            // 5-pointed star
 ```
 
 Update points at runtime:

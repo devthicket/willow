@@ -77,7 +77,7 @@ func main() {
 		g := uint8(bright * 140)
 		b := uint8(bright * 80)
 		for x := range ropeTexW {
-			ropeImg.Set(x, y, &imageColor{r, g, b, 255})
+			ropeImg.Set(x, y, willow.ColorFromRGBA(r, g, b, 255))
 		}
 	}
 
@@ -156,13 +156,4 @@ func makeHandle(name string, c willow.Color) *willow.Node {
 	})
 
 	return n
-}
-
-// imageColor implements color.Color for setting individual pixels.
-type imageColor struct {
-	r, g, b, a uint8
-}
-
-func (c *imageColor) RGBA() (uint32, uint32, uint32, uint32) {
-	return uint32(c.r) * 257, uint32(c.g) * 257, uint32(c.b) * 257, uint32(c.a) * 257
 }
