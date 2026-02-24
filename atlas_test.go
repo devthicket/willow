@@ -564,6 +564,393 @@ func TestNewAtlas_Add_SyncsPages(t *testing.T) {
 	}
 }
 
+// --- Free tests ---
+
+func TestNewAtlas_Free_Basic(t *testing.T) {
+	resetAtlasManager()
+	defer resetAtlasManager()
+
+	atlas := NewAtlas(PackerConfig{PageWidth: 256, PageHeight: 256}.NoPadding())
+
+	img := ebiten.NewImage(32, 32)
+	atlas.Add("a", img)
+
+	if !atlas.Has("a") {
+		t.Fatal("Has(a) = false before Free")
+	}
+
+	err := atlas.Free("a")
+	if err != nil {
+		t.Fatalf("Free: %v", err)
+	}
+
+	if atlas.Has("a") {
+		t.Error("Has(a) = true after Free")
+	}
+	if atlas.RegionCount() != 0 {
+		t.Errorf("RegionCount = %d, want 0", atlas.RegionCount())
+	}
+}
+
+func TestNewAtlas_Free_SpaceReused(t *testing.T) {
+	resetAtlasManager()
+	defer resetAtlasManager()
+
+	atlas := NewAtlas(PackerConfig{PageWidth: 256, PageHeight: 256}.NoPadding())
+
+	img := ebiten.NewImage(32, 32)
+	r1, _ := atlas.Add("a", img)
+
+	atlas.Free("a")
+
+	img2 := ebiten.NewImage(32, 32)
+	r2, err := atlas.Add("b", img2)
+	if err != nil {
+		t.Fatalf("Add after Free: %v", err)
+	}
+
+	// New item should reuse the freed space (same position).
+	if r2.X != r1.X || r2.Y != r1.Y {
+		t.Errorf("reused position = (%d,%d), want (%d,%d)", r2.X, r2.Y, r1.X, r1.Y)
+	}
+}
+
+func TestNewAtlas_Free_NotFound(t *testing.T) {
+	resetAtlasManager()
+	defer resetAtlasManager()
+
+	atlas := NewAtlas()
+	err := atlas.Free("nonexistent")
+	if err == nil {
+		t.Error("expected error for Free of nonexistent name")
+	}
+}
+
+func TestNewAtlas_Free_BatchError(t *testing.T) {
+	resetAtlasManager()
+	defer resetAtlasManager()
+
+	atlas := NewBatchAtlas()
+	err := atlas.Free("anything")
+	if err == nil {
+		t.Error("expected error for Free on batch atlas")
+	}
+}
+
+// --- Replace tests ---
+
+func TestNewAtlas_Replace_SameSize(t *testing.T) {
+	resetAtlasManager()
+	defer resetAtlasManager()
+
+	atlas := NewAtlas(PackerConfig{PageWidth: 256, PageHeight: 256}.NoPadding())
+
+	img := ebiten.NewImage(32, 32)
+	r1, _ := atlas.Add("a", img)
+
+	newImg := ebiten.NewImage(32, 32)
+	err := atlas.Replace("a", newImg)
+	if err != nil {
+		t.Fatalf("Replace: %v", err)
+	}
+
+	// Region should be unchanged.
+	r2 := atlas.Region("a")
+	if r2 != r1 {
+		t.Errorf("region changed after Replace: %+v vs %+v", r2, r1)
+	}
+}
+
+func TestNewAtlas_Replace_WrongSize(t *testing.T) {
+	resetAtlasManager()
+	defer resetAtlasManager()
+
+	atlas := NewAtlas(PackerConfig{PageWidth: 256, PageHeight: 256}.NoPadding())
+
+	img := ebiten.NewImage(32, 32)
+	atlas.Add("a", img)
+
+	wrongSize := ebiten.NewImage(64, 64)
+	err := atlas.Replace("a", wrongSize)
+	if err == nil {
+		t.Error("expected error for Replace with different size")
+	}
+}
+
+func TestNewAtlas_Replace_NotFound(t *testing.T) {
+	resetAtlasManager()
+	defer resetAtlasManager()
+
+	atlas := NewAtlas()
+	err := atlas.Replace("nonexistent", ebiten.NewImage(8, 8))
+	if err == nil {
+		t.Error("expected error for Replace of nonexistent name")
+	}
+}
+
+func TestNewAtlas_Replace_BatchError(t *testing.T) {
+	resetAtlasManager()
+	defer resetAtlasManager()
+
+	atlas := NewBatchAtlas()
+	err := atlas.Replace("anything", ebiten.NewImage(8, 8))
+	if err == nil {
+		t.Error("expected error for Replace on batch atlas")
+	}
+}
+
+// --- Update tests ---
+
+func TestNewAtlas_Update_SameSize(t *testing.T) {
+	resetAtlasManager()
+	defer resetAtlasManager()
+
+	atlas := NewAtlas(PackerConfig{PageWidth: 256, PageHeight: 256}.NoPadding())
+
+	img := ebiten.NewImage(32, 32)
+	r1, _ := atlas.Add("a", img)
+
+	newImg := ebiten.NewImage(32, 32)
+	r2, err := atlas.Update("a", newImg)
+	if err != nil {
+		t.Fatalf("Update same size: %v", err)
+	}
+
+	// Same size → acts like Replace, region unchanged.
+	if r2 != r1 {
+		t.Errorf("region changed after same-size Update: %+v vs %+v", r2, r1)
+	}
+}
+
+func TestNewAtlas_Update_DifferentSize(t *testing.T) {
+	resetAtlasManager()
+	defer resetAtlasManager()
+
+	atlas := NewAtlas(PackerConfig{PageWidth: 256, PageHeight: 256}.NoPadding())
+
+	img := ebiten.NewImage(32, 32)
+	r1, _ := atlas.Add("a", img)
+
+	newImg := ebiten.NewImage(64, 64)
+	r2, err := atlas.Update("a", newImg)
+	if err != nil {
+		t.Fatalf("Update different size: %v", err)
+	}
+
+	// Different size → Free + Add, may have new region.
+	if r2.Width != 64 || r2.Height != 64 {
+		t.Errorf("new region size = %d×%d, want 64×64", r2.Width, r2.Height)
+	}
+	_ = r1
+}
+
+func TestNewAtlas_Update_BatchError(t *testing.T) {
+	resetAtlasManager()
+	defer resetAtlasManager()
+
+	atlas := NewBatchAtlas()
+	_, err := atlas.Update("anything", ebiten.NewImage(8, 8))
+	if err == nil {
+		t.Error("expected error for Update on batch atlas")
+	}
+}
+
+// --- Batch mode tests ---
+
+func TestBatchAtlas_StageAndPack(t *testing.T) {
+	resetAtlasManager()
+	defer resetAtlasManager()
+
+	atlas := NewBatchAtlas(PackerConfig{PageWidth: 256, PageHeight: 256}.NoPadding())
+
+	img1 := ebiten.NewImage(32, 48)
+	img2 := ebiten.NewImage(64, 32)
+	img3 := ebiten.NewImage(16, 16)
+
+	if err := atlas.Stage("a", img1); err != nil {
+		t.Fatalf("Stage a: %v", err)
+	}
+	if err := atlas.Stage("b", img2); err != nil {
+		t.Fatalf("Stage b: %v", err)
+	}
+	if err := atlas.Stage("c", img3); err != nil {
+		t.Fatalf("Stage c: %v", err)
+	}
+
+	if err := atlas.Pack(); err != nil {
+		t.Fatalf("Pack: %v", err)
+	}
+
+	if atlas.RegionCount() != 3 {
+		t.Errorf("RegionCount = %d, want 3", atlas.RegionCount())
+	}
+	if !atlas.Has("a") || !atlas.Has("b") || !atlas.Has("c") {
+		t.Error("missing regions after Pack")
+	}
+
+	r := atlas.Region("a")
+	if r.Width != 32 || r.Height != 48 {
+		t.Errorf("region a size = %d×%d, want 32×48", r.Width, r.Height)
+	}
+}
+
+func TestBatchAtlas_StageAfterPack(t *testing.T) {
+	resetAtlasManager()
+	defer resetAtlasManager()
+
+	atlas := NewBatchAtlas(PackerConfig{PageWidth: 256, PageHeight: 256}.NoPadding())
+
+	atlas.Stage("a", ebiten.NewImage(8, 8))
+	atlas.Pack()
+
+	err := atlas.Stage("b", ebiten.NewImage(8, 8))
+	if err == nil {
+		t.Error("expected error for Stage after Pack")
+	}
+}
+
+func TestBatchAtlas_PackEmpty(t *testing.T) {
+	resetAtlasManager()
+	defer resetAtlasManager()
+
+	atlas := NewBatchAtlas()
+	err := atlas.Pack()
+	if err != nil {
+		t.Fatalf("Pack empty: %v", err)
+	}
+}
+
+func TestBatchAtlas_PackTwice(t *testing.T) {
+	resetAtlasManager()
+	defer resetAtlasManager()
+
+	atlas := NewBatchAtlas()
+	atlas.Pack()
+	err := atlas.Pack()
+	if err == nil {
+		t.Error("expected error for double Pack")
+	}
+}
+
+func TestBatchAtlas_MultiPage(t *testing.T) {
+	resetAtlasManager()
+	defer resetAtlasManager()
+
+	// Tiny page: 32x32. Each 32x32 image fills an entire page.
+	atlas := NewBatchAtlas(PackerConfig{PageWidth: 32, PageHeight: 32}.NoPadding())
+
+	atlas.Stage("a", ebiten.NewImage(32, 32))
+	atlas.Stage("b", ebiten.NewImage(32, 32))
+
+	if err := atlas.Pack(); err != nil {
+		t.Fatalf("Pack: %v", err)
+	}
+
+	r1 := atlas.Region("a")
+	r2 := atlas.Region("b")
+	if r1.Page == r2.Page {
+		t.Error("expected items on different pages")
+	}
+}
+
+func TestBatchAtlas_AddErrors(t *testing.T) {
+	resetAtlasManager()
+	defer resetAtlasManager()
+
+	atlas := NewBatchAtlas()
+
+	// Add on batch atlas should error.
+	_, err := atlas.Add("a", ebiten.NewImage(8, 8))
+	if err == nil {
+		t.Error("expected error for Add on batch atlas")
+	}
+}
+
+func TestBatchAtlas_StageOnShelfErrors(t *testing.T) {
+	resetAtlasManager()
+	defer resetAtlasManager()
+
+	atlas := NewAtlas()
+
+	err := atlas.Stage("a", ebiten.NewImage(8, 8))
+	if err == nil {
+		t.Error("expected error for Stage on shelf atlas")
+	}
+}
+
+func TestBatchAtlas_StageDuplicate(t *testing.T) {
+	resetAtlasManager()
+	defer resetAtlasManager()
+
+	atlas := NewBatchAtlas()
+
+	atlas.Stage("a", ebiten.NewImage(8, 8))
+	err := atlas.Stage("a", ebiten.NewImage(16, 16))
+	if err == nil {
+		t.Error("expected error for duplicate Stage name")
+	}
+}
+
+func TestBatchAtlas_StageNilImage(t *testing.T) {
+	resetAtlasManager()
+	defer resetAtlasManager()
+
+	atlas := NewBatchAtlas()
+	err := atlas.Stage("nil", nil)
+	if err == nil {
+		t.Error("expected error for nil image")
+	}
+}
+
+func TestBatchAtlas_PackRegionsCorrect(t *testing.T) {
+	resetAtlasManager()
+	defer resetAtlasManager()
+
+	atlas := NewBatchAtlas(PackerConfig{PageWidth: 512, PageHeight: 512}.NoPadding())
+
+	sizes := map[string][2]int{
+		"small":  {16, 16},
+		"medium": {64, 48},
+		"large":  {128, 128},
+	}
+
+	for name, sz := range sizes {
+		atlas.Stage(name, ebiten.NewImage(sz[0], sz[1]))
+	}
+
+	if err := atlas.Pack(); err != nil {
+		t.Fatalf("Pack: %v", err)
+	}
+
+	for name, sz := range sizes {
+		r := atlas.Region(name)
+		if r.Width != uint16(sz[0]) || r.Height != uint16(sz[1]) {
+			t.Errorf("region %q size = %d×%d, want %d×%d", name, r.Width, r.Height, sz[0], sz[1])
+		}
+		if r.Page == magentaPlaceholderPage {
+			t.Errorf("region %q is magenta placeholder", name)
+		}
+	}
+}
+
+func TestBatchAtlas_PagesSliceSynced(t *testing.T) {
+	resetAtlasManager()
+	defer resetAtlasManager()
+
+	atlas := NewBatchAtlas(PackerConfig{PageWidth: 64, PageHeight: 64}.NoPadding())
+	atlas.Stage("a", ebiten.NewImage(16, 16))
+	atlas.Pack()
+
+	r := atlas.Region("a")
+	pageIdx := int(r.Page)
+	if pageIdx >= len(atlas.Pages) {
+		t.Fatalf("Pages length %d, expected at least %d", len(atlas.Pages), pageIdx+1)
+	}
+	if atlas.Pages[pageIdx] == nil {
+		t.Error("atlas.Pages[pageIdx] is nil after Pack")
+	}
+}
+
 // --- Benchmarks ---
 
 func BenchmarkLoadAtlas_SinglePage(b *testing.B) {

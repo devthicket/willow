@@ -272,6 +272,153 @@ func TestPacker_PaddingOversized(t *testing.T) {
 	}
 }
 
+func TestPacker_FreeSlotReuse(t *testing.T) {
+	resetAtlasManager()
+	defer resetAtlasManager()
+
+	sp := newShelfPacker(256, 256, 0)
+
+	// Pack two items on the same shelf.
+	pp, x1, y1, err := sp.pack(32, 32)
+	if err != nil {
+		t.Fatalf("pack 1: %v", err)
+	}
+	_, x2, _, err := sp.pack(32, 32)
+	if err != nil {
+		t.Fatalf("pack 2: %v", err)
+	}
+
+	// Free the first item.
+	sp.free(pp.pageIdx, x1, y1, 32)
+
+	// Pack a new item — should reuse the freed slot at (0, 0).
+	_, x3, y3, err := sp.pack(32, 32)
+	if err != nil {
+		t.Fatalf("pack 3: %v", err)
+	}
+	if x3 != x1 || y3 != y1 {
+		t.Errorf("reused slot = (%d, %d), want (%d, %d)", x3, y3, x1, y1)
+	}
+	_ = x2
+}
+
+func TestPacker_FreeSlotSplitting(t *testing.T) {
+	resetAtlasManager()
+	defer resetAtlasManager()
+
+	sp := newShelfPacker(256, 256, 0)
+
+	// Pack a 64-wide item, creating a shelf of height 32.
+	pp, x1, y1, err := sp.pack(64, 32)
+	if err != nil {
+		t.Fatalf("pack 1: %v", err)
+	}
+
+	// Free it — creates a free slot of 64×32.
+	sp.free(pp.pageIdx, x1, y1, 64)
+
+	// Pack a 20-wide item — should use the free slot and split the remainder.
+	_, x2, y2, err := sp.pack(20, 32)
+	if err != nil {
+		t.Fatalf("pack 2: %v", err)
+	}
+	if x2 != 0 || y2 != 0 {
+		t.Errorf("item2 = (%d, %d), want (0, 0)", x2, y2)
+	}
+
+	// Pack another item that fits in the remaining 44-wide free slot.
+	_, x3, y3, err := sp.pack(30, 32)
+	if err != nil {
+		t.Fatalf("pack 3: %v", err)
+	}
+	if x3 != 20 || y3 != 0 {
+		t.Errorf("item3 = (%d, %d), want (20, 0)", x3, y3)
+	}
+}
+
+func TestPacker_FreeSmallerItem(t *testing.T) {
+	resetAtlasManager()
+	defer resetAtlasManager()
+
+	sp := newShelfPacker(256, 256, 0)
+
+	// Pack a 64-wide item.
+	pp, x1, y1, err := sp.pack(64, 32)
+	if err != nil {
+		t.Fatalf("pack 1: %v", err)
+	}
+
+	// Free it.
+	sp.free(pp.pageIdx, x1, y1, 64)
+
+	// Pack a smaller item — should fit in the freed slot.
+	_, x2, y2, err := sp.pack(16, 16)
+	if err != nil {
+		t.Fatalf("pack 2: %v", err)
+	}
+	if x2 != 0 || y2 != 0 {
+		t.Errorf("smaller item = (%d, %d), want (0, 0)", x2, y2)
+	}
+}
+
+func TestPacker_FreeNonExistent(t *testing.T) {
+	resetAtlasManager()
+	defer resetAtlasManager()
+
+	sp := newShelfPacker(256, 256, 0)
+
+	// Freeing on a non-existent page should not panic.
+	sp.free(999, 0, 0, 32)
+}
+
+func TestPacker_MultipleFreeAndReuse(t *testing.T) {
+	resetAtlasManager()
+	defer resetAtlasManager()
+
+	sp := newShelfPacker(256, 256, 0)
+
+	// Pack 4 items of 32x32 on one shelf.
+	type pos struct{ x, y int }
+	var positions []pos
+	var pp *packerPage
+	for i := 0; i < 4; i++ {
+		p, x, y, err := sp.pack(32, 32)
+		if err != nil {
+			t.Fatalf("pack %d: %v", i, err)
+		}
+		pp = p
+		positions = append(positions, pos{x, y})
+	}
+
+	// Free items 0 and 2.
+	sp.free(pp.pageIdx, positions[0].x, positions[0].y, 32)
+	sp.free(pp.pageIdx, positions[2].x, positions[2].y, 32)
+
+	// Pack 2 new items — should reuse the freed slots.
+	_, x5, y5, err := sp.pack(32, 32)
+	if err != nil {
+		t.Fatalf("pack 5: %v", err)
+	}
+	_, x6, y6, err := sp.pack(32, 32)
+	if err != nil {
+		t.Fatalf("pack 6: %v", err)
+	}
+
+	// Both should land in previously freed positions (order may vary).
+	freed := map[pos]bool{
+		positions[0]: true,
+		positions[2]: true,
+	}
+	p5 := pos{x5, y5}
+	p6 := pos{x6, y6}
+	if !freed[p5] {
+		t.Errorf("item 5 at (%d,%d) not in freed set", x5, y5)
+	}
+	if !freed[p6] {
+		t.Errorf("item 6 at (%d,%d) not in freed set", x6, y6)
+	}
+}
+
 func TestPacker_PageIndexOverflow(t *testing.T) {
 	resetAtlasManager()
 	defer resetAtlasManager()

@@ -6,23 +6,15 @@
 package main
 
 import (
-	"bytes"
-	_ "embed"
 	"image"
-	"image/png"
 	"log"
 	"math"
+	"os"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/phanxgames/willow"
 )
-
-//go:embed tileset.png
-var tilesetPNG []byte
-
-//go:embed whelp.png
-var whelpPNG []byte
 
 const (
 	windowTitle = "Willow  -  Underwater"
@@ -170,18 +162,26 @@ func (d *demo) update() error {
 }
 
 func main() {
-	// --- Load embedded assets ---
-	tilesetImg, err := png.Decode(bytes.NewReader(tilesetPNG))
+	// --- Load assets ---
+	tf, err := os.Open("demos/_assets/tileset.png")
 	if err != nil {
-		log.Fatalf("decode tileset: %v", err)
+		log.Fatalf("open tileset.png: %v", err)
 	}
-	tileset := ebiten.NewImageFromImage(tilesetImg)
+	defer tf.Close()
+	tileset, _, err := ebitenutil.NewImageFromReader(tf)
+	if err != nil {
+		log.Fatalf("decode tileset.png: %v", err)
+	}
 
-	whelpRaw, err := png.Decode(bytes.NewReader(whelpPNG))
+	wf, err := os.Open("demos/_assets/whelp.png")
 	if err != nil {
-		log.Fatalf("decode whelp: %v", err)
+		log.Fatalf("open whelp.png: %v", err)
 	}
-	whelpImg := ebiten.NewImageFromImage(whelpRaw)
+	defer wf.Close()
+	whelpImg, _, err := ebitenutil.NewImageFromReader(wf)
+	if err != nil {
+		log.Fatalf("decode whelp.png: %v", err)
+	}
 
 	// Water tile: row 3, col 0
 	waterSrc := tileset.SubImage(image.Rect(0, 96, tileSize, 128)).(*ebiten.Image)

@@ -34,12 +34,86 @@ type shelf struct {
 	usedW int // how far right items have been placed
 }
 
+// freeSlot is a rectangular hole left by a freed region on a shelf.
+type freeSlot struct {
+	x, y int // top-left corner
+	w, h int // w = padded item width that was freed, h = shelf height
+}
+
 // packerPage wraps an atlas page image with shelf packing metadata.
 type packerPage struct {
-	img     *ebiten.Image
-	pageIdx int     // index in the AtlasManager
-	shelves []shelf // horizontal shelves allocated so far
-	usedH   int     // total vertical space consumed (sum of shelf heights)
+	img       *ebiten.Image
+	pageIdx   int        // index in the AtlasManager
+	shelves   []shelf    // horizontal shelves allocated so far
+	usedH     int        // total vertical space consumed (sum of shelf heights)
+	freeSlots []freeSlot // holes left by freed regions
+}
+
+// tryPackFreeSlot scans free slots for the best fit (smallest area that fits
+// pw × ph). If placed, the slot is consumed and any remaining horizontal
+// space is split into a new free slot. Returns position and true on success.
+func (pp *packerPage) tryPackFreeSlot(pw, ph int) (x, y int, ok bool) {
+	bestIdx := -1
+	bestArea := 0
+
+	for i, fs := range pp.freeSlots {
+		if pw > fs.w || ph > fs.h {
+			continue
+		}
+		area := fs.w * fs.h
+		if bestIdx < 0 || area < bestArea {
+			bestArea = area
+			bestIdx = i
+		}
+	}
+
+	if bestIdx < 0 {
+		return 0, 0, false
+	}
+
+	fs := pp.freeSlots[bestIdx]
+	x, y = fs.x, fs.y
+
+	// Split remaining horizontal space into a new free slot.
+	remainder := fs.w - pw
+	if remainder > 0 {
+		pp.freeSlots[bestIdx] = freeSlot{
+			x: fs.x + pw,
+			y: fs.y,
+			w: remainder,
+			h: fs.h,
+		}
+	} else {
+		// Exact fit — remove slot (swap-remove).
+		last := len(pp.freeSlots) - 1
+		pp.freeSlots[bestIdx] = pp.freeSlots[last]
+		pp.freeSlots = pp.freeSlots[:last]
+	}
+
+	return x, y, true
+}
+
+// addFreeSlot records a freed region as a reusable slot. The shelf at the
+// given Y coordinate determines the slot's full height.
+func (pp *packerPage) addFreeSlot(x, y, pw int) {
+	// Find the shelf at this Y coordinate to get its height.
+	shelfH := 0
+	for i := range pp.shelves {
+		if pp.shelves[i].y == y {
+			shelfH = pp.shelves[i].h
+			break
+		}
+	}
+	if shelfH == 0 {
+		// Fallback: shouldn't happen, but avoid zero-height slots.
+		return
+	}
+	pp.freeSlots = append(pp.freeSlots, freeSlot{
+		x: x,
+		y: y,
+		w: pw,
+		h: shelfH,
+	})
 }
 
 // tryPack attempts to place a padded item of size (pw × ph) on this page.
@@ -131,7 +205,14 @@ func (sp *shelfPacker) pack(w, h int) (*packerPage, int, int, error) {
 		)
 	}
 
-	// Try each existing page.
+	// Try free slots first (across all pages).
+	for _, pp := range sp.pages {
+		if x, y, ok := pp.tryPackFreeSlot(pw, ph); ok {
+			return pp, x, y, nil
+		}
+	}
+
+	// Try each existing page (normal shelf packing).
 	for _, pp := range sp.pages {
 		if x, y, ok := pp.tryPack(pw, ph, sp.pageW, sp.pageH); ok {
 			return pp, x, y, nil
@@ -149,6 +230,18 @@ func (sp *shelfPacker) pack(w, h int) (*packerPage, int, int, error) {
 		return nil, 0, 0, fmt.Errorf("willow: internal error: item does not fit on fresh page")
 	}
 	return pp, x, y, nil
+}
+
+// free marks the region at (x, y) with padded width pw on the given page
+// as a reusable free slot. The shelf height at that Y coordinate determines
+// the slot's vertical extent.
+func (sp *shelfPacker) free(pageIdx, x, y, pw int) {
+	for _, pp := range sp.pages {
+		if pp.pageIdx == pageIdx {
+			pp.addFreeSlot(x, y, pw)
+			return
+		}
+	}
 }
 
 // allocPage creates a new atlas page via the global AtlasManager and

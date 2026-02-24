@@ -4,22 +4,17 @@
 package main
 
 import (
-	"bytes"
-	_ "embed"
 	"fmt"
 	"image/color"
-	"image/png"
 	"log"
 	"math"
+	"os"
 	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/phanxgames/willow"
 )
-
-//go:embed whelp.png
-var whelpPNG []byte
 
 const (
 	windowTitle = "Willow  -  Filter Gallery"
@@ -43,12 +38,15 @@ type filterEntry struct {
 }
 
 func main() {
-	// Decode embedded whelp image.
-	whelpRaw, err := png.Decode(bytes.NewReader(whelpPNG))
+	f, err := os.Open("demos/_assets/whelp.png")
 	if err != nil {
-		log.Fatalf("decode whelp: %v", err)
+		log.Fatalf("open whelp.png: %v", err)
 	}
-	whelpImg := ebiten.NewImageFromImage(whelpRaw)
+	defer f.Close()
+	whelpImg, _, err := ebitenutil.NewImageFromReader(f)
+	if err != nil {
+		log.Fatalf("decode whelp.png: %v", err)
+	}
 
 	scene := willow.NewScene()
 	scene.ClearColor = willow.Color{R: 0.08, G: 0.06, B: 0.12, A: 1}

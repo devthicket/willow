@@ -1,6 +1,6 @@
 # fontgen
 
-`fontgen` converts a TTF/OTF font into an SDF (Signed Distance Field) atlas for use with Willow's text renderer. SDF atlases store distance-from-edge data instead of raw pixels, enabling sharp text at any scale and cheap shader-based effects like outlines, glows, and drop shadows.
+`fontgen` is a CLI tool that converts a TTF/OTF font into an SDF (Signed Distance Field) atlas for use with Willow's text renderer. SDF atlases store distance-from-edge data instead of raw pixels, enabling sharp text at any scale and cheap shader-based effects like outlines, glows, and drop shadows.
 
 ## Installation
 

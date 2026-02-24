@@ -194,7 +194,6 @@ Benchmark suite included: `go test -bench . -benchmem`
 
 ## Roadmap
 
-- **Dynamic atlas packing**  -  Runtime `Atlas.Add(name, img)` for lazy asset loading. Shelf/guillotine packing into existing atlas pages to preserve batching.
 - UI widget layer (buttons, text input, layout, focus traversal) as a separate companion library (willowui)
 - Example projects and starter templates
 - Comprehensive API documentation and guides

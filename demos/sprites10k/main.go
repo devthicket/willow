@@ -4,19 +4,14 @@
 package main
 
 import (
-	"bytes"
-	_ "embed"
-	"image/png"
 	"log"
 	"math"
 	"math/rand/v2"
+	"os"
 
-	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/phanxgames/willow"
 )
-
-//go:embed whelp.png
-var whelpPNG []byte
 
 const (
 	screenW = 1280
@@ -36,11 +31,15 @@ type sprite struct {
 }
 
 func main() {
-	img, err := png.Decode(bytes.NewReader(whelpPNG))
+	f, err := os.Open("demos/_assets/whelp.png")
+	if err != nil {
+		log.Fatalf("open whelp.png: %v", err)
+	}
+	defer f.Close()
+	whelpImg, _, err := ebitenutil.NewImageFromReader(f)
 	if err != nil {
 		log.Fatalf("decode whelp.png: %v", err)
 	}
-	whelpImg := ebiten.NewImageFromImage(img)
 
 	scene := willow.NewScene()
 	scene.ClearColor = willow.Color{R: 0.06, G: 0.06, B: 0.09, A: 1}

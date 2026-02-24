@@ -397,17 +397,32 @@ sprite.SetCustomImage(img)
 
 ### Dynamic Atlas (Runtime Packing)
 
-For many runtime-loaded images (10+) that should batch together, use `NewAtlas` + `Add`:
+For many runtime-loaded images (10+) that should batch together, use `NewAtlas` + `Add` (shelf mode) or `NewBatchAtlas` + `Stage` + `Pack` (batch mode):
 
 ```go
+// Shelf mode  -  add/free/replace over time:
 atlas := willow.NewAtlas(willow.PackerConfig{PageWidth: 512, PageHeight: 512})
 region, err := atlas.Add("avatar", avatarImg)
 sprite := willow.NewSprite("avatar", region)
+
+// Free and reuse space:
+atlas.Free("avatar")                           // reclaims space, clears pixels
+atlas.Replace("skin", newSkinImg)              // same-size pixel swap in-place
+region, err = atlas.Update("skin", diffImg)    // same size → Replace, different → Free + Add
+```
+
+```go
+// Batch mode  -  stage all, pack once (better packing efficiency):
+atlas := willow.NewBatchAtlas(willow.PackerConfig{PageWidth: 1024, PageHeight: 1024})
+atlas.Stage("a", imgA)
+atlas.Stage("b", imgB)
+atlas.Pack()  // runs MaxRects, immutable after this
+sprite := willow.NewSprite("a", atlas.Region("a"))
 ```
 
 **Do NOT use dynamic atlas for a few images.** `SetCustomImage` or `RegisterPage` is simpler and wastes no VRAM. Dynamic atlas allocates full pages (e.g. 512x512 = 1 MB each). Only use it when per-image batch breaks are a measured performance problem.
 
-`Add` is idempotent  -  duplicate names return the existing region. `Remove` deletes the lookup entry but does not reclaim page space.
+Use shelf mode when images arrive over time and may need updating. Use batch mode when all images are known upfront (asset loading, level init)  -  it packs more efficiently.
 
 ## BlendMode
 

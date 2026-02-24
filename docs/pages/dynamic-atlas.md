@@ -6,7 +6,10 @@ Optional tool for packing images onto shared atlas pages at runtime, so they bat
 
 Willow batches sprites by atlas page. Sprites on the same page with the same blend mode and shader are drawn in one GPU submission. When you load images at runtime  -  user avatars, procedural sprites, downloaded content  -  each one normally becomes its own page, which means its own submission. With many such images, that adds up.
 
-`NewAtlas` + `Add` packs runtime images onto shared pages using shelf-based bin packing. All images on the same page are one batch.
+Two modes are available:
+
+- **Shelf mode (streaming):** `NewAtlas` + `Add`. Add, free, and replace images over time. Space is reused when freed. Best for dynamic content that changes at runtime.
+- **Batch mode (rect pack):** `NewBatchAtlas` + `Stage` + `Pack`. Stage all images, then finalize with optimal MaxRects packing. No additions after packing. Best when all images are known upfront.
 
 ## When You Do NOT Need This
 
@@ -22,9 +25,11 @@ sprite.SetCustomImage(avatarImg)
 
 **Ebitengine already has internal atlasing.** Small `ebiten.Image` instances are automatically packed onto internal atlas backends. Willow's dynamic atlas operates at a higher level  -  it controls Willow's batch key, not Ebitengine's internal texture layout. If you have few runtime images and don't see batching problems in your profiling, you don't need this.
 
-## API
+## Mode 1: Shelf (Streaming)
 
-### Creating a Dynamic Atlas
+Shelf mode adds images immediately using a shelf-based bin packing algorithm. Images can be freed, replaced, and updated over time.
+
+### Creating
 
 ```go
 atlas := willow.NewAtlas()  // 2048x2048 pages, 1px padding
@@ -52,11 +57,35 @@ sprite := willow.NewSprite("player", region)
 
 `Add` is idempotent  -  calling it twice with the same name returns the existing region without re-packing.
 
+### Freeing Images
+
+```go
+err := atlas.Free("player_skin")
+```
+
+`Free` removes the region from the lookup and reclaims the pixel space for reuse. Pixels are cleared on the atlas page to prevent stale bleeding. Future `Add` calls may reuse the freed space.
+
+### Replacing Images (Same Size)
+
+```go
+err := atlas.Replace("player_skin", newSkinImg)
+```
+
+`Replace` swaps pixels in-place without changing the TextureRegion. The new image must be exactly the same size as the existing region. Use this for texture updates that don't change dimensions.
+
+### Updating Images (Any Size)
+
+```go
+region, err := atlas.Update("player_skin", differentSizeImg)
+```
+
+`Update` is a convenience method: if the new image is the same size, it acts like `Replace`. If the size differs, it frees the old region and adds the new one, returning the (potentially different) TextureRegion.
+
 ### Querying
 
 ```go
-atlas.Has("player_skin")  // true if already added
-atlas.RegionCount()        // number of named regions
+atlas.Has("player_skin")    // true if already added
+atlas.RegionCount()          // number of named regions
 atlas.Region("player_skin") // returns TextureRegion (magenta placeholder if missing)
 ```
 
@@ -70,13 +99,39 @@ atlas, _ := scene.LoadAtlas(jsonData, []*ebiten.Image{pageImg})
 atlas.Add("dlc_hat", hatImg)
 ```
 
-### Removing
+## Mode 2: Batch (Rect Pack)
+
+Batch mode stages all images first, then packs them in one shot using the MaxRects algorithm. This produces better packing efficiency since all items are known upfront. The atlas is immutable after packing.
+
+### Creating and Staging
 
 ```go
-atlas.Remove("player_skin")
+atlas := willow.NewBatchAtlas(willow.PackerConfig{PageWidth: 1024, PageHeight: 1024})
+
+atlas.Stage("a", imgA)   // buffers image (no packing yet)
+atlas.Stage("b", imgB)
+atlas.Stage("c", imgC)
 ```
 
-Remove deletes the name from the lookup map but does **not** reclaim the pixel space on the atlas page. The dead pixels remain until the page is deallocated.
+### Packing
+
+```go
+err := atlas.Pack()  // runs MaxRects, copies pixels, sets regions
+```
+
+After `Pack`:
+- `Region("a")` returns valid TextureRegions
+- `Stage()` returns an error (atlas is immutable)
+- `Pack()` again returns an error
+
+### When to Use Batch vs Shelf
+
+| | Shelf (`NewAtlas`) | Batch (`NewBatchAtlas`) |
+|---|---|---|
+| Images known upfront | No  -  add over time | Yes  -  all staged before Pack |
+| Packing efficiency | Good (85-90%) | Better (MaxRects optimal) |
+| Post-creation changes | Add, Free, Replace, Update | None (immutable after Pack) |
+| Use case | Dynamic content, streaming | Asset loading, level init |
 
 ## Page Size Guidance
 
@@ -105,9 +160,17 @@ When a page fills up, the packer automatically allocates a new one. Images on di
 
 ## How It Works
 
-The packer uses a shelf algorithm  -  each page is divided into horizontal strips. Items are placed left-to-right on the shelf whose height best matches the item, minimizing wasted vertical space. When no shelf fits, a new one is opened. When the page is full, a new page is allocated.
+### Shelf Mode
 
-Pixels are copied onto the atlas page via `DrawImage` at `Add` time (one-time cost, not per frame). After `Add`, the source image is no longer referenced.
+The packer uses a shelf algorithm  -  each page is divided into horizontal strips. Items are placed left-to-right on the shelf whose height best matches the item, minimizing wasted vertical space. When no shelf fits, a new one is opened. When the page is full, a new page is allocated. Freed regions become free slots that are checked first on subsequent `Add` calls.
+
+### Batch Mode
+
+The packer uses the MaxRects algorithm with Best Short Side Fit (BSSF) heuristic. Images are sorted largest-area-first for optimal placement. Each image is tried on existing pages before a new page is allocated.
+
+### Pixel Copying
+
+Pixels are copied onto the atlas page via `DrawImage` at `Add`/`Pack` time (one-time cost, not per frame). After that, the source image is no longer referenced.
 
 ### Padding
 
@@ -124,6 +187,7 @@ atlas := willow.NewAtlas(cfg)
 | Approach | Batching | VRAM Overhead | Setup |
 |----------|----------|--------------|-------|
 | `LoadAtlas` (pre-packed) | Best  -  one page per atlas | Minimal  -  tightly packed offline | Requires build step |
+| `NewBatchAtlas` + `Pack` | Good  -  optimal runtime packing | Page-sized allocation | Stage all, pack once |
 | `NewAtlas` + `Add` | Good  -  shared runtime pages | Page-sized allocation | None  -  pack at load time |
 | `RegisterPage` per image | Poor  -  one batch per image | Minimal  -  image-sized | None  -  simplest |
 | `SetCustomImage` | Poor  -  breaks coalesced batching | Minimal  -  image-sized | None  -  simplest |

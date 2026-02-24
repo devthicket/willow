@@ -1,6 +1,6 @@
 # atlaspack
 
-`atlaspack` is a Go-native sprite atlas packer that outputs Willow-compatible `.png` + `.json` files. It replaces external tools like TexturePacker for projects that want a self-contained build pipeline.
+`atlaspack` is a CLI tool that packs sprite PNGs into a Willow-compatible `.png` + `.json` atlas. It replaces external tools like TexturePacker for projects that want a self-contained build pipeline.
 
 ## Installation
 

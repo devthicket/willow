@@ -170,6 +170,68 @@ func BenchmarkDraw_10000Sprites_AlphaOnly_Coalesced(b *testing.B) {
 	}
 }
 
+// --- 100K Sprite Rendering Benchmarks ---
+
+func BenchmarkDraw_100000Sprites_Static(b *testing.B) {
+	s := setupBenchScene(100000)
+	screen := ebiten.NewImage(1280, 720)
+	s.Draw(screen) // warmup
+
+	b.ResetTimer()
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		s.Draw(screen)
+	}
+}
+
+func BenchmarkDraw_100000Sprites_Rotating(b *testing.B) {
+	s := setupBenchScene(100000)
+	screen := ebiten.NewImage(1280, 720)
+	children := s.Root().Children()
+	s.Draw(screen) // warmup
+
+	b.ResetTimer()
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		for _, child := range children {
+			child.Rotation += 0.01
+			child.transformDirty = true
+		}
+		s.Draw(screen)
+	}
+}
+
+func BenchmarkDraw_100000Sprites_Static_Coalesced(b *testing.B) {
+	s := setupBenchScene(100000)
+	s.SetBatchMode(BatchModeCoalesced)
+	screen := ebiten.NewImage(1280, 720)
+	s.Draw(screen) // warmup
+
+	b.ResetTimer()
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		s.Draw(screen)
+	}
+}
+
+func BenchmarkDraw_100000Sprites_Rotating_Coalesced(b *testing.B) {
+	s := setupBenchScene(100000)
+	s.SetBatchMode(BatchModeCoalesced)
+	screen := ebiten.NewImage(1280, 720)
+	children := s.Root().Children()
+	s.Draw(screen) // warmup
+
+	b.ResetTimer()
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		for _, child := range children {
+			child.Rotation += 0.01
+			child.transformDirty = true
+		}
+		s.Draw(screen)
+	}
+}
+
 // --- CacheAsTree Benchmarks ---
 
 // setupCacheAsTreeBenchScene creates a scene with a single container
