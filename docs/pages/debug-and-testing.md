@@ -112,6 +112,8 @@ scene.Root().AddChild(fps)
 ## Next Steps
 
 - [ECS Integration](?page=ecs-integration)  -  bridge scene graph interactions to an entity store
+- [Sprite Packing (atlaspack)](?page=atlaspack)  -  pack PNG sprites into a texture atlas
+- [Font Generation (fontgen)](?page=fontgen)  -  generate SDF font atlases from TTF/OTF files
 
 ## Related
 

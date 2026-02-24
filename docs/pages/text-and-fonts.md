@@ -38,7 +38,7 @@ scene.RegisterPage(2, atlasImg)
 
 ### Loading a Pre-generated Atlas
 
-Load a pre-generated atlas (from the `sdfgen` CLI tool):
+Load a pre-generated atlas (from the `fontgen` CLI tool):
 
 ```go
 metricsJSON, _ := os.ReadFile("font.json")
@@ -48,10 +48,10 @@ scene.RegisterPage(2, atlasImage)
 
 ### Offline Generation
 
-The `cmd/sdfgen` CLI tool generates font atlases offline:
+The `cmd/fontgen` CLI tool generates font atlases offline:
 
 ```bash
-go run ./cmd/sdfgen -font input.ttf -size 80 -range 8 -out output
+go run ./cmd/fontgen -font input.ttf -size 80 -range 8 -out output
 ```
 
 Produces `output.png` (atlas) and `output.json` (metrics).
@@ -151,5 +151,6 @@ lineH := font.LineHeight()
 
 ## Related
 
+- [Font Generation (fontgen)](?page=fontgen)  -  generate SDF font atlases offline from TTF/OTF files
 - [Sprites & Atlas](?page=sprites-and-atlas)  -  atlas loading and page registration
 - [Nodes](?page=nodes)  -  node types and visual properties

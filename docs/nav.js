@@ -67,6 +67,8 @@ const NAV_TABS = [
             items: [
                 { label: "Debug & Testing", page: "debug-and-testing" },
                 { label: "ECS Integration", page: "ecs-integration" },
+                { label: "Sprite Packing (atlaspack)", page: "atlaspack" },
+                { label: "Font Generation (fontgen)", page: "fontgen" },
                 { label: "LLM Guide", page: "llm" },
             ]
         },

@@ -101,5 +101,6 @@ scene.RegisterPage(0, pageImage)
 ## Related
 
 - [Solid-Color Sprites](?page=solid-color-sprites)  -  shapes without textures using `WhitePixel`
+- [Sprite Packing (atlaspack)](?page=atlaspack)  -  pack PNG sprites into an atlas without external tools
 - [Scene](?page=scene)  -  atlas loading via `scene.LoadAtlas()`
 - [Nodes](?page=nodes)  -  node types and visual properties
