@@ -137,6 +137,7 @@ const (
 	EventPinch                         // fires during a two-finger pinch/rotate gesture
 	EventPointerEnter                  // fires when the pointer enters a node's bounds
 	EventPointerLeave                  // fires when the pointer leaves a node's bounds
+	eventBgClick                       // internal: background click (no node hit)
 )
 
 // MouseButton identifies a mouse button.

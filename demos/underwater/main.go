@@ -248,11 +248,11 @@ func main() {
 	d.maskChild = maskChild
 
 	// --- Deep water mesh (ZIndex 0) ---
-	deepGrid, deepNode := willow.NewDistortionGrid("deep-water", waterImg, totalCols, totalRows)
-	deepNode.SetPosition(float64(-bufTiles*tileSize), float64(-bufTiles*tileSize))
-	deepNode.Color = willow.Color{R: 0.35, G: 0.55, B: 0.75, A: 1.0}
-	deepNode.ZIndex = 0
-	underwaterContainer.AddChild(deepNode)
+	deepGrid := willow.NewDistortionGrid("deep-water", waterImg, totalCols, totalRows)
+	deepGrid.Node().SetPosition(float64(-bufTiles*tileSize), float64(-bufTiles*tileSize))
+	deepGrid.Node().Color = willow.Color{R: 0.35, G: 0.55, B: 0.75, A: 1.0}
+	deepGrid.Node().ZIndex = 0
+	underwaterContainer.AddChild(deepGrid.Node())
 	d.deepGrid = deepGrid
 
 	// --- Sandy floor (ZIndex 2) ---
@@ -276,11 +276,11 @@ func main() {
 	}
 
 	// --- Mid water mesh (ZIndex 5) ---
-	midGrid, midNode := willow.NewDistortionGrid("mid-water", waterImg, totalCols, totalRows)
-	midNode.SetPosition(float64(-bufTiles*tileSize), float64(-bufTiles*tileSize))
-	midNode.Color = willow.Color{R: 0.5, G: 0.7, B: 0.9, A: 0.3}
-	midNode.ZIndex = 5
-	underwaterContainer.AddChild(midNode)
+	midGrid := willow.NewDistortionGrid("mid-water", waterImg, totalCols, totalRows)
+	midGrid.Node().SetPosition(float64(-bufTiles*tileSize), float64(-bufTiles*tileSize))
+	midGrid.Node().Color = willow.Color{R: 0.5, G: 0.7, B: 0.9, A: 0.3}
+	midGrid.Node().ZIndex = 5
+	underwaterContainer.AddChild(midGrid.Node())
 	d.midGrid = midGrid
 
 	// --- Whelp (ZIndex 16) ---
@@ -337,11 +337,11 @@ func main() {
 	d.lights = lights
 
 	// --- Near water mesh (ZIndex 20) ---
-	nearGrid, nearNode := willow.NewDistortionGrid("near-water", waterImg, totalCols, totalRows)
-	nearNode.SetPosition(float64(-bufTiles*tileSize), float64(-bufTiles*tileSize))
-	nearNode.Color = willow.Color{R: 0.6, G: 0.8, B: 1.0, A: 0.5}
-	nearNode.ZIndex = 20
-	underwaterContainer.AddChild(nearNode)
+	nearGrid := willow.NewDistortionGrid("near-water", waterImg, totalCols, totalRows)
+	nearGrid.Node().SetPosition(float64(-bufTiles*tileSize), float64(-bufTiles*tileSize))
+	nearGrid.Node().Color = willow.Color{R: 0.6, G: 0.8, B: 1.0, A: 0.5}
+	nearGrid.Node().ZIndex = 20
+	underwaterContainer.AddChild(nearGrid.Node())
 	d.nearGrid = nearGrid
 
 	scene.Root().AddChild(underwaterContainer)
@@ -390,11 +390,11 @@ func main() {
 
 	surf1Container := willow.NewContainer("surf1")
 	surf1Container.ZIndex = 50
-	overlay1Grid, overlay1Node := willow.NewDistortionGrid("overlay1", waterImg, totalCols, totalRows)
-	overlay1Node.SetPosition(float64(-bufTiles*tileSize), float64(-bufTiles*tileSize))
-	overlay1Node.Color = willow.Color{R: 0.75, G: 0.92, B: 1.0, A: 1}
-	overlay1Node.BlendMode = willow.BlendScreen
-	surf1Container.AddChild(overlay1Node)
+	overlay1Grid := willow.NewDistortionGrid("overlay1", waterImg, totalCols, totalRows)
+	overlay1Grid.Node().SetPosition(float64(-bufTiles*tileSize), float64(-bufTiles*tileSize))
+	overlay1Grid.Node().Color = willow.Color{R: 0.75, G: 0.92, B: 1.0, A: 1}
+	overlay1Grid.Node().BlendMode = willow.BlendScreen
+	surf1Container.AddChild(overlay1Grid.Node())
 	mask1, hole1 := makeInvertedMask()
 	surf1Container.SetMask(mask1)
 	scene.Root().AddChild(surf1Container)
@@ -402,11 +402,11 @@ func main() {
 
 	surf2Container := willow.NewContainer("surf2")
 	surf2Container.ZIndex = 52
-	overlay2Grid, overlay2Node := willow.NewDistortionGrid("overlay2", waterImg2, totalCols, totalRows)
-	overlay2Node.SetPosition(float64(-bufTiles*tileSize), float64(-bufTiles*tileSize))
-	overlay2Node.Color = willow.Color{R: 2, G: 2, B: 2, A: 0.6}
-	overlay2Node.BlendMode = willow.BlendScreen
-	surf2Container.AddChild(overlay2Node)
+	overlay2Grid := willow.NewDistortionGrid("overlay2", waterImg2, totalCols, totalRows)
+	overlay2Grid.Node().SetPosition(float64(-bufTiles*tileSize), float64(-bufTiles*tileSize))
+	overlay2Grid.Node().Color = willow.Color{R: 2, G: 2, B: 2, A: 0.6}
+	overlay2Grid.Node().BlendMode = willow.BlendScreen
+	surf2Container.AddChild(overlay2Grid.Node())
 	mask2, hole2 := makeInvertedMask()
 	surf2Container.SetMask(mask2)
 	scene.Root().AddChild(surf2Container)

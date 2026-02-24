@@ -57,12 +57,9 @@ type game struct {
 func (g *game) update() error {
 	g.time += 1.0 / float64(ebiten.TPS())
 	t := g.time
-	dt := float32(1.0 / float64(ebiten.TPS()))
-
 	// Lantern follows cursor.
 	mx, my := ebiten.CursorPosition()
-	g.cursor.X = float64(mx)
-	g.cursor.Y = float64(my)
+	g.cursor.SetPosition(float64(mx), float64(my))
 
 	// Torch flicker.
 	for i := range g.torches {
@@ -80,7 +77,6 @@ func (g *game) update() error {
 	// Wisp animation: drift to new positions when tween completes.
 	for i := range g.wisps {
 		w := &g.wisps[i]
-		w.tween.Update(dt)
 		if w.tween.Done {
 			// Pick a new target within bounds.
 			tx := 80 + rand.Float64()*(screenW-160)
@@ -308,7 +304,6 @@ func main() {
 		flame.ScaleX = 14
 		flame.ScaleY = 14
 		flame.Color = td.spriteColor
-		flame.Interactable = true
 		scene.Root().AddChild(flame)
 
 		idx := len(torches)
@@ -319,7 +314,7 @@ func main() {
 			offColor: offColor,
 		})
 
-		flame.OnClick = func(_ willow.ClickContext) {
+		flame.OnClick(func(_ willow.ClickContext) {
 			tc := &torches[idx]
 			tc.light.Enabled = !tc.light.Enabled
 			if tc.light.Enabled {
@@ -329,7 +324,7 @@ func main() {
 				tc.light.Intensity = 0
 			}
 			tc.sprite.Invalidate()
-		}
+		})
 	}
 
 	// ---- Wisps (autonomous floating lights) ---------------------------------
@@ -404,11 +399,9 @@ func main() {
 		cursor:     cursor,
 	}
 
-	scene.Root().HitShape = willow.HitRect{Width: screenW, Height: screenH}
-	scene.Root().Interactable = true
-	scene.Root().OnClick = func(ctx willow.ClickContext) {
+	scene.OnBackgroundClick(func(ctx willow.ClickContext) {
 		g.spawnFlash(ctx.GlobalX, ctx.GlobalY)
-	}
+	})
 
 	scene.SetUpdateFunc(g.update)
 

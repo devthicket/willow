@@ -45,12 +45,12 @@ func (d *demo) update() error {
 	s := 1.0 + 0.20*math.Sin(d.time*1.8)
 	d.starShape.ScaleX = s
 	d.starShape.ScaleY = s
+	d.starShape.Invalidate()
 
 	// Panel 1: whelp mask  -  move the sprite child to the cursor.
 	// p1 is at world (panelW, 0); panel-local cursor = (mx-panelW, my).
 	mx, my := ebiten.CursorPosition()
-	d.whelpChild.X = float64(mx) - panelW - 128 // centre 256-px (2× scaled) image
-	d.whelpChild.Y = float64(my) - 128
+	d.whelpChild.SetPosition(float64(mx)-panelW-128, float64(my)-128)
 
 	// Panel 2: smooth scroll  -  move sub-container up, reset seamlessly.
 	const (
@@ -61,7 +61,7 @@ func (d *demo) update() error {
 	if d.scrollY >= barH*nBars {
 		d.scrollY -= barH * nBars
 	}
-	d.scrollContent.Y = -d.scrollY
+	d.scrollContent.SetY(-d.scrollY)
 
 	return nil
 }

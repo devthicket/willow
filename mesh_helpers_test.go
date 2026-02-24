@@ -12,7 +12,8 @@ import (
 func TestRopeBevelJoinMode(t *testing.T) {
 	// L-shaped path: bevel mode should not scale normals at the join.
 	points := []Vec2{{0, 0}, {10, 0}, {10, 10}}
-	_, n := NewRope("rope", nil, points, RopeConfig{Width: 4, JoinMode: RopeJoinBevel})
+	r := NewRope("rope", nil, points, RopeConfig{Width: 4, JoinMode: RopeJoinBevel})
+	n := r.Node()
 	if len(n.Vertices) != 6 {
 		t.Errorf("vertices = %d, want 6", len(n.Vertices))
 	}
@@ -23,7 +24,8 @@ func TestRopeBevelJoinMode(t *testing.T) {
 
 func TestRopeVertexAndIndexCounts(t *testing.T) {
 	points := []Vec2{{0, 0}, {10, 0}, {20, 0}, {30, 0}}
-	_, n := NewRope("rope", nil, points, RopeConfig{Width: 4})
+	r := NewRope("rope", nil, points, RopeConfig{Width: 4})
+	n := r.Node()
 	// 4 points → 8 vertices, 3 segments → 18 indices
 	if len(n.Vertices) != 8 {
 		t.Errorf("vertices = %d, want 8", len(n.Vertices))
@@ -35,7 +37,8 @@ func TestRopeVertexAndIndexCounts(t *testing.T) {
 
 func TestRopeTwoPoints(t *testing.T) {
 	points := []Vec2{{0, 0}, {10, 0}}
-	_, n := NewRope("rope", nil, points, RopeConfig{Width: 4})
+	r := NewRope("rope", nil, points, RopeConfig{Width: 4})
+	n := r.Node()
 	// 2 points → 4 vertices, 1 segment → 6 indices
 	if len(n.Vertices) != 4 {
 		t.Errorf("vertices = %d, want 4", len(n.Vertices))
@@ -57,7 +60,8 @@ func TestRopeTwoPoints(t *testing.T) {
 
 func TestRopeUVTiling(t *testing.T) {
 	points := []Vec2{{0, 0}, {10, 0}, {20, 0}}
-	_, n := NewRope("rope", nil, points, RopeConfig{Width: 4})
+	r := NewRope("rope", nil, points, RopeConfig{Width: 4})
+	n := r.Node()
 	// Cumulative length: 0, 10, 20
 	if !approxEqual(float64(n.Vertices[0].SrcX), 0, 0.01) {
 		t.Errorf("SrcX[0] = %f, want 0", n.Vertices[0].SrcX)
@@ -72,7 +76,8 @@ func TestRopeUVTiling(t *testing.T) {
 
 func TestRopeSetPointsReusesBuffer(t *testing.T) {
 	points := []Vec2{{0, 0}, {10, 0}, {20, 0}}
-	r, n := NewRope("rope", nil, points, RopeConfig{Width: 4})
+	r := NewRope("rope", nil, points, RopeConfig{Width: 4})
+	n := r.Node()
 	vertCap := cap(n.Vertices)
 	indCap := cap(n.Indices)
 
@@ -93,16 +98,17 @@ func TestRopeSetPointsReusesBuffer(t *testing.T) {
 }
 
 func TestRopeSinglePointNoMesh(t *testing.T) {
-	r, n := NewRope("rope", nil, []Vec2{{0, 0}}, RopeConfig{Width: 4})
+	r := NewRope("rope", nil, []Vec2{{0, 0}}, RopeConfig{Width: 4})
+	n := r.Node()
 	if len(n.Vertices) != 0 || len(n.Indices) != 0 {
 		t.Error("single point rope should have no vertices/indices")
 	}
-	_ = r
 }
 
 func TestRopeInvalidatesMeshAABB(t *testing.T) {
 	points := []Vec2{{0, 0}, {10, 0}}
-	r, n := NewRope("rope", nil, points, RopeConfig{Width: 4})
+	r := NewRope("rope", nil, points, RopeConfig{Width: 4})
+	n := r.Node()
 	n.recomputeMeshAABB()
 	if n.meshAABBDirty {
 		t.Error("AABB should not be dirty after recompute")
@@ -119,7 +125,7 @@ func TestRopeInvalidatesMeshAABB(t *testing.T) {
 func TestRopeUpdateLine(t *testing.T) {
 	start := Vec2{X: 0, Y: 0}
 	end := Vec2{X: 100, Y: 0}
-	r, n := NewRope("rope", nil, nil, RopeConfig{
+	r := NewRope("rope", nil, nil, RopeConfig{
 		Width:     4,
 		CurveMode: RopeCurveLine,
 		Segments:  10,
@@ -127,6 +133,7 @@ func TestRopeUpdateLine(t *testing.T) {
 		End:       &end,
 	})
 	r.Update()
+	n := r.Node()
 
 	// 11 points → 22 vertices, 10 segments → 60 indices.
 	if len(n.Vertices) != 22 {
@@ -149,7 +156,7 @@ func TestRopeUpdateLine(t *testing.T) {
 func TestRopeUpdateCatenary(t *testing.T) {
 	start := Vec2{X: 0, Y: 0}
 	end := Vec2{X: 100, Y: 0}
-	r, _ := NewRope("rope", nil, nil, RopeConfig{
+	r := NewRope("rope", nil, nil, RopeConfig{
 		Width:     4,
 		CurveMode: RopeCurveCatenary,
 		Segments:  20,
@@ -171,7 +178,7 @@ func TestRopeUpdateQuadBezier(t *testing.T) {
 	start := Vec2{X: 0, Y: 0}
 	end := Vec2{X: 100, Y: 0}
 	ctrl := Vec2{X: 50, Y: 80}
-	r, n := NewRope("rope", nil, nil, RopeConfig{
+	r := NewRope("rope", nil, nil, RopeConfig{
 		Width:     4,
 		CurveMode: RopeCurveQuadBezier,
 		Segments:  10,
@@ -180,6 +187,7 @@ func TestRopeUpdateQuadBezier(t *testing.T) {
 		Controls:  [2]*Vec2{&ctrl},
 	})
 	r.Update()
+	n := r.Node()
 
 	if len(n.Vertices) != 22 {
 		t.Errorf("vertices = %d, want 22", len(n.Vertices))
@@ -197,7 +205,7 @@ func TestRopeUpdateCubicBezier(t *testing.T) {
 	end := Vec2{X: 100, Y: 0}
 	c1 := Vec2{X: 33, Y: 60}
 	c2 := Vec2{X: 66, Y: 60}
-	r, n := NewRope("rope", nil, nil, RopeConfig{
+	r := NewRope("rope", nil, nil, RopeConfig{
 		Width:     4,
 		CurveMode: RopeCurveCubicBezier,
 		Segments:  10,
@@ -206,6 +214,7 @@ func TestRopeUpdateCubicBezier(t *testing.T) {
 		Controls:  [2]*Vec2{&c1, &c2},
 	})
 	r.Update()
+	n := r.Node()
 
 	if len(n.Vertices) != 22 {
 		t.Errorf("vertices = %d, want 22", len(n.Vertices))
@@ -224,7 +233,7 @@ func TestRopeUpdateCubicBezier(t *testing.T) {
 func TestRopeUpdateWave(t *testing.T) {
 	start := Vec2{X: 0, Y: 100}
 	end := Vec2{X: 200, Y: 100}
-	r, _ := NewRope("rope", nil, nil, RopeConfig{
+	r := NewRope("rope", nil, nil, RopeConfig{
 		Width:     4,
 		CurveMode: RopeCurveWave,
 		Segments:  40,
@@ -250,7 +259,7 @@ func TestRopeUpdateWave(t *testing.T) {
 
 func TestRopeUpdateCustom(t *testing.T) {
 	customPts := []Vec2{{0, 0}, {10, 10}, {20, 0}}
-	r, n := NewRope("rope", nil, nil, RopeConfig{
+	r := NewRope("rope", nil, nil, RopeConfig{
 		Width:     4,
 		CurveMode: RopeCurveCustom,
 		PointsFunc: func(buf []Vec2) []Vec2 {
@@ -258,6 +267,7 @@ func TestRopeUpdateCustom(t *testing.T) {
 		},
 	})
 	r.Update()
+	n := r.Node()
 
 	// 3 points → 6 vertices.
 	if len(n.Vertices) != 6 {
@@ -268,7 +278,7 @@ func TestRopeUpdateCustom(t *testing.T) {
 func TestRopeUpdateDefaultSegments(t *testing.T) {
 	start := Vec2{X: 0, Y: 0}
 	end := Vec2{X: 100, Y: 0}
-	r, n := NewRope("rope", nil, nil, RopeConfig{
+	r := NewRope("rope", nil, nil, RopeConfig{
 		Width:     4,
 		CurveMode: RopeCurveLine,
 		Start:     &start,
@@ -276,6 +286,7 @@ func TestRopeUpdateDefaultSegments(t *testing.T) {
 		// Segments is 0 → should default to 20.
 	})
 	r.Update()
+	n := r.Node()
 
 	// 21 points → 42 vertices.
 	if len(n.Vertices) != 42 {
@@ -286,7 +297,7 @@ func TestRopeUpdateDefaultSegments(t *testing.T) {
 func TestRopeUpdateBufferReuse(t *testing.T) {
 	start := Vec2{X: 0, Y: 0}
 	end := Vec2{X: 100, Y: 0}
-	r, _ := NewRope("rope", nil, nil, RopeConfig{
+	r := NewRope("rope", nil, nil, RopeConfig{
 		Width:     4,
 		CurveMode: RopeCurveLine,
 		Segments:  10,
@@ -307,7 +318,7 @@ func TestRopeUpdateBufferReuse(t *testing.T) {
 func TestRopeUpdateByRefMutation(t *testing.T) {
 	start := Vec2{X: 0, Y: 0}
 	end := Vec2{X: 100, Y: 0}
-	r, _ := NewRope("rope", nil, nil, RopeConfig{
+	r := NewRope("rope", nil, nil, RopeConfig{
 		Width:     4,
 		CurveMode: RopeCurveLine,
 		Segments:  10,
@@ -327,13 +338,14 @@ func TestRopeUpdateByRefMutation(t *testing.T) {
 }
 
 func TestRopeUpdateNilStartEnd(t *testing.T) {
-	r, n := NewRope("rope", nil, nil, RopeConfig{
+	r := NewRope("rope", nil, nil, RopeConfig{
 		Width:     4,
 		CurveMode: RopeCurveLine,
 		Segments:  10,
 		// Start and End are nil.
 	})
 	r.Update()
+	n := r.Node()
 
 	// Should be a no-op  -  no vertices generated.
 	if len(n.Vertices) != 0 {
@@ -344,7 +356,8 @@ func TestRopeUpdateNilStartEnd(t *testing.T) {
 // --- DistortionGrid ---
 
 func TestDistortionGridDimensions(t *testing.T) {
-	_, n := NewDistortionGrid("grid", nil, 4, 3)
+	g := NewDistortionGrid("grid", nil, 4, 3)
+	n := g.Node()
 	// 4 cols, 3 rows → (5*4)=20 vertices, (4*3*6)=72 indices
 	if len(n.Vertices) != 20 {
 		t.Errorf("vertices = %d, want 20", len(n.Vertices))
@@ -355,7 +368,8 @@ func TestDistortionGridDimensions(t *testing.T) {
 }
 
 func TestDistortionGridSetVertex(t *testing.T) {
-	g, n := NewDistortionGrid("grid", nil, 2, 2)
+	g := NewDistortionGrid("grid", nil, 2, 2)
+	n := g.Node()
 	// Grid over a nil image → all at (0,0). But cols=2,rows=2, imgW=0,imgH=0
 	// So all rest positions are at (0,0) since cellW=0, cellH=0.
 	// Instead, test with known dimensions by checking displacement.
@@ -369,7 +383,8 @@ func TestDistortionGridSetVertex(t *testing.T) {
 }
 
 func TestDistortionGridSetAllVertices(t *testing.T) {
-	g, n := NewDistortionGrid("grid", nil, 2, 2)
+	g := NewDistortionGrid("grid", nil, 2, 2)
+	n := g.Node()
 
 	g.SetAllVertices(func(col, row int, restX, restY float64) (dx, dy float64) {
 		return float64(col) * 3, float64(row) * 7
@@ -385,7 +400,8 @@ func TestDistortionGridSetAllVertices(t *testing.T) {
 }
 
 func TestDistortionGridReset(t *testing.T) {
-	g, n := NewDistortionGrid("grid", nil, 2, 2)
+	g := NewDistortionGrid("grid", nil, 2, 2)
+	n := g.Node()
 	g.SetVertex(0, 0, 99, 99)
 	g.Reset()
 
@@ -397,7 +413,8 @@ func TestDistortionGridReset(t *testing.T) {
 }
 
 func TestDistortionGridUVStability(t *testing.T) {
-	g, n := NewDistortionGrid("grid", nil, 2, 2)
+	g := NewDistortionGrid("grid", nil, 2, 2)
+	n := g.Node()
 	// Store original UVs.
 	origUVs := make([][2]float32, len(n.Vertices))
 	for i, v := range n.Vertices {
@@ -417,7 +434,8 @@ func TestDistortionGridUVStability(t *testing.T) {
 }
 
 func TestDistortionGridInvalidatesAABB(t *testing.T) {
-	g, n := NewDistortionGrid("grid", nil, 2, 2)
+	g := NewDistortionGrid("grid", nil, 2, 2)
+	n := g.Node()
 	n.recomputeMeshAABB()
 	g.SetVertex(0, 0, 5, 5)
 	if !n.meshAABBDirty {
@@ -438,7 +456,7 @@ func TestDistortionGridInvalidatesAABB(t *testing.T) {
 }
 
 func TestDistortionGridColsRows(t *testing.T) {
-	g, _ := NewDistortionGrid("grid", nil, 5, 3)
+	g := NewDistortionGrid("grid", nil, 5, 3)
 	if g.Cols() != 5 {
 		t.Errorf("Cols = %d, want 5", g.Cols())
 	}

@@ -201,17 +201,18 @@ func NewColorMatrixFilter() *ColorMatrixFilter {
 }
 
 // SetBrightness sets the matrix to adjust brightness by the given offset [-1, 1].
-func (f *ColorMatrixFilter) SetBrightness(b float64) {
+func (f *ColorMatrixFilter) SetBrightness(b float64) *ColorMatrixFilter {
 	f.Matrix = [20]float64{
 		1, 0, 0, 0, b,
 		0, 1, 0, 0, b,
 		0, 0, 1, 0, b,
 		0, 0, 0, 1, 0,
 	}
+	return f
 }
 
 // SetContrast sets the matrix to adjust contrast. c=1 is normal, 0=gray, >1 is higher.
-func (f *ColorMatrixFilter) SetContrast(c float64) {
+func (f *ColorMatrixFilter) SetContrast(c float64) *ColorMatrixFilter {
 	t := (1.0 - c) / 2.0
 	f.Matrix = [20]float64{
 		c, 0, 0, 0, t,
@@ -219,10 +220,11 @@ func (f *ColorMatrixFilter) SetContrast(c float64) {
 		0, 0, c, 0, t,
 		0, 0, 0, 1, 0,
 	}
+	return f
 }
 
 // SetSaturation sets the matrix to adjust saturation. s=1 is normal, 0=grayscale.
-func (f *ColorMatrixFilter) SetSaturation(s float64) {
+func (f *ColorMatrixFilter) SetSaturation(s float64) *ColorMatrixFilter {
 	sr := (1 - s) * 0.299
 	sg := (1 - s) * 0.587
 	sb := (1 - s) * 0.114
@@ -232,6 +234,39 @@ func (f *ColorMatrixFilter) SetSaturation(s float64) {
 		sr, sg, sb + s, 0, 0,
 		0, 0, 0, 1, 0,
 	}
+	return f
+}
+
+// SetHueRotation sets the matrix to rotate hue by the given angle in radians.
+// Uses NTSC luminance weights (0.299, 0.587, 0.114).
+func (f *ColorMatrixFilter) SetHueRotation(radians float64) *ColorMatrixFilter {
+	cos := math.Cos(radians)
+	sin := math.Sin(radians)
+	// NTSC luminance weights
+	lr, lg, lb := 0.299, 0.587, 0.114
+	f.Matrix = [20]float64{
+		lr + cos*(1-lr) + sin*(-lr), lg + cos*(-lg) + sin*(-lg), lb + cos*(-lb) + sin*(1-lb), 0, 0,
+		lr + cos*(-lr) + sin*(0.143), lg + cos*(1-lg) + sin*(0.140), lb + cos*(-lb) + sin*(-0.283), 0, 0,
+		lr + cos*(-lr) + sin*(-(1 - lr)), lg + cos*(-lg) + sin*(lg), lb + cos*(1-lb) + sin*(lb), 0, 0,
+		0, 0, 0, 1, 0,
+	}
+	return f
+}
+
+// SetInvert sets the matrix to invert RGB channels (negate and offset).
+func (f *ColorMatrixFilter) SetInvert() *ColorMatrixFilter {
+	f.Matrix = [20]float64{
+		-1, 0, 0, 0, 1,
+		0, -1, 0, 0, 1,
+		0, 0, -1, 0, 1,
+		0, 0, 0, 1, 0,
+	}
+	return f
+}
+
+// SetGrayscale sets the matrix to full grayscale (equivalent to SetSaturation(0)).
+func (f *ColorMatrixFilter) SetGrayscale() *ColorMatrixFilter {
+	return f.SetSaturation(0)
 }
 
 // Apply renders the color matrix transformation from src into dst.

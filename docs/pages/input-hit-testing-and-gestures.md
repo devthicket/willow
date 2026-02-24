@@ -4,16 +4,16 @@ Willow's input system is integrated into the scene graph. Any node can become in
 
 ## Making Nodes Interactive
 
-Set `Interactable` to true and assign a `HitShape`:
+Assign a `HitShape` and register a callback (the setter enables `Interactable` automatically):
 
 ```go
 button := willow.NewSprite("button", region)
-button.Interactable = true
 button.HitShape = willow.HitRect{X: 0, Y: 0, Width: 64, Height: 32}
 
-button.OnClick = func(ctx willow.ClickContext) {
+button.OnClick(func(ctx willow.ClickContext) {
     fmt.Println("Button clicked!")
-}
+})
+// OnClick automatically enables Interactable
 ```
 
 ## Hit Shapes
@@ -69,11 +69,11 @@ willow.ModMeta
 Check modifiers in callbacks:
 
 ```go
-node.OnClick = func(ctx willow.ClickContext) {
+node.OnClick(func(ctx willow.ClickContext) {
     if ctx.Modifiers&willow.ModShift != 0 {
         fmt.Println("Shift+click!")
     }
-}
+})
 ```
 
 ## Next Steps

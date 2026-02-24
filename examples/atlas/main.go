@@ -132,15 +132,14 @@ func main() {
 		sp.Y = startY + row*(displaySize+gridPad)
 		sp.ScaleX = displayScale
 		sp.ScaleY = displayScale
-		sp.Interactable = true
 		sp.HitShape = willow.HitRect{Width: tileSize, Height: tileSize}
-		sp.OnClick = func(ctx willow.ClickContext) {
+		sp.OnClick(func(ctx willow.ClickContext) {
 			if ctx.Node.Alpha > 0.5 {
 				ctx.Node.SetAlpha(0.25)
 			} else {
 				ctx.Node.SetAlpha(1)
 			}
-		}
+		})
 		scene.Root().AddChild(sp)
 	}
 
@@ -153,9 +152,8 @@ func main() {
 	missing.Y = startY + 2*(displaySize+gridPad)
 	missing.ScaleX = displaySize // scale 1px → 80px
 	missing.ScaleY = displaySize
-	missing.Interactable = true
 	missing.HitShape = willow.HitRect{Width: 1, Height: 1}
-	missing.OnClick = func(ctx willow.ClickContext) {
+	missing.OnClick(func(ctx willow.ClickContext) {
 		// Append whelp.png as the next atlas page in both the scene and the Atlas.
 		newPageIdx := len(atlas.Pages) // == 1 after initial load
 		scene.RegisterPage(newPageIdx, whelpImg)
@@ -175,8 +173,8 @@ func main() {
 		ctx.Node.ScaleY = displaySize / whelpH
 		ctx.Node.Invalidate()
 
-		ctx.Node.OnClick = nil // one-shot
-	}
+		ctx.Node.OnClick(nil) // one-shot
+	})
 	scene.Root().AddChild(missing)
 
 	// Atlas page preview: raw 128×64 source shown at 2× alongside the placeholder.

@@ -185,7 +185,7 @@ func (p *puzzle) createCables() {
 			solvedImg: makeRopeTexture(solvedColor, 1.0),
 		}
 
-		r, node := willow.NewRope("cable", c.normalImg, nil, willow.RopeConfig{
+		r := willow.NewRope("cable", c.normalImg, nil, willow.RopeConfig{
 			Width:     ropeWidth,
 			JoinMode:  willow.RopeJoinBevel,
 			CurveMode: willow.RopeCurveCatenary,
@@ -195,8 +195,8 @@ func (p *puzzle) createCables() {
 			End:       &c.end,
 		})
 		c.rope = r
-		c.node = node
-		p.scene.Root().AddChild(node)
+		c.node = r.Node()
+		p.scene.Root().AddChild(r.Node())
 
 		p.cables[i] = c
 	}
@@ -229,7 +229,6 @@ func (p *puzzle) makePeg(cableIdx, startIdx int, sockets []willow.Vec2) peg {
 	sp.X = startPos.X
 	sp.Y = startPos.Y
 	sp.Color = col
-	sp.Interactable = true
 
 	pg := peg{
 		node:   sp,
@@ -243,7 +242,7 @@ func (p *puzzle) makePeg(cableIdx, startIdx int, sockets []willow.Vec2) peg {
 	// Find which array and index by comparing the socket column pointer.
 	isLeft := &sockets[0] == &p.leftSockets[0]
 
-	sp.OnDrag = func(ctx willow.DragContext) {
+	sp.OnDrag(func(ctx willow.DragContext) {
 		sp.X += ctx.DeltaX
 		sp.Y += ctx.DeltaY
 		sp.Invalidate()
@@ -252,9 +251,9 @@ func (p *puzzle) makePeg(cableIdx, startIdx int, sockets []willow.Vec2) peg {
 		pg.pos.X = sp.X
 		pg.pos.Y = sp.Y
 		pg.socket = -1
-	}
+	})
 
-	sp.OnDragEnd = func(ctx willow.DragContext) {
+	sp.OnDragEnd(func(ctx willow.DragContext) {
 		pg := p.pegPtr(cableIdx, isLeft)
 		best, bestDist := -1, snapDist
 
@@ -279,7 +278,7 @@ func (p *puzzle) makePeg(cableIdx, startIdx int, sockets []willow.Vec2) peg {
 		}
 
 		p.checkSolved()
-	}
+	})
 
 	p.scene.Root().AddChild(sp)
 	return pg

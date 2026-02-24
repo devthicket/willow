@@ -147,16 +147,13 @@ func main() {
 
 	d := &demo{burst: burst}
 
-	// The full-screen hit rect on the root node captures every click.
-	scene.Root().HitShape = willow.HitRect{Width: screenW, Height: screenH}
-	scene.Root().Interactable = true
-	scene.Root().OnClick = func(ctx willow.ClickContext) {
-		burst.X = ctx.GlobalX
-		burst.Y = ctx.GlobalY
+	// Click anywhere to trigger a burst.
+	scene.OnBackgroundClick(func(ctx willow.ClickContext) {
+		burst.SetPosition(ctx.GlobalX, ctx.GlobalY)
 		burst.Emitter.Reset()
 		burst.Emitter.Start()
 		d.burstTimer = 0.08 // emit for ~5 frames then stop
-	}
+	})
 
 	scene.SetUpdateFunc(d.update)
 
@@ -182,11 +179,8 @@ func (d *demo) update() error {
 
 // addBase places a thin colored bar at (cx, y) to mark an emitter's origin.
 func addBase(scene *willow.Scene, cx, y float64, c willow.Color) {
-	bar := willow.NewSprite("base", willow.TextureRegion{})
-	bar.ScaleX = 60
-	bar.ScaleY = 5
+	bar := willow.NewRect("base", 60, 5, c)
 	bar.X = cx - 30
 	bar.Y = y
-	bar.Color = c
 	scene.Root().AddChild(bar)
 }

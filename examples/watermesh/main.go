@@ -86,14 +86,14 @@ func main() {
 	cam.Y = screenH / 2
 	cam.Invalidate()
 
-	grid, node := willow.NewDistortionGrid("water", waterImg, totalCols, totalRows)
+	grid := willow.NewDistortionGrid("water", waterImg, totalCols, totalRows)
 	// Shift the mesh so the buffer tiles sit off-screen, centering the
 	// screen-filling portion over the viewport.
-	node.X = float64(-bufTiles * tileSize)
-	node.Y = float64(-bufTiles * tileSize)
+	grid.Node().X = float64(-bufTiles * tileSize)
+	grid.Node().Y = float64(-bufTiles * tileSize)
 	// Subtle blue tint to reinforce the water feel.
-	node.Color = willow.Color{R: 0.75, G: 0.92, B: 1.0, A: 1.0}
-	scene.Root().AddChild(node)
+	grid.Node().Color = willow.Color{R: 0.75, G: 0.92, B: 1.0, A: 1.0}
+	scene.Root().AddChild(grid.Node())
 
 	g := &game{grid: grid}
 	scene.SetUpdateFunc(g.update)

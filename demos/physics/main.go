@@ -72,7 +72,6 @@ func main() {
 			node = newRegularPolygon("hexagon", 6, radius)
 		}
 
-		node.Interactable = true
 		node.Color = color
 
 		// Place shapes spread across the full screen area
@@ -82,9 +81,9 @@ func main() {
 		node.HitShape = willow.HitCircle{Radius: radius}
 
 		idx := i
-		node.OnClick = func(ctx willow.ClickContext) {
+		node.OnClick(func(ctx willow.ClickContext) {
 			explode(bodies[:], idx)
-		}
+		})
 
 		root.AddChild(node)
 

@@ -46,10 +46,9 @@ func main() {
 	// Initial spawn.
 	spawnShapes(container)
 
-	scene.Root().HitShape = willow.HitRect{Width: screenW, Height: screenH}
-	scene.Root().OnClick = func(ctx willow.ClickContext) {
+	scene.OnBackgroundClick(func(ctx willow.ClickContext) {
 		spawnShapes(container)
-	}
+	})
 
 	r := &rotator{container: container}
 	scene.SetUpdateFunc(r.update)

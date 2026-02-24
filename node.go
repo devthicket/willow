@@ -182,6 +182,7 @@ type Node struct {
 
 	// Parent points to this node's parent, or nil for the root.
 	Parent *Node
+	scene  *Scene // back-pointer to owning Scene (set by AddChild/RemoveChild)
 	// ID is a unique auto-assigned identifier (never zero for live nodes).
 	ID uint32
 	// ZIndex controls draw order among siblings. Higher values draw on top.
@@ -247,27 +248,18 @@ type Node struct {
 
 	// ---- COLD: per-node pointer callbacks (nil by default; zero cost when unused) ----
 	// Scene-level handlers fire before per-node callbacks.
+	// Use the setter methods (e.g. OnClick) to assign callbacks; they auto-enable Interactable.
 
-	// OnPointerDown fires when a pointer button is pressed over this node.
-	OnPointerDown func(PointerContext)
-	// OnPointerUp fires when a pointer button is released over this node.
-	OnPointerUp func(PointerContext)
-	// OnPointerMove fires when the pointer moves over this node (hover).
-	OnPointerMove func(PointerContext)
-	// OnClick fires on press then release over this node.
-	OnClick func(ClickContext)
-	// OnDragStart fires when a drag gesture begins on this node.
-	OnDragStart func(DragContext)
-	// OnDrag fires each frame while this node is being dragged.
-	OnDrag func(DragContext)
-	// OnDragEnd fires when a drag gesture ends on this node.
-	OnDragEnd func(DragContext)
-	// OnPinch fires during a two-finger pinch gesture over this node.
-	OnPinch func(PinchContext)
-	// OnPointerEnter fires when the pointer enters this node's bounds.
-	OnPointerEnter func(PointerContext)
-	// OnPointerLeave fires when the pointer leaves this node's bounds.
-	OnPointerLeave func(PointerContext)
+	onPointerDown  func(PointerContext)
+	onPointerUp    func(PointerContext)
+	onPointerMove  func(PointerContext)
+	onClick        func(ClickContext)
+	onDragStart    func(DragContext)
+	onDrag         func(DragContext)
+	onDragEnd      func(DragContext)
+	onPinch        func(PinchContext)
+	onPointerEnter func(PointerContext)
+	onPointerLeave func(PointerContext)
 
 	// ---- COLD: internal ----
 	disposed bool
@@ -302,6 +294,16 @@ func NewSprite(name string, region TextureRegion) *Node {
 	if region == (TextureRegion{}) {
 		n.customImage = WhitePixel
 	}
+	return n
+}
+
+// NewRect creates a solid-color rectangle node. This is a convenience wrapper
+// around NewSprite with an empty TextureRegion (WhitePixel), sized via ScaleX/Y.
+func NewRect(name string, w, h float64, c Color) *Node {
+	n := NewSprite(name, TextureRegion{})
+	n.ScaleX = w
+	n.ScaleY = h
+	n.Color = c
 	return n
 }
 
@@ -421,10 +423,104 @@ func (n *Node) SetRenderLayer(l uint8) {
 	invalidateAncestorCache(n)
 }
 
+// SetContent sets the text content of a text node and invalidates its layout.
+// Panics if called on a node without a TextBlock (programmer error).
+func (n *Node) SetContent(s string) {
+	n.TextBlock.Content = s
+	n.TextBlock.layoutDirty = true
+	n.TextBlock.sdfDirty = true
+	invalidateAncestorCache(n)
+}
+
 // SetGlobalOrder sets the node's global order and invalidates ancestor static caches.
 func (n *Node) SetGlobalOrder(o int) {
 	n.GlobalOrder = o
 	invalidateAncestorCache(n)
+}
+
+// --- Interaction callback setters ---
+// Each setter stores the callback and auto-enables Interactable.
+// Pass nil to clear a callback. Interactable is not auto-disabled on nil
+// because other callbacks may still be set.
+
+// OnPointerDown sets the callback for pointer-down events on this node.
+func (n *Node) OnPointerDown(fn func(PointerContext)) {
+	n.onPointerDown = fn
+	if fn != nil {
+		n.Interactable = true
+	}
+}
+
+// OnPointerUp sets the callback for pointer-up events on this node.
+func (n *Node) OnPointerUp(fn func(PointerContext)) {
+	n.onPointerUp = fn
+	if fn != nil {
+		n.Interactable = true
+	}
+}
+
+// OnPointerMove sets the callback for pointer-move (hover) events on this node.
+func (n *Node) OnPointerMove(fn func(PointerContext)) {
+	n.onPointerMove = fn
+	if fn != nil {
+		n.Interactable = true
+	}
+}
+
+// OnClick sets the callback for click events on this node.
+func (n *Node) OnClick(fn func(ClickContext)) {
+	n.onClick = fn
+	if fn != nil {
+		n.Interactable = true
+	}
+}
+
+// OnDragStart sets the callback for drag-start events on this node.
+func (n *Node) OnDragStart(fn func(DragContext)) {
+	n.onDragStart = fn
+	if fn != nil {
+		n.Interactable = true
+	}
+}
+
+// OnDrag sets the callback for drag events on this node.
+func (n *Node) OnDrag(fn func(DragContext)) {
+	n.onDrag = fn
+	if fn != nil {
+		n.Interactable = true
+	}
+}
+
+// OnDragEnd sets the callback for drag-end events on this node.
+func (n *Node) OnDragEnd(fn func(DragContext)) {
+	n.onDragEnd = fn
+	if fn != nil {
+		n.Interactable = true
+	}
+}
+
+// OnPinch sets the callback for pinch gesture events on this node.
+func (n *Node) OnPinch(fn func(PinchContext)) {
+	n.onPinch = fn
+	if fn != nil {
+		n.Interactable = true
+	}
+}
+
+// OnPointerEnter sets the callback for pointer-enter events on this node.
+func (n *Node) OnPointerEnter(fn func(PointerContext)) {
+	n.onPointerEnter = fn
+	if fn != nil {
+		n.Interactable = true
+	}
+}
+
+// OnPointerLeave sets the callback for pointer-leave events on this node.
+func (n *Node) OnPointerLeave(fn func(PointerContext)) {
+	n.onPointerLeave = fn
+	if fn != nil {
+		n.Interactable = true
+	}
 }
 
 // --- Tree manipulation ---
@@ -449,6 +545,7 @@ func (n *Node) AddChild(child *Node) {
 	child.Parent = n
 	n.children = append(n.children, child)
 	n.childrenSorted = false
+	propagateScene(child, n.scene)
 	markSubtreeDirty(child)
 	if n.cacheTreeEnabled {
 		n.cacheTreeDirty = true
@@ -484,6 +581,7 @@ func (n *Node) AddChildAt(child *Node, index int) {
 	copy(n.children[index+1:], n.children[index:])
 	n.children[index] = child
 	n.childrenSorted = false
+	propagateScene(child, n.scene)
 	markSubtreeDirty(child)
 	if n.cacheTreeEnabled {
 		n.cacheTreeDirty = true
@@ -507,6 +605,7 @@ func (n *Node) RemoveChild(child *Node) {
 	}
 	n.removeChildByPtr(child)
 	child.Parent = nil
+	propagateScene(child, nil)
 	n.childrenSorted = false
 	markSubtreeDirty(child)
 	if n.cacheTreeEnabled {
@@ -529,6 +628,7 @@ func (n *Node) RemoveChildAt(index int) *Node {
 	n.children[len(n.children)-1] = nil
 	n.children = n.children[:len(n.children)-1]
 	child.Parent = nil
+	propagateScene(child, nil)
 	n.childrenSorted = false
 	markSubtreeDirty(child)
 	if n.cacheTreeEnabled {
@@ -552,6 +652,7 @@ func (n *Node) RemoveFromParent() {
 func (n *Node) RemoveChildren() {
 	for i, child := range n.children {
 		child.Parent = nil
+		propagateScene(child, nil)
 		markSubtreeDirty(child)
 		n.children[i] = nil // allow GC of removed children
 	}
@@ -717,6 +818,7 @@ func (n *Node) Dispose() {
 
 func (n *Node) dispose() {
 	n.disposed = true
+	n.scene = nil
 	n.ID = 0
 	for _, child := range n.children {
 		child.Parent = nil
@@ -744,21 +846,38 @@ func (n *Node) dispose() {
 	n.Emitter = nil
 	n.TextBlock = nil
 	n.UserData = nil
-	n.OnPointerDown = nil
-	n.OnPointerUp = nil
-	n.OnPointerMove = nil
-	n.OnClick = nil
-	n.OnDragStart = nil
-	n.OnDrag = nil
-	n.OnDragEnd = nil
-	n.OnPinch = nil
-	n.OnPointerEnter = nil
-	n.OnPointerLeave = nil
+	n.onPointerDown = nil
+	n.onPointerUp = nil
+	n.onPointerMove = nil
+	n.onClick = nil
+	n.onDragStart = nil
+	n.onDrag = nil
+	n.onDragEnd = nil
+	n.onPinch = nil
+	n.onPointerEnter = nil
+	n.onPointerLeave = nil
 }
 
 // IsDisposed returns true if this node has been disposed.
 func (n *Node) IsDisposed() bool {
 	return n.disposed
+}
+
+// Scene returns the Scene this node belongs to, or nil if not in a scene graph.
+func (n *Node) Scene() *Scene {
+	return n.scene
+}
+
+// propagateScene recursively sets the scene back-pointer on n and all descendants.
+// Early-outs if the scene is already the target value.
+func propagateScene(n *Node, s *Scene) {
+	if n.scene == s {
+		return
+	}
+	n.scene = s
+	for _, child := range n.children {
+		propagateScene(child, s)
+	}
 }
 
 // --- Helpers ---

@@ -74,11 +74,12 @@ type Rope struct {
 
 // NewRope creates a rope mesh node that renders a textured ribbon along the given points.
 // The image is tiled along the path (SrcX) and spans the full image height (SrcY).
-func NewRope(name string, img *ebiten.Image, points []Vec2, cfg RopeConfig) (*Rope, *Node) {
+// Use [Rope.Node] to access the underlying scene graph node.
+func NewRope(name string, img *ebiten.Image, points []Vec2, cfg RopeConfig) *Rope {
 	n := NewMesh(name, img, nil, nil)
 	r := &Rope{node: n, config: cfg}
 	r.SetPoints(points)
-	return r, n
+	return r
 }
 
 // Node returns the underlying mesh node.
@@ -324,7 +325,7 @@ type DistortionGrid struct {
 
 // NewDistortionGrid creates a grid mesh over the given image. cols and rows
 // define the number of cells (vertices = (cols+1) * (rows+1)).
-func NewDistortionGrid(name string, img *ebiten.Image, cols, rows int) (*DistortionGrid, *Node) {
+func NewDistortionGrid(name string, img *ebiten.Image, cols, rows int) *DistortionGrid {
 	if cols < 1 {
 		cols = 1
 	}
@@ -387,7 +388,7 @@ func NewDistortionGrid(name string, img *ebiten.Image, cols, rows int) (*Distort
 
 	n := NewMesh(name, img, verts, inds)
 	g := &DistortionGrid{node: n, cols: cols, rows: rows, restPos: restPos}
-	return g, n
+	return g
 }
 
 // Node returns the underlying mesh node.

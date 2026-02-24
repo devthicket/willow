@@ -101,11 +101,10 @@ func main() {
 	d.startTweens()
 
 	// Click anywhere to restart all tweens.
-	scene.Root().HitShape = willow.HitRect{Width: screenW, Height: screenH}
-	scene.Root().OnClick = func(ctx willow.ClickContext) {
+	scene.OnBackgroundClick(func(ctx willow.ClickContext) {
 		d.resetPositions()
 		d.startTweens()
-	}
+	})
 
 	scene.SetUpdateFunc(d.update)
 
@@ -125,22 +124,11 @@ func (d *demo) resetPositions() {
 	spacing := 110.0
 	startX := cx - 2*spacing
 
-	d.posNode.X = startX
-	d.posNode.Y = cy
-	d.posNode.Invalidate()
-
-	d.scaleNode.ScaleX = 2
-	d.scaleNode.ScaleY = 2
-	d.scaleNode.Invalidate()
-
-	d.rotNode.Rotation = 0
-	d.rotNode.Invalidate()
-
-	d.alphaNode.Alpha = 1
-	d.alphaNode.Invalidate()
-
-	d.colorNode.Color = willow.Color{R: 1, G: 1, B: 1, A: 1}
-	d.colorNode.Invalidate()
+	d.posNode.SetPosition(startX, cy)
+	d.scaleNode.SetScale(2, 2)
+	d.rotNode.SetRotation(0)
+	d.alphaNode.SetAlpha(1)
+	d.colorNode.SetColor(willow.Color{R: 1, G: 1, B: 1, A: 1})
 }
 
 func (d *demo) startTweens() {
@@ -161,11 +149,8 @@ func (d *demo) startTweens() {
 }
 
 func (d *demo) update() error {
-	dt := float32(1.0 / float64(ebiten.TPS()))
-
 	allDone := true
 	for _, tw := range d.tweens {
-		tw.Update(dt)
 		if !tw.Done {
 			allDone = false
 		}
@@ -182,10 +167,7 @@ func (d *demo) update() error {
 
 // addLabel places a small colored dot below a tile as a visual indicator.
 func addLabel(scene *willow.Scene, x, y float64, c willow.Color) {
-	dot := willow.NewSprite("label", willow.TextureRegion{})
-	dot.ScaleX = 8
-	dot.ScaleY = 4
-	dot.Color = c
+	dot := willow.NewRect("label", 8, 4, c)
 	dot.X = x - 4 // center the 8px-wide dot under the tile
 	dot.Y = y
 	scene.Root().AddChild(dot)

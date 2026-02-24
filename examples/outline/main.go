@@ -62,21 +62,20 @@ func main() {
 
 	whelpW := float64(whelpImg.Bounds().Dx())
 	whelpH := float64(whelpImg.Bounds().Dy())
-	spacing := whelpW + 40
-	startX := (screenW - spacing*float64(len(cols)-1)) / 2
-	cy := float64(screenH) / 2
+	labelH := 24.0 // gap (8) + label height (16)
+	cy := (float64(screenH) - labelH) / 2
 
 	var filteredNodes []*willow.Node
 	for i, col := range cols {
-		x := startX + float64(i)*spacing
+		x := screenW * float64(i+1) / float64(len(cols)+1)
 
 		sp := willow.NewSprite("whelp", willow.TextureRegion{})
 		sp.SetCustomImage(whelpImg)
 		sp.Filters = col.filters
 		sp.X = x
 		sp.Y = cy
-		sp.PivotX = 0.5
-		sp.PivotY = 0.5
+		sp.PivotX = whelpW / 2
+		sp.PivotY = whelpH / 2
 		scene.Root().AddChild(sp)
 		if col.filters != nil {
 			filteredNodes = append(filteredNodes, sp)
@@ -89,8 +88,7 @@ func main() {
 	}
 
 	// Click to cycle outline/inline color.
-	scene.Root().HitShape = willow.HitRect{Width: screenW, Height: screenH}
-	scene.Root().OnClick = func(ctx willow.ClickContext) {
+	scene.OnBackgroundClick(func(ctx willow.ClickContext) {
 		colorIdx = (colorIdx + 1) % len(outlineColors)
 		c = outlineColors[colorIdx]
 		outline.Color = c
@@ -98,7 +96,7 @@ func main() {
 		for _, n := range filteredNodes {
 			n.Invalidate()
 		}
-	}
+	})
 
 	if err := willow.Run(scene, willow.RunConfig{
 		Title:   windowTitle,

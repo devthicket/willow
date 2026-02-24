@@ -390,10 +390,43 @@ func setTileUVs(verts []ebiten.Vertex, region TextureRegion, flags uint32, tw, t
 	verts[3].SrcY = uvY[order[3]]
 }
 
+// lateRebuildCheck detects whether the camera moved after the Update pass
+// (e.g. an input handler panned it) and rebuilds the tile buffer if needed.
+// Called once per layer at the start of emitCommands; after the first layer
+// triggers a rebuild, subsequent layers find matching bufStartCol/bufStartRow
+// and skip the rebuild.
+func (l *TileMapLayer) lateRebuildCheck() {
+	v := l.viewport
+	cam := v.camera
+	if cam == nil {
+		return
+	}
+
+	bounds := cam.VisibleBounds()
+	tw := float64(v.TileWidth)
+	th := float64(v.TileHeight)
+
+	startCol := int(math.Floor(bounds.X/tw)) - v.MarginTiles
+	startRow := int(math.Floor(bounds.Y/th)) - v.MarginTiles
+	if startCol < 0 {
+		startCol = 0
+	}
+	if startRow < 0 {
+		startRow = 0
+	}
+
+	if startCol != l.bufStartCol || startRow != l.bufStartRow {
+		// Camera moved since our Update pass — rebuild all layers.
+		v.update(0)
+	}
+}
+
 // emitCommands is the customEmit callback for a TileMapLayer node.
 // It transforms vertex positions from world to screen space and emits
 // CommandTilemap commands into the scene's command pipeline.
 func (l *TileMapLayer) emitCommands(s *Scene, treeOrder *int) {
+	l.lateRebuildCheck()
+
 	if l.tileCount == 0 || l.atlasImage == nil {
 		return
 	}

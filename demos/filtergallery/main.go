@@ -200,13 +200,9 @@ func main() {
 		by := startY + float64(row)*(btnH+btnGap)
 
 		// Background button.
-		bg := willow.NewSprite("btn-bg-"+entry.label, willow.TextureRegion{})
-		bg.ScaleX = btnW
-		bg.ScaleY = btnH
-		bg.Color = willow.Color{R: 0.2, G: 0.2, B: 0.25, A: 1}
+		bg := willow.NewRect("btn-bg-"+entry.label, btnW, btnH, willow.Color{R: 0.2, G: 0.2, B: 0.25, A: 1})
 		bg.X = bx
 		bg.Y = by
-		bg.Invalidate()
 		scene.Root().AddChild(bg)
 		entry.bg = bg
 
@@ -229,8 +225,7 @@ func main() {
 
 		// Click handler.
 		e := entry // capture loop variable
-		bg.Interactable = true
-		bg.OnClick = func(ctx willow.ClickContext) {
+		bg.OnClick(func(ctx willow.ClickContext) {
 			e.active = !e.active
 			if e.active {
 				e.bg.Color = willow.Color{R: 0.15, G: 0.4, B: 0.2, A: 1}
@@ -242,7 +237,7 @@ func main() {
 			e.bg.Invalidate()
 			e.checkSp.Invalidate()
 			rebuildFilters()
-		}
+		})
 	}
 
 	// Animate filters that support it.

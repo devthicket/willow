@@ -102,10 +102,7 @@ func main() {
 		scene.Root().AddChild(label)
 
 		// Colored indicator dot.
-		dot := willow.NewSprite("dot", willow.TextureRegion{})
-		dot.ScaleX = lw + 8
-		dot.ScaleY = 3
-		dot.Color = tweenColors[i]
+		dot := willow.NewRect("dot", lw+8, 3, tweenColors[i])
 		dot.X = startX + float64(i)*spacing - lw/2 - 4
 		dot.Y = spriteY + 96
 		scene.Root().AddChild(dot)
@@ -145,14 +142,11 @@ func main() {
 
 	resetSprites := func() {
 		for i, sp := range sprites {
-			sp.X = homeX[i]
-			sp.Y = spriteY
-			sp.ScaleX = 1.5
-			sp.ScaleY = 1.5
-			sp.Rotation = 0
-			sp.Alpha = 1
-			sp.Color = willow.Color{R: 1, G: 1, B: 1, A: 1}
-			sp.Invalidate()
+			sp.SetPosition(homeX[i], spriteY)
+			sp.SetScale(1.5, 1.5)
+			sp.SetRotation(0)
+			sp.SetAlpha(1)
+			sp.SetColor(willow.Color{R: 1, G: 1, B: 1, A: 1})
 		}
 	}
 
@@ -200,13 +194,9 @@ func main() {
 		by := gridStartY + float64(row)*(btnH+btnGap)
 
 		// Button background.
-		bg := willow.NewSprite("btn-"+entry.label, willow.TextureRegion{})
-		bg.ScaleX = btnW
-		bg.ScaleY = btnH
-		bg.Color = inactiveColor
+		bg := willow.NewRect("btn-"+entry.label, btnW, btnH, inactiveColor)
 		bg.X = bx
 		bg.Y = by
-		bg.Invalidate()
 		scene.Root().AddChild(bg)
 		entry.bg = bg
 
@@ -220,21 +210,18 @@ func main() {
 		// Click handler.
 		idx := i
 		e := entry
-		bg.Interactable = true
-		bg.OnClick = func(ctx willow.ClickContext) {
+		bg.OnClick(func(ctx willow.ClickContext) {
 			// Deselect previous.
 			if selectedIdx >= 0 && selectedIdx < len(easings) {
-				easings[selectedIdx].bg.Color = inactiveColor
-				easings[selectedIdx].bg.Invalidate()
+				easings[selectedIdx].bg.SetColor(inactiveColor)
 			}
 
 			selectedIdx = idx
-			e.bg.Color = activeColor
-			e.bg.Invalidate()
+			e.bg.SetColor(activeColor)
 
 			updateStatusLabel("Easing: " + e.label)
 			startTweens(e.fn)
-		}
+		})
 	}
 
 	// "Replay" instruction hint.
@@ -243,17 +230,14 @@ func main() {
 	hint.Y = screenH - 40
 	scene.Root().AddChild(hint)
 
-	// Update loop: advance tweens, auto-restart when all done.
+	// Update loop: auto-restart when all tweens finish (ticking is automatic).
 	scene.SetUpdateFunc(func() error {
-		dt := float32(1.0 / float64(ebiten.TPS()))
-
 		if len(tweens) == 0 {
 			return nil
 		}
 
 		allDone := true
 		for _, tw := range tweens {
-			tw.Update(dt)
 			if !tw.Done {
 				allDone = false
 			}

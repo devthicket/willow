@@ -47,17 +47,12 @@ func (g *game) update() error {
 
 	// Keep the lantern centered on the mouse cursor.
 	mx, my := ebiten.CursorPosition()
-	g.cursor.X = float64(mx)
-	g.cursor.Y = float64(my)
+	g.cursor.SetPosition(float64(mx), float64(my))
 
-	// Step the wanderer tween; when it finishes pick the next pillar.
-	dt := float32(1.0 / float64(ebiten.TPS()))
-	if g.wandererTween != nil {
-		g.wandererTween.Update(dt)
-		if g.wandererTween.Done {
-			g.wandererTween = nil
-			g.nextWander()
-		}
+	// When the wanderer tween finishes, pick the next pillar.
+	if g.wandererTween != nil && g.wandererTween.Done {
+		g.wandererTween = nil
+		g.nextWander()
 	}
 
 	// Animate per-torch flicker by combining two sine waves at different
@@ -184,7 +179,6 @@ func main() {
 		flame.ScaleX = 12
 		flame.ScaleY = 12
 		flame.Color = d.spriteColor
-		flame.Interactable = true
 		parent.AddChild(flame)
 
 		i := len(torches)
@@ -198,7 +192,7 @@ func main() {
 			*idx = i
 		}
 
-		flame.OnClick = func(_ willow.ClickContext) {
+		flame.OnClick(func(_ willow.ClickContext) {
 			tc := &torches[i]
 			tc.light.Enabled = !tc.light.Enabled
 			if tc.light.Enabled {
@@ -207,7 +201,7 @@ func main() {
 				tc.sprite.Color = tc.offColor
 				tc.light.Intensity = 0
 			}
-		}
+		})
 	}
 
 	for _, d := range fixedDefs {

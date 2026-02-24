@@ -113,12 +113,12 @@ func main() {
 	// Camera panning via drag.
 	scene.SetDragDeadZone(0)
 	scene.Root().HitShape = willow.HitRect{X: -1e6, Y: -1e6, Width: 2e6, Height: 2e6}
-	scene.Root().OnDrag = func(ctx willow.DragContext) {
+	scene.Root().OnDrag(func(ctx willow.DragContext) {
 		cam.X -= ctx.ScreenDeltaX / cam.Zoom
 		cam.Y -= ctx.ScreenDeltaY / cam.Zoom
 		cam.ClampToBounds()
 		cam.Invalidate()
-	}
+	})
 
 	// Debug overlay: camera coordinates and tile position at the bottom of the screen.
 	scene.SetPostDrawFunc(func(screen *ebiten.Image) {

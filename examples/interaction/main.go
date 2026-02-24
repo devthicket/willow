@@ -54,29 +54,22 @@ func main() {
 
 // makeBox creates a draggable, clickable sprite node with a solid color.
 func makeBox(name string, primary, alt willow.Color) *willow.Node {
-	node := willow.NewSprite(name, willow.TextureRegion{})
-	node.ScaleX = boxSize
-	node.ScaleY = boxSize
-	node.Color = primary
-	node.Interactable = true
-
+	node := willow.NewRect(name, boxSize, boxSize, primary)
 	// Toggle color on click.
 	current := true
-	node.OnClick = func(ctx willow.ClickContext) {
+	node.OnClick(func(ctx willow.ClickContext) {
 		if current {
 			node.Color = alt
 		} else {
 			node.Color = primary
 		}
 		current = !current
-	}
+	})
 
 	// Move on drag.
-	node.OnDrag = func(ctx willow.DragContext) {
-		node.X += ctx.DeltaX
-		node.Y += ctx.DeltaY
-		node.Invalidate()
-	}
+	node.OnDrag(func(ctx willow.DragContext) {
+		node.SetPosition(node.X+ctx.DeltaX, node.Y+ctx.DeltaY)
+	})
 
 	return node
 }

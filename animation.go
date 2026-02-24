@@ -7,26 +7,30 @@ import (
 
 // TweenGroup animates up to 4 float64 fields on a Node simultaneously.
 // Create one via the convenience constructors (TweenPosition, TweenScale,
-// TweenColor) and call Update(dt) each frame. The group auto-applies values
-// and marks the node dirty. If the target node is disposed, the group stops
-// immediately.
-//
-// There is no global animation manager  -  users call Update themselves.
+// TweenColor, TweenAlpha, TweenRotation). When the target node belongs to a
+// Scene, the tween is automatically managed: Scene.Update() ticks it each
+// frame and removes it when done. Manual Update(dt) calls are safe but become
+// no-ops for managed tweens to prevent double-ticking.
 type TweenGroup struct {
 	tweens [4]*gween.Tween
 	count  int
 	fields [4]*float64
 	target *Node
-	// Done is true when all tweens in the group have finished or the target
-	// node has been disposed.
-	Done bool
+	// Done is true when all tweens in the group have finished, the target
+	// node has been disposed, or Cancel was called.
+	Done      bool
+	managed   bool // true when auto-registered with a Scene
+	cancelled bool // set by Cancel(); tween finishes on next tick
 }
 
-// Update advances all tweens by dt seconds, writes values to the target fields,
-// and marks the node dirty. If the target node has been disposed, Done is set
-// to true and no writes occur.
-func (g *TweenGroup) Update(dt float32) {
+// tick is the internal method that does the actual tween work.
+func (g *TweenGroup) tick(dt float32) {
 	if g.Done {
+		return
+	}
+
+	if g.cancelled {
+		g.Done = true
 		return
 	}
 
@@ -50,6 +54,29 @@ func (g *TweenGroup) Update(dt float32) {
 	}
 }
 
+// Update advances all tweens by dt seconds, writes values to the target fields,
+// and marks the node dirty. For managed tweens (auto-registered with a Scene),
+// this is a no-op since Scene.Update() handles ticking.
+func (g *TweenGroup) Update(dt float32) {
+	if g.managed {
+		return
+	}
+	g.tick(dt)
+}
+
+// Cancel marks the tween for removal on the next tick.
+func (g *TweenGroup) Cancel() {
+	g.cancelled = true
+}
+
+// autoRegister registers the tween with the node's scene if available.
+func (g *TweenGroup) autoRegister(node *Node) {
+	if node.scene != nil {
+		g.managed = true
+		node.scene.registerTween(g)
+	}
+}
+
 // TweenPosition creates a TweenGroup that animates node.X and node.Y to the
 // given target coordinates over the specified duration using the easing function.
 func TweenPosition(node *Node, toX, toY float64, duration float32, fn ease.TweenFunc) *TweenGroup {
@@ -58,6 +85,7 @@ func TweenPosition(node *Node, toX, toY float64, duration float32, fn ease.Tween
 	g.tweens[1] = gween.New(float32(node.Y), float32(toY), duration, fn)
 	g.fields[0] = &node.X
 	g.fields[1] = &node.Y
+	g.autoRegister(node)
 	return g
 }
 
@@ -69,6 +97,7 @@ func TweenScale(node *Node, toSX, toSY float64, duration float32, fn ease.TweenF
 	g.tweens[1] = gween.New(float32(node.ScaleY), float32(toSY), duration, fn)
 	g.fields[0] = &node.ScaleX
 	g.fields[1] = &node.ScaleY
+	g.autoRegister(node)
 	return g
 }
 
@@ -84,6 +113,7 @@ func TweenColor(node *Node, to Color, duration float32, fn ease.TweenFunc) *Twee
 	g.fields[1] = &node.Color.G
 	g.fields[2] = &node.Color.B
 	g.fields[3] = &node.Color.A
+	g.autoRegister(node)
 	return g
 }
 
@@ -93,6 +123,7 @@ func TweenAlpha(node *Node, to float64, duration float32, fn ease.TweenFunc) *Tw
 	g := &TweenGroup{count: 1, target: node}
 	g.tweens[0] = gween.New(float32(node.Alpha), float32(to), duration, fn)
 	g.fields[0] = &node.Alpha
+	g.autoRegister(node)
 	return g
 }
 
@@ -102,5 +133,6 @@ func TweenRotation(node *Node, to float64, duration float32, fn ease.TweenFunc) 
 	g := &TweenGroup{count: 1, target: node}
 	g.tweens[0] = gween.New(float32(node.Rotation), float32(to), duration, fn)
 	g.fields[0] = &node.Rotation
+	g.autoRegister(node)
 	return g
 }

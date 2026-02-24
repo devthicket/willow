@@ -138,6 +138,20 @@ func (n *Node) SetPosition(x, y float64) {
 	invalidateAncestorCache(n)
 }
 
+// SetX sets the node's local X and marks it dirty.
+func (n *Node) SetX(x float64) {
+	n.X = x
+	n.transformDirty = true
+	invalidateAncestorCache(n)
+}
+
+// SetY sets the node's local Y and marks it dirty.
+func (n *Node) SetY(y float64) {
+	n.Y = y
+	n.transformDirty = true
+	invalidateAncestorCache(n)
+}
+
 // SetScale sets the node's ScaleX and ScaleY and marks it dirty.
 func (n *Node) SetScale(sx, sy float64) {
 	n.ScaleX = sx
@@ -179,10 +193,15 @@ func (n *Node) SetAlpha(a float64) {
 }
 
 // Invalidate marks the node's transform and alpha as dirty, forcing recomputation
-// on the next frame. Useful after bulk-setting fields directly.
+// on the next frame. Also invalidates the TextBlock layout and SDF cache if present.
+// Useful after bulk-setting fields directly.
 func (n *Node) Invalidate() {
 	n.transformDirty = true
 	n.alphaDirty = true
+	if n.TextBlock != nil {
+		n.TextBlock.layoutDirty = true
+		n.TextBlock.sdfDirty = true
+	}
 	invalidateAncestorCache(n)
 }
 

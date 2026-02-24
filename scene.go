@@ -106,6 +106,9 @@ type Scene struct {
 	prevTouchIDs []ebiten.TouchID
 	pinch        pinchState
 
+	// Managed tweens (auto-ticked during Update)
+	tweens []*TweenGroup
+
 	// Screenshot capture (debug tool)
 	screenshotQueue []string
 	ScreenshotDir   string
@@ -121,13 +124,15 @@ type Scene struct {
 func NewScene() *Scene {
 	root := NewContainer("root")
 	root.Interactable = true
-	return &Scene{
+	s := &Scene{
 		root:          root,
 		commands:      make([]RenderCommand, 0, defaultCommandCap),
 		sortBuf:       make([]RenderCommand, 0, defaultCommandCap),
 		dragDeadZone:  defaultDragDeadZone,
 		ScreenshotDir: "screenshots",
 	}
+	root.scene = s
+	return s
 }
 
 // Root returns the scene's root container node. The root node cannot be
@@ -241,6 +246,7 @@ func (s *Scene) Update() {
 		cam.update(dt)
 	}
 	updateNodesAndParticles(s.root, float64(dt))
+	s.tickTweens(dt)
 	if s.testRunner != nil {
 		s.testRunner.step(s)
 	}
@@ -389,6 +395,28 @@ func (s *Scene) RemoveCamera(cam *Camera) {
 // Cameras returns the scene's camera list. The returned slice MUST NOT be mutated.
 func (s *Scene) Cameras() []*Camera {
 	return s.cameras
+}
+
+// registerTween adds a tween group to the scene's managed list.
+func (s *Scene) registerTween(g *TweenGroup) {
+	s.tweens = append(s.tweens, g)
+}
+
+// tickTweens advances all managed tweens and compacts out completed ones.
+func (s *Scene) tickTweens(dt float32) {
+	n := 0
+	for _, g := range s.tweens {
+		g.tick(dt)
+		if !g.Done {
+			s.tweens[n] = g
+			n++
+		}
+	}
+	// Nil out stale tail entries to avoid retaining references.
+	for i := n; i < len(s.tweens); i++ {
+		s.tweens[i] = nil
+	}
+	s.tweens = s.tweens[:n]
 }
 
 // SetEntityStore sets the optional ECS bridge.

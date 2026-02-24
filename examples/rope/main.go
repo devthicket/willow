@@ -87,7 +87,7 @@ func main() {
 	ctrl := willow.Vec2{X: (start.X + end.X) / 2, Y: (start.Y + end.Y) / 2}
 
 	// Rope mesh.
-	rope, ropeNode := willow.NewRope("rope", ropeImg, nil, willow.RopeConfig{
+	rope := willow.NewRope("rope", ropeImg, nil, willow.RopeConfig{
 		Width:     ropeWidth,
 		JoinMode:  willow.RopeJoinBevel,
 		CurveMode: willow.RopeCurveQuadBezier,
@@ -96,7 +96,7 @@ func main() {
 		End:       &end,
 		Controls:  [2]*willow.Vec2{&ctrl},
 	})
-	scene.Root().AddChild(ropeNode)
+	scene.Root().AddChild(rope.Node())
 
 	// Draggable handle A (red).
 	handleA := makeHandle("handleA", willow.Color{R: 0.9, G: 0.3, B: 0.3, A: 1})
@@ -149,13 +149,11 @@ func makeHandle(name string, c willow.Color) *willow.Node {
 	n.PivotX = 0.5
 	n.PivotY = 0.5
 	n.Color = c
-	n.Interactable = true
-
-	n.OnDrag = func(ctx willow.DragContext) {
+	n.OnDrag(func(ctx willow.DragContext) {
 		n.X += ctx.DeltaX
 		n.Y += ctx.DeltaY
 		n.Invalidate()
-	}
+	})
 
 	return n
 }

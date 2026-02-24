@@ -318,9 +318,9 @@ func TestPerNodeCallback_PointerDown(t *testing.T) {
 	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
 
 	var nodeCalled bool
-	sprite.OnPointerDown = func(ctx PointerContext) {
+	sprite.OnPointerDown(func(ctx PointerContext) {
 		nodeCalled = true
-	}
+	})
 
 	s.firePointerDown(sprite, 0, 50, 50, MouseButtonLeft, 0)
 	if !nodeCalled {
@@ -339,9 +339,9 @@ func TestCallbackOrder_SceneThenNode(t *testing.T) {
 	s.OnPointerDown(func(ctx PointerContext) {
 		order = append(order, "scene")
 	})
-	sprite.OnPointerDown = func(ctx PointerContext) {
+	sprite.OnPointerDown(func(ctx PointerContext) {
 		order = append(order, "node")
-	}
+	})
 
 	s.firePointerDown(sprite, 0, 50, 50, MouseButtonLeft, 0)
 	if len(order) != 2 || order[0] != "scene" || order[1] != "node" {
@@ -813,9 +813,9 @@ func TestPerNodeOnPinch(t *testing.T) {
 	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
 
 	var called bool
-	sprite.OnPinch = func(ctx PinchContext) {
+	sprite.OnPinch(func(ctx PinchContext) {
 		called = true
-	}
+	})
 
 	// Simulate pinch state.
 	s.pinch.active = true

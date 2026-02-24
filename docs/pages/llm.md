@@ -37,16 +37,17 @@ cam.Follow(playerNode, 0, 0, 0.1)  // smooth follow
 cam.Follow(playerNode, 0, 0, 1.0)  // instant snap
 ```
 
-## Interactable Must Be Enabled
+## Callback Setters Auto-Enable Interactable
 
-Nodes have `Interactable = false` by default. If you set `OnClick`, `OnDrag`, or any pointer callback without enabling it, nothing will happen  -  the node is excluded from hit testing entirely.
+Callback setter methods (`OnClick`, `OnDrag`, `OnPointerDown`, etc.) automatically set `Interactable = true` on the node. You do not need to enable it manually:
 
 ```go
-node.Interactable = true   // required for OnClick, OnDrag, etc.
-node.OnClick = func(ctx willow.ClickContext) {
-    // ...
-}
+node.OnClick(func(ctx willow.ClickContext) {
+    // Interactable is now true automatically
+})
 ```
+
+You can still set `node.Interactable = false` to manually disable hit testing on a node without removing its callbacks.
 
 ## Hit Testing and Draggable Sprites
 
@@ -57,14 +58,13 @@ For WhitePixel sprites (created with `willow.TextureRegion{}`), **do not set Hit
 sp := willow.NewSprite("handle", willow.TextureRegion{})
 sp.ScaleX = 32
 sp.ScaleY = 32
-sp.PivotX = 0.5
+sp.PivotX = 0.5  // 1×1 WhitePixel, so 0.5 is the true center
 sp.PivotY = 0.5
-sp.Interactable = true
-sp.OnDrag = func(ctx willow.DragContext) {
+sp.OnDrag(func(ctx willow.DragContext) {
     sp.X += ctx.DeltaX
     sp.Y += ctx.DeltaY
     sp.Invalidate()
-}
+})
 ```
 
 Setting `HitShape = willow.HitRect{X: -0.5, Y: -0.5, Width: 1, Height: 1}` will **break** hit testing because `WorldToLocal` returns coordinates in the node's un-pivoted local space (0 to 1 for a 1×1 white pixel), not centered coordinates.
@@ -178,20 +178,26 @@ node.Rotation = 90  // this is ~14 full rotations, not 90°
 node.Rotation = math.Pi / 2  // 90° clockwise
 ```
 
-## Pivot Is Local Pixels for Atlas Sprites
+## Pivot Is Local Pixels, Not Normalized
 
-For atlas sprites, PivotX/Y are in local pixel coordinates, not normalized 0–1. A 64×64 sprite centered needs `PivotX = 32`, not `PivotX = 0.5`:
+PivotX/Y are in **local pixel coordinates**, not normalized 0–1. To center a sprite, use half the image width/height:
 
 ```go
-// WRONG for a 64×64 atlas sprite:
-sprite.PivotX = 0.5  // 0.5 pixels, not center
+// WRONG  -  0.5 pixels, not center:
+sprite.PivotX = 0.5
+sprite.PivotY = 0.5
 
-// CORRECT:
+// CORRECT for a 64×64 atlas sprite:
 sprite.PivotX = 32  // half of 64px width
 sprite.PivotY = 32
+
+// CORRECT for a SetCustomImage sprite:
+sprite.SetCustomImage(img)
+sprite.PivotX = float64(img.Bounds().Dx()) / 2
+sprite.PivotY = float64(img.Bounds().Dy()) / 2
 ```
 
-WhitePixel sprites are 1×1, so `PivotX = 0.5` does center them  -  but only by coincidence.
+WhitePixel sprites are 1×1, so `PivotX = 0.5` does center them  -  but only by coincidence. For any image larger than 1×1 (atlas regions, custom images), always use `width/2` and `height/2`.
 
 ## Visible vs Renderable
 
@@ -223,7 +229,7 @@ You can use `node.ZIndex = n` (direct field, requires `Invalidate`) or `node.Set
 Callbacks receive context structs with useful fields:
 
 ```go
-node.OnClick = func(ctx willow.ClickContext) {
+node.OnClick(func(ctx willow.ClickContext) {
     ctx.Node      // *Node  -  the clicked node
     ctx.GlobalX   // world-space X
     ctx.GlobalY   // world-space Y
@@ -231,9 +237,9 @@ node.OnClick = func(ctx willow.ClickContext) {
     ctx.LocalY    // node-local Y
     ctx.Button    // MouseButton
     ctx.Modifiers // KeyModifiers held during click
-}
+})
 
-node.OnDrag = func(ctx willow.DragContext) {
+node.OnDrag(func(ctx willow.DragContext) {
     ctx.Node         // *Node  -  the dragged node
     ctx.DeltaX       // world-space movement since last drag event
     ctx.DeltaY       // world-space movement since last drag event
@@ -243,7 +249,7 @@ node.OnDrag = func(ctx willow.DragContext) {
     ctx.StartY       // world Y where drag began
     ctx.GlobalX      // current world X
     ctx.GlobalY      // current world Y
-}
+})
 ```
 
 Use `DeltaX/DeltaY` when dragging nodes in world space. Use `ScreenDeltaX/ScreenDeltaY` when panning a camera (divide by `cam.Zoom`):
@@ -261,9 +267,9 @@ cam.Invalidate()
 `OnDragEnd` fires when the user releases a drag:
 
 ```go
-node.OnDragEnd = func(ctx willow.DragContext) {
+node.OnDragEnd(func(ctx willow.DragContext) {
     // snap to grid, validate position, etc.
-}
+})
 ```
 
 `OnUpdate` runs per-frame logic on individual nodes instead of centralizing in `SetUpdateFunc`:
@@ -284,23 +290,23 @@ By default, drags require a small movement before firing. Set to 0 for immediate
 scene.SetDragDeadZone(0)
 ```
 
-## Constructors That Return Two Values
+## NewRope and NewDistortionGrid Return a Single Value
 
-`NewRope` and `NewDistortionGrid` return `(controller, node)`  -  not just a node. You need both:
+`NewRope` and `NewDistortionGrid` return a single controller object. Use `.Node()` to get the scene node:
 
 ```go
-rope, ropeNode := willow.NewRope("cable", img, nil, config)
-scene.Root().AddChild(ropeNode)  // add the NODE to scene
-rope.Update()                     // call methods on the ROPE controller
+rope := willow.NewRope("cable", img, nil, config)
+scene.Root().AddChild(rope.Node())  // .Node() returns the renderable *Node
+rope.Update()                        // call methods on the controller
 
-grid, gridNode := willow.NewDistortionGrid("water", img, 10, 8)
-scene.Root().AddChild(gridNode)
+grid := willow.NewDistortionGrid("water", img, 10, 8)
+scene.Root().AddChild(grid.Node())
 grid.SetAllVertices(func(col, row int, restX, restY float64) (dx, dy float64) { ... })
 ```
 
 ## Wrapper Types Need .Node() to Add to Scene
 
-`LightLayer` and `TileMapViewport` are not `*Node`. Call `.Node()` to get the renderable node:
+`LightLayer`, `TileMapViewport`, `Rope`, and `DistortionGrid` are not `*Node`. Call `.Node()` to get the renderable node:
 
 ```go
 ll := willow.NewLightLayer(800, 600, 0.8)
@@ -308,6 +314,12 @@ scene.Root().AddChild(ll.Node())  // NOT ll
 
 viewport := willow.NewTileMapViewport("map", 32, 32)
 scene.Root().AddChild(viewport.Node())  // NOT viewport
+
+rope := willow.NewRope("cable", img, nil, config)
+scene.Root().AddChild(rope.Node())  // NOT rope
+
+grid := willow.NewDistortionGrid("water", img, 10, 8)
+scene.Root().AddChild(grid.Node())  // NOT grid
 ```
 
 ## Rope Endpoint Binding (Pointer Stability)
@@ -320,7 +332,7 @@ Ropes read their Start/End/Controls positions through pointers. You must ensure 
 // WRONG  -  pointer aliases a loop-local that won't be updated:
 for i := range n {
     startPos := willow.Vec2{X: 100, Y: 200}
-    r, rn := willow.NewRope("rope", img, nil, willow.RopeConfig{
+    r := willow.NewRope("rope", img, nil, willow.RopeConfig{
         Start: &startPos,  // points at loop-local
     })
     ropes[i] = myRope{start: startPos, r: r}  // copies value, Rope still reads loop-local
@@ -332,7 +344,7 @@ rb := &ropeBinding{
     start: willow.Vec2{X: 100, Y: 200},
     end:   willow.Vec2{X: 400, Y: 200},
 }
-r, rn := willow.NewRope("rope", img, nil, willow.RopeConfig{
+r := willow.NewRope("rope", img, nil, willow.RopeConfig{
     Start: &rb.start,  // points directly at the struct field
     End:   &rb.end,
 })
@@ -451,19 +463,12 @@ maskRoot.AddChild(shape)
 content.SetMask(maskRoot)
 ```
 
-## Tweens Have No Auto-Tick
+## Tweens Auto-Tick When Attached to a Scene
 
-Willow has no global tween manager. You must call `Update(dt)` yourself every frame, and `dt` is `float32`:
+Tweens on nodes that are part of a Scene are updated automatically each frame  -  no manual `Update(dt)` call is needed. Just create the tween and it runs:
 
 ```go
-dt := float32(1.0 / float64(ebiten.TPS()))  // use TPS(), not hardcoded 60
-
-scene.SetUpdateFunc(func() error {
-    if tween != nil && !tween.Done {
-        tween.Update(dt)
-    }
-    return nil
-})
+willow.TweenPosition(node, 200, 300, 1.0, ease.OutCubic)  // starts automatically
 ```
 
 ## SetUpdateFunc Replaces  -  It Does Not Chain
@@ -473,12 +478,12 @@ Calling `scene.SetUpdateFunc()` a second time replaces the previous callback. Pu
 ```go
 // WRONG  -  only the last one runs:
 scene.SetUpdateFunc(func() error { lightLayer.Redraw(); return nil })
-scene.SetUpdateFunc(func() error { tween.Update(dt); return nil })
+scene.SetUpdateFunc(func() error { updateEnemies(); return nil })
 
 // CORRECT  -  one function with everything:
 scene.SetUpdateFunc(func() error {
     lightLayer.Redraw()
-    if !tween.Done { tween.Update(dt) }
+    updateEnemies()
     return nil
 })
 ```

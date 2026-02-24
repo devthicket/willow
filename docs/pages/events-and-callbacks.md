@@ -4,20 +4,22 @@ Willow uses typed callback functions for input events. Callbacks can be attached
 
 ## Node-Level Callbacks
 
-Assign callback functions directly to nodes:
+Use setter methods to register callbacks on nodes. Each setter automatically enables `Interactable` on the node, so you never need to set it manually:
 
 ```go
-node.OnPointerDown  = func(ctx willow.PointerContext) { /* ... */ }
-node.OnPointerUp    = func(ctx willow.PointerContext) { /* ... */ }
-node.OnPointerMove  = func(ctx willow.PointerContext) { /* ... */ }
-node.OnPointerEnter = func(ctx willow.PointerContext) { /* ... */ }
-node.OnPointerLeave = func(ctx willow.PointerContext) { /* ... */ }
-node.OnClick        = func(ctx willow.ClickContext)   { /* ... */ }
-node.OnDragStart    = func(ctx willow.DragContext)    { /* ... */ }
-node.OnDrag         = func(ctx willow.DragContext)    { /* ... */ }
-node.OnDragEnd      = func(ctx willow.DragContext)    { /* ... */ }
-node.OnPinch        = func(ctx willow.PinchContext)   { /* ... */ }
+node.OnPointerDown(func(ctx willow.PointerContext)  { /* ... */ })
+node.OnPointerUp(func(ctx willow.PointerContext)    { /* ... */ })
+node.OnPointerMove(func(ctx willow.PointerContext)  { /* ... */ })
+node.OnPointerEnter(func(ctx willow.PointerContext) { /* ... */ })
+node.OnPointerLeave(func(ctx willow.PointerContext) { /* ... */ })
+node.OnClick(func(ctx willow.ClickContext)           { /* ... */ })
+node.OnDragStart(func(ctx willow.DragContext)        { /* ... */ })
+node.OnDrag(func(ctx willow.DragContext)             { /* ... */ })
+node.OnDragEnd(func(ctx willow.DragContext)          { /* ... */ })
+node.OnPinch(func(ctx willow.PinchContext)           { /* ... */ })
 ```
+
+To temporarily disable a node's interaction without removing callbacks, set `node.Interactable = false` directly.
 
 ## Scene-Level Handlers
 
@@ -45,6 +47,7 @@ scene.OnDragStart(fn)
 scene.OnDrag(fn)
 scene.OnDragEnd(fn)
 scene.OnPinch(fn)
+scene.OnBackgroundClick(fn)  // fires when clicking empty space (no node hit)
 ```
 
 ## Context Types
