@@ -272,7 +272,7 @@ func TestMergeSortMatchesStdlib(t *testing.T) {
 
 func TestMergeSortStable(t *testing.T) {
 	s := NewScene()
-	// All same layer and GlobalOrder — treeOrder should be preserved
+	// All same layer and GlobalOrder  -  treeOrder should be preserved
 	s.commands = make([]RenderCommand, 100)
 	for i := range s.commands {
 		s.commands[i] = RenderCommand{treeOrder: i}
@@ -342,7 +342,7 @@ func traverseSceneWithCamera(s *Scene, cam *Camera) {
 }
 
 func TestCacheAsTree_MatchesUncached(t *testing.T) {
-	// Build identical scenes — one cached, one not.
+	// Build identical scenes  -  one cached, one not.
 	build := func(cached bool) *Scene {
 		s := NewScene()
 		container := NewContainer("c")
@@ -397,7 +397,7 @@ func TestCacheAsTree_ManualModePersists(t *testing.T) {
 	traverseScene(s) // build
 	traverseScene(s) // replay
 
-	// Modify a child via setter — manual mode should NOT auto-invalidate.
+	// Modify a child via setter  -  manual mode should NOT auto-invalidate.
 	sp.SetPosition(100, 100)
 
 	traverseScene(s)
@@ -431,7 +431,7 @@ func TestCacheAsTree_AutoModeBubblesOnSetter(t *testing.T) {
 	traverseScene(s) // build
 	traverseScene(s) // replay (cache hit)
 
-	// Modify a child — auto mode should invalidate.
+	// Modify a child  -  auto mode should invalidate.
 	sp.SetPosition(50, 50)
 	traverseScene(s) // rebuild
 	if len(s.commands) != 1 {
@@ -552,7 +552,7 @@ func TestCacheAsTree_TextureSwap_PageChange_Invalidates(t *testing.T) {
 
 	traverseScene(s) // build
 
-	// Swap to a different page — should invalidate.
+	// Swap to a different page  -  should invalidate.
 	sp.SetTextureRegion(TextureRegion{Page: 1, Width: 32, Height: 32, OriginalW: 32, OriginalH: 32})
 
 	if !container.cacheTreeDirty {
@@ -598,7 +598,7 @@ func TestCacheAsTree_MeshBlocksCache(t *testing.T) {
 
 	traverseScene(s) // build attempt
 
-	// Mesh should block caching — cache stays dirty.
+	// Mesh should block caching  -  cache stays dirty.
 	if !container.cacheTreeDirty {
 		t.Error("mesh subtree should block cache build")
 	}

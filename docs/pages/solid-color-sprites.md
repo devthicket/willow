@@ -1,6 +1,6 @@
 # Solid-Color Sprites
 
-Willow lets you create solid-color rectangles without loading any textures. Pass an empty `TextureRegion{}` to `NewSprite` and it uses `willow.WhitePixel` — a shared 1x1 white image — internally.
+Willow lets you create solid-color rectangles without loading any textures. Pass an empty `TextureRegion{}` to `NewSprite` and it uses `willow.WhitePixel`  -  a shared 1x1 white image  -  internally.
 
 ## Basic Usage
 
@@ -41,7 +41,7 @@ entity.AddChild(hitbox)
 
 ### Color from `Node.Color`
 
-Since `Color` is a field on `Node`, you can change it at any time — no need to rebuild or swap textures:
+Since `Color` is a field on `Node`, you can change it at any time  -  no need to rebuild or swap textures:
 
 ```go
 // Flash red on hit
@@ -50,10 +50,10 @@ sprite.Color = willow.Color{R: 1, G: 0.2, B: 0.2, A: 1}
 
 ## Next Steps
 
-- [Sprites & Atlas](?page=sprites-and-atlas) — loading textures from atlas pages
-- [Camera & Viewport](?page=camera-and-viewport) — viewport setup and scrolling
+- [Sprites & Atlas](?page=sprites-and-atlas)  -  loading textures from atlas pages
+- [Camera & Viewport](?page=camera-and-viewport)  -  viewport setup and scrolling
 
 ## Related
 
-- [Nodes](?page=nodes) — node types, visual properties, blend modes
-- [Transforms](?page=transforms) — position, scale, rotation, pivot
+- [Nodes](?page=nodes)  -  node types, visual properties, blend modes
+- [Transforms](?page=transforms)  -  position, scale, rotation, pivot

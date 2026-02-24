@@ -12,16 +12,16 @@ Browse the [examples/ directory on GitHub](https://github.com/phanxgames/willow/
 
 ## Categories
 
-**Basics** — Core concepts like sprites, shapes, and interaction handling.
+**Basics**  -  Core concepts like sprites, shapes, and interaction handling.
 
-**Text** — Bitmap font and TTF text rendering.
+**Text**  -  Bitmap font and TTF text rendering.
 
-**Animation** — Tweens, easing functions, and particle effects.
+**Animation**  -  Tweens, easing functions, and particle effects.
 
-**Visual Effects** — Shaders, outlines, masks, and lighting.
+**Visual Effects**  -  Shaders, outlines, masks, and lighting.
 
-**Sprites & Maps** — Atlas loading, tilemaps, and tilemap viewports.
+**Sprites & Maps**  -  Atlas loading, tilemaps, and tilemap viewports.
 
-**Meshes** — Rope physics and water mesh distortion.
+**Meshes**  -  Rope physics and water mesh distortion.
 
 Use the sidebar to browse individual examples.

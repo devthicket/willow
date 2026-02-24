@@ -125,7 +125,7 @@ func TestTweenGroupDoneFlagTransition(t *testing.T) {
 		t.Fatal("should not be Done at start")
 	}
 
-	// Partway through — not done.
+	// Partway through  -  not done.
 	g.Update(0.25)
 	if g.Done {
 		t.Fatal("should not be Done partway through")
@@ -137,7 +137,7 @@ func TestTweenGroupDoneFlagTransition(t *testing.T) {
 		t.Fatal("should be Done after full duration")
 	}
 
-	// Update after done — should be a no-op, not panic.
+	// Update after done  -  should be a no-op, not panic.
 	g.Update(0.1)
 	if !g.Done {
 		t.Fatal("should remain Done")
@@ -230,7 +230,7 @@ func TestTweenGroupUpdateZeroAlloc(t *testing.T) {
 	node := NewContainer("alloc")
 	g := TweenPosition(node, 100, 100, 1.0, ease.Linear)
 
-	// Warm up — first call might differ.
+	// Warm up  -  first call might differ.
 	g.Update(0.01)
 
 	result := testing.AllocsPerRun(100, func() {

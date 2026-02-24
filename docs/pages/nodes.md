@@ -1,12 +1,12 @@
 # Nodes
 
-The `Node` is the fundamental building block of Willow's scene graph. Every visible element — sprites, text, particles, meshes — is a `Node` added to the scene tree.
+The `Node` is the fundamental building block of Willow's scene graph. Every visible element  -  sprites, text, particles, meshes  -  is a `Node` added to the scene tree.
 
 ## Node Types
 
 | Type | Constructor | Description |
 |------|-------------|-------------|
-| `NodeTypeContainer` | `NewContainer(name)` | Invisible grouping node — organizes children, applies transforms |
+| `NodeTypeContainer` | `NewContainer(name)` | Invisible grouping node  -  organizes children, applies transforms |
 | `NodeTypeSprite` | `NewSprite(name, region)` | Renders a texture region (or solid color) |
 | `NodeTypeMesh` | `NewMesh(name, img, verts, indices)` | Custom vertex geometry |
 | `NodeTypeParticleEmitter` | `NewParticleEmitter(name, cfg)` | CPU-simulated particle system |
@@ -126,14 +126,14 @@ Disposing a node also disposes all its children. Disposed nodes cannot be reused
 
 ## Next Steps
 
-- [Transforms](?page=transforms) — position, scale, rotation, pivot, and dirty flags
-- [Solid-Color Sprites](?page=solid-color-sprites) — creating shapes without textures
-- [Sprites & Atlas](?page=sprites-and-atlas) — loading texture atlases and regions
-- [Input & Hit Testing](?page=input-hit-testing-and-gestures) — making nodes interactive
+- [Transforms](?page=transforms)  -  position, scale, rotation, pivot, and dirty flags
+- [Solid-Color Sprites](?page=solid-color-sprites)  -  creating shapes without textures
+- [Sprites & Atlas](?page=sprites-and-atlas)  -  loading texture atlases and regions
+- [Input & Hit Testing](?page=input-hit-testing-and-gestures)  -  making nodes interactive
 
 ## Related
 
-- [Scene](?page=scene) — the scene that owns the root node
-- [Particles](?page=particles) — CPU-simulated particle emitters
-- [Mesh & Distortion](?page=meshes) — custom vertex geometry and distortion grids
-- [Text & Fonts](?page=text-and-fonts) — bitmap and TTF text rendering
+- [Scene](?page=scene)  -  the scene that owns the root node
+- [Particles](?page=particles)  -  CPU-simulated particle emitters
+- [Mesh & Distortion](?page=meshes)  -  custom vertex geometry and distortion grids
+- [Text & Fonts](?page=text-and-fonts)  -  bitmap and TTF text rendering

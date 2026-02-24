@@ -39,7 +39,7 @@ func TestDonburiStore_EmitEvent(t *testing.T) {
 		ScaleDelta: 0.5,
 	})
 
-	// Events are queued — process them.
+	// Events are queued  -  process them.
 	InteractionEventType.ProcessEvents(world)
 
 	if len(received) != 2 {

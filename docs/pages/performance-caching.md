@@ -4,7 +4,7 @@ Willow provides two caching strategies to avoid redundant work for static or sem
 
 ## CacheAsTree (Command List Cache)
 
-Caches the **render command list** for a subtree. The scene graph traversal is skipped for cached subtrees — the pre-built command list is replayed directly. Best for subtrees whose structure and visual properties don't change frequently.
+Caches the **render command list** for a subtree. The scene graph traversal is skipped for cached subtrees  -  the pre-built command list is replayed directly. Best for subtrees whose structure and visual properties don't change frequently.
 
 ```go
 node.SetCacheAsTree(true)
@@ -20,7 +20,7 @@ node.SetCacheAsTree(true, willow.CacheTreeManual)
 node.SetCacheAsTree(true, willow.CacheTreeAuto)
 ```
 
-In auto mode, calling `SetPosition()`, `SetColor()`, `SetVisible()`, or any property setter on a descendant node automatically invalidates ancestor caches. Direct field assignment (e.g., `node.X = 10`) does **not** trigger auto-invalidation — call `Invalidate()` or `InvalidateCacheTree()` manually.
+In auto mode, calling `SetPosition()`, `SetColor()`, `SetVisible()`, or any property setter on a descendant node automatically invalidates ancestor caches. Direct field assignment (e.g., `node.X = 10`) does **not** trigger auto-invalidation  -  call `Invalidate()` or `InvalidateCacheTree()` manually.
 
 ### Manual Invalidation
 

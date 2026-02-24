@@ -129,12 +129,12 @@ The `Follow`, `ScrollTo`, and `SetBounds` methods handle this automatically.
 
 ## Next Steps
 
-- [Text & Fonts](?page=text-and-fonts) — bitmap and TTF text rendering
-- [Tilemap Viewport](?page=tilemap-viewport) — tile-based map rendering with camera binding
+- [Text & Fonts](?page=text-and-fonts)  -  bitmap and TTF text rendering
+- [Tilemap Viewport](?page=tilemap-viewport)  -  tile-based map rendering with camera binding
 
 ## Related
 
-- [Transforms](?page=transforms) — node-level coordinate conversion (WorldToLocal, LocalToWorld)
-- [Tweens & Animation](?page=tweens-and-animation) — easing functions used by `ScrollTo`
-- [Scene](?page=scene) — camera creation via `scene.NewCamera()`
-- [Input & Hit Testing](?page=input-hit-testing-and-gestures) — screen-to-world hit testing
+- [Transforms](?page=transforms)  -  node-level coordinate conversion (WorldToLocal, LocalToWorld)
+- [Tweens & Animation](?page=tweens-and-animation)  -  easing functions used by `ScrollTo`
+- [Scene](?page=scene)  -  camera creation via `scene.NewCamera()`
+- [Input & Hit Testing](?page=input-hit-testing-and-gestures)  -  screen-to-world hit testing

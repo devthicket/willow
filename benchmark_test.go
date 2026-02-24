@@ -722,7 +722,7 @@ func setupMixedScene(nSprites, nEmitters int) *Scene {
 }
 
 // setupWorstCaseScene creates n sprites that alternate between page 0 and
-// page 1 on every sprite, producing batch runs of length 1 — the worst case
+// page 1 on every sprite, producing batch runs of length 1  -  the worst case
 // for coalesced mode overhead.
 func setupWorstCaseScene(n int) *Scene {
 	s := NewScene()
@@ -895,7 +895,7 @@ func BenchmarkDraw_RealWorldAtlas_Coalesced(b *testing.B) {
 }
 
 // =============================================================================
-// Raw Ebitengine baselines — no scene graph, no traversal, no sorting.
+// Raw Ebitengine baselines  -  no scene graph, no traversal, no sorting.
 // These measure the floor: pure draw call cost with pre-computed transforms.
 // =============================================================================
 

@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	windowTitle = "Willow — Tweens Example"
+	windowTitle = "Willow  -  Tweens Example"
 	showFPS     = true
 	screenW     = 640
 	screenH     = 480

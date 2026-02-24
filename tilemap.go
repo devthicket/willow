@@ -79,7 +79,7 @@ type TileMapLayer struct {
 	width  int      // map width in tiles
 	height int      // map height in tiles
 
-	// Geometry buffer — preallocated to max visible tiles.
+	// Geometry buffer  -  preallocated to max visible tiles.
 	vertices  []ebiten.Vertex // 4 vertices per tile, len = bufferCapacity * 4
 	indices   []uint16        // 6 indices per tile, len = bufferCapacity * 6
 	tileCount int             // number of active (non-empty) tiles in the buffer

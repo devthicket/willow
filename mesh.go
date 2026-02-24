@@ -95,7 +95,7 @@ func (n *Node) recomputeMeshAABB() {
 	n.meshAABBDirty = false
 }
 
-// --- White pixel singleton (no sync.Once — willow is single-threaded) ---
+// --- White pixel singleton (no sync.Once  -  willow is single-threaded) ---
 
 var whitePixelImage *ebiten.Image
 

@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	windowTitle = "Willow — Particles"
+	windowTitle = "Willow  -  Particles"
 	showFPS     = true
 	screenW     = 800
 	screenH     = 600
@@ -29,7 +29,7 @@ func main() {
 	scene := willow.NewScene()
 	scene.ClearColor = willow.Color{R: 0.04, G: 0.04, B: 0.07, A: 1}
 
-	// --- Fountain (left) — BlendNormal, gravity --------------------------------
+	// --- Fountain (left)  -  BlendNormal, gravity --------------------------------
 	// Particles arc upward and fall back down; alpha and scale fade at death.
 	fountain := willow.NewParticleEmitter("fountain", willow.EmitterConfig{
 		MaxParticles: 300,
@@ -54,7 +54,7 @@ func main() {
 	// Decorative base plate under the fountain.
 	addBase(scene, 160, 505, willow.Color{R: 0.2, G: 0.35, B: 0.5, A: 1})
 
-	// --- Campfire (center) — fire in BlendAdd, smoke in BlendNormal -----------
+	// --- Campfire (center)  -  fire in BlendAdd, smoke in BlendNormal -----------
 	// Fire uses additive blending so overlapping particles brighten naturally.
 	fire := willow.NewParticleEmitter("fire", willow.EmitterConfig{
 		MaxParticles: 220,
@@ -99,7 +99,7 @@ func main() {
 
 	addBase(scene, 400, 505, willow.Color{R: 0.45, G: 0.3, B: 0.1, A: 1})
 
-	// --- Sparkler (right) — BlendAdd, radial ----------------------------------
+	// --- Sparkler (right)  -  BlendAdd, radial ----------------------------------
 	// Particles shoot out in all directions with slight gravity; the additive
 	// blend makes colors bloom against the dark background.
 	sparkler := willow.NewParticleEmitter("sparkler", willow.EmitterConfig{

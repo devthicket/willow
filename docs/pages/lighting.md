@@ -4,7 +4,7 @@
   <img src="gif/lights.gif" alt="Lighting demo" width="400">
 </p>
 
-`LightLayer` provides a simple 2D lighting system. It renders to an offscreen texture and composites over the scene using multiply blending — areas without lights appear dark.
+`LightLayer` provides a simple 2D lighting system. It renders to an offscreen texture and composites over the scene using multiply blending  -  areas without lights appear dark.
 
 ## Creating a Light Layer
 
@@ -157,10 +157,10 @@ scene.SetUpdateFunc(func() error {
 
 ## Next Steps
 
-- [Clipping & Masks](?page=clipping-and-masks) — alpha-based masking and clipping
-- [Post-Processing Filters](?page=post-processing-filters) — shader-based visual effects
+- [Clipping & Masks](?page=clipping-and-masks)  -  alpha-based masking and clipping
+- [Post-Processing Filters](?page=post-processing-filters)  -  shader-based visual effects
 
 ## Related
 
-- [Offscreen Rendering](?page=offscreen-rendering) — light layer uses a RenderTexture internally
-- [Sprites & Atlas](?page=sprites-and-atlas) — texture lights use atlas regions
+- [Offscreen Rendering](?page=offscreen-rendering)  -  light layer uses a RenderTexture internally
+- [Sprites & Atlas](?page=sprites-and-atlas)  -  texture lights use atlas regions

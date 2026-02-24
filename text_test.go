@@ -23,7 +23,7 @@ func TestTextBlock_ColorTint(t *testing.T) {
 // --- NewText constructor ---
 
 func TestNewText_SetsTextBlock(t *testing.T) {
-	// Use a nil font — constructor should still set fields correctly.
+	// Use a nil font  -  constructor should still set fields correctly.
 	n := NewText("label", "Hello", nil)
 
 	if n.Type != NodeTypeText {

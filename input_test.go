@@ -396,7 +396,7 @@ func TestPointerCapture(t *testing.T) {
 		t.Error("captured should be b")
 	}
 
-	// Process a pointer press — the captured node b should receive the event.
+	// Process a pointer press  -  the captured node b should receive the event.
 	var receivedNode *Node
 	s.OnPointerDown(func(ctx PointerContext) {
 		receivedNode = ctx.Node
@@ -430,7 +430,7 @@ func TestDragDetection(t *testing.T) {
 	// Press at (50, 50).
 	s.processPointer(0, 50, 50, 50, 50, true, MouseButtonLeft, 0)
 
-	// Move within dead zone — no drag.
+	// Move within dead zone  -  no drag.
 	s.processPointer(0, 52, 52, 52, 52, true, MouseButtonLeft, 0)
 	if len(events) != 0 {
 		t.Fatalf("expected no events within dead zone, got %v", events)
@@ -562,13 +562,13 @@ func TestSetDragDeadZone(t *testing.T) {
 
 	// Press.
 	s.processPointer(0, 50, 50, 50, 50, true, MouseButtonLeft, 0)
-	// Move 10 pixels — should NOT start drag with 20px dead zone.
+	// Move 10 pixels  -  should NOT start drag with 20px dead zone.
 	s.processPointer(0, 60, 50, 60, 50, true, MouseButtonLeft, 0)
 	if dragStarted {
 		t.Error("drag should not start within 20px dead zone")
 	}
 
-	// Move 25 pixels from start — should start drag.
+	// Move 25 pixels from start  -  should start drag.
 	s.processPointer(0, 75, 50, 75, 50, true, MouseButtonLeft, 0)
 	if !dragStarted {
 		t.Error("drag should start beyond 20px dead zone")
@@ -646,7 +646,7 @@ func TestECSBridge_NoEntity(t *testing.T) {
 
 	sprite := NewSprite("s", TextureRegion{OriginalW: 100, OriginalH: 100})
 	sprite.Interactable = true
-	// EntityID is 0 — should not emit.
+	// EntityID is 0  -  should not emit.
 	s.Root().AddChild(sprite)
 	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
 
@@ -744,7 +744,7 @@ func TestECSBridge_PinchWithoutEntityID(t *testing.T) {
 
 	sprite := NewSprite("s", TextureRegion{OriginalW: 100, OriginalH: 100})
 	sprite.Interactable = true
-	// EntityID is 0 — pinch events should still emit.
+	// EntityID is 0  -  pinch events should still emit.
 	s.Root().AddChild(sprite)
 	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
 
@@ -770,7 +770,7 @@ func TestECSBridge_PinchNoHitNode(t *testing.T) {
 	store := &mockStore{}
 	s.SetEntityStore(store)
 
-	// No hit node — pinch should still emit with EntityID=0.
+	// No hit node  -  pinch should still emit with EntityID=0.
 	s.pinch.active = true
 	s.pinch.pointer0 = 1
 
@@ -787,7 +787,7 @@ func TestECSBridge_PinchNoHitNode(t *testing.T) {
 
 func TestECSBridge_NoStore(t *testing.T) {
 	s := NewScene()
-	// No store set — should not panic.
+	// No store set  -  should not panic.
 	sprite := NewSprite("s", TextureRegion{OriginalW: 100, OriginalH: 100})
 	sprite.Interactable = true
 	sprite.EntityID = 1

@@ -165,7 +165,7 @@ func TestLifetimeInterpolation(t *testing.T) {
 	p := &e.particles[0]
 
 	// At t≈0: scale=2, alpha=1, color=(1,0,0)
-	// (particle just spawned, not yet updated — properties are at start values)
+	// (particle just spawned, not yet updated  -  properties are at start values)
 	assertNear(t, "scale@t0", float64(p.scale), 2.0)
 	assertNear(t, "alpha@t0", float64(p.alpha), 1.0)
 	assertNear(t, "colorR@t0", float64(p.colorR), 1.0)
@@ -250,7 +250,7 @@ func TestNoCommandWhenNoAliveParticles(t *testing.T) {
 	s := NewScene()
 	cfg := defaultTestConfig(100)
 	emitterNode := NewParticleEmitter("emitter", cfg)
-	// Don't start — no particles alive.
+	// Don't start  -  no particles alive.
 	s.Root().AddChild(emitterNode)
 
 	traverseScene(s)

@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	windowTitle = "Willow — Tilemap Example"
+	windowTitle = "Willow  -  Tilemap Example"
 	showFPS     = true
 	screenW     = 640
 	screenH     = 480

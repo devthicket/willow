@@ -10,7 +10,7 @@ import (
 )
 
 // TextureRegion describes a sub-rectangle within an atlas page.
-// Value type (32 bytes) — stored directly on Node, no pointer.
+// Value type (32 bytes)  -  stored directly on Node, no pointer.
 type TextureRegion struct {
 	Page      uint16 // atlas page index (references Scene.pages)
 	X, Y      uint16 // top-left corner of the sub-image rect within the atlas page
@@ -43,7 +43,7 @@ func (a *Atlas) Region(name string) TextureRegion {
 	return magentaRegion()
 }
 
-// magenta placeholder singleton (no sync.Once — willow is single-threaded)
+// magenta placeholder singleton (no sync.Once  -  willow is single-threaded)
 var magentaImage *ebiten.Image
 
 func ensureMagentaImage() *ebiten.Image {

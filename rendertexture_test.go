@@ -190,7 +190,7 @@ func TestRenderTextureDrawSpriteMagenta(t *testing.T) {
 	defer rt.Dispose()
 
 	region := TextureRegion{Page: magentaPlaceholderPage, Width: 1, Height: 1}
-	// Should not panic — resolves to magenta placeholder.
+	// Should not panic  -  resolves to magenta placeholder.
 	rt.DrawSprite(region, 0, 0, BlendNormal, nil)
 }
 

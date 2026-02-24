@@ -22,7 +22,7 @@ import (
 var whelpPNG []byte
 
 const (
-	windowTitle = "Willow — Tween Gallery"
+	windowTitle = "Willow  -  Tween Gallery"
 	showFPS     = true
 	screenW     = 800
 	screenH     = 600
@@ -73,7 +73,7 @@ func main() {
 	cam.Y = screenH / 2
 	cam.Invalidate()
 
-	// Five whelp sprites — one per tween property.
+	// Five whelp sprites  -  one per tween property.
 	sprites := make([]*willow.Node, 5)
 	spacing := 140.0
 	startX := (screenW - 4*spacing) / 2

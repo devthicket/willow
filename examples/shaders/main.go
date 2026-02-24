@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	windowTitle = "Willow — Shader Showcase"
+	windowTitle = "Willow  -  Shader Showcase"
 	showFPS     = true
 	screenW     = 640
 	screenH     = 480

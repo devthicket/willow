@@ -90,7 +90,7 @@ type PinchContext struct {
 
 // --- ID counter ---
 
-// nodeIDCounter is a plain counter (no atomic — willow is single-threaded).
+// nodeIDCounter is a plain counter (no atomic  -  willow is single-threaded).
 var nodeIDCounter uint32
 
 func nextNodeID() uint32 {
@@ -401,7 +401,7 @@ func (n *Node) SetRenderable(r bool) {
 
 // SetTextureRegion sets the node's texture region and invalidates ancestor caches.
 // If the atlas page is unchanged (e.g. animated tile UV swap), the CacheAsTree
-// cache is NOT invalidated — instead the node is registered as animated so replay
+// cache is NOT invalidated  -  instead the node is registered as animated so replay
 // reads the live TextureRegion. Page changes always invalidate.
 func (n *Node) SetTextureRegion(r TextureRegion) {
 	pageChanged := n.TextureRegion.Page != r.Page
@@ -632,9 +632,9 @@ func (n *Node) SetZIndex(z int) {
 //
 // Modes:
 //
-//	CacheTreeAuto   — (default) setters on descendant nodes auto-invalidate
+//	CacheTreeAuto    -  (default) setters on descendant nodes auto-invalidate
 //	                  the cache. Small per-setter overhead. Always correct.
-//	CacheTreeManual — user calls InvalidateCacheTree() when subtree changes.
+//	CacheTreeManual  -  user calls InvalidateCacheTree() when subtree changes.
 //	                  Zero overhead on setters. Best for large tilemaps where
 //	                  the developer knows exactly when tiles change.
 func (n *Node) SetCacheAsTree(enabled bool, mode ...CacheTreeMode) {
@@ -670,7 +670,7 @@ func (n *Node) IsCacheAsTreeEnabled() bool {
 // registerAnimatedInCache walks up to the nearest CacheAsTree ancestor and
 // promotes this node's cachedCmd from static to animated (source = n) so
 // replay reads the live TextureRegion. O(N) scan, runs once per tile that
-// starts animating — not per frame.
+// starts animating  -  not per frame.
 func (n *Node) registerAnimatedInCache() {
 	for p := n.Parent; p != nil; p = p.Parent {
 		if !p.cacheTreeEnabled {
@@ -691,7 +691,7 @@ func (n *Node) registerAnimatedInCache() {
 
 // invalidateAncestorCache walks up the tree from n to find the nearest
 // CacheAsTree ancestor and marks it dirty (auto mode only).
-// Manual mode stops bubbling — user manages invalidation.
+// Manual mode stops bubbling  -  user manages invalidation.
 func invalidateAncestorCache(n *Node) {
 	for p := n.Parent; p != nil; p = p.Parent {
 		if p.cacheTreeEnabled {

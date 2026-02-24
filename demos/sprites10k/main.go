@@ -135,7 +135,7 @@ func main() {
 	})
 
 	if err := willow.Run(scene, willow.RunConfig{
-		Title:   "Willow — 10k Sprites",
+		Title:   "Willow  -  10k Sprites",
 		Width:   screenW,
 		Height:  screenH,
 		ShowFPS: true,

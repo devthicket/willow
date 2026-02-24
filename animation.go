@@ -11,7 +11,7 @@ import (
 // and marks the node dirty. If the target node is disposed, the group stops
 // immediately.
 //
-// There is no global animation manager — users call Update themselves.
+// There is no global animation manager  -  users call Update themselves.
 type TweenGroup struct {
 	tweens [4]*gween.Tween
 	count  int

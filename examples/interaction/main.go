@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	windowTitle = "Willow — Interaction Example"
+	windowTitle = "Willow  -  Interaction Example"
 	showFPS     = true
 	screenW     = 640
 	screenH     = 480

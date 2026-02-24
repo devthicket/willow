@@ -553,7 +553,7 @@ func (s *Scene) processPointer(pointerID int, wx, wy, sx, sy float64, pressed bo
 	}
 
 	if pressed && !ps.down {
-		// Just pressed — capture button for the duration of this interaction.
+		// Just pressed  -  capture button for the duration of this interaction.
 		ps.down = true
 		ps.button = button
 		ps.startX = wx
@@ -569,7 +569,7 @@ func (s *Scene) processPointer(pointerID int, wx, wy, sx, sy float64, pressed bo
 
 		s.firePointerDown(target, pointerID, wx, wy, ps.button, mods)
 	} else if !pressed && ps.down {
-		// Just released — use button from press start.
+		// Just released  -  use button from press start.
 		sdx := sx - ps.lastScreenX
 		sdy := sy - ps.lastScreenY
 		if ps.dragging {
@@ -587,7 +587,7 @@ func (s *Scene) processPointer(pointerID int, wx, wy, sx, sy float64, pressed bo
 		ps.hitNode = nil
 		ps.dragging = false
 	} else if pressed && ps.down {
-		// Held down, possibly moved — use button from press start.
+		// Held down, possibly moved  -  use button from press start.
 		if wx != ps.lastX || wy != ps.lastY || sx != ps.lastScreenX || sy != ps.lastScreenY {
 			sdx := sx - ps.lastScreenX
 			sdy := sy - ps.lastScreenY
@@ -939,7 +939,7 @@ func (s *Scene) firePinch(ctx PinchContext, mods KeyModifiers) {
 			pinchNode.OnPinch(ctx)
 		}
 	}
-	// Pinch is a global gesture — always emit to EntityStore (node may be nil).
+	// Pinch is a global gesture  -  always emit to EntityStore (node may be nil).
 	s.emitInteractionEvent(EventPinch, pinchNode, ctx.CenterX, ctx.CenterY, 0, 0,
 		MouseButtonLeft, mods, DragContext{}, ctx)
 }
@@ -951,7 +951,7 @@ func (s *Scene) emitInteractionEvent(eventType EventType, node *Node, wx, wy, lx
 	if s.store == nil {
 		return
 	}
-	// Pinch is a global gesture — emit even without a hit node or EntityID.
+	// Pinch is a global gesture  -  emit even without a hit node or EntityID.
 	if eventType != EventPinch && (node == nil || node.EntityID == 0) {
 		return
 	}

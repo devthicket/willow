@@ -10,7 +10,7 @@ All benchmarks run with `-benchmem -count=3`.
 
 ## Single Atlas Page (Ideal Case for Coalesced)
 
-All 10,000 sprites share the same magenta placeholder page — one giant batch.
+All 10,000 sprites share the same magenta placeholder page  -  one giant batch.
 
 ### Immediate
 
@@ -94,7 +94,7 @@ Sprites cycle through pages, producing batch runs of ~2,500.
 
 ## Mixed (5K sprites + 5 emitters x 200 particles, 2 pages, mixed blend)
 
-Emitters interleaved with sprites — sprite->particle->sprite transitions force flushes.
+Emitters interleaved with sprites  -  sprite->particle->sprite transitions force flushes.
 
 | Mode | Iters | ns/op | B/op | allocs/op |
 |------|-------|-------|------|-----------|
@@ -116,7 +116,7 @@ Emitters interleaved with sprites — sprite->particle->sprite transitions force
 
 ## Worst Case (10K sprites alternating pages every command)
 
-Batch runs of length 1 — coalesced has vertex-building overhead with zero batching benefit.
+Batch runs of length 1  -  coalesced has vertex-building overhead with zero batching benefit.
 
 | Mode | Iters | ns/op | B/op | allocs/op |
 |------|-------|-------|------|-----------|
@@ -139,7 +139,7 @@ Batch runs of length 1 — coalesced has vertex-building overhead with zero batc
 ## Real-World Atlas (10K sprites, 2x 4096x4096 pages, runs of 1000)
 
 Two full-size atlas pages like real TexturePacker output. Sprites grouped in runs of 1,000
-on alternating pages (10 page swaps total) — simulates a tilemap with two spritesheets.
+on alternating pages (10 page swaps total)  -  simulates a tilemap with two spritesheets.
 
 | Mode | Iters | ns/op | B/op | allocs/op |
 |------|-------|-------|------|-----------|
@@ -161,7 +161,7 @@ on alternating pages (10 page swaps total) — simulates a tilemap with two spri
 
 ## Raw Ebitengine Baselines (No Scene Graph)
 
-Pre-computed transforms, no traversal, no sorting — pure draw call cost.
+Pre-computed transforms, no traversal, no sorting  -  pure draw call cost.
 
 ### Single Page (10K sprites)
 
@@ -212,8 +212,8 @@ Pre-computed transforms, no traversal, no sorting — pure draw call cost.
 
 | Layer | avg ns/op | vs Raw DrawImage | vs Raw DT32 |
 |-------|-----------|-----------------|-------------|
-| Raw DrawTriangles32 | ~329K | 6.1x faster | — |
-| Raw DrawImage | ~2,012K | — | 6.1x slower |
+| Raw DrawTriangles32 | ~329K | 6.1x faster |  -  |
+| Raw DrawImage | ~2,012K |  -  | 6.1x slower |
 | **Willow Coalesced** | **~1,984K** | **~1% faster** | 6.0x slower |
 | Willow Immediate | ~3,986K | 2.0x slower | 12.1x slower |
 
@@ -221,8 +221,8 @@ Pre-computed transforms, no traversal, no sorting — pure draw call cost.
 
 | Layer | avg ns/op | vs Raw DrawImage | vs Raw DT32 |
 |-------|-----------|-----------------|-------------|
-| Raw DrawTriangles32 | ~357K | 6.3x faster | — |
-| Raw DrawImage | ~2,230K | — | 6.3x slower |
+| Raw DrawTriangles32 | ~357K | 6.3x faster |  -  |
+| Raw DrawImage | ~2,230K |  -  | 6.3x slower |
 | **Willow Coalesced** | **~1,993K** | **11% faster** | 5.6x slower |
 | Willow Immediate | ~4,121K | 1.8x slower | 11.5x slower |
 
@@ -230,7 +230,7 @@ Pre-computed transforms, no traversal, no sorting — pure draw call cost.
 
 | Layer | avg ns/op | vs Raw DrawImage |
 |-------|-----------|-----------------|
-| Raw DrawImage | ~1,599K | — |
+| Raw DrawImage | ~1,599K |  -  |
 | **Willow Coalesced** | **~1,969K** | 1.2x slower |
 | Willow Immediate | ~2,075K | 1.3x slower |
 
@@ -238,8 +238,8 @@ Pre-computed transforms, no traversal, no sorting — pure draw call cost.
 
 | Layer | avg ns/op | vs Raw DrawImage | vs Raw DT32 |
 |-------|-----------|-----------------|-------------|
-| Raw DrawTriangles32 | ~37K | 7.2x faster | — |
-| Raw DrawImage | ~266K | — | 7.2x slower |
+| Raw DrawTriangles32 | ~37K | 7.2x faster |  -  |
+| Raw DrawImage | ~266K |  -  | 7.2x slower |
 | **Willow Coalesced** | **~49K** | **5.4x faster** | 1.3x slower |
 | Willow Immediate | ~259K | 1.0x (same) | 7.0x slower |
 
@@ -252,9 +252,9 @@ Pre-computed transforms, no traversal, no sorting — pure draw call cost.
 3. **Multi-page realistic (128x128):** Coalesced still wins by ~7% even with 4 page breaks.
 4. **Mixed scenes:** Coalesced ~5% faster than Immediate with 17% fewer allocations despite sprite/particle interleaving.
 5. **Real-world atlas (4096x4096):** Coalesced is **2.1x faster** than Immediate with 1000x fewer allocs. **11% faster than raw DrawImage** (scene graph overhead is negative thanks to batching).
-6. **Worst case (every sprite breaks batch):** Coalesced ~5% slower — acceptable regression for a pathological case that doesn't occur in practice.
-7. **Willow Coalesced vs Raw DrawImage:** Willow's scene graph adds ~0-20% overhead vs hand-writing DrawImage calls — but because it batches automatically, it's often **faster** than raw DrawImage.
-8. **Willow Coalesced vs Raw DrawTriangles32:** The theoretical floor is ~5-6x faster (pure pre-computed vertex submission). The gap is Willow's traversal + transform computation + sorting + vertex building — the cost of a retained-mode scene graph.
-9. **Particles are nearly optimal:** Willow Coalesced particle rendering is only 1.3x slower than raw DrawTriangles32 — the scene graph overhead is minimal for particle batches.
+6. **Worst case (every sprite breaks batch):** Coalesced ~5% slower  -  acceptable regression for a pathological case that doesn't occur in practice.
+7. **Willow Coalesced vs Raw DrawImage:** Willow's scene graph adds ~0-20% overhead vs hand-writing DrawImage calls  -  but because it batches automatically, it's often **faster** than raw DrawImage.
+8. **Willow Coalesced vs Raw DrawTriangles32:** The theoretical floor is ~5-6x faster (pure pre-computed vertex submission). The gap is Willow's traversal + transform computation + sorting + vertex building  -  the cost of a retained-mode scene graph.
+9. **Particles are nearly optimal:** Willow Coalesced particle rendering is only 1.3x slower than raw DrawTriangles32  -  the scene graph overhead is minimal for particle batches.
 
 See `spec/optimization-research.md` for detailed optimization history and future research.

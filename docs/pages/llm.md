@@ -4,7 +4,7 @@ Common pitfalls and patterns that trip up AI code generators. Read this before w
 
 ## Camera Setup
 
-When creating a camera, you must position it at the center of the viewport — not at (0, 0). The camera's X/Y is where it *looks*, so centering it on screen means the world origin aligns with the top-left corner of the window.
+When creating a camera, you must position it at the center of the viewport  -  not at (0, 0). The camera's X/Y is where it *looks*, so centering it on screen means the world origin aligns with the top-left corner of the window.
 
 ```go
 cam := scene.NewCamera(willow.Rect{X: 0, Y: 0, Width: screenW, Height: screenH})
@@ -39,7 +39,7 @@ cam.Follow(playerNode, 0, 0, 1.0)  // instant snap
 
 ## Interactable Must Be Enabled
 
-Nodes have `Interactable = false` by default. If you set `OnClick`, `OnDrag`, or any pointer callback without enabling it, nothing will happen — the node is excluded from hit testing entirely.
+Nodes have `Interactable = false` by default. If you set `OnClick`, `OnDrag`, or any pointer callback without enabling it, nothing will happen  -  the node is excluded from hit testing entirely.
 
 ```go
 node.Interactable = true   // required for OnClick, OnDrag, etc.
@@ -53,7 +53,7 @@ node.OnClick = func(ctx willow.ClickContext) {
 For WhitePixel sprites (created with `willow.TextureRegion{}`), **do not set HitShape** unless you have a specific reason. The default hit test derives an AABB from the node's dimensions automatically.
 
 ```go
-// Correct — let the default AABB handle it:
+// Correct  -  let the default AABB handle it:
 sp := willow.NewSprite("handle", willow.TextureRegion{})
 sp.ScaleX = 32
 sp.ScaleY = 32
@@ -101,7 +101,7 @@ Create arbitrary polygon shapes with a slice of Vec2 points:
 tri := willow.NewPolygon("triangle", []willow.Vec2{
     {X: 0, Y: -40}, {X: 35, Y: 30}, {X: -35, Y: 30},
 })
-tri.Color = willow.Color{R: 1, G: 1, B: 1, A: 1}  // must set — Color{} is invisible
+tri.Color = willow.Color{R: 1, G: 1, B: 1, A: 1}  // must set  -  Color{} is invisible
 ```
 
 Update vertices at runtime with the free function:
@@ -120,20 +120,20 @@ group.AddChild(enemy2)
 scene.Root().AddChild(group)
 ```
 
-`NewContainer` returns `*Node` — same type as sprites and polygons. Containers have no visual of their own.
+`NewContainer` returns `*Node`  -  same type as sprites and polygons. Containers have no visual of their own.
 
 Use `container.RemoveChildren()` to detach all children. Use `child.RemoveFromParent()` to detach one child without destroying it.
 
 ## Invalidate After Direct Field Mutation
 
-Setting `node.X`, `node.Y`, or any other field directly does **not** invalidate the transform — the node will not move on screen until you call `Invalidate()`. Either call it yourself or use the setter methods which handle it for you:
+Setting `node.X`, `node.Y`, or any other field directly does **not** invalidate the transform  -  the node will not move on screen until you call `Invalidate()`. Either call it yourself or use the setter methods which handle it for you:
 
 ```go
 // Option A: direct fields + manual Invalidate (preferred in hot loops)
 node.X += dx
 node.Y += dy
 node.Rotation += 0.01
-node.Invalidate()  // required — without this, nothing visually changes
+node.Invalidate()  // required  -  without this, nothing visually changes
 
 // Option B: setter methods (call Invalidate internally)
 node.SetPosition(node.X + dx, node.Y + dy)
@@ -158,13 +158,13 @@ node.Color = willow.Color{R: 1, G: 0, B: 0, A: 1} // red tint at full color alph
 
 ## Color Zero Value Makes Nodes Invisible
 
-`Color` is multiplicative. The zero value `Color{}` means `{R:0, G:0, B:0, A:0}` — fully transparent black. `NewSprite` initializes Color to `{1,1,1,1}` automatically, but if you manually set `Color` to a zero struct, the node vanishes:
+`Color` is multiplicative. The zero value `Color{}` means `{R:0, G:0, B:0, A:0}`  -  fully transparent black. `NewSprite` initializes Color to `{1,1,1,1}` automatically, but if you manually set `Color` to a zero struct, the node vanishes:
 
 ```go
-// WRONG — sprite will be invisible:
+// WRONG  -  sprite will be invisible:
 sprite.Color = willow.Color{}  // alpha 0 → invisible
 
-// CORRECT — no tint:
+// CORRECT  -  no tint:
 sprite.Color = willow.Color{R: 1, G: 1, B: 1, A: 1}
 ```
 
@@ -191,7 +191,7 @@ sprite.PivotX = 32  // half of 64px width
 sprite.PivotY = 32
 ```
 
-WhitePixel sprites are 1×1, so `PivotX = 0.5` does center them — but only by coincidence.
+WhitePixel sprites are 1×1, so `PivotX = 0.5` does center them  -  but only by coincidence.
 
 ## Visible vs Renderable
 
@@ -224,7 +224,7 @@ Callbacks receive context structs with useful fields:
 
 ```go
 node.OnClick = func(ctx willow.ClickContext) {
-    ctx.Node      // *Node — the clicked node
+    ctx.Node      // *Node  -  the clicked node
     ctx.GlobalX   // world-space X
     ctx.GlobalY   // world-space Y
     ctx.LocalX    // node-local X
@@ -234,7 +234,7 @@ node.OnClick = func(ctx willow.ClickContext) {
 }
 
 node.OnDrag = func(ctx willow.DragContext) {
-    ctx.Node         // *Node — the dragged node
+    ctx.Node         // *Node  -  the dragged node
     ctx.DeltaX       // world-space movement since last drag event
     ctx.DeltaY       // world-space movement since last drag event
     ctx.ScreenDeltaX // screen-pixel movement (for camera panning)
@@ -286,7 +286,7 @@ scene.SetDragDeadZone(0)
 
 ## Constructors That Return Two Values
 
-`NewRope` and `NewDistortionGrid` return `(controller, node)` — not just a node. You need both:
+`NewRope` and `NewDistortionGrid` return `(controller, node)`  -  not just a node. You need both:
 
 ```go
 rope, ropeNode := willow.NewRope("cable", img, nil, config)
@@ -314,10 +314,10 @@ scene.Root().AddChild(viewport.Node())  // NOT viewport
 
 Ropes read their Start/End/Controls positions through pointers. You must ensure the pointers remain valid and that you mutate the **same** Vec2 the Rope references.
 
-**Common mistake:** creating a local Vec2, passing its address to `NewRope`, then copying it into a struct. The Rope still points at the original local — your struct copy is a different variable.
+**Common mistake:** creating a local Vec2, passing its address to `NewRope`, then copying it into a struct. The Rope still points at the original local  -  your struct copy is a different variable.
 
 ```go
-// WRONG — pointer aliases a loop-local that won't be updated:
+// WRONG  -  pointer aliases a loop-local that won't be updated:
 for i := range n {
     startPos := willow.Vec2{X: 100, Y: 200}
     r, rn := willow.NewRope("rope", img, nil, willow.RopeConfig{
@@ -327,7 +327,7 @@ for i := range n {
 }
 ropes[0].start.X = 999  // Rope never sees this!
 
-// CORRECT — allocate the struct first, then point at its fields:
+// CORRECT  -  allocate the struct first, then point at its fields:
 rb := &ropeBinding{
     start: willow.Vec2{X: 100, Y: 200},
     end:   willow.Vec2{X: 400, Y: 200},
@@ -338,7 +338,7 @@ r, rn := willow.NewRope("rope", img, nil, willow.RopeConfig{
 })
 rb.r = r
 
-// Each frame — mutate the same Vec2s the Rope reads:
+// Each frame  -  mutate the same Vec2s the Rope reads:
 rb.start.X = newX
 rb.r.Update()
 ```
@@ -389,10 +389,10 @@ Set `node.BlendMode` for compositing effects:
 
 ```go
 willow.BlendNormal    // standard alpha blending (default)
-willow.BlendAdd       // additive — overlapping particles brighten
-willow.BlendMultiply  // multiply — only darkens (used by LightLayer)
-willow.BlendScreen    // screen — only brightens
-willow.BlendErase     // destination-out — punches transparent holes
+willow.BlendAdd       // additive  -  overlapping particles brighten
+willow.BlendMultiply  // multiply  -  only darkens (used by LightLayer)
+willow.BlendScreen    // screen  -  only brightens
+willow.BlendErase     // destination-out  -  punches transparent holes
 willow.BlendMask      // clips destination to source alpha
 ```
 
@@ -441,7 +441,7 @@ mask := willow.NewSprite("circle-mask", atlas.Region("circle"))
 content.SetMask(mask)
 ```
 
-**The mask root node's own transform is ignored by the renderer** — only the transforms of its *children* are applied. Animated masks must use a container as root and put the actual shape one level below:
+**The mask root node's own transform is ignored by the renderer**  -  only the transforms of its *children* are applied. Animated masks must use a container as root and put the actual shape one level below:
 
 ```go
 maskRoot := willow.NewContainer("mask-root")
@@ -466,16 +466,16 @@ scene.SetUpdateFunc(func() error {
 })
 ```
 
-## SetUpdateFunc Replaces — It Does Not Chain
+## SetUpdateFunc Replaces  -  It Does Not Chain
 
 Calling `scene.SetUpdateFunc()` a second time replaces the previous callback. Put all per-frame logic in one function:
 
 ```go
-// WRONG — only the last one runs:
+// WRONG  -  only the last one runs:
 scene.SetUpdateFunc(func() error { lightLayer.Redraw(); return nil })
 scene.SetUpdateFunc(func() error { tween.Update(dt); return nil })
 
-// CORRECT — one function with everything:
+// CORRECT  -  one function with everything:
 scene.SetUpdateFunc(func() error {
     lightLayer.Redraw()
     if !tween.Done { tween.Update(dt) }
@@ -530,12 +530,12 @@ label := willow.NewText("label", "Hello", font)   // returns *Node
 scene.Root().AddChild(label)
 ```
 
-`NewFontFromTTF` generates the SDF atlas and registers the page automatically — no `RegisterPage` call needed. Size is the rasterization size (higher = sharper when scaled up). Use 0 for the default (80px).
+`NewFontFromTTF` generates the font atlas and registers the page automatically  -  no `RegisterPage` call needed. Size is the rasterization size (higher = sharper when scaled up). Use 0 for the default (80px).
 
-Set `SDFEffects` on the `TextBlock` (not the node) for outline, glow, and shadow. `nil` SDFEffects means plain fill only:
+Set `TextEffects` on the `TextBlock` (not the node) for outline, glow, and shadow. `nil` means plain fill only:
 
 ```go
-label.TextBlock.SDFEffects = &willow.SDFEffects{
+label.TextBlock.TextEffects = &willow.TextEffects{
     OutlineWidth: 2.0,
     OutlineColor: willow.Color{R: 0, G: 0, B: 0, A: 1},
 }
@@ -553,7 +553,7 @@ label.TextBlock.Outline = &willow.Outline{Color: willow.Color{A: 1}, Thickness: 
 label.TextBlock.Invalidate()  // NOT label.Invalidate()
 ```
 
-Changing `TextBlock` properties requires `node.TextBlock.Invalidate()` — not `node.Invalidate()`.
+Changing `TextBlock` properties requires `node.TextBlock.Invalidate()`  -  not `node.Invalidate()`.
 
 ### Font Measurement
 
@@ -575,8 +575,8 @@ Cache a subtree's render commands to avoid re-traversal. Ideal for large tilemap
 
 ```go
 container.SetCacheAsTree(true, willow.CacheTreeManual)
-// CacheTreeManual — you call container.InvalidateCacheTree() when tiles change
-// CacheTreeAuto  — auto-invalidates when setters on descendants are called (default)
+// CacheTreeManual  -  you call container.InvalidateCacheTree() when tiles change
+// CacheTreeAuto   -  auto-invalidates when setters on descendants are called (default)
 ```
 
 ## TileMapViewport
@@ -596,7 +596,7 @@ GID data is `[]uint32`. GID 0 is reserved as empty (not rendered). Valid tile ID
 
 ```go
 regions := []willow.TextureRegion{
-    {},                       // GID 0 — empty, unused
+    {},                       // GID 0  -  empty, unused
     atlas.Region("grass"),    // GID 1
     atlas.Region("dirt"),     // GID 2
 }

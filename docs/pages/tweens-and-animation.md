@@ -33,7 +33,7 @@ Each returns a `*TweenGroup`.
 
 ## Updating Tweens
 
-There is no global tween manager — you call `Update(dt)` yourself:
+There is no global tween manager  -  you call `Update(dt)` yourself:
 
 ```go
 var tween *willow.TweenGroup
@@ -60,7 +60,7 @@ func (g *TweenGroup) Update(dt float32)
 
 `Done` is automatically set to `true` when:
 - The tween reaches its target value
-- The target node is disposed (safe — no dangling pointer crashes)
+- The target node is disposed (safe  -  no dangling pointer crashes)
 
 ## Easing Functions
 
@@ -126,11 +126,11 @@ willow.Run(scene, willow.RunConfig{Title: "Tween Demo", Width: 640, Height: 480}
 
 ## Next Steps
 
-- [Particles](?page=particles) — CPU-simulated particle effects
-- [Mesh & Distortion](?page=meshes) — deformable vertex geometry
+- [Particles](?page=particles)  -  CPU-simulated particle effects
+- [Mesh & Distortion](?page=meshes)  -  deformable vertex geometry
 
 ## Related
 
-- [Camera & Viewport](?page=camera-and-viewport) — `ScrollTo` uses the same easing functions
-- [Clipping & Masks](?page=clipping-and-masks) — animated masks with tweens
-- [Nodes](?page=nodes) — node properties that tweens target
+- [Camera & Viewport](?page=camera-and-viewport)  -  `ScrollTo` uses the same easing functions
+- [Clipping & Masks](?page=clipping-and-masks)  -  animated masks with tweens
+- [Nodes](?page=nodes)  -  node properties that tweens target

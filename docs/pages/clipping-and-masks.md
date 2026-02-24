@@ -4,7 +4,7 @@
   <img src="gif/masks.gif" alt="Masks demo" width="400">
 </p>
 
-Masks let you clip a node's rendering to the alpha channel of another node. The mask node is not part of the scene tree — its transforms are relative to the masked node.
+Masks let you clip a node's rendering to the alpha channel of another node. The mask node is not part of the scene tree  -  its transforms are relative to the masked node.
 
 ## Setting a Mask
 
@@ -83,11 +83,11 @@ tween := willow.TweenScale(mask, 2, 2, 1.0, ease.InOutQuad)
 
 ## Next Steps
 
-- [Post-Processing Filters](?page=post-processing-filters) — shader-based visual effects
-- [CacheAsTexture](?page=cache-as-texture) — cache static masked content
+- [Post-Processing Filters](?page=post-processing-filters)  -  shader-based visual effects
+- [CacheAsTexture](?page=cache-as-texture)  -  cache static masked content
 
 ## Related
 
-- [Solid-Color Sprites](?page=solid-color-sprites) — WhitePixel sprites for geometric masks
-- [Tweens & Animation](?page=tweens-and-animation) — animate mask transforms
-- [Nodes](?page=nodes) — blend modes including `BlendErase` and `BlendMask`
+- [Solid-Color Sprites](?page=solid-color-sprites)  -  WhitePixel sprites for geometric masks
+- [Tweens & Animation](?page=tweens-and-animation)  -  animate mask transforms
+- [Nodes](?page=nodes)  -  blend modes including `BlendErase` and `BlendMask`

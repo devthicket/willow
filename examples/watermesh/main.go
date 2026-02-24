@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	windowTitle = "Willow — Water Mesh"
+	windowTitle = "Willow  -  Water Mesh"
 	showFPS     = true
 	screenW     = 640
 	screenH     = 480

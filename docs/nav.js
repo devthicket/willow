@@ -1,4 +1,4 @@
-// Willow Documentation — Navigation Data & Sidebar Logic
+// Willow Documentation  -  Navigation Data & Sidebar Logic
 
 const REFERENCE_ITEMS = [
     { label: "API Reference", href: "https://pkg.go.dev/github.com/phanxgames/willow" },
@@ -291,7 +291,7 @@ function navigateTo(page, anchor) {
         : `viewer.html?page=${page}`;
 
     // If only the anchor changed (same page), setting iframe.src won't
-    // reload — just scroll within the already-loaded document instead.
+    // reload  -  just scroll within the already-loaded document instead.
     const currentPage = new URL(iframe.src, location.href).searchParams.get("page");
     if (currentPage === page && anchor) {
         try {

@@ -63,7 +63,7 @@ scene.Root().AddChild(ropeNode)
 
 ### Updating a Rope
 
-Bind `Start` and `End` to `*Vec2` pointers — mutate the values, then call `Update()`:
+Bind `Start` and `End` to `*Vec2` pointers  -  mutate the values, then call `Update()`:
 
 ```go
 start.X = mouseX

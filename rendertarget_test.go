@@ -123,7 +123,7 @@ func TestInvalidateCache(t *testing.T) {
 
 func TestInvalidateCacheNoCacheNoOp(t *testing.T) {
 	n := NewSprite("s", TextureRegion{Width: 32, Height: 32})
-	n.InvalidateCache() // cache not enabled — should be no-op
+	n.InvalidateCache() // cache not enabled  -  should be no-op
 	if n.cacheDirty {
 		t.Error("InvalidateCache on non-cached node should not set dirty")
 	}

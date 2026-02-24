@@ -205,7 +205,7 @@ func TestParentRecomputedPropagates(t *testing.T) {
 	child.X = 10
 	updateWorldTransform(parent, identityTransform, 1.0, false, false)
 
-	// Move parent — child is not directly dirty but must update
+	// Move parent  -  child is not directly dirty but must update
 	parent.SetPosition(200, 0)
 	updateWorldTransform(parent, identityTransform, 1.0, false, false)
 
@@ -412,7 +412,7 @@ func BenchmarkUpdateWorldTransformStatic(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for b.Loop() {
-		// All clean — should be near-zero cost
+		// All clean  -  should be near-zero cost
 		updateWorldTransform(root, identityTransform, 1.0, false, false)
 	}
 }

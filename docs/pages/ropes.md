@@ -32,7 +32,7 @@ scene.Root().AddChild(ropeNode)
 
 ## Updating a Rope
 
-Bind `Start` and `End` to `*Vec2` pointers — mutate the values, then call `Update()`:
+Bind `Start` and `End` to `*Vec2` pointers  -  mutate the values, then call `Update()`:
 
 ```go
 start.X = mouseX
@@ -55,11 +55,11 @@ rope.SetPoints([]willow.Vec2{{X: 0, Y: 0}, {X: 50, Y: 100}, {X: 100, Y: 0}})
 
 ## Next Steps
 
-- [Lighting](?page=lighting) — 2D light layer compositing
-- [Clipping & Masks](?page=clipping-and-masks) — alpha-based masking
+- [Lighting](?page=lighting)  -  2D light layer compositing
+- [Clipping & Masks](?page=clipping-and-masks)  -  alpha-based masking
 
 ## Related
 
-- [Mesh & Distortion](?page=meshes) — raw vertex geometry and distortion grids
-- [Polygons](?page=polygons) — ear-clip triangulated polygon shapes
-- [Tweens & Animation](?page=tweens-and-animation) — animate rope endpoints
+- [Mesh & Distortion](?page=meshes)  -  raw vertex geometry and distortion grids
+- [Polygons](?page=polygons)  -  ear-clip triangulated polygon shapes
+- [Tweens & Animation](?page=tweens-and-animation)  -  animate rope endpoints

@@ -1,6 +1,6 @@
 # Demos
 
-Live WASM demos running directly in your browser — no install required.
+Live WASM demos running directly in your browser  -  no install required.
 
 ## 10k Sprites
 
@@ -14,7 +14,7 @@ Live WASM demos running directly in your browser — no install required.
 
 <a href="demos/physics/" target="_blank"><img src="demos/physics/thumbnail.png" alt="Physics Shapes demo screenshot" width="640"></a>
 
-~50 random shapes (circles, squares, triangles, pentagons, hexagons) with gravity, collisions, and click-to-jump. Heavier shapes fall faster and are harder to push — click any shape to give it an upward impulse.
+~50 random shapes (circles, squares, triangles, pentagons, hexagons) with gravity, collisions, and click-to-jump. Heavier shapes fall faster and are harder to push  -  click any shape to give it an upward impulse.
 
 <a href="demos/physics/" target="_blank">Launch Demo</a> · <a href="https://github.com/phanxgames/willow/tree/main/demos/physics" target="_blank">Source Code</a>
 
@@ -22,7 +22,7 @@ Live WASM demos running directly in your browser — no install required.
 
 <a href="demos/ropegarden/" target="_blank"><img src="demos/ropegarden/thumbnail.png" alt="Rope Garden demo screenshot" width="640"></a>
 
-A cable-untangling puzzle. Eight color-coded cables connect sockets on the left to matching sockets on the right. The pegs start shuffled, creating a tangle — drag each peg to the socket that matches its color to straighten every cable and win.
+A cable-untangling puzzle. Eight color-coded cables connect sockets on the left to matching sockets on the right. The pegs start shuffled, creating a tangle  -  drag each peg to the socket that matches its color to straighten every cable and win.
 
 <a href="demos/ropegarden/" target="_blank">Launch Demo</a> · <a href="https://github.com/phanxgames/willow/tree/main/demos/ropegarden" target="_blank">Source Code</a>
 
@@ -30,7 +30,7 @@ A cable-untangling puzzle. Eight color-coded cables connect sockets on the left 
 
 <a href="demos/tweengallery/" target="_blank"><img src="demos/tweengallery/thumbnail.png" alt="Tween Gallery demo screenshot" width="640"></a>
 
-An interactive showcase of Willow's tween animation system. Five whelp sprites each demonstrate a different tween property — position, scale, rotation, alpha, and color. Click any of the 12 easing function buttons to see the selected curve applied to all five properties simultaneously. Animations loop automatically for easy comparison.
+An interactive showcase of Willow's tween animation system. Five whelp sprites each demonstrate a different tween property  -  position, scale, rotation, alpha, and color. Click any of the 12 easing function buttons to see the selected curve applied to all five properties simultaneously. Animations loop automatically for easy comparison.
 
 <a href="demos/tweengallery/" target="_blank">Launch Demo</a> · <a href="https://github.com/phanxgames/willow/tree/main/demos/tweengallery" target="_blank">Source Code</a>
 
@@ -38,7 +38,7 @@ An interactive showcase of Willow's tween animation system. Five whelp sprites e
 
 <a href="demos/filtergallery/" target="_blank"><img src="demos/filtergallery/thumbnail.png" alt="Filter Gallery demo screenshot" width="640"></a>
 
-An interactive showcase of every built-in Willow filter. A whelp sprite sits in the center with 10 toggle buttons below — click to activate filters individually or stack them together. Includes static filters (blur, sepia, outline, inline, pixel-perfect outline, grayscale, contrast) and animated ones (oscillating brightness, continuous hue rotation, palette cycling).
+An interactive showcase of every built-in Willow filter. A whelp sprite sits in the center with 10 toggle buttons below  -  click to activate filters individually or stack them together. Includes static filters (blur, sepia, outline, inline, pixel-perfect outline, grayscale, contrast) and animated ones (oscillating brightness, continuous hue rotation, palette cycling).
 
 <a href="demos/filtergallery/" target="_blank">Launch Demo</a> · <a href="https://github.com/phanxgames/willow/tree/main/demos/filtergallery" target="_blank">Source Code</a>
 

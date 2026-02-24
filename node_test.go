@@ -343,7 +343,7 @@ func TestSetChildIndexFirstToLast(t *testing.T) {
 	parent.AddChild(a)
 	parent.AddChild(b)
 
-	// Move a (index 0) to index 1 — the old bug case.
+	// Move a (index 0) to index 1  -  the old bug case.
 	parent.SetChildIndex(a, 1)
 	if parent.ChildAt(0) != b || parent.ChildAt(1) != a {
 		t.Errorf("got [%s, %s], want [b, a]",

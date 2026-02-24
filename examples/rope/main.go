@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	windowTitle = "Willow — Rope Example"
+	windowTitle = "Willow  -  Rope Example"
 	showFPS     = true
 	screenW     = 640
 	screenH     = 480
@@ -45,7 +45,7 @@ func (d *demo) update() error {
 	d.orbiter.Y = my + math.Sin(d.time*1.2)*orbitR*0.6
 	d.orbiter.Invalidate()
 
-	// Update the bound Vec2s — rope.Update() reads these by reference.
+	// Update the bound Vec2s  -  rope.Update() reads these by reference.
 	d.start.X = d.handleA.X
 	d.start.Y = d.handleA.Y
 	d.end.X = d.handleB.X
@@ -81,7 +81,7 @@ func main() {
 		}
 	}
 
-	// Positions bound to the rope — mutate these, then call rope.Update().
+	// Positions bound to the rope  -  mutate these, then call rope.Update().
 	start := willow.Vec2{X: 160, Y: 200}
 	end := willow.Vec2{X: 480, Y: 200}
 	ctrl := willow.Vec2{X: (start.X + end.X) / 2, Y: (start.Y + end.Y) / 2}

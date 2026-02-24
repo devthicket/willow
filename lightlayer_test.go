@@ -75,7 +75,7 @@ func TestLightLayerRedrawNoPanic(t *testing.T) {
 	ll := NewLightLayer(128, 128, 0.5)
 	defer ll.Dispose()
 
-	// No lights — should not panic.
+	// No lights  -  should not panic.
 	ll.Redraw()
 
 	// Enabled light.
@@ -106,7 +106,7 @@ func TestLightLayerSetCircleRadius(t *testing.T) {
 		t.Error("circleCache should contain key 25")
 	}
 
-	// Generate with different radius — both should be cached.
+	// Generate with different radius  -  both should be cached.
 	ll.SetCircleRadius(50)
 	if _, ok := ll.circleCache[50]; !ok {
 		t.Error("circleCache should contain key 50")

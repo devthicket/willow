@@ -2,7 +2,7 @@ package willow
 
 // SetMask sets a mask node for this node. The mask node's alpha channel
 // determines which parts of this node are visible. The mask node is NOT
-// part of the scene tree — its transforms are relative to the masked node.
+// part of the scene tree  -  its transforms are relative to the masked node.
 func (n *Node) SetMask(maskNode *Node) {
 	n.mask = maskNode
 	invalidateAncestorCache(n)

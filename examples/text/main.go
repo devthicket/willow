@@ -1,7 +1,7 @@
-// Text demonstrates SDF font rendering with willow.NewText and willow.NewFontFromTTF.
+// Text demonstrates font rendering with willow.NewText and willow.NewFontFromTTF.
 // Shows colors, alignment, word wrapping, multi-line alignment, live content
-// updates, and SDF text effects (outline, glow, shadow).
-// No external asset files — the Go Regular font is sourced from golang.org/x/image.
+// updates, and text effects (outline, glow, shadow).
+// No external asset files  -  the Go Regular font is sourced from golang.org/x/image.
 package main
 
 import (
@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	windowTitle = "Willow — SDF Text Example"
+	windowTitle = "Willow  -  Text Example"
 	showFPS     = true
 	screenW     = 800
 	screenH     = 700
@@ -48,8 +48,8 @@ func main() {
 	const medium = 0.28 // ~22px
 	const small = 0.20  // ~16px
 
-	// ── Title ─────────────────────────────────────────────────────────────────
-	title := willow.NewText("title", "Willow — SDF Text", font)
+	// ---- Title ----------------------------------------------------------------------------------------------------------------------------------
+	title := willow.NewText("title", "Willow  -  Text", font)
 	title.TextBlock.Color = willow.Color{R: 1, G: 1, B: 1, A: 1}
 	title.TextBlock.Align = willow.TextAlignRight
 	title.TextBlock.WrapWidth = (screenW - 48) / large
@@ -59,7 +59,7 @@ func main() {
 	title.Y = 18
 	root.AddChild(title)
 
-	// ── Colors ────────────────────────────────────────────────────────────────
+	// ---- Colors --------------------------------------------------------------------------------------------------------------------------------
 	addLabel(root, font, small, "Colors", 24, 62)
 
 	colors := []struct {
@@ -84,7 +84,7 @@ func main() {
 		x += w*medium + 24
 	}
 
-	// ── Single-line Alignment ─────────────────────────────────────────────────
+	// ---- Single-line Alignment --------------------------------------------------------------------------------------------------
 	addLabel(root, font, small, "Single-line Alignment", 24, 118)
 
 	for _, a := range []struct {
@@ -108,7 +108,7 @@ func main() {
 		root.AddChild(n)
 	}
 
-	// ── Multi-line Alignment ──────────────────────────────────────────────────
+	// ---- Multi-line Alignment ----------------------------------------------------------------------------------------------------
 	const wrapW = 300.0
 	const colY = 240.0
 	addLabel(root, font, small, "Multi-line Alignment  (wrap 300px)", 24, 224)
@@ -141,64 +141,64 @@ func main() {
 		root.AddChild(n)
 	}
 
-	// ── SDF Text Effects ─────────────────────────────────────────────────────
-	addLabel(root, font, small, "SDF Text Effects", 24, 346)
+	// ---- Text Effects ----------------------------------------------------------------------------------------------------------------
+	addLabel(root, font, small, "Text Effects", 24, 346)
 
 	const effectScale = 0.5
 
 	// Plain
-	sdfPlain := willow.NewText("sdf-plain", "Plain Text", font)
-	sdfPlain.TextBlock.Color = willow.Color{R: 1, G: 1, B: 1, A: 1}
-	sdfPlain.ScaleX = effectScale
-	sdfPlain.ScaleY = effectScale
-	sdfPlain.X = 24
-	sdfPlain.Y = 370
-	root.AddChild(sdfPlain)
+	plain := willow.NewText("fx-plain", "Plain Text", font)
+	plain.TextBlock.Color = willow.Color{R: 1, G: 1, B: 1, A: 1}
+	plain.ScaleX = effectScale
+	plain.ScaleY = effectScale
+	plain.X = 24
+	plain.Y = 370
+	root.AddChild(plain)
 
 	// Outline
-	sdfOutlined := willow.NewText("sdf-outline", "Outlined", font)
-	sdfOutlined.TextBlock.Color = willow.Color{R: 1, G: 0.95, B: 0.7, A: 1}
-	sdfOutlined.TextBlock.SDFEffects = &willow.SDFEffects{
+	outlined := willow.NewText("fx-outline", "Outlined", font)
+	outlined.TextBlock.Color = willow.Color{R: 1, G: 0.95, B: 0.7, A: 1}
+	outlined.TextBlock.TextEffects = &willow.TextEffects{
 		OutlineWidth: 2.0,
 		OutlineColor: willow.Color{R: 0.1, G: 0.1, B: 0.3, A: 1},
 	}
-	sdfOutlined.ScaleX = effectScale
-	sdfOutlined.ScaleY = effectScale
-	sdfOutlined.X = 24
-	sdfOutlined.Y = 420
-	root.AddChild(sdfOutlined)
+	outlined.ScaleX = effectScale
+	outlined.ScaleY = effectScale
+	outlined.X = 24
+	outlined.Y = 420
+	root.AddChild(outlined)
 
 	// Glow
-	sdfGlow := willow.NewText("sdf-glow", "Glowing", font)
-	sdfGlow.TextBlock.Color = willow.Color{R: 0.4, G: 0.9, B: 1, A: 1}
-	sdfGlow.TextBlock.SDFEffects = &willow.SDFEffects{
+	glowing := willow.NewText("fx-glow", "Glowing", font)
+	glowing.TextBlock.Color = willow.Color{R: 0.4, G: 0.9, B: 1, A: 1}
+	glowing.TextBlock.TextEffects = &willow.TextEffects{
 		GlowWidth: 3.0,
 		GlowColor: willow.Color{R: 0.2, G: 0.5, B: 1, A: 0.6},
 	}
-	sdfGlow.ScaleX = effectScale
-	sdfGlow.ScaleY = effectScale
-	sdfGlow.X = 24
-	sdfGlow.Y = 470
-	root.AddChild(sdfGlow)
+	glowing.ScaleX = effectScale
+	glowing.ScaleY = effectScale
+	glowing.X = 24
+	glowing.Y = 470
+	root.AddChild(glowing)
 
 	// Shadow
-	sdfShadow := willow.NewText("sdf-shadow", "Shadow", font)
-	sdfShadow.TextBlock.Color = willow.Color{R: 1, G: 1, B: 1, A: 1}
-	sdfShadow.TextBlock.SDFEffects = &willow.SDFEffects{
+	shadow := willow.NewText("fx-shadow", "Shadow", font)
+	shadow.TextBlock.Color = willow.Color{R: 1, G: 1, B: 1, A: 1}
+	shadow.TextBlock.TextEffects = &willow.TextEffects{
 		ShadowOffset:   willow.Vec2{X: 3, Y: 3},
 		ShadowColor:    willow.Color{R: 0, G: 0, B: 0, A: 0.7},
 		ShadowSoftness: 1.5,
 	}
-	sdfShadow.ScaleX = effectScale
-	sdfShadow.ScaleY = effectScale
-	sdfShadow.X = 24
-	sdfShadow.Y = 520
-	root.AddChild(sdfShadow)
+	shadow.ScaleX = effectScale
+	shadow.ScaleY = effectScale
+	shadow.X = 24
+	shadow.Y = 520
+	root.AddChild(shadow)
 
 	// All effects combined
-	sdfAll := willow.NewText("sdf-all", "All Effects", font)
-	sdfAll.TextBlock.Color = willow.Color{R: 1, G: 0.85, B: 0.3, A: 1}
-	sdfAll.TextBlock.SDFEffects = &willow.SDFEffects{
+	allFx := willow.NewText("fx-all", "All Effects", font)
+	allFx.TextBlock.Color = willow.Color{R: 1, G: 0.85, B: 0.3, A: 1}
+	allFx.TextBlock.TextEffects = &willow.TextEffects{
 		OutlineWidth:   1.5,
 		OutlineColor:   willow.Color{R: 0.2, G: 0, B: 0, A: 1},
 		GlowWidth:      2.0,
@@ -207,13 +207,13 @@ func main() {
 		ShadowColor:    willow.Color{R: 0, G: 0, B: 0, A: 0.5},
 		ShadowSoftness: 1.0,
 	}
-	sdfAll.ScaleX = effectScale
-	sdfAll.ScaleY = effectScale
-	sdfAll.X = 24
-	sdfAll.Y = 570
-	root.AddChild(sdfAll)
+	allFx.ScaleX = effectScale
+	allFx.ScaleY = effectScale
+	allFx.X = 24
+	allFx.Y = 570
+	root.AddChild(allFx)
 
-	// ── Live update ───────────────────────────────────────────────────────────
+	// ---- Live update ----------------------------------------------------------------------------------------------------------------------
 	addLabel(root, font, small, "Live update", 450, 346)
 
 	counter := willow.NewText("counter", "Frame: 0", font)

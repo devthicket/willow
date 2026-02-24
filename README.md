@@ -42,7 +42,7 @@ Ebitengine            - GPU backend, window, audio, platform
 
 Willow exists so you don't have to rebuild that foundation every time.
 
-Ebitengine is intentionally low-level — that's its strength. Willow is a higher-level framework on top of it, so you can focus on gameplay instead of rendering infrastructure.
+Ebitengine is intentionally low-level  -  that's its strength. Willow is a higher-level framework on top of it, so you can focus on gameplay instead of rendering infrastructure.
 
 Inspired by [Starling](https://gamua.com/starling/), Flash display lists, and [PixiJS](https://pixijs.com/)  -  scene graph architectures that powered millions of 2D games  -  adapted for Go's strengths: simplicity and performance.
 

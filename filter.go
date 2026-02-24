@@ -120,7 +120,7 @@ func Fragment(dst vec4, src vec2, color vec4) vec4 {
 }
 `
 
-// --- Lazy shader compilation (no sync.Once — willow is single-threaded) ---
+// --- Lazy shader compilation (no sync.Once  -  willow is single-threaded) ---
 
 var (
 	colorMatrixShader *ebiten.Shader
@@ -237,7 +237,7 @@ func (f *ColorMatrixFilter) SetSaturation(s float64) {
 // Apply renders the color matrix transformation from src into dst.
 func (f *ColorMatrixFilter) Apply(src, dst *ebiten.Image) {
 	shader := ensureColorMatrixShader()
-	// Convert [20]float64 to [20]float32 in-place (no allocation — matrixSlice
+	// Convert [20]float64 to [20]float32 in-place (no allocation  -  matrixSlice
 	// already points into matrixF32 and is pre-stored in the uniforms map).
 	for i, v := range f.Matrix {
 		f.matrixF32[i] = float32(v)
@@ -254,7 +254,7 @@ func (f *ColorMatrixFilter) Padding() int { return 0 }
 // --- BlurFilter ---
 
 // BlurFilter applies a Kawase iterative blur using downscale/upscale passes.
-// No Kage shader needed — bilinear filtering during DrawImage does the work.
+// No Kage shader needed  -  bilinear filtering during DrawImage does the work.
 type BlurFilter struct {
 	Radius int
 	temps  []*ebiten.Image

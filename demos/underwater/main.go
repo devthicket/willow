@@ -25,7 +25,7 @@ var tilesetPNG []byte
 var whelpPNG []byte
 
 const (
-	windowTitle = "Willow — Underwater"
+	windowTitle = "Willow  -  Underwater"
 	showFPS     = true
 	screenW     = 1280
 	screenH     = 720
@@ -47,7 +47,7 @@ type demo struct {
 	scene *willow.Scene
 	time  float64
 
-	// Porthole tracking — move together with the cursor
+	// Porthole tracking  -  move together with the cursor
 	maskChild         *willow.Node // circle inside underwater mask container
 	surfaceEraseChild *willow.Node // BlendErase circle inside surface mask layer 1
 	surfaceEraseHole2 *willow.Node // BlendErase circle inside surface mask layer 2

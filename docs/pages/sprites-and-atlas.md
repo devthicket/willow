@@ -69,9 +69,9 @@ If a name isn't found, `Region()` returns a magenta placeholder and logs a warni
 4. Use `atlas.Region("name")` to get regions for sprites
 
 TexturePacker features supported:
-- **Trimming** — `OffsetX`/`OffsetY` and `OriginalW`/`OriginalH` handle trimmed whitespace
-- **Rotation** — 90-degree CW rotation is handled automatically
-- **Multi-page** — pass multiple page images to `LoadAtlas`
+- **Trimming**  -  `OffsetX`/`OffsetY` and `OriginalW`/`OriginalH` handle trimmed whitespace
+- **Rotation**  -  90-degree CW rotation is handled automatically
+- **Multi-page**  -  pass multiple page images to `LoadAtlas`
 
 ## Multi-Page Atlases
 
@@ -95,11 +95,11 @@ scene.RegisterPage(0, pageImage)
 
 ## Next Steps
 
-- [Camera & Viewport](?page=camera-and-viewport) — viewport setup, follow, zoom, and culling
-- [Text & Fonts](?page=text-and-fonts) — bitmap and TTF text rendering
+- [Camera & Viewport](?page=camera-and-viewport)  -  viewport setup, follow, zoom, and culling
+- [Text & Fonts](?page=text-and-fonts)  -  bitmap and TTF text rendering
 
 ## Related
 
-- [Solid-Color Sprites](?page=solid-color-sprites) — shapes without textures using `WhitePixel`
-- [Scene](?page=scene) — atlas loading via `scene.LoadAtlas()`
-- [Nodes](?page=nodes) — node types and visual properties
+- [Solid-Color Sprites](?page=solid-color-sprites)  -  shapes without textures using `WhitePixel`
+- [Scene](?page=scene)  -  atlas loading via `scene.LoadAtlas()`
+- [Nodes](?page=nodes)  -  node types and visual properties

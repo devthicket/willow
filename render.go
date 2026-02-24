@@ -56,7 +56,7 @@ type RenderCommand struct {
 	// emitted this command. Only populated when building under a cached ancestor.
 	emittingNodeID uint32
 
-	// Tilemap fields (CommandTilemap only — slice headers, not copies).
+	// Tilemap fields (CommandTilemap only  -  slice headers, not copies).
 	tilemapVerts []ebiten.Vertex
 	tilemapInds  []uint16
 	tilemapImage *ebiten.Image
@@ -71,7 +71,7 @@ func affine32(m [6]float64) [6]float32 {
 }
 
 // traverse walks the node tree depth-first, emitting render commands for
-// visible, renderable leaf nodes. It is read-only w.r.t. worldTransform —
+// visible, renderable leaf nodes. It is read-only w.r.t. worldTransform  -
 // transforms are computed by updateWorldTransform in Update, and traverse
 // applies s.viewTransform locally for screen-space output.
 func (s *Scene) traverse(n *Node, treeOrder *int) {
@@ -83,7 +83,7 @@ func (s *Scene) traverse(n *Node, treeOrder *int) {
 	viewWorld := multiplyAffine(s.viewTransform, n.worldTransform)
 
 	// Determine if this node is culled. Culling only suppresses this node's
-	// command emission — children are ALWAYS traversed because any node type
+	// command emission  -  children are ALWAYS traversed because any node type
 	// may have children whose world positions differ from the parent's AABB.
 	culled := s.cullActive && n.Renderable && shouldCull(n, viewWorld, s.cullBounds)
 
@@ -93,11 +93,11 @@ func (s *Scene) traverse(n *Node, treeOrder *int) {
 		containerAlpha := float32(n.worldAlpha)
 
 		if !n.cacheTreeDirty && len(n.cachedCommands) > 0 {
-			// Cache hit — delta remap and replay.
+			// Cache hit  -  delta remap and replay.
 			s.replayCacheAsTree(n, containerTransform32, containerAlpha, treeOrder)
 			return
 		}
-		// Cache miss — traverse normally, then capture.
+		// Cache miss  -  traverse normally, then capture.
 		s.buildCacheAsTree(n, containerTransform32, containerAlpha, treeOrder)
 		return
 	}
@@ -344,7 +344,7 @@ func mergeRun(src, dst []RenderCommand, lo, mid, hi int) {
 // renderSpecialNode handles nodes with masks, cache, or filters.
 // Processing order: bounds → adjust transform → cache check → render subtree → apply mask → apply filters → cache store → emit command.
 func (s *Scene) renderSpecialNode(n *Node, treeOrder *int) {
-	// Compute bounds up-front — needed by all paths to build the correct
+	// Compute bounds up-front  -  needed by all paths to build the correct
 	// screen-space transform.  RT pixel (0,0) corresponds to local
 	// (bounds.X, bounds.Y), not local (0,0), so the world transform must be
 	// shifted by the world-space equivalent of that offset.
@@ -568,7 +568,7 @@ func (s *Scene) buildCacheAsTree(n *Node, containerTransform32 [6]float32, conta
 		}
 	}
 
-	// Traverse children with culling disabled — the cache must capture ALL
+	// Traverse children with culling disabled  -  the cache must capture ALL
 	// children regardless of current viewport so panning replays correctly.
 	prevCull := s.cullActive
 	s.cullActive = false
@@ -601,7 +601,7 @@ func (s *Scene) buildCacheAsTree(n *Node, containerTransform32 [6]float32, conta
 	}
 
 	if blocked {
-		// Can't cache — disable and fall through. Commands are already emitted.
+		// Can't cache  -  disable and fall through. Commands are already emitted.
 		n.cacheTreeDirty = true
 		return
 	}
@@ -652,5 +652,5 @@ func (s *Scene) emitNodeCommandInline(n *Node, treeOrder *int) {
 			s.commands = emitSDFTextCommand(n.TextBlock, n, viewWorld, s.commands, treeOrder)
 		}
 	}
-	// Mesh/Particle handled as "blocked" — won't reach here during cache build
+	// Mesh/Particle handled as "blocked"  -  won't reach here during cache build
 }

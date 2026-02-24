@@ -1,5 +1,5 @@
 // physics spawns random shapes with gravity, collisions, and click-to-explode.
-// All shapes are procedural (no textures) — compiled to WASM for the docs site.
+// All shapes are procedural (no textures)  -  compiled to WASM for the docs site.
 package main
 
 import (
@@ -26,7 +26,7 @@ const (
 	// Flash animation
 	flashFrames = 12
 
-	// Collision solver iterations — more passes = less clipping
+	// Collision solver iterations  -  more passes = less clipping
 	solverPasses = 3
 )
 
@@ -157,7 +157,7 @@ func main() {
 					nx := dx / dist
 					ny := dy / dist
 
-					// Positional correction — push apart proportional to mass
+					// Positional correction  -  push apart proportional to mass
 					overlap := minDist - dist
 					totalMass := a.mass + b.mass
 					a.node.X -= nx * overlap * (b.mass / totalMass)
@@ -210,7 +210,7 @@ func main() {
 	})
 
 	if err := willow.Run(scene, willow.RunConfig{
-		Title:   "Willow — Physics Shapes",
+		Title:   "Willow  -  Physics Shapes",
 		Width:   screenW,
 		Height:  screenH,
 		ShowFPS: true,

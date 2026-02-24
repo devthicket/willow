@@ -1,5 +1,5 @@
 // Lighting Demo showcases the LightLayer system in a dark dungeon scene.
-// Heavy ambient darkness makes lighting dramatic — torches flicker on pillars,
+// Heavy ambient darkness makes lighting dramatic  -  torches flicker on pillars,
 // magical wisps drift autonomously, and a lantern follows the cursor.
 // Click anywhere to spawn a temporary flash. Click a torch to toggle it.
 package main
@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	windowTitle = "Willow — Lighting Demo"
+	windowTitle = "Willow  -  Lighting Demo"
 	showFPS     = true
 	screenW     = 800
 	screenH     = 600
@@ -385,7 +385,7 @@ func main() {
 	}
 	lightLayer.AddLight(lantern)
 
-	// Light layer must be added last — composites darkness over everything.
+	// Light layer must be added last  -  composites darkness over everything.
 	scene.Root().AddChild(lightLayer.Node())
 
 	// ---- HUD labels (added after light layer so they're always visible) -----

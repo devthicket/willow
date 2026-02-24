@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	windowTitle = "Willow — TileMapViewport Example"
+	windowTitle = "Willow  -  TileMapViewport Example"
 	screenW     = 1920
 	screenH     = 1080
 	tileSize    = 32
@@ -84,7 +84,7 @@ func main() {
 	decor := viewport.AddTileLayer("decor", mapWidth, mapHeight, decorData, regions, img)
 	decor.Node().RenderLayer = 1
 
-	// Sandwich entity layer (RenderLayer 2) — a few colored sprites as "NPCs".
+	// Sandwich entity layer (RenderLayer 2)  -  a few colored sprites as "NPCs".
 	entityLayer := willow.NewContainer("entities")
 	entityLayer.RenderLayer = 2
 	viewport.AddChild(entityLayer)
@@ -100,7 +100,7 @@ func main() {
 		entityLayer.AddChild(npc)
 	}
 
-	// Upper tile layer (RenderLayer 3) — sparse overlay that draws on top of entities.
+	// Upper tile layer (RenderLayer 3)  -  sparse overlay that draws on top of entities.
 	upperData := make([]uint32, mapWidth*mapHeight)
 	for i := range upperData {
 		if rand.IntN(20) == 0 { // 5% coverage

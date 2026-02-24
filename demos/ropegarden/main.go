@@ -1,4 +1,4 @@
-// Rope Garden — a cable-untangling puzzle.
+// Rope Garden  -  a cable-untangling puzzle.
 //
 // Eight color-coded cables stretch between two columns of sockets. Each cable
 // has a left peg and a right peg. The pegs start shuffled onto wrong sockets,
@@ -62,8 +62,8 @@ type peg struct {
 type cable struct {
 	rope      *willow.Rope
 	node      *willow.Node
-	start     willow.Vec2   // rope reads &start — must be stable pointer
-	end       willow.Vec2   // rope reads &end   — must be stable pointer
+	start     willow.Vec2   // rope reads &start  -  must be stable pointer
+	end       willow.Vec2   // rope reads &end    -  must be stable pointer
 	normalImg *ebiten.Image // dimmed texture (unsolved)
 	solvedImg *ebiten.Image // bright green texture (solved)
 	solved    bool
@@ -110,7 +110,7 @@ func main() {
 	scene.SetUpdateFunc(p.update)
 
 	if err := willow.Run(scene, willow.RunConfig{
-		Title:   "Willow — Rope Garden",
+		Title:   "Willow  -  Rope Garden",
 		Width:   screenW,
 		Height:  screenH,
 		ShowFPS: true,

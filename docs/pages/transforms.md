@@ -32,7 +32,7 @@ Every node has a local transform defined by position, scale, rotation, skew, and
 **Direct field assignment** (`node.X = 10`) does *not* trigger dirty marking. Use it for bulk updates, then call `Invalidate()` once:
 
 ```go
-// Bulk update — one dirty mark
+// Bulk update  -  one dirty mark
 node.X = 100
 node.Y = 200
 node.ScaleX = 2
@@ -81,7 +81,7 @@ child.X = 50  // world position = (150, 100)
 parent.AddChild(child)
 ```
 
-Scaling and rotation are also inherited — scaling a parent scales all children. Alpha is multiplicatively inherited.
+Scaling and rotation are also inherited  -  scaling a parent scales all children. Alpha is multiplicatively inherited.
 
 ## Dirty Flag System
 
@@ -95,11 +95,11 @@ World matrices are lazily recomputed during `scene.Update()` only for nodes that
 
 ## Next Steps
 
-- [Solid-Color Sprites](?page=solid-color-sprites) — creating shapes with scale and color
-- [Sprites & Atlas](?page=sprites-and-atlas) — loading texture atlases and regions
-- [Camera & Viewport](?page=camera-and-viewport) — camera transforms and screen-to-world conversion
+- [Solid-Color Sprites](?page=solid-color-sprites)  -  creating shapes with scale and color
+- [Sprites & Atlas](?page=sprites-and-atlas)  -  loading texture atlases and regions
+- [Camera & Viewport](?page=camera-and-viewport)  -  camera transforms and screen-to-world conversion
 
 ## Related
 
-- [Nodes](?page=nodes) — node types, visual properties, and tree manipulation
-- [Architecture](?page=architecture) — how dirty flags fit into the render pipeline
+- [Nodes](?page=nodes)  -  node types, visual properties, and tree manipulation
+- [Architecture](?page=architecture)  -  how dirty flags fit into the render pipeline

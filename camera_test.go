@@ -220,7 +220,7 @@ func TestCameraBounds(t *testing.T) {
 	cam := newCamera(Rect{X: 0, Y: 0, Width: 100, Height: 100})
 	cam.SetBounds(Rect{X: 0, Y: 0, Width: 1000, Height: 1000})
 
-	// Camera at (0,0) with viewport 100x100 — min visible area is (50,50) center
+	// Camera at (0,0) with viewport 100x100  -  min visible area is (50,50) center
 	cam.X = 0
 	cam.Y = 0
 	cam.update(0)
@@ -254,7 +254,7 @@ func TestCameraClearBounds(t *testing.T) {
 
 func TestCameraBoundsSmallWorld(t *testing.T) {
 	cam := newCamera(Rect{X: 0, Y: 0, Width: 800, Height: 600})
-	// World smaller than viewport — should center
+	// World smaller than viewport  -  should center
 	cam.SetBounds(Rect{X: 0, Y: 0, Width: 100, Height: 100})
 	cam.X = 0
 	cam.Y = 0
@@ -432,7 +432,7 @@ func TestMultiCamera_BothRender(t *testing.T) {
 	screen := ebiten.NewImage(800, 300)
 	updateWorldTransform(scene.root, identityTransform, 1.0, false, false)
 	scene.Draw(screen)
-	// Both cameras should render the sprite — we can verify that Draw didn't panic.
+	// Both cameras should render the sprite  -  we can verify that Draw didn't panic.
 	// Detailed multi-camera output verification would need pixel checks.
 }
 
@@ -454,7 +454,7 @@ func TestNoCameraImplicitIdentity(t *testing.T) {
 
 	screen := ebiten.NewImage(800, 600)
 	updateWorldTransform(scene.root, identityTransform, 1.0, false, false)
-	scene.Draw(screen) // Should not panic — uses implicit identity camera
+	scene.Draw(screen) // Should not panic  -  uses implicit identity camera
 }
 
 // --- Camera Invalidate ---

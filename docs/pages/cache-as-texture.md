@@ -1,6 +1,6 @@
 # CacheAsTexture
 
-CacheAsTexture renders an entire subtree to an **offscreen image** once, then reuses that image each frame. This is the most aggressive caching strategy — it skips traversal, command emission, *and* per-node vertex submissions. Use it for complex subtrees that rarely change, like backgrounds or static UI panels.
+CacheAsTexture renders an entire subtree to an **offscreen image** once, then reuses that image each frame. This is the most aggressive caching strategy  -  it skips traversal, command emission, *and* per-node vertex submissions. Use it for complex subtrees that rarely change, like backgrounds or static UI panels.
 
 ## Enabling
 
@@ -63,12 +63,12 @@ The 300 tile sprites are rendered once to an offscreen image and reused every fr
 
 ## Next Steps
 
-- [Debug & Testing](?page=debug-and-testing) — debug overlays and visual testing tools
-- [ECS Integration](?page=ecs-integration) — entity component system bridge
+- [Debug & Testing](?page=debug-and-testing)  -  debug overlays and visual testing tools
+- [ECS Integration](?page=ecs-integration)  -  entity component system bridge
 
 ## Related
 
-- [Performance](?page=performance-overview) — benchmarks, batching, and optimization strategies
-- [CacheAsTree](?page=cache-as-tree) — lighter caching that preserves per-node transforms
-- [Offscreen Rendering](?page=offscreen-rendering) — manual render targets
-- [Post-Processing Filters](?page=post-processing-filters) — combine with CacheAsTexture for static filtered content
+- [Performance](?page=performance-overview)  -  benchmarks, batching, and optimization strategies
+- [CacheAsTree](?page=cache-as-tree)  -  lighter caching that preserves per-node transforms
+- [Offscreen Rendering](?page=offscreen-rendering)  -  manual render targets
+- [Post-Processing Filters](?page=post-processing-filters)  -  combine with CacheAsTexture for static filtered content

@@ -12,9 +12,10 @@ import (
 	"golang.org/x/image/math/fixed"
 )
 
-// SDFEffects configures distance-field text effects rendered by the SDF shader.
-// All widths are in distance-field units (relative to the font's DistanceRange).
-type SDFEffects struct {
+// TextEffects configures text effects (outline, glow, shadow) rendered in a
+// single shader pass. All widths are in distance-field units (relative to the
+// font's DistanceRange).
+type TextEffects struct {
 	OutlineWidth   float64 // 0 = no outline
 	OutlineColor   Color
 	GlowWidth      float64 // 0 = no glow
@@ -263,7 +264,7 @@ func LoadSpriteFontFromTTF(ttfData []byte, opts SDFGenOptions) (*SpriteFont, *eb
 		gh := y1 - y0
 
 		if gw <= 0 || gh <= 0 {
-			// Whitespace or empty glyph — record advance only.
+			// Whitespace or empty glyph  -  record advance only.
 			glyphs = append(glyphs, GlyphBitmap{
 				ID:       r,
 				Img:      nil,

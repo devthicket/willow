@@ -33,7 +33,7 @@ mesh.InvalidateMeshAABB()  // call after modifying vertices
   <img src="gif/watermesh.gif" alt="Water mesh demo" width="400">
 </p>
 
-A grid mesh that deforms a texture — useful for water, heat haze, or cloth effects:
+A grid mesh that deforms a texture  -  useful for water, heat haze, or cloth effects:
 
 ```go
 grid, gridNode := willow.NewDistortionGrid("water", waterImage, 10, 8)
@@ -64,11 +64,11 @@ rows := grid.Rows()
 
 ## Next Steps
 
-- [Ropes](?page=ropes) — textured strips along curved paths
-- [Lighting](?page=lighting) — 2D light layer compositing
+- [Ropes](?page=ropes)  -  textured strips along curved paths
+- [Lighting](?page=lighting)  -  2D light layer compositing
 
 ## Related
 
-- [Polygons](?page=polygons) — ear-clip triangulated polygon shapes
-- [Nodes](?page=nodes) — node types and visual properties
-- [Offscreen Rendering](?page=offscreen-rendering) — render targets for mesh effects
+- [Polygons](?page=polygons)  -  ear-clip triangulated polygon shapes
+- [Nodes](?page=nodes)  -  node types and visual properties
+- [Offscreen Rendering](?page=offscreen-rendering)  -  render targets for mesh effects

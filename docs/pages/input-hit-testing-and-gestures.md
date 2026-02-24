@@ -1,6 +1,6 @@
 # Input & Hit Testing
 
-Willow's input system is integrated into the scene graph. Any node can become interactive by enabling hit testing — Willow handles pointer dispatch, gesture recognition, and coordinate conversion automatically.
+Willow's input system is integrated into the scene graph. Any node can become interactive by enabling hit testing  -  Willow handles pointer dispatch, gesture recognition, and coordinate conversion automatically.
 
 ## Making Nodes Interactive
 
@@ -78,10 +78,10 @@ node.OnClick = func(ctx willow.ClickContext) {
 
 ## Next Steps
 
-- [Events & Callbacks](?page=events-and-callbacks) — node-level and scene-level callback API, context types, drag, and pinch
+- [Events & Callbacks](?page=events-and-callbacks)  -  node-level and scene-level callback API, context types, drag, and pinch
 
 ## Related
 
-- [Nodes](?page=nodes) — node properties including `Interactable` and `EntityID`
-- [Transforms](?page=transforms) — coordinate conversion between local and world space
-- [Camera & Viewport](?page=camera-and-viewport) — screen-to-world conversion
+- [Nodes](?page=nodes)  -  node properties including `Interactable` and `EntityID`
+- [Transforms](?page=transforms)  -  coordinate conversion between local and world space
+- [Camera & Viewport](?page=camera-and-viewport)  -  screen-to-world conversion

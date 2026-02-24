@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	windowTitle = "Willow — Outline Example"
+	windowTitle = "Willow  -  Outline Example"
 	showFPS     = true
 	screenW     = 640
 	screenH     = 480

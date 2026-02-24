@@ -28,7 +28,7 @@ type EmitterConfig struct {
 }
 ```
 
-The `Range` type has `Min` and `Max` fields — each particle picks a random value in that range at spawn.
+The `Range` type has `Min` and `Max` fields  -  each particle picks a random value in that range at spawn.
 
 ## Creating a Particle Emitter
 
@@ -90,7 +90,7 @@ Particle simulation runs during `scene.Update()`, not `Draw()`. This ensures con
 
 ## Solid-Color Particles
 
-Use `TextureRegion{}` for untextured particles — they use the 1x1 WhitePixel and can be tinted with `StartColor`/`EndColor`:
+Use `TextureRegion{}` for untextured particles  -  they use the 1x1 WhitePixel and can be tinted with `StartColor`/`EndColor`:
 
 ```go
 cfg := willow.EmitterConfig{
@@ -103,11 +103,11 @@ cfg := willow.EmitterConfig{
 
 ## Next Steps
 
-- [Mesh & Distortion](?page=meshes) — deformable vertex geometry and distortion grids
-- [Ropes](?page=ropes) — textured strips along curved paths
+- [Mesh & Distortion](?page=meshes)  -  deformable vertex geometry and distortion grids
+- [Ropes](?page=ropes)  -  textured strips along curved paths
 
 ## Related
 
-- [Tweens & Animation](?page=tweens-and-animation) — animate emitter properties
-- [Solid-Color Sprites](?page=solid-color-sprites) — WhitePixel used by untextured particles
-- [Nodes](?page=nodes) — particle emitter is a node type
+- [Tweens & Animation](?page=tweens-and-animation)  -  animate emitter properties
+- [Solid-Color Sprites](?page=solid-color-sprites)  -  WhitePixel used by untextured particles
+- [Nodes](?page=nodes)  -  particle emitter is a node type

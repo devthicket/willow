@@ -10,9 +10,9 @@ Willow requires **Go 1.24+** and [Ebitengine](https://ebitengine.org/) v2.
 
 ## Two Paths: Run Wrapper vs Custom Game Loop
 
-There are two ways to integrate Willow — both are first-class.
+There are two ways to integrate Willow  -  both are first-class.
 
-### Path 1: `willow.Run()` — Quick Setup
+### Path 1: `willow.Run()`  -  Quick Setup
 
 Call `willow.Run(scene, config)` and Willow handles the window, game loop, and calling `Update`/`Draw` for you. Best for getting started quickly or projects that don't need custom Ebitengine lifecycle control.
 
@@ -46,7 +46,7 @@ func main() {
 }
 ```
 
-This creates a 640x480 window with a blue square. `NewSprite` with an empty `TextureRegion{}` creates a [solid-color sprite](?page=solid-color-sprites) — set `Color` for the fill and `ScaleX`/`ScaleY` for the size.
+This creates a 640x480 window with a blue square. `NewSprite` with an empty `TextureRegion{}` creates a [solid-color sprite](?page=solid-color-sprites)  -  set `Color` for the fill and `ScaleX`/`ScaleY` for the size.
 
 Use `SetUpdateFunc` to attach game logic without a custom struct:
 
@@ -57,9 +57,9 @@ scene.SetUpdateFunc(func() error {
 })
 ```
 
-### Path 2: Custom Game Loop — Full Control
+### Path 2: Custom Game Loop  -  Full Control
 
-Implement `ebiten.Game` yourself and call `scene.Update()` and `scene.Draw(screen)` directly. This gives you full control over the Ebitengine lifecycle — useful when you need custom `Layout` logic, multiple scenes, or integration with other Ebitengine features.
+Implement `ebiten.Game` yourself and call `scene.Update()` and `scene.Draw(screen)` directly. This gives you full control over the Ebitengine lifecycle  -  useful when you need custom `Layout` logic, multiple scenes, or integration with other Ebitengine features.
 
 ```go
 package main
@@ -98,13 +98,13 @@ func main() {
 
 ## Next Steps
 
-- [Scene](?page=scene) — scene configuration, batch modes, and RunConfig
-- [Nodes](?page=nodes) — node types, tree manipulation, and visual properties
-- [Sprites & Atlas](?page=sprites-and-atlas) — load texture atlases
-- [Camera & Viewport](?page=camera-and-viewport) — set up viewport and scrolling
+- [Scene](?page=scene)  -  scene configuration, batch modes, and RunConfig
+- [Nodes](?page=nodes)  -  node types, tree manipulation, and visual properties
+- [Sprites & Atlas](?page=sprites-and-atlas)  -  load texture atlases
+- [Camera & Viewport](?page=camera-and-viewport)  -  set up viewport and scrolling
 
 ## Related
 
-- [What is Willow?](?page=what-is-willow) — overview of features and design
-- [Architecture](?page=architecture) — how the render pipeline works under the hood
-- [Examples](?page=examples) — runnable demos with GIFs and source code
+- [What is Willow?](?page=what-is-willow)  -  overview of features and design
+- [Architecture](?page=architecture)  -  how the render pipeline works under the hood
+- [Examples](?page=examples)  -  runnable demos with GIFs and source code

@@ -24,7 +24,7 @@ sprite.Filters = []willow.Filter{
 }
 ```
 
-Multiple filters chain in order — output of one feeds into the next.
+Multiple filters chain in order  -  output of one feeds into the next.
 
 ## Built-in Filters
 
@@ -121,12 +121,12 @@ Filters require offscreen rendering, which adds overhead. For static content, co
 
 ## Next Steps
 
-- [CacheAsTree](?page=cache-as-tree) — command list caching for semi-static subtrees
-- [CacheAsTexture](?page=cache-as-texture) — cache filtered content to avoid re-applying every frame
+- [CacheAsTree](?page=cache-as-tree)  -  command list caching for semi-static subtrees
+- [CacheAsTexture](?page=cache-as-texture)  -  cache filtered content to avoid re-applying every frame
 
 ## Related
 
-- [Offscreen Rendering](?page=offscreen-rendering) — filters use offscreen buffers internally
-- [Clipping & Masks](?page=clipping-and-masks) — alpha-based clipping (non-shader approach)
-- [Lighting](?page=lighting) — another compositing effect
-- [Performance](?page=performance-overview) — benchmarks, batching, and optimization strategies
+- [Offscreen Rendering](?page=offscreen-rendering)  -  filters use offscreen buffers internally
+- [Clipping & Masks](?page=clipping-and-masks)  -  alpha-based clipping (non-shader approach)
+- [Lighting](?page=lighting)  -  another compositing effect
+- [Performance](?page=performance-overview)  -  benchmarks, batching, and optimization strategies

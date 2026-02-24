@@ -52,12 +52,12 @@ type TextBlock struct {
 	lines       []textLine // cached line layout
 
 	// SDF rendering fields (unexported)
-	SDFEffects *SDFEffects     // nil = no effects (plain fill)
-	sdfImage   *ebiten.Image   // cached SDF render
-	sdfPage    int             // page index where sdfImage is registered (-1 = unset)
-	sdfDirty   bool            // true when SDF cache needs re-render
-	sdfVerts   []ebiten.Vertex // preallocated vertex buffer, grows to high-water mark
-	sdfInds    []uint16        // preallocated index buffer
+	TextEffects *TextEffects    // nil = no effects (plain fill)
+	sdfImage    *ebiten.Image   // cached SDF render
+	sdfPage     int             // page index where sdfImage is registered (-1 = unset)
+	sdfDirty    bool            // true when SDF cache needs re-render
+	sdfVerts    []ebiten.Vertex // preallocated vertex buffer, grows to high-water mark
+	sdfInds     []uint16        // preallocated index buffer
 }
 
 // textLine stores one line of laid-out glyphs.
@@ -309,8 +309,8 @@ func emitSDFTextCommand(tb *TextBlock, n *Node, worldTransform [6]float64, comma
 
 	// Compute effect padding in pixels
 	effectPad := 0.0
-	if tb.SDFEffects != nil {
-		e := tb.SDFEffects
+	if tb.TextEffects != nil {
+		e := tb.TextEffects
 		if e.OutlineWidth > 0 {
 			effectPad = e.OutlineWidth * f.distanceRange
 		}
@@ -478,8 +478,8 @@ func emitSDFTextCommand(tb *TextBlock, n *Node, worldTransform [6]float64, comma
 			"FillColor":      fillPremul[:],
 		}
 
-		if tb.SDFEffects != nil {
-			e := tb.SDFEffects
+		if tb.TextEffects != nil {
+			e := tb.TextEffects
 			// Scale widths to distance-field units (normalized to [0,1] range)
 			ow := e.OutlineWidth / f.distanceRange
 			uniforms["OutlineWidth"] = float32(ow)

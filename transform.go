@@ -16,7 +16,7 @@ func computeLocalTransform(n *Node) [6]float64 {
 	sy := n.ScaleY
 
 	// Fast path: no rotation and no skew (the common case for static sprites).
-	// Avoids Sincos and Tan entirely — just scale + pivot + translate.
+	// Avoids Sincos and Tan entirely  -  just scale + pivot + translate.
 	if n.Rotation == 0 && n.SkewX == 0 && n.SkewY == 0 {
 		return [6]float64{sx, 0, 0, sy, -n.PivotX*sx + n.X, -n.PivotY*sy + n.Y}
 	}

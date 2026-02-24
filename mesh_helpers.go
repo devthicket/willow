@@ -557,7 +557,7 @@ func buildPolygonFan(points []Vec2, textured bool, img *ebiten.Image) ([]ebiten.
 }
 
 // earClipIndices triangulates a simple polygon using ear-clipping.
-// Handles both convex and concave polygons. O(n²) — fine for small polygons.
+// Handles both convex and concave polygons. O(n²)  -  fine for small polygons.
 func earClipIndices(pts []Vec2) []uint16 {
 	n := len(pts)
 	if n < 3 {

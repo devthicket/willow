@@ -11,7 +11,7 @@ scene.Screenshot("after-spawn")
 // writes: screenshots/20260217_143052_after-spawn.png
 ```
 
-This is the visual equivalent of `fmt.Println` — use it anywhere (`Update`, `Draw`, callbacks) to see what the viewport looks like at a specific point in time.
+This is the visual equivalent of `fmt.Println`  -  use it anywhere (`Update`, `Draw`, callbacks) to see what the viewport looks like at a specific point in time.
 
 ### Output Directory
 
@@ -21,7 +21,7 @@ scene.ScreenshotDir = "debug_out"  // default: "screenshots"
 
 ### Behavior
 
-- Multiple calls per frame are batched — pixels are read once, then written as separate PNGs
+- Multiple calls per frame are batched  -  pixels are read once, then written as separate PNGs
 - Labels are sanitized for filenames (unsafe chars become `_`, empty becomes `unlabeled`)
 - Errors go to stderr, never crash the application
 - When not in use: one `len()` check per frame (zero cost)
@@ -111,10 +111,10 @@ scene.Root().AddChild(fps)
 
 ## Next Steps
 
-- [ECS Integration](?page=ecs-integration) — bridge scene graph interactions to an entity store
+- [ECS Integration](?page=ecs-integration)  -  bridge scene graph interactions to an entity store
 
 ## Related
 
-- [Events & Callbacks](?page=events-and-callbacks) — the callback system that input injection feeds into
-- [Scene](?page=scene) — `ScreenshotDir` field and `SetDebugMode`
-- [Performance](?page=performance-overview) — benchmarking and optimization strategies
+- [Events & Callbacks](?page=events-and-callbacks)  -  the callback system that input injection feeds into
+- [Scene](?page=scene)  -  `ScreenshotDir` field and `SetDebugMode`
+- [Performance](?page=performance-overview)  -  benchmarking and optimization strategies

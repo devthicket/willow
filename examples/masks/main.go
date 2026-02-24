@@ -1,7 +1,7 @@
 // Masks demonstrates three node-masking techniques in Willow across three
 // equal full-height panels:
 //   - Star: a rotating, pulsing star polygon mask clips a rainbow tile grid.
-//   - Cursor: move the mouse over the centre panel — the whelp sprite's
+//   - Cursor: move the mouse over the centre panel  -  the whelp sprite's
 //     alpha channel stamps its shape into bold horizontal stripes.
 //   - Scroll: a full-panel rect mask clips smoothly-scrolling colour bars.
 //
@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	windowTitle = "Willow — Masks"
+	windowTitle = "Willow  -  Masks"
 	showFPS     = true
 	screenW     = 900
 	screenH     = 480
@@ -30,8 +30,8 @@ const (
 
 type demo struct {
 	time          float64
-	starShape     *willow.Node // child of mask container — rotation/scale applied here
-	whelpChild    *willow.Node // child of mask container — X/Y follows cursor
+	starShape     *willow.Node // child of mask container  -  rotation/scale applied here
+	whelpChild    *willow.Node // child of mask container  -  X/Y follows cursor
 	scrollContent *willow.Node // Y-scrolled each frame
 	scrollY       float64
 }
@@ -40,19 +40,19 @@ func (d *demo) update() error {
 	dt := 1.0 / float64(ebiten.TPS())
 	d.time += dt
 
-	// Panel 0: star mask — rotate and pulse the shape child.
+	// Panel 0: star mask  -  rotate and pulse the shape child.
 	d.starShape.Rotation = d.time * 0.9
 	s := 1.0 + 0.20*math.Sin(d.time*1.8)
 	d.starShape.ScaleX = s
 	d.starShape.ScaleY = s
 
-	// Panel 1: whelp mask — move the sprite child to the cursor.
+	// Panel 1: whelp mask  -  move the sprite child to the cursor.
 	// p1 is at world (panelW, 0); panel-local cursor = (mx-panelW, my).
 	mx, my := ebiten.CursorPosition()
 	d.whelpChild.X = float64(mx) - panelW - 128 // centre 256-px (2× scaled) image
 	d.whelpChild.Y = float64(my) - 128
 
-	// Panel 2: smooth scroll — move sub-container up, reset seamlessly.
+	// Panel 2: smooth scroll  -  move sub-container up, reset seamlessly.
 	const (
 		barH  = 60.0
 		nBars = 8
@@ -83,7 +83,7 @@ func main() {
 
 	d := &demo{}
 
-	// ── Panel 0: rotating star mask over a rainbow tile grid ─────────────────
+	// ---- Panel 0: rotating star mask over a rainbow tile grid ----------------------------------
 	// Container at world (0, 0); content fills local (0,0)→(panelW, screenH).
 
 	p0 := willow.NewContainer("star-panel")
@@ -105,7 +105,7 @@ func main() {
 	// Mask root is a container; star shape is its child so transforms apply.
 	maskRoot0 := willow.NewContainer("mask-root-0")
 	starShape := willow.NewPolygon("star", starPoints(140, 56, 5))
-	starShape.X = panelW / 2  // 150 — centre of panel
+	starShape.X = panelW / 2  // 150  -  centre of panel
 	starShape.Y = screenH / 2 // 240
 	starShape.Color = willow.Color{R: 1, G: 1, B: 1, A: 1}
 	maskRoot0.AddChild(starShape)
@@ -123,11 +123,11 @@ func main() {
 	scene.Root().AddChild(clip0)
 	d.starShape = starShape
 
-	// ── Panel 1: whelp-alpha mask over bold stripes, follows cursor ───────────
+	// ---- Panel 1: whelp-alpha mask over bold stripes, follows cursor ----------------------
 	// Container at world (panelW, 0); content fills local (0,0)→(panelW,screenH).
 
 	p1 := willow.NewContainer("cursor-panel")
-	// p1.X = 0 — clip1 carries the panelW world offset.
+	// p1.X = 0  -  clip1 carries the panelW world offset.
 
 	// Eight bold horizontal rainbow stripes filling the full panel height.
 	// Warm palette: crimson → red → orange-red → orange → amber → gold → tan → sienna.
@@ -174,11 +174,11 @@ func main() {
 	scene.Root().AddChild(clip1)
 	d.whelpChild = whelpChild
 
-	// ── Panel 2: scrolling bars with a static whelp shape erased from them ────
+	// ---- Panel 2: scrolling bars with a static whelp shape erased from them --------
 	// clip2 carries the world offset and hard-clips; p2 holds the erase mask.
 
 	p2 := willow.NewContainer("scroll-panel")
-	// p2.X = 0 — clip2 handles the world offset.
+	// p2.X = 0  -  clip2 handles the world offset.
 
 	scrollContent := willow.NewContainer("scroll-content")
 	p2.AddChild(scrollContent)
@@ -243,7 +243,7 @@ func main() {
 	scene.Root().AddChild(clip2)
 	d.scrollContent = scrollContent
 
-	// ── Dividers ──────────────────────────────────────────────────────────────
+	// ---- Dividers ----------------------------------------------------------------------------------------------------------------------------
 
 	for _, divX := range []float64{panelW, panelW * 2} {
 		div := willow.NewSprite("div", willow.TextureRegion{})
@@ -255,7 +255,7 @@ func main() {
 		scene.Root().AddChild(div)
 	}
 
-	// ── Labels ────────────────────────────────────────────────────────────────
+	// ---- Labels --------------------------------------------------------------------------------------------------------------------------------
 
 	for i, lbl := range []string{"Star Mask", "Cursor Mask", "Erase Mask"} {
 		x := float64(i)*panelW + panelW/2 - float64(len(lbl)*6)/2

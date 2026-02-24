@@ -19,7 +19,7 @@ Browse the [examples/ directory on GitHub](https://github.com/phanxgames/willow/
 <td><a id="basic"></a>
 <strong>Basic</strong><br>
 <code>go run ./examples/basic</code><br><br>
-Bouncing colored sprite — the simplest possible Willow app. Creates a single solid-color sprite that moves and bounces off screen edges.
+Bouncing colored sprite  -  the simplest possible Willow app. Creates a single solid-color sprite that moves and bounces off screen edges.
 </td>
 <td width="260"></td>
 </tr>
@@ -96,7 +96,7 @@ Fountain, campfire, and sparkler particle effects. Each emitter uses different c
 <td><a id="shaders"></a>
 <strong>Shaders</strong><br>
 <code>go run ./examples/shaders</code><br><br>
-Built-in shader filters showcase — blur, glow, chromatic aberration, and more. Demonstrates applying Kage-based post-processing filters to nodes.
+Built-in shader filters showcase  -  blur, glow, chromatic aberration, and more. Demonstrates applying Kage-based post-processing filters to nodes.
 </td>
 <td width="260"><img src="gif/shaders.gif" alt="Shaders" width="240"></td>
 </tr>

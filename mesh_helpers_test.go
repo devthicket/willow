@@ -76,7 +76,7 @@ func TestRopeSetPointsReusesBuffer(t *testing.T) {
 	vertCap := cap(n.Vertices)
 	indCap := cap(n.Indices)
 
-	// Set fewer points — should not reallocate.
+	// Set fewer points  -  should not reallocate.
 	r.SetPoints([]Vec2{{0, 0}, {5, 0}})
 	if cap(n.Vertices) != vertCap {
 		t.Errorf("vertex cap changed from %d to %d", vertCap, cap(n.Vertices))
@@ -296,7 +296,7 @@ func TestRopeUpdateBufferReuse(t *testing.T) {
 	r.Update()
 	ptsCap := cap(r.ptsBuf)
 
-	// Update again with fewer segments — buffer should not shrink.
+	// Update again with fewer segments  -  buffer should not shrink.
 	r.config.Segments = 5
 	r.Update()
 	if cap(r.ptsBuf) != ptsCap {
@@ -316,7 +316,7 @@ func TestRopeUpdateByRefMutation(t *testing.T) {
 	})
 	r.Update()
 
-	// Mutate the bound Vec2 directly — Update() should pick it up.
+	// Mutate the bound Vec2 directly  -  Update() should pick it up.
 	end.X = 200
 	r.Update()
 
@@ -335,7 +335,7 @@ func TestRopeUpdateNilStartEnd(t *testing.T) {
 	})
 	r.Update()
 
-	// Should be a no-op — no vertices generated.
+	// Should be a no-op  -  no vertices generated.
 	if len(n.Vertices) != 0 {
 		t.Errorf("nil start/end should produce no vertices, got %d", len(n.Vertices))
 	}
@@ -524,7 +524,7 @@ func TestSetPolygonPoints(t *testing.T) {
 	n := NewPolygon("poly", []Vec2{{0, 0}, {10, 0}, {5, 10}})
 	vertCap := cap(n.Vertices)
 
-	// Update with fewer points — should reuse backing array.
+	// Update with fewer points  -  should reuse backing array.
 	SetPolygonPoints(n, []Vec2{{0, 0}, {20, 0}, {10, 20}})
 	if len(n.Vertices) != 3 {
 		t.Errorf("vertices = %d, want 3", len(n.Vertices))
@@ -561,7 +561,7 @@ func TestNewPolygonTextured(t *testing.T) {
 
 func TestSetPolygonPointsGrows(t *testing.T) {
 	n := NewPolygon("poly", []Vec2{{0, 0}, {10, 0}, {5, 10}})
-	// Grow to 5 points — may need new backing array.
+	// Grow to 5 points  -  may need new backing array.
 	points := []Vec2{{0, 0}, {10, 0}, {20, 5}, {15, 15}, {0, 10}}
 	SetPolygonPoints(n, points)
 	if len(n.Vertices) != 5 {

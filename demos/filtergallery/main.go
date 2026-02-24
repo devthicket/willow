@@ -22,7 +22,7 @@ import (
 var whelpPNG []byte
 
 const (
-	windowTitle = "Willow — Filter Gallery"
+	windowTitle = "Willow  -  Filter Gallery"
 	showFPS     = true
 	screenW     = 800
 	screenH     = 600

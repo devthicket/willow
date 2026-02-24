@@ -1,6 +1,6 @@
 # Text & Fonts
 
-All text in Willow renders through **SpriteFont** (Signed Distance Field). SDF fonts store distance-to-edge per pixel, enabling smooth scaling, outlines, glows, and drop shadows via a single shader pass. Willow supports both single-channel SDF and multi-channel MSDF.
+All text in Willow renders through **SpriteFont**. Fonts are generated from TTF/OTF data into a glyph atlas, enabling smooth scaling, outlines, glows, and drop shadows via a single shader pass.
 
 ## Font Interface
 
@@ -13,15 +13,15 @@ type Font interface {
 
 Implemented by `*SpriteFont`.
 
-## Creating an SDF Font
+## Creating a Font
 
-The simplest way to get an SDF font from TTF/OTF data:
+The simplest way to create a font from TTF/OTF data:
 
 ```go
 font, err := willow.NewFontFromTTF(ttfData, 80)  // 80px rasterization size
 ```
 
-This generates an SDF atlas at runtime, registers the atlas page, and returns the font ready to use. Higher size = better quality when scaled up. Use 0 for the default (80px).
+This generates a glyph atlas at runtime, registers it, and returns the font ready to use. Higher size = better quality when scaled up. Use 0 for the default (80px).
 
 ## Advanced: Low-Level Constructors
 
@@ -36,9 +36,9 @@ font, atlasImg, _, err := willow.LoadSpriteFontFromTTF(ttfData, willow.SDFGenOpt
 scene.RegisterPage(2, atlasImg)
 ```
 
-### Loading Pre-generated SDF Atlas
+### Loading a Pre-generated Atlas
 
-Load a pre-generated SDF atlas (from the `sdfgen` CLI tool):
+Load a pre-generated atlas (from the `sdfgen` CLI tool):
 
 ```go
 metricsJSON, _ := os.ReadFile("font.json")
@@ -48,7 +48,7 @@ scene.RegisterPage(2, atlasImage)
 
 ### Offline Generation
 
-The `cmd/sdfgen` CLI tool generates SDF atlases offline:
+The `cmd/sdfgen` CLI tool generates font atlases offline:
 
 ```bash
 go run ./cmd/sdfgen -font input.ttf -size 80 -range 8 -out output
@@ -56,12 +56,12 @@ go run ./cmd/sdfgen -font input.ttf -size 80 -range 8 -out output
 
 Produces `output.png` (atlas) and `output.json` (metrics).
 
-## SDF Effects
+## Text Effects
 
-Set `SDFEffects` on a TextBlock for outline, glow, and shadow:
+Set `TextEffects` on a TextBlock for outline, glow, and shadow:
 
 ```go
-node.TextBlock.SDFEffects = &willow.SDFEffects{
+node.TextBlock.TextEffects = &willow.TextEffects{
     OutlineWidth:   2.0,
     OutlineColor:   willow.Color{R: 0, G: 0, B: 0, A: 1},
     GlowWidth:      3.0,
@@ -73,7 +73,7 @@ node.TextBlock.SDFEffects = &willow.SDFEffects{
 node.TextBlock.Invalidate()
 ```
 
-All effects are rendered in a single shader pass — no multi-pass overhead.
+All effects are rendered in a single shader pass  -  no multi-pass overhead.
 
 ## Creating Text Nodes
 
@@ -146,10 +146,10 @@ lineH := font.LineHeight()
 
 ## Next Steps
 
-- [Tilemap Viewport](?page=tilemap-viewport) — tile-based map rendering
-- [Polygons](?page=polygons) — point-list polygon shapes
+- [Tilemap Viewport](?page=tilemap-viewport)  -  tile-based map rendering
+- [Polygons](?page=polygons)  -  point-list polygon shapes
 
 ## Related
 
-- [Sprites & Atlas](?page=sprites-and-atlas) — atlas loading and page registration
-- [Nodes](?page=nodes) — node types and visual properties
+- [Sprites & Atlas](?page=sprites-and-atlas)  -  atlas loading and page registration
+- [Nodes](?page=nodes)  -  node types and visual properties

@@ -468,7 +468,7 @@ func TestRunnerStep_Click(t *testing.T) {
 	if len(s.injectQueue) != 2 {
 		t.Fatalf("expected 2 queued events, got %d", len(s.injectQueue))
 	}
-	// Runner should not be done yet — injections still pending.
+	// Runner should not be done yet  -  injections still pending.
 	if runner.Done() {
 		t.Error("runner should not be done while inject queue has events")
 	}
@@ -477,7 +477,7 @@ func TestRunnerStep_Click(t *testing.T) {
 	s.processInput()
 	s.processInput()
 
-	// Now step again — should finalize.
+	// Now step again  -  should finalize.
 	runner.step(s)
 	if !runner.Done() {
 		t.Error("runner should be done after all steps executed and queue drained")
@@ -511,7 +511,7 @@ func TestRunnerStep_Wait(t *testing.T) {
 	// Frame 3: waitCount 1→0.
 	runner.step(s)
 	if runner.Done() {
-		t.Error("should not be done — screenshot step not yet executed")
+		t.Error("should not be done  -  screenshot step not yet executed")
 	}
 
 	// Frame 4: execute screenshot step, runner finishes.
@@ -582,7 +582,7 @@ func TestRunnerWaitsForInjectQueue(t *testing.T) {
 		t.Fatalf("expected 2 events, got %d", len(s.injectQueue))
 	}
 
-	// Step again — should NOT advance because inject queue is not drained.
+	// Step again  -  should NOT advance because inject queue is not drained.
 	runner.step(s)
 	if runner.cursor != 1 {
 		t.Errorf("cursor should still be 1, got %d", runner.cursor)
@@ -591,7 +591,7 @@ func TestRunnerWaitsForInjectQueue(t *testing.T) {
 	// Drain inject queue manually.
 	s.injectQueue = s.injectQueue[:0]
 
-	// Now step — should execute screenshot.
+	// Now step  -  should execute screenshot.
 	runner.step(s)
 	if len(s.screenshotQueue) != 1 || s.screenshotQueue[0] != "after" {
 		t.Errorf("expected screenshot 'after', got %v", s.screenshotQueue)

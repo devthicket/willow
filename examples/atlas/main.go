@@ -6,7 +6,7 @@
 //
 // Layout:
 //   - Eight named regions displayed at 80×80 on screen (2.5× of the 32×32 tiles).
-//   - A ninth sprite starts as the "dragon" region — not in the atlas — so it
+//   - A ninth sprite starts as the "dragon" region  -  not in the atlas  -  so it
 //     renders as a 1×1 magenta placeholder. With debug mode on, a warning is
 //     logged to stderr.
 //   - Click the magenta tile to dynamically register whelp.png as atlas page 1,
@@ -29,7 +29,7 @@ import (
 )
 
 const (
-	windowTitle = "Willow — Atlas Example"
+	windowTitle = "Willow  -  Atlas Example"
 	showFPS     = true
 	screenW     = 640
 	screenH     = 480

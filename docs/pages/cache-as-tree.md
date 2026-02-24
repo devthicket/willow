@@ -1,6 +1,6 @@
 # CacheAsTree
 
-CacheAsTree caches the **render command list** for a subtree. When enabled, scene graph traversal and command emission are skipped — the pre-built command list is replayed directly. Use this for subtrees whose structure and visual properties don't change frequently but still need per-node transforms applied.
+CacheAsTree caches the **render command list** for a subtree. When enabled, scene graph traversal and command emission are skipped  -  the pre-built command list is replayed directly. Use this for subtrees whose structure and visual properties don't change frequently but still need per-node transforms applied.
 
 ## Enabling
 
@@ -18,7 +18,7 @@ node.SetCacheAsTree(true, willow.CacheTreeAuto)
 node.SetCacheAsTree(true, willow.CacheTreeManual)
 ```
 
-In auto mode, calling `SetPosition()`, `SetColor()`, `SetVisible()`, or any property setter on a descendant node automatically invalidates ancestor caches. Direct field assignment (e.g., `node.X = 10`) does **not** trigger auto-invalidation — call `Invalidate()` or `InvalidateCacheTree()` manually.
+In auto mode, calling `SetPosition()`, `SetColor()`, `SetVisible()`, or any property setter on a descendant node automatically invalidates ancestor caches. Direct field assignment (e.g., `node.X = 10`) does **not** trigger auto-invalidation  -  call `Invalidate()` or `InvalidateCacheTree()` manually.
 
 ## Manual Invalidation
 
@@ -50,15 +50,15 @@ panel.InvalidateCacheTree()
 | Scenario | Recommendation |
 |----------|---------------|
 | Subtree structure is stable but nodes still move/transform | CacheAsTree |
-| Content changes every frame | Don't cache — overhead outweighs savings |
+| Content changes every frame | Don't cache  -  overhead outweighs savings |
 | Fully static content that never changes | [CacheAsTexture](?page=cache-as-texture) is more efficient |
 
 ## Next Steps
 
-- [CacheAsTexture](?page=cache-as-texture) — render subtrees to an offscreen image for maximum performance
+- [CacheAsTexture](?page=cache-as-texture)  -  render subtrees to an offscreen image for maximum performance
 
 ## Related
 
-- [Performance](?page=performance-overview) — benchmarks, batching, and optimization strategies
-- [Transforms](?page=transforms) — setter methods vs direct assignment and dirty flags
-- [Architecture](?page=architecture) — how caching fits into the render pipeline
+- [Performance](?page=performance-overview)  -  benchmarks, batching, and optimization strategies
+- [Transforms](?page=transforms)  -  setter methods vs direct assignment and dirty flags
+- [Architecture](?page=architecture)  -  how caching fits into the render pipeline

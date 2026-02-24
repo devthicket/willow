@@ -132,11 +132,11 @@ willow.EventPointerLeave
 
 ## Next Steps
 
-- [Tweens & Animation](?page=tweens-and-animation) — animate nodes in response to input
-- [Particles](?page=particles) — CPU-simulated particle effects
+- [Tweens & Animation](?page=tweens-and-animation)  -  animate nodes in response to input
+- [Particles](?page=particles)  -  CPU-simulated particle effects
 
 ## Related
 
-- [Input & Hit Testing](?page=input-hit-testing-and-gestures) — making nodes interactive and hit shape types
-- [ECS Integration](?page=ecs-integration) — forward interaction events to an entity store
-- [Debug & Testing](?page=debug-and-testing) — input injection for automated testing
+- [Input & Hit Testing](?page=input-hit-testing-and-gestures)  -  making nodes interactive and hit shape types
+- [ECS Integration](?page=ecs-integration)  -  forward interaction events to an entity store
+- [Debug & Testing](?page=debug-and-testing)  -  input injection for automated testing

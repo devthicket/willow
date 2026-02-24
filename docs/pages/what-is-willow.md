@@ -9,9 +9,9 @@
 
 **[GitHub](https://github.com/phanxgames/willow)** | **[API Reference](https://pkg.go.dev/github.com/phanxgames/willow)**
 
-Willow is a **retained-mode** 2D game framework built on [Ebitengine](https://ebitengine.org/) for Go. You build a tree of nodes — sprites, text, particles, meshes — and Willow traverses that tree each frame to produce optimized render commands for Ebitengine. You describe *what* to render by building a scene tree, not *how* to render by issuing draw commands yourself.
+Willow is a **retained-mode** 2D game framework built on [Ebitengine](https://ebitengine.org/) for Go. You build a tree of nodes  -  sprites, text, particles, meshes  -  and Willow traverses that tree each frame to produce optimized render commands for Ebitengine. You describe *what* to render by building a scene tree, not *how* to render by issuing draw commands yourself.
 
-Ebitengine itself is **immediate-mode** — every frame you must issue every draw command from scratch, and nothing persists between frames. Willow adds a retained-mode layer on top: your scene graph is the persistent state. Create a node once, set its properties, and it keeps rendering until you remove it. Under the hood Willow still walks the tree and re-submits draw commands to Ebitengine each frame, but that machinery is hidden from you. This is the same pattern used by engines like Unity, Godot, and PixiJS — a retained scene graph driving an immediate-mode renderer.
+Ebitengine itself is **immediate-mode**  -  every frame you must issue every draw command from scratch, and nothing persists between frames. Willow adds a retained-mode layer on top: your scene graph is the persistent state. Create a node once, set its properties, and it keeps rendering until you remove it. Under the hood Willow still walks the tree and re-submits draw commands to Ebitengine each frame, but that machinery is hidden from you. This is the same pattern used by engines like Unity, Godot, and PixiJS  -  a retained scene graph driving an immediate-mode renderer.
 
 ```
 Your Game             - gameplay, content, logic
@@ -21,28 +21,28 @@ Ebitengine            - GPU backend, window, audio, platform
 
 ## Key Features
 
-- **Scene graph** — tree of nodes with parent-child transforms, visibility, and render ordering
-- **Sprites & atlas** — TexturePacker JSON loading, automatic batching
-- **Camera & viewport** — follow, scroll-to, zoom, culling, multi-camera
-- **Text** — bitmap fonts and TTF via signed distance field (SDF) rendering for resolution-independent scaling
-- **Input** — hit testing, click/drag/pinch gestures with typed callbacks
-- **Particles** — CPU-simulated emitters with pooled allocation
-- **Tweens & animation** — frame sequences, easing via gween
-- **Filters** — Kage shader post-processing (blur, glow, color grading)
-- **Meshes** — custom vertex geometry, ropes, polygons
-- **Tilemaps** — viewport-based tile rendering
-- **Lighting** — 2D light layer compositing
-- **Caching** — `CacheAsTree` and `CacheAsTexture` for static content
-- **ECS adapter** — optional Entity Component System integration
+- **Scene graph**  -  tree of nodes with parent-child transforms, visibility, and render ordering
+- **Sprites & atlas**  -  TexturePacker JSON loading, automatic batching
+- **Camera & viewport**  -  follow, scroll-to, zoom, culling, multi-camera
+- **Text**  -  bitmap fonts and TTF via signed distance field (SDF) rendering for resolution-independent scaling
+- **Input**  -  hit testing, click/drag/pinch gestures with typed callbacks
+- **Particles**  -  CPU-simulated emitters with pooled allocation
+- **Tweens & animation**  -  frame sequences, easing via gween
+- **Filters**  -  Kage shader post-processing (blur, glow, color grading)
+- **Meshes**  -  custom vertex geometry, ropes, polygons
+- **Tilemaps**  -  viewport-based tile rendering
+- **Lighting**  -  2D light layer compositing
+- **Caching**  -  `CacheAsTree` and `CacheAsTexture` for static content
+- **ECS adapter**  -  optional Entity Component System integration
 
 ## How It Works
 
 You own the game loop. Create a `Scene`, call `scene.Update()` and `scene.Draw(screen)` from your Ebitengine game, and Willow handles everything else:
 
-1. **`scene.Update()`** — processes input, fires callbacks, updates particles/tweens, recomputes dirty transforms
-2. **`scene.Draw(screen)`** — traverses the tree, culls off-screen nodes, emits and sorts render commands, submits to Ebitengine
+1. **`scene.Update()`**  -  processes input, fires callbacks, updates particles/tweens, recomputes dirty transforms
+2. **`scene.Draw(screen)`**  -  traverses the tree, culls off-screen nodes, emits and sorts render commands, submits to Ebitengine
 
-The `willow.Run()` helper wraps this into a one-liner for simple projects, but it's a convenience — not a requirement.
+The `willow.Run()` helper wraps this into a one-liner for simple projects, but it's a convenience  -  not a requirement.
 
 ## Performance Targets
 
@@ -50,11 +50,11 @@ Willow targets **10,000+ sprites at 120+ FPS** on desktop and **60+ FPS** on mob
 
 ## Etymology
 
-Willow's scene graph was inspired by [PixiJS](https://pixijs.com/). Pixies are associated with wisps — glowing sprites of light. A display tree full of wisps? That's a willow tree.
+Willow's scene graph was inspired by [PixiJS](https://pixijs.com/). Pixies are associated with wisps  -  glowing sprites of light. A display tree full of wisps? That's a willow tree.
 
 ## Next Steps
 
-- [Getting Started](?page=getting-started) — installation and your first Willow program
-- [Architecture](?page=architecture) — render pipeline, scene tree structure, and performance design
-- [Performance](?page=performance-overview) — benchmarks, batching, and optimization strategies
-- [Examples](?page=examples) — runnable demos with GIFs and source code
+- [Getting Started](?page=getting-started)  -  installation and your first Willow program
+- [Architecture](?page=architecture)  -  render pipeline, scene tree structure, and performance design
+- [Performance](?page=performance-overview)  -  benchmarks, batching, and optimization strategies
+- [Examples](?page=examples)  -  runnable demos with GIFs and source code

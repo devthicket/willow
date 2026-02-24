@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	windowTitle = "Willow — Shapes Example"
+	windowTitle = "Willow  -  Shapes Example"
 	showFPS     = true
 	screenW     = 640
 	screenH     = 480

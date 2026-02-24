@@ -31,11 +31,11 @@ This re-triangulates the polygon with the new point list.
 
 ## Next Steps
 
-- [Offscreen Rendering](?page=offscreen-rendering) — render targets and compositing
-- [Input & Hit Testing](?page=input-hit-testing-and-gestures) — making nodes interactive
+- [Offscreen Rendering](?page=offscreen-rendering)  -  render targets and compositing
+- [Input & Hit Testing](?page=input-hit-testing-and-gestures)  -  making nodes interactive
 
 ## Related
 
-- [Mesh & Distortion](?page=meshes) — raw vertex geometry and distortion grids
-- [Ropes](?page=ropes) — textured strips along curved paths
-- [Solid-Color Sprites](?page=solid-color-sprites) — simpler approach for rectangles
+- [Mesh & Distortion](?page=meshes)  -  raw vertex geometry and distortion grids
+- [Ropes](?page=ropes)  -  textured strips along curved paths
+- [Solid-Color Sprites](?page=solid-color-sprites)  -  simpler approach for rectangles

@@ -62,7 +62,7 @@ func TestTransformVerticesColorTint(t *testing.T) {
 		{DstX: 0, DstY: 0, SrcX: 0, SrcY: 0, ColorR: 1, ColorG: 0.8, ColorB: 0.5, ColorA: 1},
 	}
 	dst := make([]ebiten.Vertex, 1)
-	// Tint with color {R:0.5, G:1.0, B:0.8, A:0.6} — alpha baked in
+	// Tint with color {R:0.5, G:1.0, B:0.8, A:0.6}  -  alpha baked in
 	tint := Color{0.5, 1.0, 0.8, 0.6}
 	transformVertices(src, dst, identityTransform, tint)
 
@@ -165,7 +165,7 @@ func TestEnsureTransformedVertsGrowsToHighWater(t *testing.T) {
 	}
 	cap1 := cap(n.transformedVerts)
 
-	// Shrink vertices — buffer should not shrink.
+	// Shrink vertices  -  buffer should not shrink.
 	n.Vertices = n.Vertices[:5]
 	buf = ensureTransformedVerts(n)
 	if len(buf) != 5 {

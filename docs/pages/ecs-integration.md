@@ -122,6 +122,6 @@ func (s *MyStore) Process() {
 
 ## Related
 
-- [Events & Callbacks](?page=events-and-callbacks) — the callback system and event types that feed into ECS
-- [Input & Hit Testing](?page=input-hit-testing-and-gestures) — making nodes interactive with `Interactable` and `HitShape`
-- [Nodes](?page=nodes) — `EntityID` and `UserData` fields on nodes
+- [Events & Callbacks](?page=events-and-callbacks)  -  the callback system and event types that feed into ECS
+- [Input & Hit Testing](?page=input-hit-testing-and-gestures)  -  making nodes interactive with `Interactable` and `HitShape`
+- [Nodes](?page=nodes)  -  `EntityID` and `UserData` fields on nodes
