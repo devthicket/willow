@@ -24,7 +24,7 @@ Inspired by [Starling](https://gamua.com/starling/), Flash display lists, and [P
 
 Willow is a 2D game framework built on Ebitengine. Ebitengine is immediate-mode - every frame you must issue every draw command from scratch, and nothing persists between frames. Willow adds a retained-mode layer on top: you create a tree of nodes representing your game objects, and Willow traverses that tree each frame to produce draw commands for Ebitengine. You describe *what* exists in your scene, not *how* to render it each frame. This is the same pattern used by engines like Unity, Godot, and PixiJS - a persistent scene graph driving an immediate-mode renderer.
 
-A main focus of Willow is performance - it is designed to minimize heap allocations and maximize batching, with features like subtree command caching for static content, and a zero-allocation-per-frame contract on the hot path. While managing the display tree does have a slight runtime cost, in some instances Willow can be faster than raw Ebitengine draw calls due to better batching and caching strategies.
+A main focus of Willow is performance - it is designed to minimize heap allocations and maximize batching, with features like subtree command caching for static content, and a zero-allocation-per-frame contract on the hot path. While managing the display tree does have a slight runtime cost, in some instances Willow can be faster than raw Ebitengine due to better batching and caching strategies.
 
 It sits between Ebitengine and your game:
 
@@ -38,11 +38,11 @@ Ebitengine            - GPU backend, window, audio, platform
 
 ## Why does Willow exist?
 
-[Ebitengine](https://ebitengine.org) is an excellent, minimal 2D engine for Go - but every project beyond a prototype ends up building the same infrastructure from scratch: transform hierarchies, draw-call batching, hit testing, camera viewports, text layout, sprite atlases.
+[Ebitengine](https://ebitengine.org) is an excellent, minimal 2D engine for Go - but every project beyond a prototype ends up building the same infrastructure from scratch: transform hierarchies, batching, hit testing, camera viewports, text layout, sprite atlases.
 
 Willow exists so you don't have to rebuild that foundation every time.
 
-It was created with a specific belief: **Go deserves a clean, structured way to build 2D games.** A framework that handles the rendering infrastructure so you can focus on gameplay.
+Ebitengine is intentionally low-level — that's its strength. Willow is a higher-level framework on top of it, so you can focus on gameplay instead of rendering infrastructure.
 
 Inspired by [Starling](https://gamua.com/starling/), Flash display lists, and [PixiJS](https://pixijs.com/)  -  scene graph architectures that powered millions of 2D games  -  adapted for Go's strengths: simplicity and performance.
 
@@ -63,8 +63,7 @@ Willow focuses on structured rendering and scene composition. You bring the game
 1. **Structure without handcuffs.** Willow provides hierarchy, transforms, and batching without imposing game architecture. Any genre, any pattern, any scale.
 2. **Performance as a contract.** Zero heap allocations per frame on the hot path. 10,000 sprites at 120+ FPS on desktop, 60+ FPS on mobile and web. Verified with compiler escape analysis and benchmark suites.
 3. **Wrap Ebitengine, never fight it.** Willow uses Ebitengine's lifecycle hooks, image types, and threading model directly.
-4. **Minimal public API.** Every exported symbol earns its place. Fewer concepts, less to learn, less to break.
-5. **Cross Platform.** Windows, macOS, Linux, iOS, Android, WebAssembly  -  wherever Ebitengine runs.
+4. **Cross Platform.** Windows, macOS, Linux, iOS, Android, WebAssembly  -  wherever Ebitengine runs.
 
 ---
 
@@ -75,7 +74,7 @@ Willow is well suited for:
 - 2D games requiring structured layering and scene composition
 - Games with worlds with large tile maps, cameras, and movement
 - Game tooling and level editors built on a display tree
-- Prototyping game rendering architectures on top of Ebitengine
+- Rapidly prototyping game ideas with minimal boilerplate on top of Ebitengine
 
 ---
 
@@ -127,8 +126,7 @@ Runnable examples are included in the [examples/](examples/) directory:
 go run ./examples/basic        # Bouncing colored sprite
 go run ./examples/shapes       # Rotating polygon hierarchy with parent/child transforms
 go run ./examples/interaction  # Draggable, clickable rectangles with color toggle
-go run ./examples/text         # Bitmap font text with colors, alignment, word wrap
-go run ./examples/texttf       # TTF text with colors, per-line alignment, word wrap, and outline
+go run ./examples/text         # Bitmap font and SDF text with colors, alignment, word wrap
 go run ./examples/tweens       # Position, scale, rotation, alpha, and color tweens
 go run ./examples/particles    # Fountain, campfire, and sparkler particle effects
 go run ./examples/shaders      # 3x3 grid showcasing all built-in shader filters
@@ -156,7 +154,7 @@ go run ./examples/watermesh    # Water surface with per-vertex wave animation
 - **Sprite batching** - [TexturePacker](https://www.codeandweb.com/texturepacker) JSON atlas loading with multi-page, trimmed, and rotated region support. Consecutive draws are grouped automatically into single `DrawImage` calls.
 - **Camera system** - Multiple independent viewports with smooth follow, scroll-to animation (45+ easings), bounds clamping, frustum culling, and world/screen coordinate conversion.
 - **Input and interaction** - Hierarchical hit testing with pluggable shapes (rect, circle, polygon). Pointer capture, drag dead zones, multi-touch, and two-finger pinch with rotation. Callbacks per-node or scene-wide.
-- **Text rendering** - Bitmap fonts (BMFont `.fnt`) for pixel-perfect rendering, TTF fallback via Ebitengine `text/v2`. Alignment, word wrapping, line height overrides, and outlines.
+- **Text rendering** - Bitmap fonts (BMFont `.fnt`) for pixel-perfect rendering, and TTF via signed distance field (SDF) generation for resolution-independent scaling with GPU-accelerated outlines, shadows, and glow. Alignment, word wrapping, and line height overrides.
 - **Particle system** - CPU-simulated with preallocated pools. Configurable emit rate, lifetime, speed, gravity, and scale/alpha/color interpolation. Optional world-space emission.
 - **Mesh support** - `DrawTriangles` with preallocated vertex and index buffers. High-level helpers for rope meshes, filled polygons, and deformable grids.
 - **Subtree command caching** - `SetCacheAsTree` caches all render commands for a container's subtree and replays them with delta transform remapping. Camera panning, parent movement, and alpha changes never invalidate the cache. Animated tiles (same-page UV swaps) are handled automatically via a two-tier source pointer - no invalidation, no API overhead. Manual and auto-invalidation modes. Includes sort-skip optimization when the entire scene is cache hits.
@@ -164,7 +162,7 @@ go run ./examples/watermesh    # Water surface with per-vertex wave animation
 - **Lighting** - Dedicated lighting layer using erase-blend render targets with automatic compositing.
 - **Animation** - Tweening via [gween](https://github.com/tanema/gween) with 45+ easing functions. Convenience wrappers for position, scale, rotation, alpha, and color. Auto-stops on node disposal.
 - **ECS integration** - Optional `EntityStore` interface to bridge interaction events into your ECS. Ships with a [Donburi](https://github.com/yohamta/donburi) adapter.
-- **Debug mode** - Performance timers, draw call and batch counting, tree depth warnings, and disposed-node assertions via `scene.SetDebugMode(true)`.
+- **Debug mode** - Performance timers, batch counting, tree depth warnings, and disposed-node assertions via `scene.SetDebugMode(true)`.
 
 ---
 

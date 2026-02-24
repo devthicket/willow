@@ -24,7 +24,7 @@ Ebitengine            - GPU backend, window, audio, platform
 - **Scene graph** — tree of nodes with parent-child transforms, visibility, and render ordering
 - **Sprites & atlas** — TexturePacker JSON loading, automatic batching
 - **Camera & viewport** — follow, scroll-to, zoom, culling, multi-camera
-- **Text** — bitmap fonts and TTF rendering
+- **Text** — bitmap fonts and TTF via signed distance field (SDF) rendering for resolution-independent scaling
 - **Input** — hit testing, click/drag/pinch gestures with typed callbacks
 - **Particles** — CPU-simulated emitters with pooled allocation
 - **Tweens & animation** — frame sequences, easing via gween
