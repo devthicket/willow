@@ -63,6 +63,7 @@ func (s *Scene) submitSprite(target *ebiten.Image, cmd *RenderCommand, op *ebite
 			op.ColorScale.Scale(cmd.Color.R*a, cmd.Color.G*a, cmd.Color.B*a, a)
 		}
 		op.Blend = cmd.BlendMode.EbitenBlend()
+		op.Filter = ebiten.FilterLinear
 		target.DrawImage(cmd.directImage, op)
 		return
 	}

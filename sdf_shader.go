@@ -66,7 +66,6 @@ func Fragment(dst vec4, src vec2, color vec4) vec4 {
 
 	// Fade to transparent at the SDF range boundary (dist near 0)
 	// to prevent visible rectangles where the distance field runs out.
-	// Uses fwidth for a tight per-pixel fade that doesn't dim the glyph body.
 	result *= smoothstep(0, fwidth(dist)*3, dist)
 
 	return result
@@ -133,7 +132,6 @@ func Fragment(dst vec4, src vec2, color vec4) vec4 {
 
 	// Fade to transparent at the SDF range boundary (dist near 0)
 	// to prevent visible rectangles where the distance field runs out.
-	// Uses fwidth for a tight per-pixel fade that doesn't dim the glyph body.
 	result *= smoothstep(0, fwidth(dist)*3, dist)
 
 	return result
