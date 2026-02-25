@@ -42,7 +42,8 @@ type SpriteFont struct {
 	kernings map[[2]rune]int16
 }
 
-// MeasureString returns the pixel width and height of the rendered text.
+// MeasureString returns the pixel width and height of the rendered text
+// in native atlas pixels.
 func (f *SpriteFont) MeasureString(s string) (width, height float64) {
 	var maxW float64
 	var cursorX float64
@@ -51,8 +52,8 @@ func (f *SpriteFont) MeasureString(s string) (width, height float64) {
 	lines := 1
 
 	for i := 0; i < len(s); {
-		r, size := utf8.DecodeRuneInString(s[i:])
-		i += size
+		r, sz := utf8.DecodeRuneInString(s[i:])
+		i += sz
 
 		if r == '\n' {
 			if cursorX > maxW {
@@ -84,7 +85,7 @@ func (f *SpriteFont) MeasureString(s string) (width, height float64) {
 	return maxW, float64(lines) * f.lineHeight
 }
 
-// LineHeight returns the vertical distance between baselines in pixels.
+// LineHeight returns the vertical distance between baselines in native atlas pixels.
 func (f *SpriteFont) LineHeight() float64 {
 	return f.lineHeight
 }
@@ -332,6 +333,7 @@ func LoadSpriteFontFromTTF(ttfData []byte, opts SDFGenOptions) (*SpriteFont, *eb
 //
 //	font, err := willow.NewFontFromTTF(ttfData, 80)
 //	label := willow.NewText("label", "Hello!", font)
+//	label.TextBlock.FontSize = 24
 //
 // Size is the rasterization size in pixels (higher = better quality when scaled up).
 // Use 0 for the default (80px).

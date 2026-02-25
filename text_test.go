@@ -43,6 +43,45 @@ func TestNewText_SetsTextBlock(t *testing.T) {
 	}
 }
 
+func TestNewText_DefaultFontSize(t *testing.T) {
+	n := NewText("label", "Hello", nil)
+	if n.TextBlock.FontSize != 16 {
+		t.Errorf("FontSize = %f, want 16", n.TextBlock.FontSize)
+	}
+	if n.ScaleX != 1 || n.ScaleY != 1 {
+		t.Errorf("Scale = (%f, %f), want (1, 1)", n.ScaleX, n.ScaleY)
+	}
+}
+
+func TestFontScale_NilFont(t *testing.T) {
+	tb := &TextBlock{FontSize: 24}
+	if tb.fontScale() != 1.0 {
+		t.Errorf("fontScale with nil Font = %f, want 1.0", tb.fontScale())
+	}
+}
+
+func TestFontScale_ZeroFontSize(t *testing.T) {
+	tb := &TextBlock{FontSize: 0, Font: &SpriteFont{lineHeight: 80}}
+	if tb.fontScale() != 1.0 {
+		t.Errorf("fontScale with FontSize 0 = %f, want 1.0", tb.fontScale())
+	}
+}
+
+func TestFontScale_NegativeFontSize(t *testing.T) {
+	tb := &TextBlock{FontSize: -1, Font: &SpriteFont{lineHeight: 80}}
+	if tb.fontScale() != 1.0 {
+		t.Errorf("fontScale with negative FontSize = %f, want 1.0", tb.fontScale())
+	}
+}
+
+func TestFontScale_Computed(t *testing.T) {
+	tb := &TextBlock{FontSize: 24, Font: &SpriteFont{lineHeight: 80}}
+	expected := 24.0 / 80.0
+	if math.Abs(tb.fontScale()-expected) > 1e-10 {
+		t.Errorf("fontScale = %f, want %f", tb.fontScale(), expected)
+	}
+}
+
 // --- composeGlyphTransform ---
 
 func TestComposeGlyphTransform_Identity(t *testing.T) {

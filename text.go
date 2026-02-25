@@ -9,11 +9,14 @@ import (
 
 // Font is the interface for text measurement and layout.
 // Implemented by SpriteFont.
+//
+// All measurements are in native atlas pixels. To get display-sized values,
+// use TextBlock.MeasureDisplay or scale manually by TextBlock.fontScale().
 type Font interface {
-	// MeasureString returns the pixel width and height of the rendered text,
-	// accounting for newlines and the font's line height.
+	// MeasureString returns the pixel width and height of the rendered text
+	// in native atlas pixels, accounting for newlines and the font's line height.
 	MeasureString(text string) (width, height float64)
-	// LineHeight returns the vertical distance between baselines in pixels.
+	// LineHeight returns the vertical distance between baselines in native atlas pixels.
 	LineHeight() float64
 }
 
@@ -33,10 +36,14 @@ type TextBlock struct {
 	Content string
 	// Font is the SpriteFont used for measurement and rendering.
 	Font Font
+	// FontSize is the desired display size in pixels. Applied at render time as a
+	// scale factor (FontSize / Font.LineHeight()), independent of ScaleX/ScaleY.
+	// Defaults to 16. Set to 0 or negative to use the font's native atlas size.
+	FontSize float64
 	// Align controls horizontal alignment within the wrap width or measured bounds.
 	Align TextAlign
-	// WrapWidth is the maximum line width in pixels before word wrapping.
-	// Zero means no wrapping.
+	// WrapWidth is the maximum line width in screen pixels before word wrapping.
+	// Internally converted to atlas pixels via fontScale. Zero means no wrapping.
 	WrapWidth float64
 	// Color is the fill color for the text glyphs.
 	Color Color
@@ -74,14 +81,14 @@ type glyphPos struct {
 }
 
 // Invalidate invalidates the cached layout and SDF image, forcing recomputation
-// on the next frame. Call this after changing Content, Font, WrapWidth, Align,
-// LineHeight, Color, or Outline at runtime.
+// on the next frame. Call this after changing Content, Font, FontSize, WrapWidth,
+// Align, LineHeight, Color, or Outline at runtime.
 func (tb *TextBlock) Invalidate() {
 	tb.layoutDirty = true
 	tb.sdfDirty = true
 }
 
-// lineHeight returns the effective line height for this text block.
+// lineHeight returns the effective line height for this text block in atlas pixels.
 func (tb *TextBlock) lineHeight() float64 {
 	if tb.LineHeight > 0 {
 		return tb.LineHeight
@@ -90,6 +97,30 @@ func (tb *TextBlock) lineHeight() float64 {
 		return tb.Font.LineHeight()
 	}
 	return 0
+}
+
+// fontScale returns the scale factor that maps native atlas pixels to display pixels.
+// Returns 1.0 when FontSize is zero/negative or Font is nil.
+func (tb *TextBlock) fontScale() float64 {
+	if tb.FontSize <= 0 || tb.Font == nil {
+		return 1.0
+	}
+	native := tb.Font.LineHeight()
+	if native <= 0 {
+		return 1.0
+	}
+	return tb.FontSize / native
+}
+
+// MeasureDisplay returns the display-pixel width and height of the rendered text,
+// accounting for FontSize scaling. Equivalent to Font.MeasureString scaled by fontScale().
+func (tb *TextBlock) MeasureDisplay(text string) (width, height float64) {
+	if tb.Font == nil {
+		return 0, 0
+	}
+	w, h := tb.Font.MeasureString(text)
+	fs := tb.fontScale()
+	return w * fs, h * fs
 }
 
 // layout recomputes glyph positions if dirty. Returns the cached lines.
@@ -152,6 +183,13 @@ func composeGlyphTransform(world [6]float64, localX, localY float64) [6]float64 
 func (tb *TextBlock) layoutSDF(f *SpriteFont) {
 	lh := tb.lineHeight()
 	content := tb.Content
+
+	// Convert screen-pixel WrapWidth to atlas pixels.
+	fs := tb.fontScale()
+	atlasWrapWidth := 0.0
+	if tb.WrapWidth > 0 && fs > 0 {
+		atlasWrapWidth = tb.WrapWidth / fs
+	}
 
 	tb.lines = tb.lines[:0]
 
@@ -236,7 +274,7 @@ func (tb *TextBlock) layoutSDF(f *SpriteFont) {
 			wordGlyphs = append(wordGlyphs, gp)
 			wordWidth = cursorX + advance - (cursorX - wordWidth)
 
-			if tb.WrapWidth > 0 && cursorX+advance > tb.WrapWidth && len(curLine.glyphs) > 0 {
+			if atlasWrapWidth > 0 && cursorX+advance > atlasWrapWidth && len(curLine.glyphs) > 0 {
 				flush()
 
 				cursorX = 0
@@ -264,8 +302,8 @@ func (tb *TextBlock) layoutSDF(f *SpriteFont) {
 	}
 
 	alignW := maxW
-	if tb.WrapWidth > 0 {
-		alignW = tb.WrapWidth
+	if atlasWrapWidth > 0 {
+		alignW = atlasWrapWidth
 	}
 	for li := range tb.lines {
 		line := &tb.lines[li]
@@ -300,8 +338,15 @@ func emitSDFTextCommand(tb *TextBlock, n *Node, worldTransform [6]float64, comma
 	f := tb.Font.(*SpriteFont)
 	alpha := n.worldAlpha
 
-	// Extract uniform scale from world transform for scale-aware smoothing.
-	// Uses the X-axis scale magnitude: sqrt(a² + b²) from [a, b, c, d, tx, ty].
+	// Apply font scale as an affine transform: atlas pixels → display pixels.
+	// This is multiplied into the world transform so ScaleX/ScaleY remain independent.
+	fontScale := tb.fontScale()
+	fst := [6]float64{fontScale, 0, 0, fontScale, 0, 0}
+	scaledWT := multiplyAffine(worldTransform, fst)
+
+	// Extract the node's world scale (without fontScale) for smoothing.
+	// The SDF image is rendered at atlas resolution; fontScale is applied as a
+	// separate transform, so smoothing should not account for it.
 	displayScale := math.Sqrt(worldTransform[0]*worldTransform[0] + worldTransform[1]*worldTransform[1])
 	if displayScale < 0.05 {
 		displayScale = 0.05
@@ -335,7 +380,10 @@ func emitSDFTextCommand(tb *TextBlock, n *Node, worldTransform [6]float64, comma
 
 	imgW := tb.measuredW
 	if tb.Align != TextAlignLeft && tb.WrapWidth > 0 {
-		imgW = tb.WrapWidth
+		fs := tb.fontScale()
+		if fs > 0 {
+			imgW = tb.WrapWidth / fs
+		}
 	}
 	w := int(imgW) + 2*pad + 1
 	h := int(tb.measuredH) + 2*pad + 1
@@ -450,11 +498,18 @@ func emitSDFTextCommand(tb *TextBlock, n *Node, worldTransform [6]float64, comma
 			shader = ensureSDFShader()
 		}
 
-		// Scale-aware smoothing: at atlas resolution, each atlas pixel has distance
-		// change of ~1/distanceRange. When displayed at displayScale, each screen
-		// pixel spans 1/displayScale atlas pixels. For 1-pixel AA on screen:
-		//   smoothing = 0.5 / (distanceRange * displayScale)
-		smoothing := 0.5 / (f.distanceRange * displayScale)
+		// Scale-aware smoothing: the numerator controls the AA band width in
+		// screen pixels. 1.5 gives ~3px of anti-aliasing for smooth edges.
+		smoothing := 1.5 / (f.distanceRange * displayScale)
+
+		// Below FontSize 24: progressively thicken glyphs to compensate for
+		// thin strokes at small display sizes. At 24+ the default threshold
+		// and full AA band produce smooth text.
+		threshold := 0.5
+		if tb.FontSize > 0 && tb.FontSize < 24 {
+			t := tb.FontSize / 24     // 0..1 range
+			threshold = 0.30 + 0.20*t // 0.30 at tiny sizes, 0.50 at 24
+		}
 
 		// Build uniforms
 		fillColor := tb.Color
@@ -466,7 +521,7 @@ func emitSDFTextCommand(tb *TextBlock, n *Node, worldTransform [6]float64, comma
 		}
 
 		uniforms := map[string]any{
-			"Threshold":      float32(0.5),
+			"Threshold":      float32(threshold),
 			"Smoothing":      float32(smoothing),
 			"OutlineWidth":   float32(0),
 			"OutlineColor":   []float32{0, 0, 0, 0},
@@ -524,8 +579,9 @@ func emitSDFTextCommand(tb *TextBlock, n *Node, worldTransform [6]float64, comma
 
 	// Emit single sprite command with the cached SDF image.
 	// The transform is offset by -pad so the text content aligns with the node position.
+	// Uses scaledWT (world * fontScale) so the SDF image renders at display size.
 	padF := float64(pad)
-	adjustedTransform := composeGlyphTransform(worldTransform, -padF, -padF)
+	adjustedTransform := composeGlyphTransform(scaledWT, -padF, -padF)
 
 	*treeOrder++
 	commands = append(commands, RenderCommand{

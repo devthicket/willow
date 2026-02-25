@@ -6,12 +6,12 @@ All text in Willow renders through **SpriteFont**. Fonts are generated from TTF/
 
 ```go
 type Font interface {
-    MeasureString(text string) (width, height float64)
-    LineHeight() float64
+    MeasureString(text string) (width, height float64)  // native atlas pixels
+    LineHeight() float64                                  // native atlas pixels
 }
 ```
 
-Implemented by `*SpriteFont`.
+Implemented by `*SpriteFont`. All measurements are in native atlas pixels. Use `TextBlock.MeasureDisplay()` for display-scaled values.
 
 ## Creating a Font
 
@@ -79,6 +79,7 @@ All effects are rendered in a single shader pass  -  no multi-pass overhead.
 
 ```go
 label := willow.NewText("label", "Hello, Willow!", font)
+label.TextBlock.FontSize = 24
 label.X = 100
 label.Y = 50
 scene.Root().AddChild(label)
@@ -92,8 +93,9 @@ The `TextBlock` struct controls text layout and appearance:
 type TextBlock struct {
     Content    string
     Font       Font
+    FontSize   float64      // display size in pixels (default 16); 0 = native atlas size
     Align      TextAlign    // Left, Center, Right
-    WrapWidth  float64      // 0 = no wrapping
+    WrapWidth  float64      // screen pixels; 0 = no wrapping
     Color      Color
     Outline    *Outline     // nil = no outline
     LineHeight float64      // 0 = use Font.LineHeight()
@@ -104,6 +106,7 @@ Access the text block via the node:
 
 ```go
 node := willow.NewText("msg", "Initial text", font)
+node.TextBlock.FontSize = 24
 node.TextBlock.Align = willow.TextAlignCenter
 node.TextBlock.WrapWidth = 300
 node.TextBlock.Color = willow.Color{R: 1, G: 1, B: 0, A: 1}
@@ -130,18 +133,22 @@ Alignment is relative to the node's X position (left-aligned) or within the `Wra
 
 ## Word Wrapping
 
-Set `WrapWidth` to enable automatic line breaking:
+Set `WrapWidth` to enable automatic line breaking. Values are in screen pixels:
 
 ```go
-node.TextBlock.WrapWidth = 400  // wrap at 400 pixels
+node.TextBlock.WrapWidth = 400  // wrap at 400 screen pixels
 node.TextBlock.Invalidate()
 ```
 
 ## Measuring Text
 
 ```go
+// Native atlas pixels:
 width, height := font.MeasureString("Hello!")
 lineH := font.LineHeight()
+
+// Display pixels (scaled by FontSize):
+dispW, dispH := node.TextBlock.MeasureDisplay("Hello!")
 ```
 
 ## Next Steps

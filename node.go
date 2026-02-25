@@ -341,7 +341,9 @@ func NewParticleEmitter(name string, cfg EmitterConfig) *Node {
 }
 
 // NewText creates a text node that renders the given string using font.
-// The node's TextBlock is initialized with white color and dirty layout.
+// FontSize defaults to 16 and is applied at render time as a scale factor,
+// independent of ScaleX/ScaleY. Set TextBlock.FontSize after construction
+// to change the display size.
 func NewText(name string, content string, font Font) *Node {
 	n := &Node{
 		Name: name,
@@ -349,6 +351,7 @@ func NewText(name string, content string, font Font) *Node {
 		TextBlock: &TextBlock{
 			Content:     content,
 			Font:        font,
+			FontSize:    16,
 			Color:       Color{1, 1, 1, 1},
 			layoutDirty: true,
 			sdfPage:     -1,
@@ -531,6 +534,38 @@ func (n *Node) OnPointerLeave(fn func(PointerContext)) {
 		n.Interactable = true
 	}
 }
+
+// --- Callback getters ---
+
+func (n *Node) HasOnPointerDown() bool                 { return n.onPointerDown != nil }
+func (n *Node) GetOnPointerDown() func(PointerContext) { return n.onPointerDown }
+
+func (n *Node) HasOnPointerUp() bool                 { return n.onPointerUp != nil }
+func (n *Node) GetOnPointerUp() func(PointerContext) { return n.onPointerUp }
+
+func (n *Node) HasOnPointerMove() bool                 { return n.onPointerMove != nil }
+func (n *Node) GetOnPointerMove() func(PointerContext) { return n.onPointerMove }
+
+func (n *Node) HasOnClick() bool               { return n.onClick != nil }
+func (n *Node) GetOnClick() func(ClickContext) { return n.onClick }
+
+func (n *Node) HasOnDragStart() bool              { return n.onDragStart != nil }
+func (n *Node) GetOnDragStart() func(DragContext) { return n.onDragStart }
+
+func (n *Node) HasOnDrag() bool              { return n.onDrag != nil }
+func (n *Node) GetOnDrag() func(DragContext) { return n.onDrag }
+
+func (n *Node) HasOnDragEnd() bool              { return n.onDragEnd != nil }
+func (n *Node) GetOnDragEnd() func(DragContext) { return n.onDragEnd }
+
+func (n *Node) HasOnPinch() bool               { return n.onPinch != nil }
+func (n *Node) GetOnPinch() func(PinchContext) { return n.onPinch }
+
+func (n *Node) HasOnPointerEnter() bool                 { return n.onPointerEnter != nil }
+func (n *Node) GetOnPointerEnter() func(PointerContext) { return n.onPointerEnter }
+
+func (n *Node) HasOnPointerLeave() bool                 { return n.onPointerLeave != nil }
+func (n *Node) GetOnPointerLeave() func(PointerContext) { return n.onPointerLeave }
 
 // --- Tree manipulation ---
 

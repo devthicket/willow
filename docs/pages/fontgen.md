@@ -50,6 +50,7 @@ font, err := willow.LoadSpriteFont(metricsJSON, 0)  // page index 0
 scene.RegisterPage(0, atlasImg)
 
 label := willow.NewText("title", "Hello!", font)
+label.TextBlock.FontSize = 24
 scene.Root().AddChild(label)
 ```
 

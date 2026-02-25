@@ -64,9 +64,10 @@ func Fragment(dst vec4, src vec2, color vec4) vec4 {
 	fillAlpha := smoothstep(Threshold - sm, Threshold + sm, dist)
 	result = mix(result, FillColor, FillColor.a * fillAlpha)
 
-	// Fade all effects to transparent at the SDF range boundary (dist near 0)
-	// to prevent visible rectangles where the distance field runs out of data.
-	result *= smoothstep(0, sm*3, dist)
+	// Fade to transparent at the SDF range boundary (dist near 0)
+	// to prevent visible rectangles where the distance field runs out.
+	// Uses fwidth for a tight per-pixel fade that doesn't dim the glyph body.
+	result *= smoothstep(0, fwidth(dist)*3, dist)
 
 	return result
 }
@@ -130,9 +131,10 @@ func Fragment(dst vec4, src vec2, color vec4) vec4 {
 	fillAlpha := smoothstep(Threshold - sm, Threshold + sm, dist)
 	result = mix(result, FillColor, FillColor.a * fillAlpha)
 
-	// Fade all effects to transparent at the SDF range boundary (dist near 0)
-	// to prevent visible rectangles where the distance field runs out of data.
-	result *= smoothstep(0, sm*3, dist)
+	// Fade to transparent at the SDF range boundary (dist near 0)
+	// to prevent visible rectangles where the distance field runs out.
+	// Uses fwidth for a tight per-pixel fade that doesn't dim the glyph body.
+	result *= smoothstep(0, fwidth(dist)*3, dist)
 
 	return result
 }

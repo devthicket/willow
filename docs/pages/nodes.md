@@ -23,6 +23,7 @@ player := willow.NewSprite("player", atlas.Region("player_idle"))
 
 // Text
 label := willow.NewText("score", "Score: 0", myFont)
+label.TextBlock.FontSize = 16
 
 // Particle emitter
 emitter := willow.NewParticleEmitter("sparks", emitterConfig)

@@ -561,10 +561,15 @@ All fonts are `*SpriteFont`. The primary constructor is `NewFontFromTTF`:
 ```go
 font, err := willow.NewFontFromTTF(ttfData, 80)  // returns (*SpriteFont, error)
 label := willow.NewText("label", "Hello", font)   // returns *Node
+label.TextBlock.FontSize = 24                       // display size in pixels (default 16)
 scene.Root().AddChild(label)
 ```
 
 `NewFontFromTTF` generates the font atlas and registers the page automatically  -  no `RegisterPage` call needed. Size is the rasterization size (higher = sharper when scaled up). Use 0 for the default (80px).
+
+**FontSize** is applied at render time as a scale factor, independent of `ScaleX`/`ScaleY`. This means you can animate node scale without affecting text size, and vice versa. Defaults to 16. Set to 0 to use the font's native atlas size.
+
+**WrapWidth** is in screen pixels. No manual division by scale is needed.
 
 Set `TextEffects` on the `TextBlock` (not the node) for outline, glow, and shadow. `nil` means plain fill only:
 
@@ -580,8 +585,9 @@ label.TextBlock.Invalidate()
 
 ```go
 label.TextBlock.Content = "New text"
+label.TextBlock.FontSize = 24
 label.TextBlock.Align = willow.TextAlignCenter
-label.TextBlock.WrapWidth = 400
+label.TextBlock.WrapWidth = 400                      // screen pixels
 label.TextBlock.Color = willow.Color{R: 1, G: 1, B: 1, A: 1}
 label.TextBlock.Outline = &willow.Outline{Color: willow.Color{A: 1}, Thickness: 2}
 label.TextBlock.Invalidate()  // NOT label.Invalidate()
@@ -592,7 +598,11 @@ Changing `TextBlock` properties requires `node.TextBlock.Invalidate()`  -  not `
 ### Font Measurement
 
 ```go
-w, h := font.MeasureString("Hello World")  // returns (float64, float64)
+// Native atlas pixels:
+w, h := font.MeasureString("Hello World")
+
+// Display pixels (scaled by FontSize):
+dw, dh := node.TextBlock.MeasureDisplay("Hello World")
 ```
 
 ## Filters Is a Slice
