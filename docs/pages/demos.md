@@ -1,6 +1,6 @@
 # Demos
 
-Live WASM demos running directly in your browser  -  no install required.
+Live WASM demos running directly in your browser  -  no install required. Each demo showcases a different aspect of the Willow framework.
 
 ## 10k Sprites
 
