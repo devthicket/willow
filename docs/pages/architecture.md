@@ -32,6 +32,8 @@ All simulation  -  input, particles, tweens, callbacks  -  happens in `Update()`
 
 ## Scene Tree Structure
 
+If you're unfamiliar with the display tree concept, see [The Display Tree](?page=what-is-willow#the-display-tree) section on the overview page first.
+
 ```
 Scene
  └─ Root (container node)

@@ -19,6 +19,29 @@ Willow                - scene graph, rendering, interaction
 Ebitengine            - GPU backend, window, audio, platform
 ```
 
+## The Display Tree
+
+The central concept in Willow is the **display tree**  -  a tree data structure where every visible thing in your game is a node. Nodes can contain children, forming a hierarchy that mirrors how you think about your game:
+
+```
+Scene
+ └─ Root
+     ├─ Background
+     ├─ Player
+     │   ├─ Sword
+     │   └─ HealthBar
+     ├─ Enemy
+     │   └─ Shadow
+     └─ UI
+         └─ ScoreText
+```
+
+The tree isn't just for organization  -  **parent-child relationships do real work**. When you move a parent, all its children move with it. Hide a parent, and its children disappear. A parent's opacity multiplies into its children. You group things together and the relationships handle the rest. The Player node above carries its Sword and HealthBar along automatically  -  no manual bookkeeping.
+
+This is the core difference between a retained-mode engine and a raw immediate-mode API. Without a display tree, you manually position and draw every sprite every frame. With one, you set properties on a node once and the tree remembers. Move a character? Set `node.X`. The tree persists between frames, so Willow knows what changed and what didn't.
+
+Each frame, Willow walks this tree top-to-bottom, computes final transforms, culls anything off-screen, and submits the result to Ebitengine. You describe the scene; Willow figures out the rendering.
+
 ## Key Features
 
 - **Scene graph**  -  tree of nodes with parent-child transforms, visibility, and render ordering
