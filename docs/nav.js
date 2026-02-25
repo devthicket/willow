@@ -108,6 +108,9 @@ const NAV_TABS = [
         ]},
     ]},
     { id: "demos", label: "Demos", sections: [
+        { title: "Intro", items: [
+            { label: "Intro", page: "demos-intro" },
+        ]},
         { title: "Stress Tests", items: [
             { label: "10k Sprites", page: "demos", anchor: "10k-sprites" },
         ]},

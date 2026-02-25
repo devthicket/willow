@@ -8,7 +8,7 @@ Willow batches sprites by atlas page. Sprites on the same page with the same ble
 
 Two modes are available:
 
-- **Shelf mode (streaming):** `NewAtlas` + `Add`. Add, free, and replace images over time. Space is reused when freed. Best for dynamic content that changes at runtime.
+- **Shelf mode:** `NewAtlas` + `Add`. Add, free, and replace images over time. Space is reused when freed. Best for dynamic content that changes at runtime.
 - **Batch mode (rect pack):** `NewBatchAtlas` + `Stage` + `Pack`. Stage all images, then finalize with optimal MaxRects packing. No additions after packing. Best when all images are known upfront.
 
 ## When You Do NOT Need This
@@ -25,7 +25,7 @@ sprite.SetCustomImage(avatarImg)
 
 **Ebitengine already has internal atlasing.** Small `ebiten.Image` instances are automatically packed onto internal atlas backends. Willow's dynamic atlas operates at a higher level  -  it controls Willow's batch key, not Ebitengine's internal texture layout. If you have few runtime images and don't see batching problems in your profiling, you don't need this.
 
-## Mode 1: Shelf (Streaming)
+## Mode 1: Shelf
 
 Shelf mode adds images immediately using a shelf-based bin packing algorithm. Images can be freed, replaced, and updated over time.
 
@@ -131,7 +131,7 @@ After `Pack`:
 | Images known upfront | No  -  add over time | Yes  -  all staged before Pack |
 | Packing efficiency | Good (85-90%) | Better (MaxRects optimal) |
 | Post-creation changes | Add, Free, Replace, Update | None (immutable after Pack) |
-| Use case | Dynamic content, streaming | Asset loading, level init |
+| Use case | Dynamic content, runtime updates | Asset loading, level init |
 
 ## Page Size Guidance
 

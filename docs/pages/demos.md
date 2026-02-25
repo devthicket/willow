@@ -1,7 +1,5 @@
 # Demos
 
-Live WASM demos running directly in your browser  -  no install required. Each demo showcases a different aspect of the Willow framework.
-
 ## 10k Sprites
 
 <a href="demos/sprites10k/" target="_blank"><img src="demos/sprites10k/thumbnail.png" alt="10k Sprites demo screenshot" width="640"></a>
@@ -58,18 +56,3 @@ A layered underwater scene revealed through a circular porthole mask that follow
 
 <a href="demos/underwater/" target="_blank">Launch Demo</a> · <a href="https://github.com/phanxgames/willow/tree/main/demos/underwater" target="_blank">Source Code</a>
 
----
-
-Want to run demos locally? Clone the repo and use `go run`:
-
-```bash
-git clone https://github.com/phanxgames/willow.git
-cd willow
-go run ./demos/sprites10k
-go run ./demos/physics
-go run ./demos/ropegarden
-go run ./demos/underwater
-go run ./demos/filtergallery
-go run ./demos/tweengallery
-go run ./demos/lighting
-```
