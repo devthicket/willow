@@ -44,6 +44,8 @@ func (s *Scene) submitBatches(target *ebiten.Image) {
 			s.submitMesh(target, cmd)
 		case CommandTilemap:
 			s.submitTilemap(target, cmd)
+		case CommandSDF:
+			s.submitSDF(target, cmd)
 		}
 	}
 }
@@ -288,6 +290,11 @@ func (s *Scene) submitBatchesCoalesced(target *ebiten.Image) {
 			s.flushSpriteBatch(target, currentKey)
 			inRun = false
 			s.submitTilemap(target, cmd)
+
+		case CommandSDF:
+			s.flushSpriteBatch(target, currentKey)
+			inRun = false
+			s.submitSDF(target, cmd)
 		}
 	}
 
@@ -406,6 +413,63 @@ func (s *Scene) flushSpriteBatch(target *ebiten.Image, key batchKey) {
 
 	s.batchVerts = s.batchVerts[:0]
 	s.batchInds = s.batchInds[:0]
+}
+
+// submitSDF draws SDF text glyphs by transforming local-space vertices to screen
+// space using the command's affine transform, then calling DrawTrianglesShader
+// with the SDF shader. This runs the SDF shader at display resolution.
+func (s *Scene) submitSDF(target *ebiten.Image, cmd *RenderCommand) {
+	if cmd.sdfAtlasImg == nil || cmd.sdfShader == nil || cmd.sdfVertCount == 0 || cmd.sdfIndCount == 0 {
+		return
+	}
+
+	t := &cmd.Transform
+	a, b, c, d, tx, ty := t[0], t[1], t[2], t[3], t[4], t[5]
+
+	// Premultiplied node color.
+	ca := cmd.Color.A
+	var cr, cg, cb float32
+	if ca == 0 && cmd.Color.R == 0 && cmd.Color.G == 0 && cmd.Color.B == 0 {
+		cr, cg, cb, ca = 1, 1, 1, 1
+	} else {
+		cr = cmd.Color.R * ca
+		cg = cmd.Color.G * ca
+		cb = cmd.Color.B * ca
+	}
+
+	vc := cmd.sdfVertCount
+	ic := cmd.sdfIndCount
+
+	// Ensure scratch buffers are large enough.
+	if cap(s.batchVerts) < vc {
+		s.batchVerts = make([]ebiten.Vertex, vc)
+	}
+	s.batchVerts = s.batchVerts[:vc]
+
+	// Transform local-space Dst coords to screen space; keep Src unchanged.
+	for i := 0; i < vc; i++ {
+		sv := &cmd.sdfVerts[i]
+		dx := sv.DstX
+		dy := sv.DstY
+		s.batchVerts[i] = ebiten.Vertex{
+			DstX:   a*dx + c*dy + tx,
+			DstY:   b*dx + d*dy + ty,
+			SrcX:   sv.SrcX,
+			SrcY:   sv.SrcY,
+			ColorR: cr,
+			ColorG: cg,
+			ColorB: cb,
+			ColorA: ca,
+		}
+	}
+
+	opts := &ebiten.DrawTrianglesShaderOptions{
+		Uniforms: cmd.sdfUniforms,
+		Images:   [4]*ebiten.Image{cmd.sdfAtlasImg},
+	}
+	target.DrawTrianglesShader(s.batchVerts[:vc], cmd.sdfInds[:ic], cmd.sdfShader, opts)
+
+	s.batchVerts = s.batchVerts[:0]
 }
 
 // submitParticlesBatched draws all alive particles using a single DrawTriangles32 call.

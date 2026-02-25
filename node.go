@@ -349,12 +349,12 @@ func NewText(name string, content string, font Font) *Node {
 		Name: name,
 		Type: NodeTypeText,
 		TextBlock: &TextBlock{
-			Content:     content,
-			Font:        font,
-			FontSize:    16,
-			Color:       Color{1, 1, 1, 1},
-			layoutDirty: true,
-			sdfPage:     -1,
+			Content:       content,
+			Font:          font,
+			FontSize:      16,
+			Color:         Color{1, 1, 1, 1},
+			layoutDirty:   true,
+			uniformsDirty: true,
 		},
 	}
 	nodeDefaults(n)
@@ -431,7 +431,6 @@ func (n *Node) SetRenderLayer(l uint8) {
 func (n *Node) SetContent(s string) {
 	n.TextBlock.Content = s
 	n.TextBlock.layoutDirty = true
-	n.TextBlock.sdfDirty = true
 	invalidateAncestorCache(n)
 }
 
@@ -440,7 +439,6 @@ func (n *Node) SetContent(s string) {
 func (n *Node) SetFont(f Font) {
 	n.TextBlock.Font = f
 	n.TextBlock.layoutDirty = true
-	n.TextBlock.sdfDirty = true
 	invalidateAncestorCache(n)
 }
 

@@ -200,7 +200,7 @@ func (n *Node) Invalidate() {
 	n.alphaDirty = true
 	if n.TextBlock != nil {
 		n.TextBlock.layoutDirty = true
-		n.TextBlock.sdfDirty = true
+		n.TextBlock.uniformsDirty = true
 	}
 	invalidateAncestorCache(n)
 }

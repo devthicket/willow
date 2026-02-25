@@ -14,6 +14,7 @@ const (
 	CommandMesh                        // DrawTriangles
 	CommandParticle                    // particle quads (batches as sprites)
 	CommandTilemap                     // DrawTriangles for tilemap layers
+	CommandSDF                         // DrawTrianglesShader for SDF text glyphs
 )
 
 // color32 is a compact RGBA color using float32, for render commands only.
@@ -60,6 +61,15 @@ type RenderCommand struct {
 	tilemapVerts []ebiten.Vertex
 	tilemapInds  []uint16
 	tilemapImage *ebiten.Image
+
+	// SDF text fields (CommandSDF only  -  slice headers, not copies).
+	sdfVerts     []ebiten.Vertex // local-space glyph quads (from TextBlock cache)
+	sdfInds      []uint16        // glyph indices (from TextBlock cache)
+	sdfVertCount int             // active vertex count
+	sdfIndCount  int             // active index count
+	sdfShader    *ebiten.Shader  // SDF or MSDF shader
+	sdfAtlasImg  *ebiten.Image   // font's SDF atlas page
+	sdfUniforms  map[string]any  // shader uniforms (threshold, smoothing, effects)
 }
 
 // identityTransform32 is the identity affine matrix as float32.

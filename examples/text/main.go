@@ -156,6 +156,7 @@ func main() {
 	outlined := willow.NewText("fx-outline", "Outlined", font)
 	outlined.TextBlock.FontSize = sizeEffect
 	outlined.TextBlock.Color = willow.Color{R: 1, G: 0.95, B: 0.7, A: 1}
+
 	outlined.TextBlock.TextEffects = &willow.TextEffects{
 		OutlineWidth: 2.0,
 		OutlineColor: willow.Color{R: 0.1, G: 0.1, B: 0.3, A: 1},
@@ -168,18 +169,21 @@ func main() {
 	glowing := willow.NewText("fx-glow", "Glowing", font)
 	glowing.TextBlock.FontSize = sizeEffect
 	glowing.TextBlock.Color = willow.Color{R: 0.4, G: 0.9, B: 1, A: 1}
+
 	glowing.TextBlock.TextEffects = &willow.TextEffects{
 		GlowWidth: 3.0,
 		GlowColor: willow.Color{R: 0.2, G: 0.5, B: 1, A: 0.6},
 	}
 	glowing.X = 24
 	glowing.Y = 470
+	glowing.SetCacheAsTexture(true)
 	root.AddChild(glowing)
 
 	// Shadow
 	shadow := willow.NewText("fx-shadow", "Shadow", font)
 	shadow.TextBlock.FontSize = sizeEffect
 	shadow.TextBlock.Color = willow.Color{R: 1, G: 1, B: 1, A: 1}
+
 	shadow.TextBlock.TextEffects = &willow.TextEffects{
 		ShadowOffset:   willow.Vec2{X: 3, Y: 3},
 		ShadowColor:    willow.Color{R: 0, G: 0, B: 0, A: 0.7},
@@ -187,12 +191,14 @@ func main() {
 	}
 	shadow.X = 24
 	shadow.Y = 520
+	shadow.SetCacheAsTexture(true)
 	root.AddChild(shadow)
 
 	// All effects combined
 	allFx := willow.NewText("fx-all", "All Effects", font)
 	allFx.TextBlock.FontSize = sizeEffect
 	allFx.TextBlock.Color = willow.Color{R: 1, G: 0.85, B: 0.3, A: 1}
+
 	allFx.TextBlock.TextEffects = &willow.TextEffects{
 		OutlineWidth:   1.5,
 		OutlineColor:   willow.Color{R: 0.2, G: 0, B: 0, A: 1},
@@ -204,6 +210,7 @@ func main() {
 	}
 	allFx.X = 24
 	allFx.Y = 570
+	allFx.SetCacheAsTexture(true)
 	root.AddChild(allFx)
 
 	// ---- Live update ----------------------------------------------------------------------------------------------------------------------
@@ -232,12 +239,12 @@ func main() {
 func (d *demo) update() error {
 	d.frameNum++
 	d.counter.SetContent(fmt.Sprintf("Frame: %d", d.frameNum))
-	// if d.frameNum == 10 {
-	// 	d.scene.Screenshot("text-rendering")
-	// }
-	// if d.frameNum == 12 {
-	// 	os.Exit(0)
-	// }
+	//if d.frameNum == 10 {
+	//	d.scene.Screenshot("text-rendering")
+	//}
+	//if d.frameNum == 12 {
+	//	os.Exit(0)
+	//}
 	return nil
 }
 

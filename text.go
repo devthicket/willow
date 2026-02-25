@@ -59,12 +59,14 @@ type TextBlock struct {
 	lines       []textLine // cached line layout
 
 	// SDF rendering fields (unexported)
-	TextEffects *TextEffects    // nil = no effects (plain fill)
-	sdfImage    *ebiten.Image   // cached SDF render
-	sdfPage     int             // page index where sdfImage is registered (-1 = unset)
-	sdfDirty    bool            // true when SDF cache needs re-render
-	sdfVerts    []ebiten.Vertex // preallocated vertex buffer, grows to high-water mark
-	sdfInds     []uint16        // preallocated index buffer
+	TextEffects   *TextEffects    // nil = no effects (plain fill)
+	sdfVerts      []ebiten.Vertex // local-space glyph quads, rebuilt on layout change
+	sdfInds       []uint16        // glyph index buffer
+	sdfVertCount  int             // active vertex count
+	sdfIndCount   int             // active index count
+	sdfUniforms   map[string]any  // cached uniform map (allocated once, updated in place)
+	sdfShader     *ebiten.Shader  // cached SDF vs MSDF shader selection
+	uniformsDirty bool            // triggers uniform rebuild
 }
 
 // textLine stores one line of laid-out glyphs.
@@ -85,7 +87,7 @@ type glyphPos struct {
 // Align, LineHeight, Color, or Outline at runtime.
 func (tb *TextBlock) Invalidate() {
 	tb.layoutDirty = true
-	tb.sdfDirty = true
+	tb.uniformsDirty = true
 }
 
 // lineHeight returns the effective line height for this text block in atlas pixels.
@@ -137,11 +139,11 @@ func (tb *TextBlock) layout() []textLine {
 		return tb.lines
 	}
 
-	tb.sdfDirty = true
-
 	switch f := tb.Font.(type) {
 	case *SpriteFont:
 		tb.layoutSDF(f)
+		tb.rebuildLocalVerts(f)
+		tb.uniformsDirty = true
 	default:
 		tb.lines = tb.lines[:0]
 		tb.measuredW = 0
@@ -326,9 +328,173 @@ func (tb *TextBlock) layoutSDF(f *SpriteFont) {
 	tb.measuredH = float64(len(tb.lines)) * lh
 }
 
-// emitSDFTextCommand renders SDF text to a cached image via DrawTrianglesShader
-// and emits a single CommandSprite with directImage. The image is only
-// re-rendered when the text or effects change (sdfDirty).
+// rebuildLocalVerts builds local-space vertex/index buffers from the laid-out
+// glyph positions. The atlas glyph regions already include distanceRange+1
+// pixels of SDF padding, so no per-glyph expansion is needed  -  the shader
+// has sufficient distance-field data for outline, glow, and shadow effects
+// within the atlas's distance range.
+func (tb *TextBlock) rebuildLocalVerts(f *SpriteFont) {
+	lines := tb.lines
+	lh := tb.lineHeight()
+
+	glyphCount := 0
+	for _, line := range lines {
+		glyphCount += len(line.glyphs)
+	}
+
+	// Grow buffers to high-water mark.
+	vertCount := glyphCount * 4
+	indCount := glyphCount * 6
+	if cap(tb.sdfVerts) < vertCount {
+		tb.sdfVerts = make([]ebiten.Vertex, vertCount)
+	}
+	tb.sdfVerts = tb.sdfVerts[:vertCount]
+	if cap(tb.sdfInds) < indCount {
+		tb.sdfInds = make([]uint16, indCount)
+	}
+	tb.sdfInds = tb.sdfInds[:indCount]
+
+	vi := 0
+	ii := 0
+	for li, line := range lines {
+		lineY := float64(li) * lh
+		for _, gp := range line.glyphs {
+			// Destination in local atlas-pixel space.
+			dx := float32(gp.x)
+			dy := float32(gp.y + lineY)
+			dw := float32(gp.region.Width)
+			dh := float32(gp.region.Height)
+
+			// Source in atlas pixel coords (1:1 mapping, no expansion).
+			sx := float32(gp.region.X)
+			sy := float32(gp.region.Y)
+			sw := float32(gp.region.Width)
+			sh := float32(gp.region.Height)
+
+			base := uint16(vi)
+			tb.sdfVerts[vi] = ebiten.Vertex{
+				DstX: dx, DstY: dy,
+				SrcX: sx, SrcY: sy,
+				ColorR: 1, ColorG: 1, ColorB: 1, ColorA: 1,
+			}
+			vi++
+			tb.sdfVerts[vi] = ebiten.Vertex{
+				DstX: dx + dw, DstY: dy,
+				SrcX: sx + sw, SrcY: sy,
+				ColorR: 1, ColorG: 1, ColorB: 1, ColorA: 1,
+			}
+			vi++
+			tb.sdfVerts[vi] = ebiten.Vertex{
+				DstX: dx, DstY: dy + dh,
+				SrcX: sx, SrcY: sy + sh,
+				ColorR: 1, ColorG: 1, ColorB: 1, ColorA: 1,
+			}
+			vi++
+			tb.sdfVerts[vi] = ebiten.Vertex{
+				DstX: dx + dw, DstY: dy + dh,
+				SrcX: sx + sw, SrcY: sy + sh,
+				ColorR: 1, ColorG: 1, ColorB: 1, ColorA: 1,
+			}
+			vi++
+
+			tb.sdfInds[ii] = base
+			tb.sdfInds[ii+1] = base + 1
+			tb.sdfInds[ii+2] = base + 2
+			tb.sdfInds[ii+3] = base + 1
+			tb.sdfInds[ii+4] = base + 3
+			tb.sdfInds[ii+5] = base + 2
+			ii += 6
+		}
+	}
+	tb.sdfVertCount = vi
+	tb.sdfIndCount = ii
+}
+
+// ensureUniforms builds or updates the cached uniform map for the SDF shader.
+// On first call it allocates the map; on subsequent calls it updates values in place.
+// Smoothing is always updated since it depends on displayScale.
+func (tb *TextBlock) ensureUniforms(f *SpriteFont, displayScale float64) {
+	// Scale-aware smoothing.
+	smoothing := float32(1.5 / (f.distanceRange * displayScale))
+
+	// Threshold: thicken at small sizes.
+	threshold := float32(0.5)
+	if tb.FontSize > 0 && tb.FontSize < 24 {
+		t := tb.FontSize / 24
+		threshold = float32(0.30 + 0.20*t)
+	}
+
+	fillColor := tb.Color
+	fillPremul := [4]float32{
+		float32(fillColor.R * fillColor.A),
+		float32(fillColor.G * fillColor.A),
+		float32(fillColor.B * fillColor.A),
+		float32(fillColor.A),
+	}
+
+	if tb.sdfUniforms == nil {
+		tb.sdfUniforms = make(map[string]any, 11)
+		tb.uniformsDirty = true // force full populate
+	}
+
+	// Smoothing always changes with camera zoom.
+	tb.sdfUniforms["Smoothing"] = smoothing
+
+	if !tb.uniformsDirty {
+		return
+	}
+	tb.uniformsDirty = false
+
+	tb.sdfUniforms["Threshold"] = threshold
+	tb.sdfUniforms["FillColor"] = fillPremul[:]
+	tb.sdfUniforms["OutlineWidth"] = float32(0)
+	tb.sdfUniforms["OutlineColor"] = []float32{0, 0, 0, 0}
+	tb.sdfUniforms["GlowWidth"] = float32(0)
+	tb.sdfUniforms["GlowColor"] = []float32{0, 0, 0, 0}
+	tb.sdfUniforms["ShadowOffset"] = []float32{0, 0}
+	tb.sdfUniforms["ShadowColor"] = []float32{0, 0, 0, 0}
+	tb.sdfUniforms["ShadowSoftness"] = float32(0)
+
+	if tb.TextEffects != nil {
+		e := tb.TextEffects
+		tb.sdfUniforms["OutlineWidth"] = float32(e.OutlineWidth / f.distanceRange)
+		tb.sdfUniforms["OutlineColor"] = []float32{
+			float32(e.OutlineColor.R * e.OutlineColor.A),
+			float32(e.OutlineColor.G * e.OutlineColor.A),
+			float32(e.OutlineColor.B * e.OutlineColor.A),
+			float32(e.OutlineColor.A),
+		}
+		tb.sdfUniforms["GlowWidth"] = float32(e.GlowWidth / f.distanceRange)
+		tb.sdfUniforms["GlowColor"] = []float32{
+			float32(e.GlowColor.R * e.GlowColor.A),
+			float32(e.GlowColor.G * e.GlowColor.A),
+			float32(e.GlowColor.B * e.GlowColor.A),
+			float32(e.GlowColor.A),
+		}
+		tb.sdfUniforms["ShadowOffset"] = []float32{
+			float32(e.ShadowOffset.X),
+			float32(e.ShadowOffset.Y),
+		}
+		tb.sdfUniforms["ShadowColor"] = []float32{
+			float32(e.ShadowColor.R * e.ShadowColor.A),
+			float32(e.ShadowColor.G * e.ShadowColor.A),
+			float32(e.ShadowColor.B * e.ShadowColor.A),
+			float32(e.ShadowColor.A),
+		}
+		tb.sdfUniforms["ShadowSoftness"] = float32(e.ShadowSoftness / f.distanceRange)
+	}
+
+	// Select shader.
+	if f.multiChannel {
+		tb.sdfShader = ensureMSDFShader()
+	} else {
+		tb.sdfShader = ensureSDFShader()
+	}
+}
+
+// emitSDFTextCommand emits a CommandSDF carrying local-space glyph quads.
+// The batch submitter transforms vertices to screen space and calls
+// DrawTrianglesShader  -  SDF shader runs at display resolution.
 func emitSDFTextCommand(tb *TextBlock, n *Node, worldTransform [6]float64, commands []RenderCommand, treeOrder *int) []RenderCommand {
 	tb.layout()
 	if tb.measuredW == 0 || tb.measuredH == 0 {
@@ -336,271 +502,50 @@ func emitSDFTextCommand(tb *TextBlock, n *Node, worldTransform [6]float64, comma
 	}
 
 	f := tb.Font.(*SpriteFont)
-	alpha := n.worldAlpha
+
+	// Rebuild local verts if layout changed (layout() clears layoutDirty and
+	// triggers rebuildLocalVerts via the dirty path).
+	if tb.sdfVertCount == 0 || len(tb.sdfVerts) == 0 {
+		tb.rebuildLocalVerts(f)
+	}
+	if tb.sdfVertCount == 0 {
+		return commands
+	}
 
 	// Apply font scale as an affine transform: atlas pixels → display pixels.
-	// This is multiplied into the world transform so ScaleX/ScaleY remain independent.
 	fontScale := tb.fontScale()
 	fst := [6]float64{fontScale, 0, 0, fontScale, 0, 0}
 	scaledWT := multiplyAffine(worldTransform, fst)
 
+	// Resolve atlas image.
+	atlasImg := atlasManager().Page(int(f.page))
+	if atlasImg == nil {
+		return commands
+	}
+
 	// Extract the node's world scale (without fontScale) for smoothing.
-	// The SDF image is rendered at atlas resolution; fontScale is applied as a
-	// separate transform, so smoothing should not account for it.
 	displayScale := math.Sqrt(worldTransform[0]*worldTransform[0] + worldTransform[1]*worldTransform[1])
 	if displayScale < 0.05 {
 		displayScale = 0.05
 	}
-
-	// Compute effect padding in pixels
-	effectPad := 0.0
-	if tb.TextEffects != nil {
-		e := tb.TextEffects
-		if e.OutlineWidth > 0 {
-			effectPad = e.OutlineWidth * f.distanceRange
-		}
-		if e.GlowWidth > 0 {
-			gpad := (e.OutlineWidth + e.GlowWidth) * f.distanceRange
-			if gpad > effectPad {
-				effectPad = gpad
-			}
-		}
-		if e.ShadowOffset.X != 0 || e.ShadowOffset.Y != 0 || e.ShadowSoftness > 0 {
-			sx := math.Abs(e.ShadowOffset.X) + e.ShadowSoftness*f.distanceRange
-			sy := math.Abs(e.ShadowOffset.Y) + e.ShadowSoftness*f.distanceRange
-			if sx > effectPad {
-				effectPad = sx
-			}
-			if sy > effectPad {
-				effectPad = sy
-			}
-		}
-	}
-	pad := int(effectPad + 1)
-
-	imgW := tb.measuredW
-	if tb.Align != TextAlignLeft && tb.WrapWidth > 0 {
-		fs := tb.fontScale()
-		if fs > 0 {
-			imgW = tb.WrapWidth / fs
-		}
-	}
-	w := int(imgW) + 2*pad + 1
-	h := int(tb.measuredH) + 2*pad + 1
-
-	if tb.sdfDirty || tb.sdfImage == nil {
-		tb.sdfDirty = false
-
-		// Reuse or create image
-		if tb.sdfImage != nil {
-			oldB := tb.sdfImage.Bounds()
-			if oldB.Dx() != w || oldB.Dy() != h {
-				tb.sdfImage.Deallocate()
-				tb.sdfImage = ebiten.NewImage(w, h)
-			} else {
-				tb.sdfImage.Clear()
-			}
-		} else {
-			tb.sdfImage = ebiten.NewImage(w, h)
-		}
-
-		// Get the SDF atlas page image
-		am := atlasManager()
-		atlasImg := am.Page(int(f.page))
-		if atlasImg == nil {
-			// Atlas not registered yet; emit nothing
-			return commands
-		}
-
-		// Build vertex/index buffers for all glyph quads
-		lines := tb.lines
-		lh := tb.lineHeight()
-		glyphCount := 0
-		for _, line := range lines {
-			glyphCount += len(line.glyphs)
-		}
-
-		// Grow vertex/index buffers to high-water mark
-		vertCount := glyphCount * 4
-		indCount := glyphCount * 6
-		if cap(tb.sdfVerts) < vertCount {
-			tb.sdfVerts = make([]ebiten.Vertex, vertCount)
-		}
-		tb.sdfVerts = tb.sdfVerts[:vertCount]
-		if cap(tb.sdfInds) < indCount {
-			tb.sdfInds = make([]uint16, indCount)
-		}
-		tb.sdfInds = tb.sdfInds[:indCount]
-
-		vi := 0
-		ii := 0
-		for li, line := range lines {
-			lineY := float64(li) * lh
-			for _, gp := range line.glyphs {
-				// Destination position in the cached image (offset by pad)
-				dx := float32(gp.x) + float32(pad)
-				dy := float32(gp.y+lineY) + float32(pad)
-				dw := float32(gp.region.Width)
-				dh := float32(gp.region.Height)
-
-				// Source coordinates in atlas (pixel coordinates for //kage:unit pixels)
-				sx := float32(gp.region.X)
-				sy := float32(gp.region.Y)
-				sw := float32(gp.region.Width)
-				sh := float32(gp.region.Height)
-
-				base := uint16(vi)
-				// Top-left
-				tb.sdfVerts[vi] = ebiten.Vertex{
-					DstX: dx, DstY: dy,
-					SrcX: sx, SrcY: sy,
-					ColorR: 1, ColorG: 1, ColorB: 1, ColorA: 1,
-				}
-				vi++
-				// Top-right
-				tb.sdfVerts[vi] = ebiten.Vertex{
-					DstX: dx + dw, DstY: dy,
-					SrcX: sx + sw, SrcY: sy,
-					ColorR: 1, ColorG: 1, ColorB: 1, ColorA: 1,
-				}
-				vi++
-				// Bottom-left
-				tb.sdfVerts[vi] = ebiten.Vertex{
-					DstX: dx, DstY: dy + dh,
-					SrcX: sx, SrcY: sy + sh,
-					ColorR: 1, ColorG: 1, ColorB: 1, ColorA: 1,
-				}
-				vi++
-				// Bottom-right
-				tb.sdfVerts[vi] = ebiten.Vertex{
-					DstX: dx + dw, DstY: dy + dh,
-					SrcX: sx + sw, SrcY: sy + sh,
-					ColorR: 1, ColorG: 1, ColorB: 1, ColorA: 1,
-				}
-				vi++
-
-				// Two triangles
-				tb.sdfInds[ii] = base
-				tb.sdfInds[ii+1] = base + 1
-				tb.sdfInds[ii+2] = base + 2
-				tb.sdfInds[ii+3] = base + 1
-				tb.sdfInds[ii+4] = base + 3
-				tb.sdfInds[ii+5] = base + 2
-				ii += 6
-			}
-		}
-
-		// Select shader
-		var shader *ebiten.Shader
-		if f.multiChannel {
-			shader = ensureMSDFShader()
-		} else {
-			shader = ensureSDFShader()
-		}
-
-		// Scale-aware smoothing: the numerator controls the AA band width in
-		// screen pixels. 1.5 gives ~3px of anti-aliasing for smooth edges.
-		smoothing := 1.5 / (f.distanceRange * displayScale)
-
-		// Below FontSize 24: progressively thicken glyphs to compensate for
-		// thin strokes at small display sizes. At 24+ the default threshold
-		// and full AA band produce smooth text.
-		threshold := 0.5
-		if tb.FontSize > 0 && tb.FontSize < 24 {
-			t := tb.FontSize / 24     // 0..1 range
-			threshold = 0.30 + 0.20*t // 0.30 at tiny sizes, 0.50 at 24
-		}
-
-		// Build uniforms
-		fillColor := tb.Color
-		fillPremul := [4]float32{
-			float32(fillColor.R * fillColor.A),
-			float32(fillColor.G * fillColor.A),
-			float32(fillColor.B * fillColor.A),
-			float32(fillColor.A),
-		}
-
-		uniforms := map[string]any{
-			"Threshold":      float32(threshold),
-			"Smoothing":      float32(smoothing),
-			"OutlineWidth":   float32(0),
-			"OutlineColor":   []float32{0, 0, 0, 0},
-			"GlowWidth":      float32(0),
-			"GlowColor":      []float32{0, 0, 0, 0},
-			"ShadowOffset":   []float32{0, 0},
-			"ShadowColor":    []float32{0, 0, 0, 0},
-			"ShadowSoftness": float32(0),
-			"FillColor":      fillPremul[:],
-		}
-
-		if tb.TextEffects != nil {
-			e := tb.TextEffects
-			// Scale widths to distance-field units (normalized to [0,1] range)
-			ow := e.OutlineWidth / f.distanceRange
-			uniforms["OutlineWidth"] = float32(ow)
-			uniforms["OutlineColor"] = []float32{
-				float32(e.OutlineColor.R * e.OutlineColor.A),
-				float32(e.OutlineColor.G * e.OutlineColor.A),
-				float32(e.OutlineColor.B * e.OutlineColor.A),
-				float32(e.OutlineColor.A),
-			}
-			uniforms["GlowWidth"] = float32(e.GlowWidth / f.distanceRange)
-			uniforms["GlowColor"] = []float32{
-				float32(e.GlowColor.R * e.GlowColor.A),
-				float32(e.GlowColor.G * e.GlowColor.A),
-				float32(e.GlowColor.B * e.GlowColor.A),
-				float32(e.GlowColor.A),
-			}
-			uniforms["ShadowOffset"] = []float32{
-				float32(e.ShadowOffset.X),
-				float32(e.ShadowOffset.Y),
-			}
-			uniforms["ShadowColor"] = []float32{
-				float32(e.ShadowColor.R * e.ShadowColor.A),
-				float32(e.ShadowColor.G * e.ShadowColor.A),
-				float32(e.ShadowColor.B * e.ShadowColor.A),
-				float32(e.ShadowColor.A),
-			}
-			uniforms["ShadowSoftness"] = float32(e.ShadowSoftness / f.distanceRange)
-		}
-
-		opts := &ebiten.DrawTrianglesShaderOptions{
-			Uniforms: uniforms,
-			Images:   [4]*ebiten.Image{atlasImg},
-		}
-		tb.sdfImage.DrawTrianglesShader(tb.sdfVerts[:vi], tb.sdfInds[:ii], shader, opts)
-
-		// Allocate a page slot once, reuse on subsequent renders
-		if tb.sdfPage < 0 {
-			tb.sdfPage = am.AllocPage()
-		}
-		am.RegisterPage(tb.sdfPage, tb.sdfImage)
-	}
-
-	// Emit single sprite command with the cached SDF image.
-	// The transform is offset by -pad so the text content aligns with the node position.
-	// Uses scaledWT (world * fontScale) so the SDF image renders at display size.
-	padF := float64(pad)
-	adjustedTransform := composeGlyphTransform(scaledWT, -padF, -padF)
+	tb.ensureUniforms(f, displayScale)
 
 	*treeOrder++
 	commands = append(commands, RenderCommand{
-		Type:      CommandSprite,
-		Transform: affine32(adjustedTransform),
-		TextureRegion: TextureRegion{
-			Page:      uint16(tb.sdfPage),
-			X:         0,
-			Y:         0,
-			Width:     uint16(w),
-			Height:    uint16(h),
-			OriginalW: uint16(w),
-			OriginalH: uint16(h),
-		},
-		Color:       color32{float32(n.Color.R), float32(n.Color.G), float32(n.Color.B), float32(n.Color.A * alpha)},
-		BlendMode:   n.BlendMode,
-		RenderLayer: n.RenderLayer,
-		GlobalOrder: n.GlobalOrder,
-		treeOrder:   *treeOrder,
+		Type:         CommandSDF,
+		Transform:    affine32(scaledWT),
+		Color:        color32{float32(n.Color.R), float32(n.Color.G), float32(n.Color.B), float32(n.Color.A * n.worldAlpha)},
+		BlendMode:    n.BlendMode,
+		RenderLayer:  n.RenderLayer,
+		GlobalOrder:  n.GlobalOrder,
+		treeOrder:    *treeOrder,
+		sdfVerts:     tb.sdfVerts,
+		sdfInds:      tb.sdfInds,
+		sdfVertCount: tb.sdfVertCount,
+		sdfIndCount:  tb.sdfIndCount,
+		sdfShader:    tb.sdfShader,
+		sdfAtlasImg:  atlasImg,
+		sdfUniforms:  tb.sdfUniforms,
 	})
 
 	return commands

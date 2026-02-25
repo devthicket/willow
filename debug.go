@@ -103,6 +103,8 @@ func countDrawCalls(commands []RenderCommand) int {
 			if cmd.emitter != nil {
 				count += cmd.emitter.alive
 			}
+		case CommandSDF:
+			count++ // each text node = 1 DrawTrianglesShader call
 		default:
 			count++
 		}
@@ -154,6 +156,12 @@ func countDrawCallsCoalesced(commands []RenderCommand) int {
 				inSpriteRun = false
 			}
 			count++
+		case CommandSDF:
+			if inSpriteRun {
+				count++
+				inSpriteRun = false
+			}
+			count++ // each text node = 1 DrawTrianglesShader call
 		}
 	}
 	if inSpriteRun {

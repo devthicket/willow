@@ -66,7 +66,10 @@ func Fragment(dst vec4, src vec2, color vec4) vec4 {
 
 	// Fade to transparent at the SDF range boundary (dist near 0)
 	// to prevent visible rectangles where the distance field runs out.
-	result *= smoothstep(0, fwidth(dist)*3, dist)
+	// Uses Smoothing*2 instead of fwidth*3 for scale-independent fading:
+	// Smoothing already accounts for the atlas-to-screen pixel ratio,
+	// so the fade range stays correct regardless of font scale or zoom.
+	result *= smoothstep(0, Smoothing*2, dist)
 
 	return result
 }
@@ -132,7 +135,8 @@ func Fragment(dst vec4, src vec2, color vec4) vec4 {
 
 	// Fade to transparent at the SDF range boundary (dist near 0)
 	// to prevent visible rectangles where the distance field runs out.
-	result *= smoothstep(0, fwidth(dist)*3, dist)
+	// Uses Smoothing*2 instead of fwidth*3 for scale-independent fading.
+	result *= smoothstep(0, Smoothing*2, dist)
 
 	return result
 }
