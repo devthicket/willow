@@ -135,5 +135,5 @@ Trimming removes transparent whitespace before packing, so sprites occupy only t
 
 ## Related
 
-- [Sprites & Atlas](?page=sprites-and-atlas) — loading atlases and using regions in Willow
+- [Atlases](?page=atlases) — loading atlases and using regions in Willow
 - [Text & Fonts](?page=text-and-fonts) — font atlas loading (uses the same page registration)

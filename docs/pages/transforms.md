@@ -96,7 +96,7 @@ World matrices are lazily recomputed during `scene.Update()` only for nodes that
 ## Next Steps
 
 - [Solid-Color Sprites](?page=solid-color-sprites)  -  creating shapes with scale and color
-- [Sprites & Atlas](?page=sprites-and-atlas)  -  loading texture atlases and regions
+- [Sprites](?page=sprites)  -  TextureRegion and image display
 - [Camera & Viewport](?page=camera-and-viewport)  -  camera transforms and screen-to-world conversion
 
 ## Related

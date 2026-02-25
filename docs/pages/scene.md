@@ -56,7 +56,7 @@ scene.SetBatchMode(willow.BatchModeImmediate)  // switch to per-sprite rendering
 
 - [Nodes](?page=nodes)  -  node types, visual properties, and tree manipulation
 - [Camera & Viewport](?page=camera-and-viewport)  -  camera creation, follow, zoom, and culling
-- [Sprites & Atlas](?page=sprites-and-atlas)  -  atlas loading with `scene.LoadAtlas()`
+- [Atlases](?page=atlases)  -  atlas loading with `scene.LoadAtlas()`
 
 ## Related
 

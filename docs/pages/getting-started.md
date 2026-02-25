@@ -100,7 +100,7 @@ func main() {
 
 - [Scene](?page=scene)  -  scene configuration, batch modes, and RunConfig
 - [Nodes](?page=nodes)  -  node types, tree manipulation, and visual properties
-- [Sprites & Atlas](?page=sprites-and-atlas)  -  load texture atlases
+- [Sprites](?page=sprites)  -  display images and load atlases
 - [Camera & Viewport](?page=camera-and-viewport)  -  set up viewport and scrolling
 
 ## Related

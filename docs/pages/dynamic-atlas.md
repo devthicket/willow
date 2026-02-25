@@ -1,6 +1,6 @@
 # Dynamic Atlas (Runtime Packing)
 
-Optional tool for packing images onto shared atlas pages at runtime, so they batch together in a single `DrawTriangles32` submission.
+Optional tool for packing images onto shared atlas pages at runtime, so they batch together in a single `DrawTriangles32` submission. If you're loading pre-packed TexturePacker JSON or need to understand atlas page management, see [Atlases](?page=atlases).
 
 ## When You Need This
 
@@ -182,15 +182,7 @@ cfg := willow.PackerConfig{PageWidth: 512, PageHeight: 512}.NoPadding()
 atlas := willow.NewAtlas(cfg)
 ```
 
-## Comparison with Other Approaches
-
-| Approach | Batching | VRAM Overhead | Setup |
-|----------|----------|--------------|-------|
-| `LoadAtlas` (pre-packed) | Best  -  one page per atlas | Minimal  -  tightly packed offline | Requires build step |
-| `NewBatchAtlas` + `Pack` | Good  -  optimal runtime packing | Page-sized allocation | Stage all, pack once |
-| `NewAtlas` + `Add` | Good  -  shared runtime pages | Page-sized allocation | None  -  pack at load time |
-| `RegisterPage` per image | Poor  -  one batch per image | Minimal  -  image-sized | None  -  simplest |
-| `SetCustomImage` | Poor  -  breaks coalesced batching | Minimal  -  image-sized | None  -  simplest |
+For a comparison of all approaches (LoadAtlas, SetCustomImage, RegisterPage, NewAtlas, NewBatchAtlas), see [Atlases  -  Choosing an Approach](?page=atlases#choosing-an-approach).
 
 ## Next Steps
 
@@ -199,6 +191,6 @@ atlas := willow.NewAtlas(cfg)
 
 ## Related
 
-- [Sprites & Atlas](?page=sprites-and-atlas)  -  static atlas loading and TextureRegion basics
+- [Atlases](?page=atlases)  -  static atlas loading and page management
 - [Sprite Packing (atlaspack)](?page=atlaspack)  -  build-time atlas packing tool
 - [Offscreen Rendering](?page=offscreen-rendering)  -  RenderTexture for procedural content

@@ -152,5 +152,5 @@ lineH := font.LineHeight()
 ## Related
 
 - [Font Generation (fontgen)](?page=fontgen)  -  generate SDF font atlases offline from TTF/OTF files
-- [Sprites & Atlas](?page=sprites-and-atlas)  -  atlas loading and page registration
+- [Atlases](?page=atlases)  -  atlas loading and page registration
 - [Nodes](?page=nodes)  -  node types and visual properties

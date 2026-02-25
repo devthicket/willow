@@ -4,28 +4,25 @@ Willow is designed with performance in mind. This page explains why a retained-m
 
 ## Why a Scene Graph Can Be Faster
 
-A common assumption is that a scene graph adds overhead compared to calling `DrawImage` directly. In practice, Willow's coalesced batching mode can be **faster** than raw Ebitengine `DrawImage` calls  -  because owning the entire command stream unlocks optimizations that hand-written code typically doesn't do.
-
-The key insight: **individual `DrawImage` calls each produce their own `DrawTriangles` submission internally**. Willow instead accumulates vertices across many sprites and submits them in bulk via `DrawTriangles32`, reducing command pipeline entries.
+A common assumption is that a scene graph adds overhead compared to calling `DrawImage` directly. In practice, Willow is **~2.6x faster** than naive raw `DrawImage` calls — because owning the entire command stream lets Willow accumulate vertices explicitly and submit them in bulk via `DrawTriangles32`, while also eliminating per-sprite heap allocations.
 
 ### Benchmark: Willow vs Raw Ebitengine (10K sprites)
 
-*Tested on Apple M3 Max, Go 1.24, Ebitengine v2. Results will vary by hardware, scene complexity, and atlas layout.*
+*Tested on Apple M3 Max, Go 1.24, Ebitengine v2. Real-world atlas: 2× 4096×4096 pages, runs of 1,000 sprites per page. Results will vary by hardware, scene complexity, and atlas layout.*
 
 | Layer | avg ns/op | vs Raw DrawImage |
 |-------|-----------|-----------------|
-| Raw `DrawTriangles32` (pre-computed) | ~357K | ~6x faster |
-| **Willow Coalesced** | **~1,993K** | **~11% faster** |
-| Raw `DrawImage` | ~2,230K |  -  |
-| Willow Immediate | ~4,121K | ~1.8x slower |
+| Raw `DrawTriangles32` (pre-computed) | ~391K | ~5.8x faster |
+| **Willow** | **~875K** | **~2.6x faster** |
+| Raw `DrawImage` | ~2,287K | — |
 
-In this test (2x 4096x4096 atlas pages, runs of 1,000 sprites per page), Willow's coalesced mode measured about 11% faster than calling `DrawImage` 10,000 times. The scene graph overhead was more than offset by batching gains. Your mileage may vary depending on atlas layout and sprite count.
+*Lower ns/op is better. Raw `DrawTriangles32` pre-computes all vertex positions outside the benchmark loop — it represents the theoretical floor if you did all the math yourself ahead of time.*
 
 ### Where Does This Come From?
 
-1. **Vertex accumulation**  -  sprites sharing the same atlas page and blend mode have their vertices merged into a single `DrawTriangles32` submission
-2. **Sort-based batching**  -  Willow sorts render commands by batch key (texture, blend mode, render layer), maximizing batch run lengths
-3. **Allocation elimination**  -  preallocated buffers mean the hot path produces minimal garbage, reducing GC pressure
+1. **Vertex accumulation** — sprites sharing the same atlas page and blend mode have their vertices merged into a single `DrawTriangles32` submission, rather than 10,000 individual `DrawImage` calls
+2. **Sort-based batching** — Willow sorts render commands by batch key (texture, blend mode, render layer), maximizing batch run lengths
+3. **Allocation elimination** — preallocated buffers reduce per-frame allocations from ~30,000 (raw `DrawImage`) to ~31, cutting GC pressure significantly
 
 ## Minimal Heap Allocations
 
@@ -43,21 +40,27 @@ Willow's hot path is designed to produce **near-zero heap allocations per frame*
 
 *From `go test -bench` on the same hardware as above.*
 
-| Scenario (10K sprites) | Immediate mode | Coalesced mode |
-|------------------------|---------------|---------------|
-| Single atlas page | 30,000 allocs/op | **3 allocs/op** |
-| Real-world atlas (2 pages) | 30,000 allocs/op | **30 allocs/op** |
-| 1,000 particles | 3,000 allocs/op | **3 allocs/op** |
+| Scenario | Willow | Raw DrawImage |
+|----------|--------|---------------|
+| Real-world atlas (10K sprites, 2 pages) | 31 allocs/op | 30,000 allocs/op |
+| 1,000 particles (coalesced) | 4 allocs/op | 3,001 allocs/op |
 
 ## Dirty Flag Transforms
 
 World transforms are only recomputed when something actually changes. Willow tracks dirty state per node:
 
 - Setting a transform property via a setter (`SetPosition`, `SetScale`, etc.) marks the node dirty
-- Dirty state propagates to descendants during traversal
-- Static subtrees pay **zero cost**  -  no matrix math, no cache invalidation
+- Dirty state propagates to descendants during `updateWorldTransform`
+- Clean nodes skip `computeLocalTransform` and the matrix multiply, though the tree is still walked to propagate parent state
 
-In our benchmarks, the read-only traverse optimization (skipping clean nodes) measured around a **10x speedup** on 10K sprite traversal compared to unconditional recomputation.
+### Measured Impact
+
+| State | avg ns/op |
+|-------|-----------|
+| All nodes dirty | ~142K |
+| All nodes clean | ~35K |
+
+Clean frames are **~4x faster** than fully dirty frames — a significant win for scenes where most nodes are stationary each frame.
 
 ## Batching In Depth
 
@@ -74,11 +77,13 @@ Willow's default `BatchModeCoalesced` groups compatible render commands into bat
 
 | Scenario | Coalesced vs Immediate | Notes |
 |----------|----------------------|-------|
-| Single atlas page (10K sprites) | **~2x faster** | One giant batch |
-| Particles (1,000) | **~5x faster** | Single texture, single blend mode |
-| Real-world atlas (2 pages, runs of 1K) | **~2x faster** | 10 batch breaks, still significant gains |
-| Mixed sprites + particles | **~5% faster** | Interleaving causes more breaks |
-| Worst case (alternating pages every sprite) | ~5% slower | Pathological  -  unlikely in practice |
+| Particles (1,000) | **~5x faster** | 45K vs 230K ns/op |
+| Mixed sprites + particles | ~3% faster | Marginal |
+| Single atlas page (10K) | Roughly equal | |
+| Real-world atlas (2 pages) | Roughly equal | |
+| Worst case (alternating pages) | ~13% slower | Pathological |
+
+Coalesced mode is the default and recommended because of the large particle win, even though it's roughly neutral for sprite-only workloads. The worst case — alternating atlas pages every sprite — is pathological and unlikely in real games.
 
 **Takeaway:** organize your atlases so sprites that render together share the same page. Longer batch runs generally mean better performance.
 
@@ -86,29 +91,38 @@ Willow's default `BatchModeCoalesced` groups compatible render commands into bat
 
 ### For All Games
 
-- **Use coalesced batch mode** (the default)  -  it tends to be faster in most realistic scenarios
-- **Pack related sprites onto the same atlas page**  -  minimizes batch breaks
-- **Use setter methods** (`SetPosition`, `SetScale`) or call `Invalidate()` after bulk field assignments  -  ensures dirty flags propagate correctly
-- **Set `Visible = false`** on off-screen containers  -  skips entire subtrees
+- **Use coalesced batch mode** (the default) — it tends to be faster in most realistic scenarios
+- **Pack related sprites onto the same atlas page** — minimizes batch breaks
+- **Use setter methods** (`SetPosition`, `SetScale`) or call `Invalidate()` after bulk field assignments — ensures dirty flags propagate correctly
+- **Set `Visible = false`** on off-screen containers — skips entire subtrees
 
 ### For Large Worlds
 
-- **Enable camera culling**  -  `cam.CullEnabled = true` skips nodes outside the viewport
+- **Enable camera culling** — `cam.CullEnabled = true` skips nodes outside the viewport
 - **Use `CacheAsTree`** for semi-static subtrees (stable structure, occasional changes)
 - **Use `CacheAsTexture`** for fully static content (backgrounds, decorations)
 
 ### For Complex Effects
 
-- **Combine filters with `CacheAsTexture`**  -  avoids re-applying shaders every frame on static content
-- **Use `WorldSpace: false`** on particle emitters when possible  -  avoids per-particle world transform
+- **Combine filters with `CacheAsTexture`** — avoids re-applying shaders every frame on static content
+
+## Reproduce These Benchmarks
+
+All numbers on this page come from the benchmark suite in the Willow repository. To reproduce on your hardware:
+
+```
+go test -bench='BenchmarkDraw_RealWorldAtlas|BenchmarkRaw_RealWorldAtlas' -benchmem -count=3
+go test -bench='BenchmarkTransform' -benchmem -count=3
+go test -bench='BenchmarkParticle' -benchmem -count=3
+```
 
 ## Next Steps
 
-- [Scene](?page=scene)  -  scene configuration and batch modes
-- [Nodes](?page=nodes)  -  node types, visual properties, and tree manipulation
+- [Scene](?page=scene) — scene configuration and batch modes
+- [Nodes](?page=nodes) — node types, visual properties, and tree manipulation
 
 ## Related
 
-- [Architecture](?page=architecture)  -  render pipeline and sort/batch details
-- [CacheAsTree](?page=cache-as-tree)  -  command list caching for semi-static subtrees
-- [CacheAsTexture](?page=cache-as-texture)  -  offscreen render caching for static content
+- [Architecture](?page=architecture) — render pipeline and sort/batch details
+- [CacheAsTree](?page=cache-as-tree) — command list caching for semi-static subtrees
+- [CacheAsTexture](?page=cache-as-texture) — offscreen render caching for static content

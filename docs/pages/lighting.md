@@ -163,4 +163,4 @@ scene.SetUpdateFunc(func() error {
 ## Related
 
 - [Offscreen Rendering](?page=offscreen-rendering)  -  light layer uses a RenderTexture internally
-- [Sprites & Atlas](?page=sprites-and-atlas)  -  texture lights use atlas regions
+- [Sprites](?page=sprites)  -  texture lights use TextureRegion

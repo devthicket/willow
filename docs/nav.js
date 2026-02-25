@@ -29,7 +29,8 @@ const NAV_TABS = [
             title: "Rendering",
             items: [
                 { label: "Solid-Color Sprites", page: "solid-color-sprites" },
-                { label: "Sprites & Atlas", page: "sprites-and-atlas" },
+                { label: "Sprites", page: "sprites" },
+                { label: "Atlases", page: "atlases" },
                 { label: "Dynamic Atlas", page: "dynamic-atlas" },
                 { label: "Camera & Viewport", page: "camera-and-viewport" },
                 { label: "Text & Fonts", page: "text-and-fonts" },

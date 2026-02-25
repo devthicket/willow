@@ -136,5 +136,5 @@ viewport.MaxZoomOut = 0.5  // support zooming out to 50%
 ## Related
 
 - [Camera & Viewport](?page=camera-and-viewport)  -  camera follow, bounds, and coordinate conversion
-- [Sprites & Atlas](?page=sprites-and-atlas)  -  atlas regions used for tile GIDs
+- [Atlases](?page=atlases)  -  atlas regions used for tile GIDs
 - [Tweens & Animation](?page=tweens-and-animation)  -  easing functions for camera scrolling

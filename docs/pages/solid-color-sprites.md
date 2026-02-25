@@ -79,7 +79,7 @@ img.Set(x, y, willow.ColorFromRGBA(r, g, b, 255))
 
 ## Next Steps
 
-- [Sprites & Atlas](?page=sprites-and-atlas)  -  loading textures from atlas pages
+- [Sprites](?page=sprites)  -  loading textures and TextureRegion
 - [Camera & Viewport](?page=camera-and-viewport)  -  viewport setup and scrolling
 
 ## Related

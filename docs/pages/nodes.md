@@ -148,7 +148,7 @@ Disposing a node also disposes all its children. Disposed nodes cannot be reused
 
 - [Transforms](?page=transforms)  -  position, scale, rotation, pivot, and dirty flags
 - [Solid-Color Sprites](?page=solid-color-sprites)  -  creating shapes without textures
-- [Sprites & Atlas](?page=sprites-and-atlas)  -  loading texture atlases and regions
+- [Sprites](?page=sprites)  -  TextureRegion and image display
 - [Input & Hit Testing](?page=input-hit-testing-and-gestures)  -  making nodes interactive
 
 ## Related

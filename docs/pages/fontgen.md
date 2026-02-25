@@ -74,5 +74,5 @@ fontgen -font game.ttf -chars "ABCDEFabcdef0123456789!?,." -out game_font
 ## Related
 
 - [Text & Fonts](?page=text-and-fonts) — using fonts in Willow, text effects, alignment, and wrapping
-- [Sprites & Atlas](?page=sprites-and-atlas) — atlas loading and page registration
+- [Atlases](?page=atlases) — atlas loading and page registration
 - [Sprite Packing (atlaspack)](?page=atlaspack) — pack sprite images into a texture atlas
