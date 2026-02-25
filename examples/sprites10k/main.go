@@ -31,7 +31,7 @@ type sprite struct {
 }
 
 func main() {
-	f, err := os.Open("demos/_assets/whelp.png")
+	f, err := os.Open("examples/_assets/whelp.png")
 	if err != nil {
 		log.Fatalf("open whelp.png: %v", err)
 	}

@@ -163,7 +163,7 @@ func (d *demo) update() error {
 
 func main() {
 	// --- Load assets ---
-	tf, err := os.Open("demos/_assets/tileset.png")
+	tf, err := os.Open("examples/_assets/tileset.png")
 	if err != nil {
 		log.Fatalf("open tileset.png: %v", err)
 	}
@@ -173,7 +173,7 @@ func main() {
 		log.Fatalf("decode tileset.png: %v", err)
 	}
 
-	wf, err := os.Open("demos/_assets/whelp.png")
+	wf, err := os.Open("examples/_assets/whelp.png")
 	if err != nil {
 		log.Fatalf("open whelp.png: %v", err)
 	}

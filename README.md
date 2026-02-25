@@ -120,23 +120,12 @@ func main() {
 
 ## Examples
 
-Runnable examples are included in the [examples/](examples/) directory:
+20+ runnable examples are included in the [examples/](examples/) directory, covering everything from basic sprites to full scenes combining lighting, meshes, particles, and masks. Several are also available as [live WASM demos](https://phanxgames.github.io/willow/?page=examples) in the docs.
 
 ```bash
-go run ./examples/basic        # Bouncing colored sprite
-go run ./examples/shapes       # Rotating polygon hierarchy with parent/child transforms
-go run ./examples/interaction  # Draggable, clickable rectangles with color toggle
-go run ./examples/text         # Bitmap font and SDF text with colors, alignment, word wrap
-go run ./examples/tweens       # Position, scale, rotation, alpha, and color tweens
-go run ./examples/particles    # Fountain, campfire, and sparkler particle effects
-go run ./examples/shaders      # 3x3 grid showcasing all built-in shader filters
-go run ./examples/outline      # Outline and inline filters on a sprite
-go run ./examples/masks        # Star polygon, cursor-following, and erase masking
-go run ./examples/lighting     # Dark dungeon with colored torches and mouse-following lantern
-go run ./examples/atlas        # TexturePacker atlas loading with named regions and magenta placeholders
-go run ./examples/tilemap      # Tile map rendering with camera panning
-go run ./examples/rope         # Draggable endpoints connected by a textured rope
-go run ./examples/watermesh    # Water surface with per-vertex wave animation
+go run ./examples/basic    # simplest possible Willow app
+go run ./examples/shapes   # parent/child transforms
+go run ./examples/lighting # dungeon scene with torches and wisps
 ```
 
 ---

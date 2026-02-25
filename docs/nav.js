@@ -3,6 +3,7 @@
 const REFERENCE_ITEMS = [
     { label: "API Reference", href: "https://pkg.go.dev/github.com/phanxgames/willow" },
     { label: "GitHub", href: "https://github.com/phanxgames/willow" },
+    { label: "Donate", page: "donate" },
 ];
 
 const NAV_TABS = [
@@ -76,7 +77,16 @@ const NAV_TABS = [
     ]},
     { id: "examples", label: "Examples", sections: [
         { title: "Intro", items: [
-            { label: "Intro", page: "examples-intro" },
+            { label: "Intro", page: "examples" },
+        ]},
+        { title: "WASM Demos", items: [
+            { label: "10k Sprites", page: "examples", anchor: "10k-sprites" },
+            { label: "Physics Shapes", page: "examples", anchor: "physics-shapes" },
+            { label: "Rope Garden", page: "examples", anchor: "rope-garden" },
+            { label: "Tween Gallery", page: "examples", anchor: "tween-gallery" },
+            { label: "Filter Gallery", page: "examples", anchor: "filter-gallery" },
+            { label: "Lighting Demo", page: "examples", anchor: "lighting-demo" },
+            { label: "Underwater", page: "examples", anchor: "underwater" },
         ]},
         { title: "Basics", items: [
             { label: "Basic", page: "examples", anchor: "basic" },
@@ -89,10 +99,12 @@ const NAV_TABS = [
         ]},
         { title: "Animation", items: [
             { label: "Tweens", page: "examples", anchor: "tweens" },
+            { label: "Tween Gallery", page: "examples", anchor: "tween-gallery-ex" },
             { label: "Particles", page: "examples", anchor: "particles" },
         ]},
         { title: "Visual Effects", items: [
             { label: "Shaders", page: "examples", anchor: "shaders" },
+            { label: "Filter Gallery", page: "examples", anchor: "filter-gallery-ex" },
             { label: "Outline", page: "examples", anchor: "outline" },
             { label: "Masks", page: "examples", anchor: "masks" },
             { label: "Lighting", page: "examples", anchor: "lighting" },
@@ -106,29 +118,19 @@ const NAV_TABS = [
             { label: "Rope", page: "examples", anchor: "rope" },
             { label: "Water Mesh", page: "examples", anchor: "water-mesh" },
         ]},
-    ]},
-    { id: "demos", label: "Demos", sections: [
-        { title: "Intro", items: [
-            { label: "Intro", page: "demos-intro" },
-        ]},
-        { title: "Stress Tests", items: [
-            { label: "10k Sprites", page: "demos", anchor: "10k-sprites" },
-        ]},
-        { title: "Interactive", items: [
-            { label: "Physics Shapes", page: "demos", anchor: "physics-shapes" },
-            { label: "Rope Garden", page: "demos", anchor: "rope-garden" },
-            { label: "Tween Gallery", page: "demos", anchor: "tween-gallery" },
-            { label: "Filter Gallery", page: "demos", anchor: "filter-gallery" },
-            { label: "Lighting", page: "demos", anchor: "lighting" },
-            { label: "Underwater", page: "demos", anchor: "underwater" },
+        { title: "Showcases", items: [
+            { label: "10k Sprites", page: "examples", anchor: "sprites10k" },
+            { label: "Physics Shapes", page: "examples", anchor: "physics" },
+            { label: "Rope Garden", page: "examples", anchor: "ropegarden" },
+            { label: "Underwater", page: "examples", anchor: "underwater-ex" },
         ]},
     ]},
     { id: "tutorials", label: "Tutorials", sections: [
         { title: "Tutorials", items: [{ label: "Tutorials (Coming Soon)", page: "tutorials" }] }
     ]},
-    { id: "reference", label: "Reference", sections: [
-        { title: "Reference", items: REFERENCE_ITEMS }
-    ]}
+    // { id: "reference", label: "Reference", sections: [
+    //     { title: "Reference", items: REFERENCE_ITEMS }
+    // ]}
 ];
 
 let activeTabId = "docs";
@@ -193,9 +195,17 @@ function buildFooter() {
         const a = document.createElement("a");
         a.className = "sidebar-footer-link";
         a.textContent = item.label;
-        a.href = item.href;
-        a.target = "_blank";
-        a.rel = "noopener noreferrer";
+        if (item.href) {
+            a.href = item.href;
+            a.target = "_blank";
+            a.rel = "noopener noreferrer";
+        } else if (item.page) {
+            a.href = `?page=${item.page}`;
+            a.addEventListener("click", (e) => {
+                e.preventDefault();
+                navigateTo(item.page);
+            });
+        }
         footer.appendChild(a);
     });
 }
