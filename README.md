@@ -150,7 +150,7 @@ go run ./examples/lighting # dungeon scene with torches and wisps
 - **Filters and effects** - Composable filter chains via Kage shaders. Built-in: color matrix, blur, outline, pixel-perfect outline, pixel-perfect inline, palette swap. Render-target masking and `CacheAsTexture`.
 - **Lighting** - Dedicated lighting layer using erase-blend render targets with automatic compositing.
 - **Animation** - Tweening via [gween](https://github.com/tanema/gween) with 45+ easing functions. Convenience wrappers for position, scale, rotation, alpha, and color. Auto-stops on node disposal.
-- **ECS integration** - Optional `EntityStore` interface to bridge interaction events into your ECS. Ships with a [Donburi](https://github.com/yohamta/donburi) adapter.
+- **ECS integration** - Optional `EntityStore` interface to bridge interaction events into your ECS.
 - **Debug mode** - Performance timers, batch counting, tree depth warnings, and disposed-node assertions via `scene.SetDebugMode(true)`.
 
 ---

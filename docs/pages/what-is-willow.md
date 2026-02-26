@@ -56,7 +56,7 @@ Each frame, Willow walks this tree top-to-bottom, computes final transforms, cul
 - **Tilemaps**  -  viewport-based tile rendering
 - **Lighting**  -  2D light layer compositing
 - **Caching**  -  `CacheAsTree` and `CacheAsTexture` for static content
-- **ECS adapter**  -  optional Entity Component System integration
+- **ECS integration**  -  optional `EntityStore` interface bridges interaction events into your ECS
 
 ## How It Works
 
