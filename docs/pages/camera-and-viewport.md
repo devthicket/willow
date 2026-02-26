@@ -124,7 +124,7 @@ The `Follow`, `ScrollTo`, and `SetBounds` methods handle this automatically.
 
 ## Next Steps
 
-- [Text & Fonts](?page=text-and-fonts)  -  bitmap and TTF text rendering
+- [Text & Fonts](?page=text-and-fonts)  -  SDF text rendering from TTF/OTF
 - [Tilemap Viewport](?page=tilemap-viewport)  -  tile-based map rendering with camera binding
 
 ## Related

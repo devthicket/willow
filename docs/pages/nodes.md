@@ -10,7 +10,7 @@ The `Node` is the fundamental building block of Willow's scene graph. Every visi
 | `NodeTypeSprite` | `NewSprite(name, region)` | Renders a texture region (or solid color) |
 | `NodeTypeMesh` | `NewMesh(name, img, verts, indices)` | Custom vertex geometry |
 | `NodeTypeParticleEmitter` | `NewParticleEmitter(name, cfg)` | CPU-simulated particle system |
-| `NodeTypeText` | `NewText(name, content, font)` | Text rendered with bitmap or TTF font |
+| `NodeTypeText` | `NewText(name, content, font)` | SDF text rendered from TTF/OTF font |
 
 ## Creating Nodes
 
@@ -157,4 +157,4 @@ Disposing a node also disposes all its children. Disposed nodes cannot be reused
 - [Scene](?page=scene)  -  the scene that owns the root node
 - [Particles](?page=particles)  -  CPU-simulated particle emitters
 - [Mesh & Distortion](?page=meshes)  -  custom vertex geometry and distortion grids
-- [Text & Fonts](?page=text-and-fonts)  -  bitmap and TTF text rendering
+- [Text & Fonts](?page=text-and-fonts)  -  SDF text rendering from TTF/OTF

@@ -105,7 +105,7 @@ Developers interact with pages through `scene.LoadAtlas()`, `scene.RegisterPage(
 | `LoadAtlas` (pre-packed) | Best  -  one page per atlas | Minimal  -  tightly packed offline | Requires build step | Main game assets |
 | `NewBatchAtlas` + `Pack` | Good  -  optimal runtime packing | Page-sized allocation | Stage all, pack once | Level init, known set of runtime images |
 | `NewAtlas` + `Add` | Good  -  shared runtime pages | Page-sized allocation | None  -  pack at load time | Dynamic content, runtime updates |
-| `RegisterPage` per image | Poor  -  one batch per image | Minimal  -  image-sized | None  -  simplest | Tilemaps, bitmap fonts |
+| `RegisterPage` per image | Poor  -  one batch per image | Minimal  -  image-sized | None  -  simplest | Tilemaps, pre-baked font atlases |
 | `SetCustomImage` | Poor  -  breaks coalesced batching | Minimal  -  image-sized | None  -  simplest | A few one-off images |
 
 For most games, `LoadAtlas` with TexturePacker or [atlaspack](?page=atlaspack) output covers your needs. Reach for dynamic packing only when you have many runtime-loaded images.

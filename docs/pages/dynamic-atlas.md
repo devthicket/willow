@@ -187,7 +187,7 @@ For a comparison of all approaches (LoadAtlas, SetCustomImage, RegisterPage, New
 ## Next Steps
 
 - [Camera & Viewport](?page=camera-and-viewport)  -  viewport setup, follow, zoom, and culling
-- [Text & Fonts](?page=text-and-fonts)  -  bitmap and TTF text rendering
+- [Text & Fonts](?page=text-and-fonts)  -  SDF text rendering from TTF/OTF
 
 ## Related
 

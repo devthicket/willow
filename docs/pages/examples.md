@@ -100,9 +100,9 @@ Draggable, clickable rectangles showcasing hit testing and gesture handling. Dem
 <table>
 <tr>
 <td><a id="text"></a>
-<strong>Bitmap & SDF Font</strong><br>
+<strong>SDF Text</strong><br>
 <code>go run ./examples/text</code><br><br>
-Bitmap font text with alignment and wrapping options, plus SDF text effects (outline, glow, shadow). Generates an SDF atlas PNG at startup and saves it to the example directory.
+SDF text with alignment and wrapping options, plus effects (outline, glow, shadow). Generates an SDF atlas PNG at startup and saves it to the example directory.
 </td>
 <td width="260"></td>
 </tr>

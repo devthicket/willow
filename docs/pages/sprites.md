@@ -43,7 +43,7 @@ For a few one-off images that aren't in a pre-packed atlas, two approaches keep 
 sprite := willow.NewSprite("preview", willow.TextureRegion{})
 sprite.SetCustomImage(img)
 
-// Option B: RegisterPage + TextureRegion (for bitmap fonts, tilemaps)
+// Option B: RegisterPage + TextureRegion (for font atlases, tilemaps)
 scene.RegisterPage(0, pageImage)
 ```
 
