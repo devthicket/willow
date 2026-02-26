@@ -82,7 +82,7 @@ func (g *game) update() error {
 			tx := 80 + rand.Float64()*(screenW-160)
 			ty := 80 + rand.Float64()*(screenH-160)
 			dur := float32(3.0 + rand.Float64()*4.0)
-			w.tween = willow.TweenPosition(w.node, tx, ty, dur, ease.InOutSine)
+			w.tween = willow.TweenPosition(w.node, tx, ty, willow.TweenConfig{Duration: dur, Ease: ease.InOutSine})
 		}
 		// Pulse the wisp light.
 		phase := float64(i) * 3.14
@@ -360,7 +360,7 @@ func main() {
 		tx := 80 + rand.Float64()*(screenW-160)
 		ty := 80 + rand.Float64()*(screenH-160)
 		dur := float32(3.0 + rand.Float64()*4.0)
-		tw := willow.TweenPosition(node, tx, ty, dur, ease.InOutSine)
+		tw := willow.TweenPosition(node, tx, ty, willow.TweenConfig{Duration: dur, Ease: ease.InOutSine})
 
 		wisps[i] = wisp{node: node, light: light, tween: tw}
 	}

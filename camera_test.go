@@ -185,7 +185,7 @@ func TestCameraUnfollow(t *testing.T) {
 
 func TestCameraScrollTo(t *testing.T) {
 	cam := newCamera(Rect{X: 0, Y: 0, Width: 800, Height: 600})
-	cam.ScrollTo(100, 200, 1.0, ease.Linear)
+	cam.ScrollTo(100, 200, TweenConfig{Duration: 1.0, Ease: ease.Linear})
 
 	// Advance halfway
 	cam.update(0.5)
@@ -207,7 +207,7 @@ func TestCameraScrollTo(t *testing.T) {
 
 func TestCameraScrollToTile(t *testing.T) {
 	cam := newCamera(Rect{X: 0, Y: 0, Width: 800, Height: 600})
-	cam.ScrollToTile(3, 2, 32, 32, 0.0001, ease.Linear)
+	cam.ScrollToTile(3, 2, 32, 32, TweenConfig{Duration: 0.0001, Ease: ease.Linear})
 
 	// tile center: (3*32+16, 2*32+16) = (112, 80)
 	cam.update(1.0) // large dt to finish instantly
@@ -439,7 +439,7 @@ func TestMultiCamera_BothRender(t *testing.T) {
 func TestSceneUpdateRunsCameraUpdates(t *testing.T) {
 	scene := NewScene()
 	cam := scene.NewCamera(Rect{X: 0, Y: 0, Width: 800, Height: 600})
-	cam.ScrollTo(100, 0, 1.0, ease.Linear)
+	cam.ScrollTo(100, 0, TweenConfig{Duration: 1.0, Ease: ease.Linear})
 
 	scene.Update() // Should advance scroll
 	if cam.X == 0 {

@@ -78,7 +78,7 @@ mask.OnUpdate = func(dt float64) {
 Or use tweens:
 
 ```go
-tween := willow.TweenScale(mask, 2, 2, 1.0, ease.InOutQuad)
+tween := willow.TweenScale(mask, 2, 2, willow.TweenConfig{Duration: 1.0, Ease: ease.InOutQuad})
 ```
 
 ## Next Steps

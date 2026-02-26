@@ -77,11 +77,17 @@ func main() {
 	scene.Root().AddChild(viewport.Node())
 
 	// Ground tile layer (RenderLayer 0).
-	ground := viewport.AddTileLayer("ground", mapWidth, mapHeight, groundData, regions, img)
+	ground := viewport.AddTileLayer(willow.TileLayerConfig{
+		Name: "ground", Width: mapWidth, Height: mapHeight,
+		Data: groundData, Regions: regions, AtlasImage: img,
+	})
 	ground.Node().RenderLayer = 0
 
 	// Decor tile layer (RenderLayer 1).
-	decor := viewport.AddTileLayer("decor", mapWidth, mapHeight, decorData, regions, img)
+	decor := viewport.AddTileLayer(willow.TileLayerConfig{
+		Name: "decor", Width: mapWidth, Height: mapHeight,
+		Data: decorData, Regions: regions, AtlasImage: img,
+	})
 	decor.Node().RenderLayer = 1
 
 	// Sandwich entity layer (RenderLayer 2)  -  a few colored sprites as "NPCs".
@@ -107,7 +113,10 @@ func main() {
 			upperData[i] = uint32(rand.IntN(4)) + 13 // GIDs 13-16 (fourth row)
 		}
 	}
-	upper := viewport.AddTileLayer("upper", mapWidth, mapHeight, upperData, regions, img)
+	upper := viewport.AddTileLayer(willow.TileLayerConfig{
+		Name: "upper", Width: mapWidth, Height: mapHeight,
+		Data: upperData, Regions: regions, AtlasImage: img,
+	})
 	upper.Node().RenderLayer = 3
 
 	// Camera panning via drag.

@@ -140,11 +140,11 @@ func (d *demo) startTweens() {
 	// Position: bounce to a random nearby spot and back.
 	targetY := cy + (rand.Float64()-0.5)*120
 	d.tweens = []*willow.TweenGroup{
-		willow.TweenPosition(d.posNode, startX, targetY, 1.5, ease.OutBounce),
-		willow.TweenScale(d.scaleNode, 3.5, 3.5, 1.2, ease.OutElastic),
-		willow.TweenRotation(d.rotNode, math.Pi*2, 2.0, ease.InOutCubic),
-		willow.TweenAlpha(d.alphaNode, 0.1, 1.5, ease.InOutSine),
-		willow.TweenColor(d.colorNode, randomBrightColor(), 1.5, ease.InOutQuad),
+		willow.TweenPosition(d.posNode, startX, targetY, willow.TweenConfig{Duration: 1.5, Ease: ease.OutBounce}),
+		willow.TweenScale(d.scaleNode, 3.5, 3.5, willow.TweenConfig{Duration: 1.2, Ease: ease.OutElastic}),
+		willow.TweenRotation(d.rotNode, math.Pi*2, willow.TweenConfig{Duration: 2.0, Ease: ease.InOutCubic}),
+		willow.TweenAlpha(d.alphaNode, 0.1, willow.TweenConfig{Duration: 1.5, Ease: ease.InOutSine}),
+		willow.TweenColor(d.colorNode, randomBrightColor(), willow.TweenConfig{Duration: 1.5, Ease: ease.InOutQuad}),
 	}
 }
 

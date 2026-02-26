@@ -5,6 +5,21 @@ import (
 	"github.com/tanema/gween/ease"
 )
 
+// TweenConfig holds the duration and easing function for a tween.
+// A nil Ease defaults to ease.Linear. Duration is in seconds; 0 means instant.
+type TweenConfig struct {
+	Duration float32        // seconds; 0 = instant
+	Ease     ease.TweenFunc // nil defaults to ease.Linear
+}
+
+// tweenEase returns cfg.Ease if non-nil, otherwise ease.Linear.
+func tweenEase(cfg TweenConfig) ease.TweenFunc {
+	if cfg.Ease != nil {
+		return cfg.Ease
+	}
+	return ease.Linear
+}
+
 // TweenGroup animates up to 4 float64 fields on a Node simultaneously.
 // Create one via the convenience constructors (TweenPosition, TweenScale,
 // TweenColor, TweenAlpha, TweenRotation). When the target node belongs to a
@@ -79,10 +94,11 @@ func (g *TweenGroup) autoRegister(node *Node) {
 
 // TweenPosition creates a TweenGroup that animates node.X and node.Y to the
 // given target coordinates over the specified duration using the easing function.
-func TweenPosition(node *Node, toX, toY float64, duration float32, fn ease.TweenFunc) *TweenGroup {
+func TweenPosition(node *Node, toX, toY float64, cfg TweenConfig) *TweenGroup {
+	fn := tweenEase(cfg)
 	g := &TweenGroup{count: 2, target: node}
-	g.tweens[0] = gween.New(float32(node.X), float32(toX), duration, fn)
-	g.tweens[1] = gween.New(float32(node.Y), float32(toY), duration, fn)
+	g.tweens[0] = gween.New(float32(node.X), float32(toX), cfg.Duration, fn)
+	g.tweens[1] = gween.New(float32(node.Y), float32(toY), cfg.Duration, fn)
 	g.fields[0] = &node.X
 	g.fields[1] = &node.Y
 	g.autoRegister(node)
@@ -91,10 +107,11 @@ func TweenPosition(node *Node, toX, toY float64, duration float32, fn ease.Tween
 
 // TweenScale creates a TweenGroup that animates node.ScaleX and node.ScaleY to
 // the given target values over the specified duration using the easing function.
-func TweenScale(node *Node, toSX, toSY float64, duration float32, fn ease.TweenFunc) *TweenGroup {
+func TweenScale(node *Node, toSX, toSY float64, cfg TweenConfig) *TweenGroup {
+	fn := tweenEase(cfg)
 	g := &TweenGroup{count: 2, target: node}
-	g.tweens[0] = gween.New(float32(node.ScaleX), float32(toSX), duration, fn)
-	g.tweens[1] = gween.New(float32(node.ScaleY), float32(toSY), duration, fn)
+	g.tweens[0] = gween.New(float32(node.ScaleX), float32(toSX), cfg.Duration, fn)
+	g.tweens[1] = gween.New(float32(node.ScaleY), float32(toSY), cfg.Duration, fn)
 	g.fields[0] = &node.ScaleX
 	g.fields[1] = &node.ScaleY
 	g.autoRegister(node)
@@ -103,12 +120,13 @@ func TweenScale(node *Node, toSX, toSY float64, duration float32, fn ease.TweenF
 
 // TweenColor creates a TweenGroup that animates all four components of
 // node.Color (R, G, B, A) to the target color over the specified duration.
-func TweenColor(node *Node, to Color, duration float32, fn ease.TweenFunc) *TweenGroup {
+func TweenColor(node *Node, to Color, cfg TweenConfig) *TweenGroup {
+	fn := tweenEase(cfg)
 	g := &TweenGroup{count: 4, target: node}
-	g.tweens[0] = gween.New(float32(node.Color.R), float32(to.R), duration, fn)
-	g.tweens[1] = gween.New(float32(node.Color.G), float32(to.G), duration, fn)
-	g.tweens[2] = gween.New(float32(node.Color.B), float32(to.B), duration, fn)
-	g.tweens[3] = gween.New(float32(node.Color.A), float32(to.A), duration, fn)
+	g.tweens[0] = gween.New(float32(node.Color.R), float32(to.R), cfg.Duration, fn)
+	g.tweens[1] = gween.New(float32(node.Color.G), float32(to.G), cfg.Duration, fn)
+	g.tweens[2] = gween.New(float32(node.Color.B), float32(to.B), cfg.Duration, fn)
+	g.tweens[3] = gween.New(float32(node.Color.A), float32(to.A), cfg.Duration, fn)
 	g.fields[0] = &node.Color.R
 	g.fields[1] = &node.Color.G
 	g.fields[2] = &node.Color.B
@@ -119,9 +137,10 @@ func TweenColor(node *Node, to Color, duration float32, fn ease.TweenFunc) *Twee
 
 // TweenAlpha creates a TweenGroup that animates node.Alpha to the target value
 // over the specified duration using the easing function.
-func TweenAlpha(node *Node, to float64, duration float32, fn ease.TweenFunc) *TweenGroup {
+func TweenAlpha(node *Node, to float64, cfg TweenConfig) *TweenGroup {
+	fn := tweenEase(cfg)
 	g := &TweenGroup{count: 1, target: node}
-	g.tweens[0] = gween.New(float32(node.Alpha), float32(to), duration, fn)
+	g.tweens[0] = gween.New(float32(node.Alpha), float32(to), cfg.Duration, fn)
 	g.fields[0] = &node.Alpha
 	g.autoRegister(node)
 	return g
@@ -129,9 +148,10 @@ func TweenAlpha(node *Node, to float64, duration float32, fn ease.TweenFunc) *Tw
 
 // TweenRotation creates a TweenGroup that animates node.Rotation to the target
 // value over the specified duration using the easing function.
-func TweenRotation(node *Node, to float64, duration float32, fn ease.TweenFunc) *TweenGroup {
+func TweenRotation(node *Node, to float64, cfg TweenConfig) *TweenGroup {
+	fn := tweenEase(cfg)
 	g := &TweenGroup{count: 1, target: node}
-	g.tweens[0] = gween.New(float32(node.Rotation), float32(to), duration, fn)
+	g.tweens[0] = gween.New(float32(node.Rotation), float32(to), cfg.Duration, fn)
 	g.fields[0] = &node.Rotation
 	g.autoRegister(node)
 	return g

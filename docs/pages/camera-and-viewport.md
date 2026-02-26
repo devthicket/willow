@@ -48,18 +48,13 @@ Smoothly scroll to a world position:
 ```go
 import "github.com/tanema/gween/ease"
 
-cam.ScrollTo(500, 300, 1.0, ease.InOutQuad)
-// x, y: target world position
-// duration: seconds
-// easeFn: easing function
+cam.ScrollTo(500, 300, willow.TweenConfig{Duration: 1.0, Ease: ease.InOutQuad})
 ```
 
 For tile-based scrolling:
 
 ```go
-cam.ScrollToTile(5, 3, 32, 32, 0.5, ease.Linear)
-// tileX, tileY: tile coordinates
-// tileW, tileH: tile dimensions in pixels
+cam.ScrollToTile(5, 3, 32, 32, willow.TweenConfig{Duration: 0.5})
 ```
 
 ## Camera Bounds

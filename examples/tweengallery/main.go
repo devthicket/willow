@@ -150,17 +150,18 @@ func main() {
 
 	startTweens := func(fn ease.TweenFunc) {
 		resetSprites()
+		cfg := willow.TweenConfig{Duration: 1.8, Ease: fn}
 		tweens = []*willow.TweenGroup{
 			// Position: bounce vertically.
-			willow.TweenPosition(sprites[0], homeX[0], spriteY-70+(rand.Float64()*40), 1.8, fn),
+			willow.TweenPosition(sprites[0], homeX[0], spriteY-70+(rand.Float64()*40), cfg),
 			// Scale: grow then shrink back.
-			willow.TweenScale(sprites[1], 2.8, 2.8, 1.8, fn),
+			willow.TweenScale(sprites[1], 2.8, 2.8, cfg),
 			// Rotation: full spin.
-			willow.TweenRotation(sprites[2], math.Pi*2, 1.8, fn),
+			willow.TweenRotation(sprites[2], math.Pi*2, cfg),
 			// Alpha: fade to near-invisible.
-			willow.TweenAlpha(sprites[3], 0.1, 1.8, fn),
+			willow.TweenAlpha(sprites[3], 0.1, cfg),
 			// Color: tint to random bright color.
-			willow.TweenColor(sprites[4], randomBrightColor(), 1.8, fn),
+			willow.TweenColor(sprites[4], randomBrightColor(), cfg),
 		}
 	}
 

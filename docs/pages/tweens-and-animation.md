@@ -14,19 +14,19 @@ Five property tweens are available:
 import "github.com/tanema/gween/ease"
 
 // Move to position over 1 second
-tween := willow.TweenPosition(node, 300, 200, 1.0, ease.InOutQuad)
+tween := willow.TweenPosition(node, 300, 200, willow.TweenConfig{Duration: 1.0, Ease: ease.InOutQuad})
 
 // Scale to 2x over 0.5 seconds
-tween := willow.TweenScale(node, 2, 2, 0.5, ease.OutBack)
+tween := willow.TweenScale(node, 2, 2, willow.TweenConfig{Duration: 0.5, Ease: ease.OutBack})
 
 // Fade to 50% alpha over 0.8 seconds
-tween := willow.TweenAlpha(node, 0.5, 0.8, ease.Linear)
+tween := willow.TweenAlpha(node, 0.5, willow.TweenConfig{Duration: 0.8})
 
 // Tint to red over 1 second
-tween := willow.TweenColor(node, willow.Color{R: 1, G: 0, B: 0, A: 1}, 1.0, ease.InOutQuad)
+tween := willow.TweenColor(node, willow.Color{R: 1, G: 0, B: 0, A: 1}, willow.TweenConfig{Duration: 1.0, Ease: ease.InOutQuad})
 
 // Rotate to 90 degrees over 0.5 seconds
-tween := willow.TweenRotation(node, math.Pi/2, 0.5, ease.InOutCubic)
+tween := willow.TweenRotation(node, math.Pi/2, willow.TweenConfig{Duration: 0.5, Ease: ease.InOutCubic})
 ```
 
 Each returns a `*TweenGroup`.
@@ -40,7 +40,7 @@ box := willow.NewSprite("box", willow.TextureRegion{})
 scene.Root().AddChild(box)
 
 // This tween runs automatically  -  nothing else to do.
-tween := willow.TweenPosition(box, 500, 200, 2.0, ease.InOutQuad)
+tween := willow.TweenPosition(box, 500, 200, willow.TweenConfig{Duration: 2.0, Ease: ease.InOutQuad})
 ```
 
 The scene ticks all registered tweens during `Scene.Update()`, removes them when done, and cleans up automatically.
@@ -89,13 +89,13 @@ var current *willow.TweenGroup
 scene.SetUpdateFunc(func() error {
     if current != nil && current.Done {
         // First tween finished  -  start the next.
-        current = willow.TweenAlpha(node, 0, 0.5, ease.Linear)
+        current = willow.TweenAlpha(node, 0, willow.TweenConfig{Duration: 0.5})
     }
     return nil
 })
 
 // Kick off the chain.
-current = willow.TweenPosition(node, 300, 200, 1.0, ease.InOutQuad)
+current = willow.TweenPosition(node, 300, 200, willow.TweenConfig{Duration: 1.0, Ease: ease.InOutQuad})
 ```
 
 ## Example
@@ -112,7 +112,7 @@ box.Y = 200
 scene.Root().AddChild(box)
 
 // Tween auto-ticks because box is already on the scene.
-willow.TweenPosition(box, 500, 200, 2.0, ease.InOutQuad)
+willow.TweenPosition(box, 500, 200, willow.TweenConfig{Duration: 2.0, Ease: ease.InOutQuad})
 
 willow.Run(scene, willow.RunConfig{Title: "Tween Demo", Width: 640, Height: 480})
 ```

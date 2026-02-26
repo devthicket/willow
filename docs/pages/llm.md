@@ -497,7 +497,7 @@ content.SetMask(maskRoot)
 Tweens on nodes that are part of a Scene are updated automatically each frame  -  no manual `Update(dt)` call is needed. Just create the tween and it runs:
 
 ```go
-willow.TweenPosition(node, 200, 300, 1.0, ease.OutCubic)  // starts automatically
+willow.TweenPosition(node, 200, 300, willow.TweenConfig{Duration: 1.0, Ease: ease.OutCubic})  // starts automatically
 ```
 
 ## SetUpdateFunc Replaces  -  It Does Not Chain
@@ -632,7 +632,10 @@ viewport := willow.NewTileMapViewport("world", tileW, tileH)
 viewport.SetCamera(cam)
 scene.Root().AddChild(viewport.Node())
 
-layer := viewport.AddTileLayer("ground", mapW, mapH, gidData, regions, tilesetImg)
+layer := viewport.AddTileLayer(willow.TileLayerConfig{
+    Name: "ground", Width: mapW, Height: mapH,
+    Data: gidData, Regions: regions, AtlasImage: tilesetImg,
+})
 layer.Node().RenderLayer = 0  // controls draw order within the viewport
 ```
 

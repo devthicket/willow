@@ -50,7 +50,10 @@ regions := []willow.TextureRegion{
     atlas.Region("stone"),    // GID 3
 }
 
-layer := viewport.AddTileLayer("ground", 5, 3, tileData, regions, atlasPage)
+layer := viewport.AddTileLayer(willow.TileLayerConfig{
+    Name: "ground", Width: 5, Height: 3,
+    Data: tileData, Regions: regions, AtlasImage: atlasPage,
+})
 ```
 
 ### GID Format
@@ -91,14 +94,20 @@ Insert scene graph nodes between tile layers for depth-sorted entities:
 
 ```go
 // Background tiles
-viewport.AddTileLayer("bg", w, h, bgData, regions, page)
+viewport.AddTileLayer(willow.TileLayerConfig{
+    Name: "bg", Width: w, Height: h,
+    Data: bgData, Regions: regions, AtlasImage: page,
+})
 
 // Entity layer (scene graph nodes rendered between tile layers)
 entityContainer := willow.NewContainer("entities")
 viewport.AddChild(entityContainer)
 
 // Foreground tiles
-viewport.AddTileLayer("fg", w, h, fgData, regions, page)
+viewport.AddTileLayer(willow.TileLayerConfig{
+    Name: "fg", Width: w, Height: h,
+    Data: fgData, Regions: regions, AtlasImage: page,
+})
 ```
 
 `AddChild` interleaves scene graph nodes with tile layers in draw order.
@@ -110,7 +119,7 @@ cam := scene.NewCamera(willow.Rect{X: 0, Y: 0, Width: 800, Height: 600})
 viewport.SetCamera(cam)
 
 // Scroll to a tile coordinate
-cam.ScrollToTile(10, 5, 32, 32, 0.5, ease.InOutQuad)
+cam.ScrollToTile(10, 5, 32, 32, willow.TweenConfig{Duration: 0.5, Ease: ease.InOutQuad})
 
 // Set camera bounds to map size
 cam.SetBounds(willow.Rect{

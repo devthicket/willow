@@ -12,7 +12,7 @@ func TestTweenPositionReachesTarget(t *testing.T) {
 	node.X = 10
 	node.Y = 20
 
-	g := TweenPosition(node, 100, 200, 1.0, ease.Linear)
+	g := TweenPosition(node, 100, 200, TweenConfig{Duration: 1.0, Ease: ease.Linear})
 
 	// Run for full duration using exact halves to avoid float32 accumulation drift.
 	g.Update(0.5)
@@ -32,7 +32,7 @@ func TestTweenPositionReachesTarget(t *testing.T) {
 func TestTweenScaleReachesTarget(t *testing.T) {
 	node := NewContainer("scale")
 
-	g := TweenScale(node, 2.0, 3.0, 0.5, ease.Linear)
+	g := TweenScale(node, 2.0, 3.0, TweenConfig{Duration: 0.5, Ease: ease.Linear})
 
 	g.Update(0.25)
 	g.Update(0.25)
@@ -53,7 +53,7 @@ func TestTweenColorAllComponents(t *testing.T) {
 	node.Color = Color{R: 1, G: 0, B: 0, A: 1}
 	target := Color{R: 0, G: 1, B: 0.5, A: 0.5}
 
-	g := TweenColor(node, target, 1.0, ease.Linear)
+	g := TweenColor(node, target, TweenConfig{Duration: 1.0, Ease: ease.Linear})
 
 	g.Update(0.5)
 	g.Update(0.5)
@@ -79,7 +79,7 @@ func TestTweenAlphaInterpolates(t *testing.T) {
 	node := NewContainer("alpha")
 	node.Alpha = 1.0
 
-	tw := TweenAlpha(node, 0.0, 1.0, ease.Linear)
+	tw := TweenAlpha(node, 0.0, TweenConfig{Duration: 1.0, Ease: ease.Linear})
 
 	// Halfway through.
 	tw.Update(0.5)
@@ -104,7 +104,7 @@ func TestTweenRotationReachesTarget(t *testing.T) {
 	node := NewContainer("rot")
 	node.Rotation = 0
 
-	tw := TweenRotation(node, math.Pi, 1.0, ease.Linear)
+	tw := TweenRotation(node, math.Pi, TweenConfig{Duration: 1.0, Ease: ease.Linear})
 
 	tw.Update(0.5)
 	tw.Update(0.5)
@@ -119,7 +119,7 @@ func TestTweenRotationReachesTarget(t *testing.T) {
 
 func TestTweenGroupDoneFlagTransition(t *testing.T) {
 	node := NewContainer("done")
-	g := TweenPosition(node, 50, 50, 0.5, ease.Linear)
+	g := TweenPosition(node, 50, 50, TweenConfig{Duration: 0.5, Ease: ease.Linear})
 
 	if g.Done {
 		t.Fatal("should not be Done at start")
@@ -150,7 +150,7 @@ func TestTweenGroupMarksDirty(t *testing.T) {
 	// Clear the dirty flag first.
 	node.transformDirty = false
 
-	g := TweenPosition(node, 100, 100, 1.0, ease.Linear)
+	g := TweenPosition(node, 100, 100, TweenConfig{Duration: 1.0, Ease: ease.Linear})
 	g.Update(0.1)
 
 	if !node.transformDirty {
@@ -163,7 +163,7 @@ func TestTweenGroupDisposedNode(t *testing.T) {
 	node.X = 10
 	node.Y = 20
 
-	g := TweenPosition(node, 100, 200, 1.0, ease.Linear)
+	g := TweenPosition(node, 100, 200, TweenConfig{Duration: 1.0, Ease: ease.Linear})
 
 	// Dispose the node before tweening.
 	node.Dispose()
@@ -185,7 +185,7 @@ func TestTweenGroupDisposedNode(t *testing.T) {
 func TestTweenGroupDisposedMidAnimation(t *testing.T) {
 	node := NewContainer("mid-dispose")
 
-	g := TweenPosition(node, 100, 100, 1.0, ease.Linear)
+	g := TweenPosition(node, 100, 100, TweenConfig{Duration: 1.0, Ease: ease.Linear})
 
 	// Run a few frames.
 	g.Update(0.1)
@@ -213,8 +213,8 @@ func TestTweenEasingFunctionsProduceDifferentCurves(t *testing.T) {
 	nodeL := NewContainer("linear")
 	nodeC := NewContainer("cubic")
 
-	gL := TweenPosition(nodeL, 100, 0, 1.0, ease.Linear)
-	gC := TweenPosition(nodeC, 100, 0, 1.0, ease.OutCubic)
+	gL := TweenPosition(nodeL, 100, 0, TweenConfig{Duration: 1.0, Ease: ease.Linear})
+	gC := TweenPosition(nodeC, 100, 0, TweenConfig{Duration: 1.0, Ease: ease.OutCubic})
 
 	// Advance to midpoint.
 	gL.Update(0.5)
@@ -228,7 +228,7 @@ func TestTweenEasingFunctionsProduceDifferentCurves(t *testing.T) {
 
 func TestTweenGroupUpdateZeroAlloc(t *testing.T) {
 	node := NewContainer("alloc")
-	g := TweenPosition(node, 100, 100, 1.0, ease.Linear)
+	g := TweenPosition(node, 100, 100, TweenConfig{Duration: 1.0, Ease: ease.Linear})
 
 	// Warm up  -  first call might differ.
 	g.Update(0.01)

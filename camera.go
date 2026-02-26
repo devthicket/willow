@@ -4,7 +4,6 @@ import (
 	"math"
 
 	"github.com/tanema/gween"
-	"github.com/tanema/gween/ease"
 )
 
 // scrollAnim holds active scroll-to tweens for camera X and Y.
@@ -73,19 +72,21 @@ func (c *Camera) Unfollow() {
 	c.followTarget = nil
 }
 
-// ScrollTo animates the camera to the given world position over duration seconds.
-func (c *Camera) ScrollTo(x, y float64, duration float32, easeFn ease.TweenFunc) {
+// ScrollTo animates the camera to the given world position using the provided
+// TweenConfig for duration and easing.
+func (c *Camera) ScrollTo(x, y float64, cfg TweenConfig) {
+	fn := tweenEase(cfg)
 	c.scrollTween = &scrollAnim{
-		tweenX: gween.New(float32(c.X), float32(x), duration, easeFn),
-		tweenY: gween.New(float32(c.Y), float32(y), duration, easeFn),
+		tweenX: gween.New(float32(c.X), float32(x), cfg.Duration, fn),
+		tweenY: gween.New(float32(c.Y), float32(y), cfg.Duration, fn),
 	}
 }
 
 // ScrollToTile scrolls to the center of the given tile in a tile-based layout.
-func (c *Camera) ScrollToTile(tileX, tileY int, tileW, tileH float64, duration float32, easeFn ease.TweenFunc) {
+func (c *Camera) ScrollToTile(tileX, tileY int, tileW, tileH float64, cfg TweenConfig) {
 	worldX := float64(tileX)*tileW + tileW/2
 	worldY := float64(tileY)*tileH + tileH/2
-	c.ScrollTo(worldX, worldY, duration, easeFn)
+	c.ScrollTo(worldX, worldY, cfg)
 }
 
 // SetBounds enables camera bounds clamping.

@@ -109,6 +109,16 @@ type TileMapLayer struct {
 	viewport *TileMapViewport
 }
 
+// TileLayerConfig holds the parameters for creating a tile layer.
+type TileLayerConfig struct {
+	Name       string
+	Width      int
+	Height     int
+	Data       []uint32
+	Regions    []TextureRegion
+	AtlasImage *ebiten.Image
+}
+
 // NewTileMapViewport creates a new tilemap viewport node with the given tile
 // dimensions. The viewport is a container node that should be added to the
 // scene graph.
@@ -135,17 +145,17 @@ func (v *TileMapViewport) SetCamera(cam *Camera) {
 	v.camera = cam
 }
 
-// AddTileLayer creates a tile layer with the given map data and adds it as a
-// child of the viewport. All regions must come from the provided atlas image.
+// AddTileLayer creates a tile layer with the given configuration and adds it as
+// a child of the viewport. All regions must come from the provided atlas image.
 // Returns the layer for further configuration (RenderLayer, animations, etc.).
-func (v *TileMapViewport) AddTileLayer(name string, w, h int, data []uint32, regions []TextureRegion, atlasImage *ebiten.Image) *TileMapLayer {
+func (v *TileMapViewport) AddTileLayer(cfg TileLayerConfig) *TileMapLayer {
 	layer := &TileMapLayer{
-		node:        NewContainer(name),
-		data:        data,
-		width:       w,
-		height:      h,
-		regions:     regions,
-		atlasImage:  atlasImage,
+		node:        NewContainer(cfg.Name),
+		data:        cfg.Data,
+		width:       cfg.Width,
+		height:      cfg.Height,
+		regions:     cfg.Regions,
+		atlasImage:  cfg.AtlasImage,
 		viewport:    v,
 		bufDirty:    true,
 		bufStartCol: -1, // force initial rebuild
