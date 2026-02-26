@@ -79,8 +79,6 @@ Willow targets **10,000+ sprites at 120+ FPS** on desktop and **60+ FPS** on mob
 
 Willow is a single flat Go package (`github.com/phanxgames/willow`). There are no `internal/` sub-packages. Go's unexported (lowercase) visibility serves as the internal boundary.
 
-The ECS adapter lives in a separate submodule at `github.com/phanxgames/willow/ecs`.
-
 ## Next Steps
 
 - [Performance](?page=performance-overview)  -  benchmarks, batching strategy, and optimization tips

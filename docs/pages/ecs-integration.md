@@ -54,51 +54,7 @@ scene.Root().AddChild(sprite)
 
 When this sprite is clicked, dragged, etc., an `InteractionEvent` with the matching `EntityID` is emitted through the entity store.
 
-## Donburi Adapter
-
-Willow ships a ready-made adapter for [Donburi](https://github.com/yohamta/donburi) ECS in the `willow/ecs` submodule:
-
-```go
-import (
-    "github.com/phanxgames/willow/ecs"
-    "github.com/yohamta/donburi"
-    "github.com/yohamta/donburi/features/events"
-)
-
-world := donburi.NewWorld()
-store := ecs.NewDonburiStore(world)
-scene.SetEntityStore(store)
-```
-
-### Consuming Events
-
-Subscribe to interaction events using Donburi's event system:
-
-```go
-events.Subscribe(world, ecs.InteractionEventType,
-    func(w donburi.World, event willow.InteractionEvent) {
-        switch event.Type {
-        case willow.EventClick:
-            fmt.Printf("Entity %d clicked at (%.0f, %.0f)\n",
-                event.EntityID, event.GlobalX, event.GlobalY)
-        case willow.EventDrag:
-            fmt.Printf("Entity %d dragged by (%.1f, %.1f)\n",
-                event.EntityID, event.DeltaX, event.DeltaY)
-        }
-    },
-)
-
-// Process events each frame
-events.ProcessAllEvents(world)
-```
-
-### Installation
-
-```bash
-go get github.com/phanxgames/willow/ecs@latest
-```
-
-## Custom EntityStore
+## Implementing EntityStore
 
 Implement the `EntityStore` interface for any ECS framework:
 

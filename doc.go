@@ -61,13 +61,11 @@
 // (TTF/OTF via signed distance fields for resolution-independent scaling
 // with GPU-accelerated outlines, glows, and shadows), CPU-simulated particles,
 // mesh/polygon/rope geometry, Kage shader filters, texture caching,
-// masking, blend modes, lighting layers, tweens (via [gween]), and ECS
-// integration (via [Donburi] adapter in willow/ecs).
+// masking, blend modes, lighting layers, and tweens (via [gween]).
 //
 // See the full docs for guides on each feature:
 // https://phanxgames.github.io/willow/
 //
 // [Ebitengine]: https://ebitengine.org
 // [gween]: https://github.com/tanema/gween
-// [Donburi]: https://github.com/yohamta/donburi
 package willow
