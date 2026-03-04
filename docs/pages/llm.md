@@ -2,7 +2,9 @@
 
 Common pitfalls and patterns that trip up AI code generators. Read this before writing Willow code.
 
-## Camera Setup
+## Camera Is Optional
+
+A camera is **not required** for basic Willow apps. Without a camera, the scene renders with a default identity transform (world origin at top-left, 1:1 pixel mapping). Only create a camera when you need viewport features like culling, scrolling, zooming, or follow.
 
 When creating a camera, you must position it at the center of the viewport  -  not at (0, 0). The camera's X/Y is where it *looks*, so centering it on screen means the world origin aligns with the top-left corner of the window.
 
@@ -13,7 +15,7 @@ cam.Y = screenH / 2
 cam.Invalidate()
 ```
 
-Without this, everything renders offset by half the screen.
+Without this centering, everything renders offset by half the screen.
 
 ### Camera Bounds
 

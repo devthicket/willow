@@ -96,9 +96,10 @@ type TextBlock struct {
     FontSize   float64      // display size in pixels (default 16); 0 = native atlas size
     Align      TextAlign    // Left, Center, Right
     WrapWidth  float64      // screen pixels; 0 = no wrapping
-    Color      Color
-    Outline    *Outline     // nil = no outline
-    LineHeight float64      // 0 = use Font.LineHeight()
+    Color       Color
+    Outline     *Outline      // nil = no outline
+    LineHeight  float64       // 0 = use Font.LineHeight()
+    TextEffects *TextEffects  // nil = no effects; outline, glow, shadow
 }
 ```
 
