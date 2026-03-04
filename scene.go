@@ -118,6 +118,11 @@ type Scene struct {
 
 	// Test runner (automated visual testing)
 	testRunner *TestRunner
+
+	// AntiAlias enables anti-aliased edges on DrawTriangles calls (meshes,
+	// tilemaps, batched sprites, particles). Toggle at runtime or set via
+	// RunConfig for initial setup.
+	AntiAlias bool
 }
 
 // NewScene creates a new scene with a pre-created root container.
@@ -151,6 +156,9 @@ type RunConfig struct {
 
 	// ShowFPS enables a small FPS/TPS widget in the top-left corner.
 	ShowFPS bool
+
+	// AntiAlias enables anti-aliased edges on all DrawTriangles calls.
+	AntiAlias bool
 }
 
 // SetUpdateFunc registers a callback that is called once per tick before
@@ -184,6 +192,7 @@ func Run(scene *Scene, cfg RunConfig) error {
 	if cfg.Title != "" {
 		ebiten.SetWindowTitle(cfg.Title)
 	}
+	scene.AntiAlias = cfg.AntiAlias
 	g := &gameShell{scene: scene, w: w, h: h}
 	if cfg.ShowFPS {
 		g.fpsWid = NewFPSWidget()

@@ -431,6 +431,8 @@ type SpriteFont struct {
 	extGlyphs   map[rune]*glyph        // extended Unicode
 
 	kernings map[[2]rune]int16
+
+	ttfData []byte // original TTF data (retained for offscreen text rendering)
 }
 
 // MeasureString returns the pixel width and height of the rendered text
@@ -489,6 +491,18 @@ func (f *SpriteFont) DistanceRange() float64 {
 // IsMultiChannel returns true if this is an MSDF font (multi-channel SDF).
 func (f *SpriteFont) IsMultiChannel() bool {
 	return f.multiChannel
+}
+
+// TTFData returns the original TTF/OTF byte data, or nil if the font was not
+// created from TTF. This allows consumers (e.g. RichText offscreen rendering)
+// to create a GoTextFace from the same font source.
+func (f *SpriteFont) TTFData() []byte {
+	return f.ttfData
+}
+
+// FontSize returns the design size (in pixels) that the SDF was generated at.
+func (f *SpriteFont) FontSize() float64 {
+	return f.fontSize
 }
 
 // glyph returns the glyph for the given rune, or nil if not found.
@@ -745,6 +759,7 @@ func NewFontFromTTF(ttfData []byte, size float64) (*SpriteFont, error) {
 		return nil, err
 	}
 	am.RegisterPage(pageIndex, atlasImg)
+	sdfFont.ttfData = ttfData
 	return sdfFont, nil
 }
 
