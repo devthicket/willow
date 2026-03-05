@@ -10,11 +10,12 @@ import (
 type CommandType uint8
 
 const (
-	CommandSprite   CommandType = iota // DrawImage
-	CommandMesh                        // DrawTriangles
-	CommandParticle                    // particle quads (batches as sprites)
-	CommandTilemap                     // DrawTriangles for tilemap layers
-	CommandSDF                         // DrawTrianglesShader for SDF text glyphs
+	CommandSprite     CommandType = iota // DrawImage
+	CommandMesh                          // DrawTriangles
+	CommandParticle                      // particle quads (batches as sprites)
+	CommandTilemap                       // DrawTriangles for tilemap layers
+	CommandSDF                           // DrawTrianglesShader for SDF text glyphs
+	CommandBitmapText                    // DrawTriangles for pixel-perfect bitmap font glyphs
 )
 
 // color32 is a compact RGBA color using float32, for render commands only.
@@ -70,6 +71,13 @@ type RenderCommand struct {
 	sdfShader    *ebiten.Shader  // SDF or MSDF shader
 	sdfAtlasImg  *ebiten.Image   // font's SDF atlas page
 	sdfUniforms  map[string]any  // shader uniforms (threshold, smoothing, effects)
+
+	// Bitmap text fields (CommandBitmapText only — slice headers, not copies).
+	bmpVerts     []ebiten.Vertex
+	bmpInds      []uint16
+	bmpVertCount int
+	bmpIndCount  int
+	bmpImage     *ebiten.Image
 }
 
 // identityTransform32 is the identity affine matrix as float32.
@@ -209,7 +217,12 @@ func (s *Scene) traverse(n *Node, treeOrder *int) {
 			}
 		case NodeTypeText:
 			if n.TextBlock != nil && n.TextBlock.Font != nil {
-				s.commands = emitSDFTextCommand(n.TextBlock, n, viewWorld, s.commands, treeOrder)
+				switch n.TextBlock.Font.(type) {
+				case *SpriteFont:
+					s.commands = emitSDFTextCommand(n.TextBlock, n, viewWorld, s.commands, treeOrder)
+				case *PixelFont:
+					s.commands = emitPixelTextCommand(n.TextBlock, n, viewWorld, s.commands, treeOrder)
+				}
 			}
 			// NodeTypeContainer doesn't emit commands
 		}
@@ -659,7 +672,12 @@ func (s *Scene) emitNodeCommandInline(n *Node, treeOrder *int) {
 		s.commands = append(s.commands, cmd)
 	case NodeTypeText:
 		if n.TextBlock != nil && n.TextBlock.Font != nil {
-			s.commands = emitSDFTextCommand(n.TextBlock, n, viewWorld, s.commands, treeOrder)
+			switch n.TextBlock.Font.(type) {
+			case *SpriteFont:
+				s.commands = emitSDFTextCommand(n.TextBlock, n, viewWorld, s.commands, treeOrder)
+			case *PixelFont:
+				s.commands = emitPixelTextCommand(n.TextBlock, n, viewWorld, s.commands, treeOrder)
+			}
 		}
 	}
 	// Mesh/Particle handled as "blocked"  -  won't reach here during cache build

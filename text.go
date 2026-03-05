@@ -119,6 +119,20 @@ func (tb *TextBlock) lineHeight() float64 {
 // fontScale returns the scale factor that maps native atlas pixels to display pixels.
 // Returns 1.0 when FontSize is zero/negative or Font is nil.
 func (tb *TextBlock) fontScale() float64 {
+	if _, ok := tb.Font.(*PixelFont); ok {
+		if tb.FontSize <= 0 {
+			return 1.0
+		}
+		native := tb.Font.LineHeight()
+		if native <= 0 {
+			return 1.0
+		}
+		s := math.Round(tb.FontSize / native)
+		if s < 1 {
+			s = 1
+		}
+		return s
+	}
 	if tb.FontSize <= 0 || tb.Font == nil {
 		return 1.0
 	}
@@ -159,6 +173,9 @@ func (tb *TextBlock) layout() []textLine {
 		tb.layoutSDF(f)
 		tb.rebuildLocalVerts(f)
 		tb.uniformsDirty = true
+	case *PixelFont:
+		tb.layoutPixel(f)
+		tb.rebuildPixelVerts(f)
 	default:
 		tb.lines = tb.lines[:0]
 		tb.measuredW = 0
@@ -423,6 +440,270 @@ func (tb *TextBlock) rebuildLocalVerts(f *SpriteFont) {
 	}
 	tb.sdfVertCount = vi
 	tb.sdfIndCount = ii
+}
+
+// --- Pixel font layout and rendering ---
+
+// layoutPixel computes glyph positions for a PixelFont (monospaced grid).
+func (tb *TextBlock) layoutPixel(f *PixelFont) {
+	lh := float64(f.advanceH())
+	advW := float64(f.advanceW())
+	content := tb.Content
+
+	// Trimmed source region dimensions.
+	srcX := f.padLeft
+	srcY := f.padTop
+	srcW := f.advanceW()
+	srcH := f.advanceH()
+
+	// Convert screen-pixel WrapWidth to native pixels.
+	scale := tb.fontScale()
+	atlasWrapWidth := 0.0
+	if tb.WrapWidth > 0 && scale > 0 {
+		atlasWrapWidth = tb.WrapWidth / scale
+	}
+
+	// Maximum characters per line for word wrapping.
+	maxCharsPerLine := 0
+	if atlasWrapWidth > 0 {
+		maxCharsPerLine = int(atlasWrapWidth / advW)
+		if maxCharsPerLine < 1 {
+			maxCharsPerLine = 1
+		}
+	}
+
+	tb.lines = tb.lines[:0]
+
+	var maxW float64
+	var curLine textLine
+	var wordGlyphs []glyphPos
+	var wordLen int
+	var lineCharCount int
+
+	flush := func() {
+		if curLine.width > maxW {
+			maxW = curLine.width
+		}
+		tb.lines = append(tb.lines, curLine)
+		curLine = textLine{}
+		lineCharCount = 0
+	}
+
+	for i := 0; i < len(content); {
+		r, size := utf8.DecodeRuneInString(content[i:])
+		i += size
+
+		if r == '\n' {
+			curLine.glyphs = append(curLine.glyphs, wordGlyphs...)
+			curLine.width = float64(lineCharCount+wordLen) * advW
+			lineCharCount += wordLen
+			wordGlyphs = wordGlyphs[:0]
+			wordLen = 0
+			flush()
+			continue
+		}
+
+		// Space advances the cursor without needing a glyph in the atlas.
+		if r == ' ' {
+			curLine.glyphs = append(curLine.glyphs, wordGlyphs...)
+			lineCharCount += wordLen
+			wordGlyphs = wordGlyphs[:0]
+			wordLen = 0
+
+			lineCharCount++
+			curLine.width = float64(lineCharCount) * advW
+			continue
+		}
+
+		pg, found := f.glyph(r)
+		if !found {
+			continue
+		}
+
+		gp := glyphPos{
+			x: float64(lineCharCount+wordLen) * advW,
+			y: 0,
+			region: TextureRegion{
+				Page:      f.page,
+				X:         pg.x + uint16(srcX),
+				Y:         pg.y + uint16(srcY),
+				Width:     uint16(srcW),
+				Height:    uint16(srcH),
+				OriginalW: uint16(srcW),
+				OriginalH: uint16(srcH),
+			},
+			page: f.page,
+		}
+
+		wordGlyphs = append(wordGlyphs, gp)
+		wordLen++
+
+		// Word wrap check.
+		if maxCharsPerLine > 0 && lineCharCount+wordLen > maxCharsPerLine && lineCharCount > 0 {
+			flush()
+			// Re-position word glyphs at start of new line.
+			for gi := range wordGlyphs {
+				wordGlyphs[gi].x = float64(gi) * advW
+			}
+		}
+	}
+
+	// Flush remaining word and line.
+	curLine.glyphs = append(curLine.glyphs, wordGlyphs...)
+	lineCharCount += wordLen
+	curLine.width = float64(lineCharCount) * advW
+	if len(curLine.glyphs) > 0 || len(tb.lines) == 0 {
+		if curLine.width > maxW {
+			maxW = curLine.width
+		}
+		tb.lines = append(tb.lines, curLine)
+	}
+
+	// Alignment.
+	alignW := maxW
+	if atlasWrapWidth > 0 {
+		alignW = atlasWrapWidth
+	}
+	for li := range tb.lines {
+		line := &tb.lines[li]
+		var offsetX float64
+		switch tb.Align {
+		case TextAlignLeft:
+		case TextAlignCenter:
+			offsetX = (alignW - line.width) / 2
+		case TextAlignRight:
+			offsetX = alignW - line.width
+		}
+		if offsetX != 0 {
+			for gi := range line.glyphs {
+				line.glyphs[gi].x += offsetX
+			}
+		}
+	}
+
+	tb.measuredW = maxW
+	tb.measuredH = float64(len(tb.lines)) * lh
+}
+
+// rebuildPixelVerts builds local-space vertex/index buffers for pixel font glyphs.
+// Reuses the sdfVerts/sdfInds fields (same quad structure, no SDF padding).
+func (tb *TextBlock) rebuildPixelVerts(f *PixelFont) {
+	lines := tb.lines
+	lh := float64(f.cellH)
+
+	glyphCount := 0
+	for _, line := range lines {
+		glyphCount += len(line.glyphs)
+	}
+
+	vertCount := glyphCount * 4
+	indCount := glyphCount * 6
+	if cap(tb.sdfVerts) < vertCount {
+		tb.sdfVerts = make([]ebiten.Vertex, vertCount)
+	}
+	tb.sdfVerts = tb.sdfVerts[:vertCount]
+	if cap(tb.sdfInds) < indCount {
+		tb.sdfInds = make([]uint16, indCount)
+	}
+	tb.sdfInds = tb.sdfInds[:indCount]
+
+	vi := 0
+	ii := 0
+	for li, line := range lines {
+		lineY := float64(li) * lh
+		for _, gp := range line.glyphs {
+			dx := float32(gp.x)
+			dy := float32(gp.y + lineY)
+			dw := float32(gp.region.Width)
+			dh := float32(gp.region.Height)
+
+			sx := float32(gp.region.X)
+			sy := float32(gp.region.Y)
+			sw := float32(gp.region.Width)
+			sh := float32(gp.region.Height)
+
+			base := uint16(vi)
+			tb.sdfVerts[vi] = ebiten.Vertex{
+				DstX: dx, DstY: dy,
+				SrcX: sx, SrcY: sy,
+				ColorR: 1, ColorG: 1, ColorB: 1, ColorA: 1,
+			}
+			vi++
+			tb.sdfVerts[vi] = ebiten.Vertex{
+				DstX: dx + dw, DstY: dy,
+				SrcX: sx + sw, SrcY: sy,
+				ColorR: 1, ColorG: 1, ColorB: 1, ColorA: 1,
+			}
+			vi++
+			tb.sdfVerts[vi] = ebiten.Vertex{
+				DstX: dx, DstY: dy + dh,
+				SrcX: sx, SrcY: sy + sh,
+				ColorR: 1, ColorG: 1, ColorB: 1, ColorA: 1,
+			}
+			vi++
+			tb.sdfVerts[vi] = ebiten.Vertex{
+				DstX: dx + dw, DstY: dy + dh,
+				SrcX: sx + sw, SrcY: sy + sh,
+				ColorR: 1, ColorG: 1, ColorB: 1, ColorA: 1,
+			}
+			vi++
+
+			tb.sdfInds[ii] = base
+			tb.sdfInds[ii+1] = base + 1
+			tb.sdfInds[ii+2] = base + 2
+			tb.sdfInds[ii+3] = base + 1
+			tb.sdfInds[ii+4] = base + 3
+			tb.sdfInds[ii+5] = base + 2
+			ii += 6
+		}
+	}
+	tb.sdfVertCount = vi
+	tb.sdfIndCount = ii
+}
+
+// emitPixelTextCommand emits a CommandBitmapText for pixel-perfect bitmap font rendering.
+func emitPixelTextCommand(tb *TextBlock, n *Node, worldTransform [6]float64, commands []RenderCommand, treeOrder *int) []RenderCommand {
+	tb.layout()
+	if tb.measuredW == 0 || tb.measuredH == 0 {
+		return commands
+	}
+
+	f := tb.Font.(*PixelFont)
+
+	if tb.sdfVertCount == 0 || len(tb.sdfVerts) == 0 {
+		tb.rebuildPixelVerts(f)
+	}
+	if tb.sdfVertCount == 0 {
+		return commands
+	}
+
+	// Apply integer scale as an affine transform.
+	s := tb.fontScale()
+	fst := [6]float64{s, 0, 0, s, 0, 0}
+	scaledWT := multiplyAffine(worldTransform, fst)
+
+	atlasImg := atlasManager().Page(int(f.page))
+	if atlasImg == nil {
+		return commands
+	}
+
+	*treeOrder++
+	commands = append(commands, RenderCommand{
+		Type:         CommandBitmapText,
+		Transform:    affine32(scaledWT),
+		Color:        color32{float32(n.Color.R), float32(n.Color.G), float32(n.Color.B), float32(n.Color.A * n.worldAlpha)},
+		BlendMode:    n.BlendMode,
+		RenderLayer:  n.RenderLayer,
+		GlobalOrder:  n.GlobalOrder,
+		treeOrder:    *treeOrder,
+		bmpVerts:     tb.sdfVerts,
+		bmpInds:      tb.sdfInds,
+		bmpVertCount: tb.sdfVertCount,
+		bmpIndCount:  tb.sdfIndCount,
+		bmpImage:     atlasImg,
+	})
+
+	return commands
 }
 
 // --- SDF Kage shader sources ---

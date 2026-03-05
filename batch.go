@@ -46,6 +46,8 @@ func (s *Scene) submitBatches(target *ebiten.Image) {
 			s.submitTilemap(target, cmd)
 		case CommandSDF:
 			s.submitSDF(target, cmd)
+		case CommandBitmapText:
+			s.submitBitmapText(target, cmd)
 		}
 	}
 }
@@ -297,6 +299,11 @@ func (s *Scene) submitBatchesCoalesced(target *ebiten.Image) {
 			s.flushSpriteBatch(target, currentKey)
 			inRun = false
 			s.submitSDF(target, cmd)
+
+		case CommandBitmapText:
+			s.flushSpriteBatch(target, currentKey)
+			inRun = false
+			s.submitBitmapText(target, cmd)
 		}
 	}
 
@@ -472,6 +479,60 @@ func (s *Scene) submitSDF(target *ebiten.Image, cmd *RenderCommand) {
 		AntiAlias: s.AntiAlias,
 	}
 	target.DrawTrianglesShader(s.batchVerts[:vc], cmd.sdfInds[:ic], cmd.sdfShader, opts)
+
+	s.batchVerts = s.batchVerts[:0]
+}
+
+// submitBitmapText draws pixel-perfect bitmap font glyphs by transforming
+// local-space vertices to screen space and calling DrawTriangles with FilterNearest.
+func (s *Scene) submitBitmapText(target *ebiten.Image, cmd *RenderCommand) {
+	if cmd.bmpImage == nil || cmd.bmpVertCount == 0 || cmd.bmpIndCount == 0 {
+		return
+	}
+
+	t := &cmd.Transform
+	a, b, c, d, tx, ty := t[0], t[1], t[2], t[3], t[4], t[5]
+
+	// Premultiplied node color.
+	ca := cmd.Color.A
+	var cr, cg, cb float32
+	if ca == 0 && cmd.Color.R == 0 && cmd.Color.G == 0 && cmd.Color.B == 0 {
+		cr, cg, cb, ca = 1, 1, 1, 1
+	} else {
+		cr = cmd.Color.R * ca
+		cg = cmd.Color.G * ca
+		cb = cmd.Color.B * ca
+	}
+
+	vc := cmd.bmpVertCount
+	ic := cmd.bmpIndCount
+
+	if cap(s.batchVerts) < vc {
+		s.batchVerts = make([]ebiten.Vertex, vc)
+	}
+	s.batchVerts = s.batchVerts[:vc]
+
+	for i := 0; i < vc; i++ {
+		sv := &cmd.bmpVerts[i]
+		dx := sv.DstX
+		dy := sv.DstY
+		s.batchVerts[i] = ebiten.Vertex{
+			DstX:   a*dx + c*dy + tx,
+			DstY:   b*dx + d*dy + ty,
+			SrcX:   sv.SrcX,
+			SrcY:   sv.SrcY,
+			ColorR: cr,
+			ColorG: cg,
+			ColorB: cb,
+			ColorA: ca,
+		}
+	}
+
+	var triOp ebiten.DrawTrianglesOptions
+	triOp.Blend = cmd.BlendMode.EbitenBlend()
+	triOp.ColorScaleMode = ebiten.ColorScaleModePremultipliedAlpha
+	triOp.Filter = ebiten.FilterNearest
+	target.DrawTriangles(s.batchVerts[:vc], cmd.bmpInds[:ic], cmd.bmpImage, &triOp)
 
 	s.batchVerts = s.batchVerts[:0]
 }
