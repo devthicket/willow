@@ -558,7 +558,11 @@ willow.EmitterConfig{
 
 ## Text
 
-All fonts are `*SpriteFont`. The primary constructor is `NewFontFromTTF`:
+Willow has two font types: `*SpriteFont` (SDF-based, smooth scaling) and `*PixelFont` (bitmap, pixel-perfect integer scaling). Both implement the `Font` interface and work with `NewText`.
+
+### SpriteFont (SDF)
+
+The primary constructor is `NewFontFromTTF`:
 
 ```go
 font, err := willow.NewFontFromTTF(ttfData, 80)  // returns (*SpriteFont, error)
@@ -606,6 +610,37 @@ w, h := font.MeasureString("Hello World")
 // Display pixels (scaled by FontSize):
 dw, dh := node.TextBlock.MeasureDisplay("Hello World")
 ```
+
+### PixelFont (Bitmap)
+
+For pixel art games with monospaced spritesheet fonts. Each character is a fixed cell in a grid. Scaling is integer-only (1x, 2x, 3x) to stay pixel-perfect.
+
+```go
+font := willow.NewPixelFont(sheetImg, 16, 16, "!\"#$%&'()*+,-./0123...")
+label := willow.NewText("label", "Hello!", font)
+scene.Root().AddChild(label)
+```
+
+- `sheetImg`: the spritesheet `*ebiten.Image` (registered as an atlas page automatically)
+- `cellW, cellH`: pixel dimensions of each character cell
+- `chars`: string mapping grid positions to characters (left-to-right, top-to-bottom), starting at the first glyph (typically `!`). Space does not need a glyph  -  it advances the cursor automatically.
+
+**FontSize** controls integer scaling via `TextBlock.FontSize`. The scale factor is `FontSize / cellH`, rounded to the nearest integer (minimum 1x). With a 16px cell: FontSize 16 = 1x, 32 = 2x, 48 = 3x.
+
+```go
+label.TextBlock.FontSize = 32  // 2x scale for a 16px cell font
+label.TextBlock.Invalidate()
+```
+
+**TrimCell** trims dead pixels from each side of every cell, tightening character spacing. Parameters follow CSS order: top, right, bottom, left.
+
+```go
+font.TrimCell(0, 4, 0, 4)  // trim 4px left/right: 16px cell → 8px advance
+```
+
+**WrapWidth**, **Align**, and **Color** work the same as SpriteFont. No shader is used  -  bitmap text renders with `DrawTriangles` and `FilterNearest`.
+
+**TextEffects** (outline, glow, shadow) are SpriteFont-only and have no effect on PixelFont.
 
 ## Filters Is a Slice
 

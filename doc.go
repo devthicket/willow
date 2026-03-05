@@ -57,11 +57,12 @@
 //
 // # Key features
 //
-// Willow includes cameras with follow/scroll-to/zoom, SDF text rendering
-// (TTF/OTF via signed distance fields for resolution-independent scaling
-// with GPU-accelerated outlines, glows, and shadows), CPU-simulated particles,
-// mesh/polygon/rope geometry, Kage shader filters, texture caching,
-// masking, blend modes, lighting layers, and tweens (via [gween]).
+// Willow includes cameras with follow/scroll-to/zoom, two text systems
+// (SDF-based [SpriteFont] for smooth TTF/OTF scaling with outlines, glows,
+// and shadows; pixel-perfect [PixelFont] for bitmap spritesheet fonts with
+// integer-only scaling), CPU-simulated particles, mesh/polygon/rope geometry,
+// Kage shader filters, texture caching, masking, blend modes, lighting layers,
+// and tweens (via [gween]).
 //
 // See the full docs for guides on each feature:
 // https://phanxgames.github.io/willow/
