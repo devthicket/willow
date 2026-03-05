@@ -595,7 +595,7 @@ label.TextBlock.FontSize = 24
 label.TextBlock.Align = willow.TextAlignCenter
 label.TextBlock.WrapWidth = 400                      // screen pixels
 label.TextBlock.Color = willow.Color{R: 1, G: 1, B: 1, A: 1}
-label.TextBlock.Outline = &willow.Outline{Color: willow.Color{A: 1}, Thickness: 2}
+label.TextBlock.TextEffects = &willow.TextEffects{OutlineWidth: 2, OutlineColor: willow.Color{A: 1}}
 label.TextBlock.Invalidate()  // NOT label.Invalidate()
 ```
 
@@ -638,7 +638,9 @@ label.TextBlock.Invalidate()
 font.TrimCell(0, 4, 0, 4)  // trim 4px left/right: 16px cell → 8px advance
 ```
 
-**WrapWidth**, **Align**, and **Color** work the same as SpriteFont. No shader is used  -  bitmap text renders with `DrawTriangles` and `FilterNearest`.
+**WrapWidth** and **Align** work the same as SpriteFont. No shader is used  -  bitmap text renders with `DrawTriangles` and `FilterNearest`.
+
+**Color** works consistently across both font types: `TextBlock.Color` is the fill color, `Node.Color` is a tint multiplier on top (same as how Node.Color tints sprites). The final pixel color is `TextBlock.Color * Node.Color`.
 
 **TextEffects** (outline, glow, shadow) are SpriteFont-only and have no effect on PixelFont.
 

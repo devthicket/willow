@@ -40,7 +40,6 @@ type TextBlock struct {
     Align      TextAlign    // Left, Center, Right
     WrapWidth  float64      // screen pixels; 0 = no wrapping
     Color       Color
-    Outline     *Outline      // nil = no outline (SpriteFont only)
     LineHeight  float64       // 0 = use Font.LineHeight()
     TextEffects *TextEffects  // nil = no effects (SpriteFont only)
 }
@@ -220,11 +219,13 @@ font.TrimCell(2, 4, 2, 4)  // trim 2px top/bottom, 4px left/right
 
 ### Rendering
 
-PixelFont renders with `DrawTriangles` and `FilterNearest`  -  no shader is used. Color tinting works through vertex colors, same as sprites:
+PixelFont renders with `DrawTriangles` and `FilterNearest`  -  no shader is used. `TextBlock.Color` is the fill color; `Node.Color` multiplies on top as a tint (same as how Node.Color tints sprites):
 
 ```go
 label := willow.NewText("msg", "Game Over", font)
-label.Color = willow.Color{R: 1, G: 0.3, B: 0.3, A: 1}  // red tint
+label.TextBlock.Color = willow.Color{R: 1, G: 0.3, B: 0.3, A: 1}  // red fill
+label.TextBlock.Invalidate()
+label.Color = willow.Color{R: 0.8, G: 0.8, B: 0.8, A: 1}          // optional dim tint
 ```
 
 ### What Works
@@ -232,13 +233,12 @@ label.Color = willow.Color{R: 1, G: 0.3, B: 0.3, A: 1}  // red tint
 - `TextBlock.FontSize`  -  integer scaling
 - `TextBlock.WrapWidth`  -  word wrapping
 - `TextBlock.Align`  -  left, center, right alignment
-- `TextBlock.Color`  -  fill color
-- `Node.Color`  -  tinting
+- `TextBlock.Color`  -  fill color (primary text color)
+- `Node.Color`  -  tint multiplier on top of fill (same as sprites)
 
 ### What Does Not Apply
 
 - `TextBlock.TextEffects`  -  outline, glow, shadow (SpriteFont only)
-- `TextBlock.Outline`  -  stroke outline (SpriteFont only)
 
 ## Next Steps
 

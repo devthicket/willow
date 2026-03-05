@@ -47,7 +47,7 @@ Each frame, Willow walks this tree top-to-bottom, computes final transforms, cul
 - **Scene graph**  -  tree of nodes with parent-child transforms, visibility, and render ordering
 - **Sprites & atlas**  -  TexturePacker JSON loading, automatic batching
 - **Camera & viewport**  -  follow, scroll-to, zoom, culling, multi-camera
-- **Text**  -  TTF/OTF via signed distance field (SDF) rendering for resolution-independent scaling with outlines, glows, and shadows
+- **Text**  -  two font systems: **SpriteFont** for TTF/OTF via signed distance field (SDF) rendering with resolution-independent scaling, outlines, glows, and shadows; **PixelFont** for pixel-perfect bitmap spritesheet fonts with integer-only scaling
 - **Input**  -  hit testing, click/drag/pinch gestures with typed callbacks
 - **Particles**  -  CPU-simulated emitters with pooled allocation
 - **Tweens & animation**  -  frame sequences, easing via gween

@@ -35,14 +35,6 @@ type TextEffects struct {
 	ShadowSoftness float64
 }
 
-// --- Outline ---
-
-// Outline defines a text stroke rendered behind the fill.
-type Outline struct {
-	Color     Color
-	Thickness float64
-}
-
 // --- TextBlock ---
 
 // TextBlock holds text content, formatting, and cached layout state.
@@ -62,8 +54,6 @@ type TextBlock struct {
 	WrapWidth float64
 	// Color is the fill color for the text glyphs.
 	Color Color
-	// Outline defines a text stroke rendered behind the fill. Nil means no outline.
-	Outline *Outline
 	// LineHeight overrides the font's default line height. Zero uses Font.LineHeight().
 	LineHeight float64
 
@@ -99,7 +89,7 @@ type glyphPos struct {
 
 // Invalidate invalidates the cached layout and SDF image, forcing recomputation
 // on the next frame. Call this after changing Content, Font, FontSize, WrapWidth,
-// Align, LineHeight, Color, or Outline at runtime.
+// Align, LineHeight, Color, or TextEffects at runtime.
 func (tb *TextBlock) Invalidate() {
 	tb.layoutDirty = true
 	tb.uniformsDirty = true
@@ -689,9 +679,14 @@ func emitPixelTextCommand(tb *TextBlock, n *Node, worldTransform [6]float64, com
 
 	*treeOrder++
 	commands = append(commands, RenderCommand{
-		Type:         CommandBitmapText,
-		Transform:    affine32(scaledWT),
-		Color:        color32{float32(n.Color.R), float32(n.Color.G), float32(n.Color.B), float32(n.Color.A * n.worldAlpha)},
+		Type:      CommandBitmapText,
+		Transform: affine32(scaledWT),
+		Color: color32{
+			float32(tb.Color.R * n.Color.R),
+			float32(tb.Color.G * n.Color.G),
+			float32(tb.Color.B * n.Color.B),
+			float32(tb.Color.A * n.Color.A * n.worldAlpha),
+		},
 		BlendMode:    n.BlendMode,
 		RenderLayer:  n.RenderLayer,
 		GlobalOrder:  n.GlobalOrder,
@@ -775,6 +770,9 @@ func Fragment(dst vec4, src vec2, color vec4) vec4 {
 	// so the fade range stays correct regardless of font scale or zoom.
 	result *= smoothstep(0, Smoothing*2, dist)
 
+	// Apply vertex color as a tint multiplier (Node.Color).
+	result *= color
+
 	return result
 }
 `
@@ -841,6 +839,9 @@ func Fragment(dst vec4, src vec2, color vec4) vec4 {
 	// to prevent visible rectangles where the distance field runs out.
 	// Uses Smoothing*2 instead of fwidth*3 for scale-independent fading.
 	result *= smoothstep(0, Smoothing*2, dist)
+
+	// Apply vertex color as a tint multiplier (Node.Color).
+	result *= color
 
 	return result
 }
