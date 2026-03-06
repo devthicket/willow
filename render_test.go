@@ -555,7 +555,7 @@ func TestCacheAsTree_TextureSwap_PageChange_Invalidates(t *testing.T) {
 	// Swap to a different page  -  should invalidate.
 	sp.SetTextureRegion(TextureRegion{Page: 1, Width: 32, Height: 32, OriginalW: 32, OriginalH: 32})
 
-	if !container.cacheTreeDirty {
+	if !container.cacheTree.dirty {
 		t.Error("page change should have invalidated auto-mode cache")
 	}
 }
@@ -569,21 +569,21 @@ func TestCacheAsTree_TreeOps_Invalidate(t *testing.T) {
 	container.SetCacheAsTree(true, CacheTreeAuto)
 
 	traverseScene(s) // build
-	if container.cacheTreeDirty {
+	if container.cacheTree.dirty {
 		t.Error("cache should be clean after build")
 	}
 
 	// AddChild should invalidate.
 	extra := NewSprite("extra", TextureRegion{Width: 16, Height: 16, OriginalW: 16, OriginalH: 16})
 	container.AddChild(extra)
-	if !container.cacheTreeDirty {
+	if !container.cacheTree.dirty {
 		t.Error("AddChild should invalidate auto cache on self")
 	}
 
 	traverseScene(s) // rebuild
 	// RemoveChild should invalidate.
 	container.RemoveChild(extra)
-	if !container.cacheTreeDirty {
+	if !container.cacheTree.dirty {
 		t.Error("RemoveChild should invalidate auto cache on self")
 	}
 }
@@ -599,7 +599,7 @@ func TestCacheAsTree_MeshBlocksCache(t *testing.T) {
 	traverseScene(s) // build attempt
 
 	// Mesh should block caching  -  cache stays dirty.
-	if !container.cacheTreeDirty {
+	if !container.cacheTree.dirty {
 		t.Error("mesh subtree should block cache build")
 	}
 }
@@ -638,11 +638,8 @@ func TestCacheAsTree_Disable(t *testing.T) {
 
 	// Disable.
 	container.SetCacheAsTree(false)
-	if container.cacheTreeEnabled {
+	if container.cacheTree != nil {
 		t.Error("cache should be disabled")
-	}
-	if container.cachedCommands != nil {
-		t.Error("cached commands should be nil after disable")
 	}
 
 	traverseScene(s) // normal traverse

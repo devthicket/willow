@@ -362,12 +362,12 @@ func emitNodeCommand(s *Scene, n *Node, transform [6]float64, alpha float64, tre
 		}
 		s.commands = append(s.commands, cmd)
 	case NodeTypeMesh:
-		if len(n.Vertices) == 0 || len(n.Indices) == 0 {
+		if len(n.mesh.Vertices) == 0 || len(n.mesh.Indices) == 0 {
 			return
 		}
 		tintColor := Color{n.color.r, n.color.g, n.color.b, n.color.a * alpha}
 		dst := ensureTransformedVerts(n)
-		transformVertices(n.Vertices, dst, transform, tintColor)
+		transformVertices(n.mesh.Vertices, dst, transform, tintColor)
 		*treeOrder++
 		s.commands = append(s.commands, RenderCommand{
 			Type:        CommandMesh,
@@ -377,8 +377,8 @@ func emitNodeCommand(s *Scene, n *Node, transform [6]float64, alpha float64, tre
 			GlobalOrder: n.globalOrder,
 			treeOrder:   *treeOrder,
 			meshVerts:   dst,
-			meshInds:    n.Indices,
-			meshImage:   n.MeshImage,
+			meshInds:    n.mesh.Indices,
+			meshImage:   n.mesh.Image,
 		})
 	case NodeTypeParticleEmitter:
 		if n.Emitter != nil && n.Emitter.alive > 0 {

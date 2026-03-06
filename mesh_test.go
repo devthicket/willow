@@ -163,20 +163,20 @@ func TestEnsureTransformedVertsGrowsToHighWater(t *testing.T) {
 	if len(buf) != 10 {
 		t.Errorf("len = %d, want 10", len(buf))
 	}
-	cap1 := cap(n.transformedVerts)
+	cap1 := cap(n.mesh.transformedVerts)
 
 	// Shrink vertices  -  buffer should not shrink.
-	n.Vertices = n.Vertices[:5]
+	n.mesh.Vertices = n.mesh.Vertices[:5]
 	buf = ensureTransformedVerts(n)
 	if len(buf) != 5 {
 		t.Errorf("len = %d, want 5", len(buf))
 	}
-	if cap(n.transformedVerts) != cap1 {
-		t.Errorf("cap changed from %d to %d (should keep high-water)", cap1, cap(n.transformedVerts))
+	if cap(n.mesh.transformedVerts) != cap1 {
+		t.Errorf("cap changed from %d to %d (should keep high-water)", cap1, cap(n.mesh.transformedVerts))
 	}
 
 	// Grow past high-water.
-	n.Vertices = make([]ebiten.Vertex, 20)
+	n.mesh.Vertices = make([]ebiten.Vertex, 20)
 	buf = ensureTransformedVerts(n)
 	if len(buf) != 20 {
 		t.Errorf("len = %d, want 20", len(buf))
@@ -187,20 +187,20 @@ func TestEnsureTransformedVertsGrowsToHighWater(t *testing.T) {
 
 func TestMeshAABBDirtyOnNew(t *testing.T) {
 	n := NewMesh("test", nil, []ebiten.Vertex{{DstX: 5, DstY: 10}}, nil)
-	if !n.meshAABBDirty {
+	if !n.mesh.aabbDirty {
 		t.Error("meshAABBDirty should be true after NewMesh")
 	}
 
 	n.recomputeMeshAABB()
-	if n.meshAABBDirty {
+	if n.mesh.aabbDirty {
 		t.Error("meshAABBDirty should be false after recompute")
 	}
-	if !approxEqual(n.meshAABB.X, 5, epsilon) || !approxEqual(n.meshAABB.Y, 10, epsilon) {
-		t.Errorf("AABB = %v, want origin (5,10)", n.meshAABB)
+	if !approxEqual(n.mesh.aabb.X, 5, epsilon) || !approxEqual(n.mesh.aabb.Y, 10, epsilon) {
+		t.Errorf("AABB = %v, want origin (5,10)", n.mesh.aabb)
 	}
 
 	n.InvalidateMeshAABB()
-	if !n.meshAABBDirty {
+	if !n.mesh.aabbDirty {
 		t.Error("meshAABBDirty should be true after Invalidate")
 	}
 }
@@ -392,12 +392,12 @@ func TestMeshDisposeNilsTransformedVerts(t *testing.T) {
 	verts := []ebiten.Vertex{{DstX: 0, DstY: 0}}
 	n := NewMesh("m", nil, verts, []uint16{0})
 	_ = ensureTransformedVerts(n) // allocate buffer
-	if n.transformedVerts == nil {
+	if n.mesh.transformedVerts == nil {
 		t.Fatal("transformedVerts should be allocated")
 	}
 	n.Dispose()
-	if n.transformedVerts != nil {
-		t.Error("transformedVerts should be nil after Dispose")
+	if n.mesh != nil {
+		t.Error("mesh data should be nil after Dispose")
 	}
 }
 

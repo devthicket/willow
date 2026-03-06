@@ -27,7 +27,7 @@ func TestNewMeshDefaults(t *testing.T) {
 	inds := []uint16{0}
 	n := NewMesh("mesh", nil, verts, inds)
 	assertNodeDefaults(t, n, "mesh", NodeTypeMesh)
-	if len(n.Vertices) != 1 || len(n.Indices) != 1 {
+	if len(n.mesh.Vertices) != 1 || len(n.mesh.Indices) != 1 {
 		t.Errorf("Vertices/Indices not set")
 	}
 }

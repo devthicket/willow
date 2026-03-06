@@ -14,11 +14,11 @@ func TestRopeBevelJoinMode(t *testing.T) {
 	points := []Vec2{{0, 0}, {10, 0}, {10, 10}}
 	r := NewRope("rope", nil, points, RopeConfig{Width: 4, JoinMode: RopeJoinBevel})
 	n := r.Node()
-	if len(n.Vertices) != 6 {
-		t.Errorf("vertices = %d, want 6", len(n.Vertices))
+	if len(n.mesh.Vertices) != 6 {
+		t.Errorf("vertices = %d, want 6", len(n.mesh.Vertices))
 	}
-	if len(n.Indices) != 12 {
-		t.Errorf("indices = %d, want 12", len(n.Indices))
+	if len(n.mesh.Indices) != 12 {
+		t.Errorf("indices = %d, want 12", len(n.mesh.Indices))
 	}
 }
 
@@ -27,11 +27,11 @@ func TestRopeVertexAndIndexCounts(t *testing.T) {
 	r := NewRope("rope", nil, points, RopeConfig{Width: 4})
 	n := r.Node()
 	// 4 points → 8 vertices, 3 segments → 18 indices
-	if len(n.Vertices) != 8 {
-		t.Errorf("vertices = %d, want 8", len(n.Vertices))
+	if len(n.mesh.Vertices) != 8 {
+		t.Errorf("vertices = %d, want 8", len(n.mesh.Vertices))
 	}
-	if len(n.Indices) != 18 {
-		t.Errorf("indices = %d, want 18", len(n.Indices))
+	if len(n.mesh.Indices) != 18 {
+		t.Errorf("indices = %d, want 18", len(n.mesh.Indices))
 	}
 }
 
@@ -40,21 +40,21 @@ func TestRopeTwoPoints(t *testing.T) {
 	r := NewRope("rope", nil, points, RopeConfig{Width: 4})
 	n := r.Node()
 	// 2 points → 4 vertices, 1 segment → 6 indices
-	if len(n.Vertices) != 4 {
-		t.Errorf("vertices = %d, want 4", len(n.Vertices))
+	if len(n.mesh.Vertices) != 4 {
+		t.Errorf("vertices = %d, want 4", len(n.mesh.Vertices))
 	}
-	if len(n.Indices) != 6 {
-		t.Errorf("indices = %d, want 6", len(n.Indices))
+	if len(n.mesh.Indices) != 6 {
+		t.Errorf("indices = %d, want 6", len(n.mesh.Indices))
 	}
 
 	// For horizontal segment left→right (dx=10,dy=0), left-perpendicular is (0, 1).
 	// Top vertex (+ perpendicular * halfW) should be at Y = +2
 	// Bottom vertex (- perpendicular * halfW) should be at Y = -2
-	if !approxEqual(float64(n.Vertices[0].DstY), 2, 0.01) {
-		t.Errorf("top vertex Y = %f, want 2", n.Vertices[0].DstY)
+	if !approxEqual(float64(n.mesh.Vertices[0].DstY), 2, 0.01) {
+		t.Errorf("top vertex Y = %f, want 2", n.mesh.Vertices[0].DstY)
 	}
-	if !approxEqual(float64(n.Vertices[1].DstY), -2, 0.01) {
-		t.Errorf("bottom vertex Y = %f, want -2", n.Vertices[1].DstY)
+	if !approxEqual(float64(n.mesh.Vertices[1].DstY), -2, 0.01) {
+		t.Errorf("bottom vertex Y = %f, want -2", n.mesh.Vertices[1].DstY)
 	}
 }
 
@@ -63,14 +63,14 @@ func TestRopeUVTiling(t *testing.T) {
 	r := NewRope("rope", nil, points, RopeConfig{Width: 4})
 	n := r.Node()
 	// Cumulative length: 0, 10, 20
-	if !approxEqual(float64(n.Vertices[0].SrcX), 0, 0.01) {
-		t.Errorf("SrcX[0] = %f, want 0", n.Vertices[0].SrcX)
+	if !approxEqual(float64(n.mesh.Vertices[0].SrcX), 0, 0.01) {
+		t.Errorf("SrcX[0] = %f, want 0", n.mesh.Vertices[0].SrcX)
 	}
-	if !approxEqual(float64(n.Vertices[2].SrcX), 10, 0.01) {
-		t.Errorf("SrcX[2] = %f, want 10", n.Vertices[2].SrcX)
+	if !approxEqual(float64(n.mesh.Vertices[2].SrcX), 10, 0.01) {
+		t.Errorf("SrcX[2] = %f, want 10", n.mesh.Vertices[2].SrcX)
 	}
-	if !approxEqual(float64(n.Vertices[4].SrcX), 20, 0.01) {
-		t.Errorf("SrcX[4] = %f, want 20", n.Vertices[4].SrcX)
+	if !approxEqual(float64(n.mesh.Vertices[4].SrcX), 20, 0.01) {
+		t.Errorf("SrcX[4] = %f, want 20", n.mesh.Vertices[4].SrcX)
 	}
 }
 
@@ -78,29 +78,29 @@ func TestRopeSetPointsReusesBuffer(t *testing.T) {
 	points := []Vec2{{0, 0}, {10, 0}, {20, 0}}
 	r := NewRope("rope", nil, points, RopeConfig{Width: 4})
 	n := r.Node()
-	vertCap := cap(n.Vertices)
-	indCap := cap(n.Indices)
+	vertCap := cap(n.mesh.Vertices)
+	indCap := cap(n.mesh.Indices)
 
 	// Set fewer points  -  should not reallocate.
 	r.SetPoints([]Vec2{{0, 0}, {5, 0}})
-	if cap(n.Vertices) != vertCap {
-		t.Errorf("vertex cap changed from %d to %d", vertCap, cap(n.Vertices))
+	if cap(n.mesh.Vertices) != vertCap {
+		t.Errorf("vertex cap changed from %d to %d", vertCap, cap(n.mesh.Vertices))
 	}
-	if cap(n.Indices) != indCap {
-		t.Errorf("index cap changed from %d to %d", indCap, cap(n.Indices))
+	if cap(n.mesh.Indices) != indCap {
+		t.Errorf("index cap changed from %d to %d", indCap, cap(n.mesh.Indices))
 	}
-	if len(n.Vertices) != 4 {
-		t.Errorf("vertices = %d, want 4", len(n.Vertices))
+	if len(n.mesh.Vertices) != 4 {
+		t.Errorf("vertices = %d, want 4", len(n.mesh.Vertices))
 	}
-	if len(n.Indices) != 6 {
-		t.Errorf("indices = %d, want 6", len(n.Indices))
+	if len(n.mesh.Indices) != 6 {
+		t.Errorf("indices = %d, want 6", len(n.mesh.Indices))
 	}
 }
 
 func TestRopeSinglePointNoMesh(t *testing.T) {
 	r := NewRope("rope", nil, []Vec2{{0, 0}}, RopeConfig{Width: 4})
 	n := r.Node()
-	if len(n.Vertices) != 0 || len(n.Indices) != 0 {
+	if len(n.mesh.Vertices) != 0 || len(n.mesh.Indices) != 0 {
 		t.Error("single point rope should have no vertices/indices")
 	}
 }
@@ -110,12 +110,12 @@ func TestRopeInvalidatesMeshAABB(t *testing.T) {
 	r := NewRope("rope", nil, points, RopeConfig{Width: 4})
 	n := r.Node()
 	n.recomputeMeshAABB()
-	if n.meshAABBDirty {
+	if n.mesh.aabbDirty {
 		t.Error("AABB should not be dirty after recompute")
 	}
 
 	r.SetPoints([]Vec2{{0, 0}, {20, 0}})
-	if !n.meshAABBDirty {
+	if !n.mesh.aabbDirty {
 		t.Error("AABB should be dirty after SetPoints")
 	}
 }
@@ -136,20 +136,20 @@ func TestRopeUpdateLine(t *testing.T) {
 	n := r.Node()
 
 	// 11 points → 22 vertices, 10 segments → 60 indices.
-	if len(n.Vertices) != 22 {
-		t.Errorf("vertices = %d, want 22", len(n.Vertices))
+	if len(n.mesh.Vertices) != 22 {
+		t.Errorf("vertices = %d, want 22", len(n.mesh.Vertices))
 	}
-	if len(n.Indices) != 60 {
-		t.Errorf("indices = %d, want 60", len(n.Indices))
+	if len(n.mesh.Indices) != 60 {
+		t.Errorf("indices = %d, want 60", len(n.mesh.Indices))
 	}
 
 	// First point at start, last point at end.
-	if !approxEqual(float64(n.Vertices[0].DstX), 0, 0.1) {
-		t.Errorf("first vertex X = %f, want ~0", n.Vertices[0].DstX)
+	if !approxEqual(float64(n.mesh.Vertices[0].DstX), 0, 0.1) {
+		t.Errorf("first vertex X = %f, want ~0", n.mesh.Vertices[0].DstX)
 	}
-	lastV := len(n.Vertices) - 2 // top vertex of last point
-	if !approxEqual(float64(n.Vertices[lastV].DstX), 100, 0.1) {
-		t.Errorf("last vertex X = %f, want ~100", n.Vertices[lastV].DstX)
+	lastV := len(n.mesh.Vertices) - 2 // top vertex of last point
+	if !approxEqual(float64(n.mesh.Vertices[lastV].DstX), 100, 0.1) {
+		t.Errorf("last vertex X = %f, want ~100", n.mesh.Vertices[lastV].DstX)
 	}
 }
 
@@ -168,7 +168,7 @@ func TestRopeUpdateCatenary(t *testing.T) {
 
 	// Midpoint should sag downward (positive Y).
 	midIdx := 10 * 2 // vertex index for midpoint (top vertex)
-	midY := float64(r.Node().Vertices[midIdx].DstY)
+	midY := float64(r.Node().mesh.Vertices[midIdx].DstY)
 	if midY < 40 {
 		t.Errorf("catenary midpoint Y = %f, want > 40 (sag=50)", midY)
 	}
@@ -189,14 +189,14 @@ func TestRopeUpdateQuadBezier(t *testing.T) {
 	r.Update()
 	n := r.Node()
 
-	if len(n.Vertices) != 22 {
-		t.Errorf("vertices = %d, want 22", len(n.Vertices))
+	if len(n.mesh.Vertices) != 22 {
+		t.Errorf("vertices = %d, want 22", len(n.mesh.Vertices))
 	}
 
 	// Midpoint (t=0.5): 0.25*0 + 2*0.25*50 + 0.25*100 = 50 (X)
 	midIdx := 5 * 2
-	if !approxEqual(float64(n.Vertices[midIdx].DstX), 50, 5) {
-		t.Errorf("quad bezier midpoint X = %f, want ~50", n.Vertices[midIdx].DstX)
+	if !approxEqual(float64(n.mesh.Vertices[midIdx].DstX), 50, 5) {
+		t.Errorf("quad bezier midpoint X = %f, want ~50", n.mesh.Vertices[midIdx].DstX)
 	}
 }
 
@@ -216,17 +216,17 @@ func TestRopeUpdateCubicBezier(t *testing.T) {
 	r.Update()
 	n := r.Node()
 
-	if len(n.Vertices) != 22 {
-		t.Errorf("vertices = %d, want 22", len(n.Vertices))
+	if len(n.mesh.Vertices) != 22 {
+		t.Errorf("vertices = %d, want 22", len(n.mesh.Vertices))
 	}
 
 	// Endpoints should match Start and End (within halfW perpendicular offset).
-	if !approxEqual(float64(n.Vertices[0].DstX), 0, 3) {
-		t.Errorf("start X = %f, want ~0", n.Vertices[0].DstX)
+	if !approxEqual(float64(n.mesh.Vertices[0].DstX), 0, 3) {
+		t.Errorf("start X = %f, want ~0", n.mesh.Vertices[0].DstX)
 	}
-	lastV := len(n.Vertices) - 2
-	if !approxEqual(float64(n.Vertices[lastV].DstX), 100, 3) {
-		t.Errorf("end X = %f, want ~100", n.Vertices[lastV].DstX)
+	lastV := len(n.mesh.Vertices) - 2
+	if !approxEqual(float64(n.mesh.Vertices[lastV].DstX), 100, 3) {
+		t.Errorf("end X = %f, want ~100", n.mesh.Vertices[lastV].DstX)
 	}
 }
 
@@ -246,8 +246,8 @@ func TestRopeUpdateWave(t *testing.T) {
 
 	// For a horizontal line with wave, some vertices should deviate from Y=100.
 	maxDev := 0.0
-	for i := 0; i < len(r.Node().Vertices); i += 2 {
-		dev := math.Abs(float64(r.Node().Vertices[i].DstY) - 100)
+	for i := 0; i < len(r.Node().mesh.Vertices); i += 2 {
+		dev := math.Abs(float64(r.Node().mesh.Vertices[i].DstY) - 100)
 		if dev > maxDev {
 			maxDev = dev
 		}
@@ -270,8 +270,8 @@ func TestRopeUpdateCustom(t *testing.T) {
 	n := r.Node()
 
 	// 3 points → 6 vertices.
-	if len(n.Vertices) != 6 {
-		t.Errorf("vertices = %d, want 6", len(n.Vertices))
+	if len(n.mesh.Vertices) != 6 {
+		t.Errorf("vertices = %d, want 6", len(n.mesh.Vertices))
 	}
 }
 
@@ -289,8 +289,8 @@ func TestRopeUpdateDefaultSegments(t *testing.T) {
 	n := r.Node()
 
 	// 21 points → 42 vertices.
-	if len(n.Vertices) != 42 {
-		t.Errorf("vertices = %d, want 42 (default 20 segments)", len(n.Vertices))
+	if len(n.mesh.Vertices) != 42 {
+		t.Errorf("vertices = %d, want 42 (default 20 segments)", len(n.mesh.Vertices))
 	}
 }
 
@@ -331,9 +331,9 @@ func TestRopeUpdateByRefMutation(t *testing.T) {
 	end.X = 200
 	r.Update()
 
-	lastV := len(r.Node().Vertices) - 2
-	if !approxEqual(float64(r.Node().Vertices[lastV].DstX), 200, 1) {
-		t.Errorf("after ref mutation, end X = %f, want ~200", r.Node().Vertices[lastV].DstX)
+	lastV := len(r.Node().mesh.Vertices) - 2
+	if !approxEqual(float64(r.Node().mesh.Vertices[lastV].DstX), 200, 1) {
+		t.Errorf("after ref mutation, end X = %f, want ~200", r.Node().mesh.Vertices[lastV].DstX)
 	}
 }
 
@@ -348,8 +348,8 @@ func TestRopeUpdateNilStartEnd(t *testing.T) {
 	n := r.Node()
 
 	// Should be a no-op  -  no vertices generated.
-	if len(n.Vertices) != 0 {
-		t.Errorf("nil start/end should produce no vertices, got %d", len(n.Vertices))
+	if len(n.mesh.Vertices) != 0 {
+		t.Errorf("nil start/end should produce no vertices, got %d", len(n.mesh.Vertices))
 	}
 }
 
@@ -359,11 +359,11 @@ func TestDistortionGridDimensions(t *testing.T) {
 	g := NewDistortionGrid("grid", nil, 4, 3)
 	n := g.Node()
 	// 4 cols, 3 rows → (5*4)=20 vertices, (4*3*6)=72 indices
-	if len(n.Vertices) != 20 {
-		t.Errorf("vertices = %d, want 20", len(n.Vertices))
+	if len(n.mesh.Vertices) != 20 {
+		t.Errorf("vertices = %d, want 20", len(n.mesh.Vertices))
 	}
-	if len(n.Indices) != 72 {
-		t.Errorf("indices = %d, want 72", len(n.Indices))
+	if len(n.mesh.Indices) != 72 {
+		t.Errorf("indices = %d, want 72", len(n.mesh.Indices))
 	}
 }
 
@@ -376,7 +376,7 @@ func TestDistortionGridSetVertex(t *testing.T) {
 	// With nil image, all positions should be 0,0.
 	g.SetVertex(1, 1, 5.0, 10.0)
 	idx := 1*3 + 1 // row=1, vcols=3, col=1
-	v := n.Vertices[idx]
+	v := n.mesh.Vertices[idx]
 	if !approxEqual(float64(v.DstX), 5, 0.01) || !approxEqual(float64(v.DstY), 10, 0.01) {
 		t.Errorf("SetVertex(1,1, 5,10): got (%f,%f), want (5,10)", v.DstX, v.DstY)
 	}
@@ -393,7 +393,7 @@ func TestDistortionGridSetAllVertices(t *testing.T) {
 	// Check vertex at (2, 1): rest=(0,0) since nil image, offset=(2*3, 1*7)=(6,7)
 	vcols := 3
 	idx := 1*vcols + 2
-	v := n.Vertices[idx]
+	v := n.mesh.Vertices[idx]
 	if !approxEqual(float64(v.DstX), 6, 0.01) || !approxEqual(float64(v.DstY), 7, 0.01) {
 		t.Errorf("SetAllVertices: vertex(%d) = (%f,%f), want (6,7)", idx, v.DstX, v.DstY)
 	}
@@ -406,7 +406,7 @@ func TestDistortionGridReset(t *testing.T) {
 	g.Reset()
 
 	// After reset, vertex (0,0) should be back at rest position (0,0).
-	v := n.Vertices[0]
+	v := n.mesh.Vertices[0]
 	if !approxEqual(float64(v.DstX), 0, 0.01) || !approxEqual(float64(v.DstY), 0, 0.01) {
 		t.Errorf("Reset: vertex(0) = (%f,%f), want (0,0)", v.DstX, v.DstY)
 	}
@@ -416,8 +416,8 @@ func TestDistortionGridUVStability(t *testing.T) {
 	g := NewDistortionGrid("grid", nil, 2, 2)
 	n := g.Node()
 	// Store original UVs.
-	origUVs := make([][2]float32, len(n.Vertices))
-	for i, v := range n.Vertices {
+	origUVs := make([][2]float32, len(n.mesh.Vertices))
+	for i, v := range n.mesh.Vertices {
 		origUVs[i] = [2]float32{v.SrcX, v.SrcY}
 	}
 
@@ -426,7 +426,7 @@ func TestDistortionGridUVStability(t *testing.T) {
 	g.Reset()
 
 	// UVs should not change.
-	for i, v := range n.Vertices {
+	for i, v := range n.mesh.Vertices {
 		if v.SrcX != origUVs[i][0] || v.SrcY != origUVs[i][1] {
 			t.Errorf("UV changed at %d: (%f,%f) vs (%f,%f)", i, v.SrcX, v.SrcY, origUVs[i][0], origUVs[i][1])
 		}
@@ -438,19 +438,19 @@ func TestDistortionGridInvalidatesAABB(t *testing.T) {
 	n := g.Node()
 	n.recomputeMeshAABB()
 	g.SetVertex(0, 0, 5, 5)
-	if !n.meshAABBDirty {
+	if !n.mesh.aabbDirty {
 		t.Error("SetVertex should invalidate AABB")
 	}
 
 	n.recomputeMeshAABB()
 	g.SetAllVertices(func(c, r int, rx, ry float64) (float64, float64) { return 0, 0 })
-	if !n.meshAABBDirty {
+	if !n.mesh.aabbDirty {
 		t.Error("SetAllVertices should invalidate AABB")
 	}
 
 	n.recomputeMeshAABB()
 	g.Reset()
-	if !n.meshAABBDirty {
+	if !n.mesh.aabbDirty {
 		t.Error("Reset should invalidate AABB")
 	}
 }
@@ -471,17 +471,17 @@ func TestPolygonFanTriangulation(t *testing.T) {
 	points := []Vec2{{0, 0}, {10, 0}, {10, 10}, {0, 10}}
 	n := NewPolygon("poly", points)
 	// 4 vertices, 2 triangles → 6 indices
-	if len(n.Vertices) != 4 {
-		t.Errorf("vertices = %d, want 4", len(n.Vertices))
+	if len(n.mesh.Vertices) != 4 {
+		t.Errorf("vertices = %d, want 4", len(n.mesh.Vertices))
 	}
-	if len(n.Indices) != 6 {
-		t.Errorf("indices = %d, want 6", len(n.Indices))
+	if len(n.mesh.Indices) != 6 {
+		t.Errorf("indices = %d, want 6", len(n.mesh.Indices))
 	}
 	// Ear-clip: first ear is vertex 0 (triangle 3,0,1), remainder is 1,2,3
 	expected := []uint16{3, 0, 1, 1, 2, 3}
 	for i, idx := range expected {
-		if n.Indices[i] != idx {
-			t.Errorf("Indices[%d] = %d, want %d", i, n.Indices[i], idx)
+		if n.mesh.Indices[i] != idx {
+			t.Errorf("Indices[%d] = %d, want %d", i, n.mesh.Indices[i], idx)
 		}
 	}
 }
@@ -489,11 +489,11 @@ func TestPolygonFanTriangulation(t *testing.T) {
 func TestPolygonTriangle(t *testing.T) {
 	points := []Vec2{{0, 0}, {10, 0}, {5, 10}}
 	n := NewPolygon("tri", points)
-	if len(n.Vertices) != 3 {
-		t.Errorf("vertices = %d, want 3", len(n.Vertices))
+	if len(n.mesh.Vertices) != 3 {
+		t.Errorf("vertices = %d, want 3", len(n.mesh.Vertices))
 	}
-	if len(n.Indices) != 3 {
-		t.Errorf("indices = %d, want 3", len(n.Indices))
+	if len(n.mesh.Indices) != 3 {
+		t.Errorf("indices = %d, want 3", len(n.mesh.Indices))
 	}
 }
 
@@ -505,18 +505,18 @@ func TestPolygonPentagon(t *testing.T) {
 		points = append(points, Vec2{X: math.Cos(angle) * 10, Y: math.Sin(angle) * 10})
 	}
 	n := NewPolygon("pent", points)
-	if len(n.Vertices) != 5 {
-		t.Errorf("vertices = %d, want 5", len(n.Vertices))
+	if len(n.mesh.Vertices) != 5 {
+		t.Errorf("vertices = %d, want 5", len(n.mesh.Vertices))
 	}
-	if len(n.Indices) != 9 {
-		t.Errorf("indices = %d, want 9", len(n.Indices))
+	if len(n.mesh.Indices) != 9 {
+		t.Errorf("indices = %d, want 9", len(n.mesh.Indices))
 	}
 }
 
 func TestPolygonWhitePixelSharing(t *testing.T) {
 	a := NewPolygon("a", []Vec2{{0, 0}, {10, 0}, {5, 10}})
 	b := NewPolygon("b", []Vec2{{0, 0}, {20, 0}, {10, 20}})
-	if a.MeshImage != b.MeshImage {
+	if a.mesh.Image != b.mesh.Image {
 		t.Error("untextured polygons should share the same white pixel image")
 	}
 }
@@ -524,7 +524,7 @@ func TestPolygonWhitePixelSharing(t *testing.T) {
 func TestPolygonUntexturedUV(t *testing.T) {
 	n := NewPolygon("poly", []Vec2{{0, 0}, {10, 0}, {5, 10}})
 	// Untextured: all UVs should be at center of white pixel (0.5, 0.5).
-	for i, v := range n.Vertices {
+	for i, v := range n.mesh.Vertices {
 		if v.SrcX != 0.5 || v.SrcY != 0.5 {
 			t.Errorf("vertex %d UV = (%f,%f), want (0.5,0.5)", i, v.SrcX, v.SrcY)
 		}
@@ -533,24 +533,24 @@ func TestPolygonUntexturedUV(t *testing.T) {
 
 func TestPolygonTooFewPoints(t *testing.T) {
 	n := NewPolygon("tiny", []Vec2{{0, 0}, {10, 0}})
-	if len(n.Vertices) != 0 || len(n.Indices) != 0 {
+	if len(n.mesh.Vertices) != 0 || len(n.mesh.Indices) != 0 {
 		t.Error("polygon with <3 points should have no vertices/indices")
 	}
 }
 
 func TestSetPolygonPoints(t *testing.T) {
 	n := NewPolygon("poly", []Vec2{{0, 0}, {10, 0}, {5, 10}})
-	vertCap := cap(n.Vertices)
+	vertCap := cap(n.mesh.Vertices)
 
 	// Update with fewer points  -  should reuse backing array.
 	SetPolygonPoints(n, []Vec2{{0, 0}, {20, 0}, {10, 20}})
-	if len(n.Vertices) != 3 {
-		t.Errorf("vertices = %d, want 3", len(n.Vertices))
+	if len(n.mesh.Vertices) != 3 {
+		t.Errorf("vertices = %d, want 3", len(n.mesh.Vertices))
 	}
-	if cap(n.Vertices) != vertCap {
-		t.Errorf("vertex backing array reallocated: was %d, now %d", vertCap, cap(n.Vertices))
+	if cap(n.mesh.Vertices) != vertCap {
+		t.Errorf("vertex backing array reallocated: was %d, now %d", vertCap, cap(n.mesh.Vertices))
 	}
-	if !n.meshAABBDirty {
+	if !n.mesh.aabbDirty {
 		t.Error("SetPolygonPoints should invalidate AABB")
 	}
 }
@@ -560,18 +560,18 @@ func TestNewPolygonTextured(t *testing.T) {
 	points := []Vec2{{0, 0}, {32, 0}, {32, 32}, {0, 32}}
 	n := NewPolygonTextured("texPoly", img, points)
 
-	if len(n.Vertices) != 4 {
-		t.Errorf("vertices = %d, want 4", len(n.Vertices))
+	if len(n.mesh.Vertices) != 4 {
+		t.Errorf("vertices = %d, want 4", len(n.mesh.Vertices))
 	}
-	if len(n.Indices) != 6 {
-		t.Errorf("indices = %d, want 6", len(n.Indices))
+	if len(n.mesh.Indices) != 6 {
+		t.Errorf("indices = %d, want 6", len(n.mesh.Indices))
 	}
-	if n.MeshImage != img {
+	if n.mesh.Image != img {
 		t.Error("MeshImage should be the provided image")
 	}
 
 	// Bottom-right vertex should have UVs mapped to image dimensions.
-	v := n.Vertices[2] // point (32,32)
+	v := n.mesh.Vertices[2] // point (32,32)
 	if v.SrcX != 32 || v.SrcY != 32 {
 		t.Errorf("textured UV at (32,32) = (%f,%f), want (32,32)", v.SrcX, v.SrcY)
 	}
@@ -582,10 +582,10 @@ func TestSetPolygonPointsGrows(t *testing.T) {
 	// Grow to 5 points  -  may need new backing array.
 	points := []Vec2{{0, 0}, {10, 0}, {20, 5}, {15, 15}, {0, 10}}
 	SetPolygonPoints(n, points)
-	if len(n.Vertices) != 5 {
-		t.Errorf("vertices = %d, want 5", len(n.Vertices))
+	if len(n.mesh.Vertices) != 5 {
+		t.Errorf("vertices = %d, want 5", len(n.mesh.Vertices))
 	}
-	if len(n.Indices) != 9 {
-		t.Errorf("indices = %d, want 9", len(n.Indices))
+	if len(n.mesh.Indices) != 9 {
+		t.Errorf("indices = %d, want 9", len(n.mesh.Indices))
 	}
 }

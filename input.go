@@ -744,8 +744,8 @@ func (s *Scene) firePointerDown(node *Node, pointerID int, wx, wy float64, butto
 		h.fn(ctx)
 	}
 	// Per-node callback.
-	if node != nil && node.onPointerDown != nil {
-		node.onPointerDown(ctx)
+	if node != nil && node.callbacks != nil && node.callbacks.onPointerDown != nil {
+		node.callbacks.onPointerDown(ctx)
 	}
 	// ECS bridge.
 	s.emitInteractionEvent(EventPointerDown, node, wx, wy, lx, ly, button, mods, DragContext{}, PinchContext{})
@@ -768,8 +768,8 @@ func (s *Scene) firePointerUp(node *Node, pointerID int, wx, wy float64, button 
 	for _, h := range s.handlers.pointerUp {
 		h.fn(ctx)
 	}
-	if node != nil && node.onPointerUp != nil {
-		node.onPointerUp(ctx)
+	if node != nil && node.callbacks != nil && node.callbacks.onPointerUp != nil {
+		node.callbacks.onPointerUp(ctx)
 	}
 	s.emitInteractionEvent(EventPointerUp, node, wx, wy, lx, ly, button, mods, DragContext{}, PinchContext{})
 }
@@ -791,8 +791,8 @@ func (s *Scene) firePointerMove(node *Node, pointerID int, wx, wy float64, butto
 	for _, h := range s.handlers.pointerMove {
 		h.fn(ctx)
 	}
-	if node != nil && node.onPointerMove != nil {
-		node.onPointerMove(ctx)
+	if node != nil && node.callbacks != nil && node.callbacks.onPointerMove != nil {
+		node.callbacks.onPointerMove(ctx)
 	}
 	s.emitInteractionEvent(EventPointerMove, node, wx, wy, lx, ly, button, mods, DragContext{}, PinchContext{})
 }
@@ -814,8 +814,8 @@ func (s *Scene) firePointerEnter(node *Node, pointerID int, wx, wy float64, butt
 	for _, h := range s.handlers.pointerEnter {
 		h.fn(ctx)
 	}
-	if node != nil && node.onPointerEnter != nil {
-		node.onPointerEnter(ctx)
+	if node != nil && node.callbacks != nil && node.callbacks.onPointerEnter != nil {
+		node.callbacks.onPointerEnter(ctx)
 	}
 	s.emitInteractionEvent(EventPointerEnter, node, wx, wy, lx, ly, button, mods, DragContext{}, PinchContext{})
 }
@@ -837,8 +837,8 @@ func (s *Scene) firePointerLeave(node *Node, pointerID int, wx, wy float64, butt
 	for _, h := range s.handlers.pointerLeave {
 		h.fn(ctx)
 	}
-	if node != nil && node.onPointerLeave != nil {
-		node.onPointerLeave(ctx)
+	if node != nil && node.callbacks != nil && node.callbacks.onPointerLeave != nil {
+		node.callbacks.onPointerLeave(ctx)
 	}
 	s.emitInteractionEvent(EventPointerLeave, node, wx, wy, lx, ly, button, mods, DragContext{}, PinchContext{})
 }
@@ -860,8 +860,8 @@ func (s *Scene) fireClick(node *Node, pointerID int, wx, wy float64, button Mous
 	for _, h := range s.handlers.click {
 		h.fn(ctx)
 	}
-	if node != nil && node.onClick != nil {
-		node.onClick(ctx)
+	if node != nil && node.callbacks != nil && node.callbacks.onClick != nil {
+		node.callbacks.onClick(ctx)
 	}
 	s.emitInteractionEvent(EventClick, node, wx, wy, lx, ly, button, mods, DragContext{}, PinchContext{})
 }
@@ -885,8 +885,8 @@ func (s *Scene) fireDragStart(node *Node, pointerID int, wx, wy, startX, startY,
 	for _, h := range s.handlers.dragStart {
 		h.fn(ctx)
 	}
-	if node != nil && node.onDragStart != nil {
-		node.onDragStart(ctx)
+	if node != nil && node.callbacks != nil && node.callbacks.onDragStart != nil {
+		node.callbacks.onDragStart(ctx)
 	}
 	s.emitInteractionEvent(EventDragStart, node, wx, wy, lx, ly, button, mods, ctx, PinchContext{})
 }
@@ -910,8 +910,8 @@ func (s *Scene) fireDrag(node *Node, pointerID int, wx, wy, startX, startY, delt
 	for _, h := range s.handlers.drag {
 		h.fn(ctx)
 	}
-	if node != nil && node.onDrag != nil {
-		node.onDrag(ctx)
+	if node != nil && node.callbacks != nil && node.callbacks.onDrag != nil {
+		node.callbacks.onDrag(ctx)
 	}
 	s.emitInteractionEvent(EventDrag, node, wx, wy, lx, ly, button, mods, ctx, PinchContext{})
 }
@@ -935,8 +935,8 @@ func (s *Scene) fireDragEnd(node *Node, pointerID int, wx, wy, startX, startY, d
 	for _, h := range s.handlers.dragEnd {
 		h.fn(ctx)
 	}
-	if node != nil && node.onDragEnd != nil {
-		node.onDragEnd(ctx)
+	if node != nil && node.callbacks != nil && node.callbacks.onDragEnd != nil {
+		node.callbacks.onDragEnd(ctx)
 	}
 	s.emitInteractionEvent(EventDragEnd, node, wx, wy, lx, ly, button, mods, ctx, PinchContext{})
 }
@@ -963,8 +963,8 @@ func (s *Scene) firePinch(ctx PinchContext, mods KeyModifiers) {
 	var pinchNode *Node
 	if s.pinch.pointer0 > 0 && s.pinch.pointer0 < maxPointers {
 		pinchNode = s.pointers[s.pinch.pointer0].hitNode
-		if pinchNode != nil && pinchNode.onPinch != nil {
-			pinchNode.onPinch(ctx)
+		if pinchNode != nil && pinchNode.callbacks != nil && pinchNode.callbacks.onPinch != nil {
+			pinchNode.callbacks.onPinch(ctx)
 		}
 	}
 	// Pinch is a global gesture  -  always emit to EntityStore (node may be nil).

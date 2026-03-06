@@ -197,8 +197,8 @@ func (r *Rope) Update() {
 // SetPoints updates the rope's path. For N points: 2N vertices, 6(N-1) indices.
 func (r *Rope) SetPoints(points []Vec2) {
 	if len(points) < 2 {
-		r.node.Vertices = r.node.Vertices[:0]
-		r.node.Indices = r.node.Indices[:0]
+		r.node.mesh.Vertices = r.node.mesh.Vertices[:0]
+		r.node.mesh.Indices = r.node.mesh.Indices[:0]
 		r.node.InvalidateMeshAABB()
 		return
 	}
@@ -208,19 +208,19 @@ func (r *Rope) SetPoints(points []Vec2) {
 	numInds := (n - 1) * 6
 
 	// Grow vertex/index slices to high-water mark.
-	if cap(r.node.Vertices) < numVerts {
-		r.node.Vertices = make([]ebiten.Vertex, numVerts)
+	if cap(r.node.mesh.Vertices) < numVerts {
+		r.node.mesh.Vertices = make([]ebiten.Vertex, numVerts)
 	}
-	r.node.Vertices = r.node.Vertices[:numVerts]
+	r.node.mesh.Vertices = r.node.mesh.Vertices[:numVerts]
 
-	if cap(r.node.Indices) < numInds {
-		r.node.Indices = make([]uint16, numInds)
+	if cap(r.node.mesh.Indices) < numInds {
+		r.node.mesh.Indices = make([]uint16, numInds)
 	}
-	r.node.Indices = r.node.Indices[:numInds]
+	r.node.mesh.Indices = r.node.mesh.Indices[:numInds]
 
 	imgH := float64(0)
-	if r.node.MeshImage != nil {
-		imgH = float64(r.node.MeshImage.Bounds().Dy())
+	if r.node.mesh.Image != nil {
+		imgH = float64(r.node.mesh.Image.Bounds().Dy())
 	}
 
 	halfW := r.config.Width / 2
@@ -271,14 +271,14 @@ func (r *Rope) SetPoints(points []Vec2) {
 
 		srcX := float32(r.cumLen[i])
 		vi := i * 2
-		r.node.Vertices[vi] = ebiten.Vertex{
+		r.node.mesh.Vertices[vi] = ebiten.Vertex{
 			DstX:   float32(points[i].X + nx*halfW),
 			DstY:   float32(points[i].Y + ny*halfW),
 			SrcX:   srcX,
 			SrcY:   0,
 			ColorR: 1, ColorG: 1, ColorB: 1, ColorA: 1,
 		}
-		r.node.Vertices[vi+1] = ebiten.Vertex{
+		r.node.mesh.Vertices[vi+1] = ebiten.Vertex{
 			DstX:   float32(points[i].X - nx*halfW),
 			DstY:   float32(points[i].Y - ny*halfW),
 			SrcX:   srcX,
@@ -291,12 +291,12 @@ func (r *Rope) SetPoints(points []Vec2) {
 	for i := 0; i < n-1; i++ {
 		ii := i * 6
 		v := uint16(i * 2)
-		r.node.Indices[ii+0] = v
-		r.node.Indices[ii+1] = v + 1
-		r.node.Indices[ii+2] = v + 2
-		r.node.Indices[ii+3] = v + 1
-		r.node.Indices[ii+4] = v + 3
-		r.node.Indices[ii+5] = v + 2
+		r.node.mesh.Indices[ii+0] = v
+		r.node.mesh.Indices[ii+1] = v + 1
+		r.node.mesh.Indices[ii+2] = v + 2
+		r.node.mesh.Indices[ii+3] = v + 1
+		r.node.mesh.Indices[ii+4] = v + 3
+		r.node.mesh.Indices[ii+5] = v + 2
 	}
 
 	r.node.InvalidateMeshAABB()
@@ -407,8 +407,8 @@ func (g *DistortionGrid) SetVertex(col, row int, dx, dy float64) {
 	vcols := g.cols + 1
 	idx := row*vcols + col
 	rest := g.restPos[idx]
-	g.node.Vertices[idx].DstX = float32(rest.X + dx)
-	g.node.Vertices[idx].DstY = float32(rest.Y + dy)
+	g.node.mesh.Vertices[idx].DstX = float32(rest.X + dx)
+	g.node.mesh.Vertices[idx].DstY = float32(rest.Y + dy)
 	g.node.InvalidateMeshAABB()
 }
 
@@ -422,8 +422,8 @@ func (g *DistortionGrid) SetAllVertices(fn func(col, row int, restX, restY float
 			idx := r*vcols + c
 			rest := g.restPos[idx]
 			dx, dy := fn(c, r, rest.X, rest.Y)
-			g.node.Vertices[idx].DstX = float32(rest.X + dx)
-			g.node.Vertices[idx].DstY = float32(rest.Y + dy)
+			g.node.mesh.Vertices[idx].DstX = float32(rest.X + dx)
+			g.node.mesh.Vertices[idx].DstY = float32(rest.Y + dy)
 		}
 	}
 	g.node.InvalidateMeshAABB()
@@ -437,8 +437,8 @@ func (g *DistortionGrid) Reset() {
 		for c := 0; c < vcols; c++ {
 			idx := r*vcols + c
 			rest := g.restPos[idx]
-			g.node.Vertices[idx].DstX = float32(rest.X)
-			g.node.Vertices[idx].DstY = float32(rest.Y)
+			g.node.mesh.Vertices[idx].DstX = float32(rest.X)
+			g.node.mesh.Vertices[idx].DstY = float32(rest.Y)
 		}
 	}
 	g.node.InvalidateMeshAABB()
@@ -504,24 +504,24 @@ func NewPolygonTextured(name string, img *ebiten.Image, points []Vec2) *Node {
 func SetPolygonPoints(n *Node, points []Vec2) {
 	textured := false
 	var img *ebiten.Image
-	if n.MeshImage != nil && n.MeshImage != ensureWhitePixel() {
+	if n.mesh.Image != nil && n.mesh.Image != ensureWhitePixel() {
 		textured = true
-		img = n.MeshImage
+		img = n.mesh.Image
 	}
 	verts, inds := buildPolygonFan(points, textured, img)
 
 	// Reuse backing arrays when possible.
-	if cap(n.Vertices) >= len(verts) {
-		n.Vertices = n.Vertices[:len(verts)]
-		copy(n.Vertices, verts)
+	if cap(n.mesh.Vertices) >= len(verts) {
+		n.mesh.Vertices = n.mesh.Vertices[:len(verts)]
+		copy(n.mesh.Vertices, verts)
 	} else {
-		n.Vertices = verts
+		n.mesh.Vertices = verts
 	}
-	if cap(n.Indices) >= len(inds) {
-		n.Indices = n.Indices[:len(inds)]
-		copy(n.Indices, inds)
+	if cap(n.mesh.Indices) >= len(inds) {
+		n.mesh.Indices = n.mesh.Indices[:len(inds)]
+		copy(n.mesh.Indices, inds)
 	} else {
-		n.Indices = inds
+		n.mesh.Indices = inds
 	}
 
 	n.InvalidateMeshAABB()

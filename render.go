@@ -106,11 +106,11 @@ func (s *Scene) traverse(n *Node, treeOrder *int) {
 	culled := s.cullActive && n.renderable && shouldCull(n, viewWorld, s.cullBounds)
 
 	// CacheAsTree: replay cached commands (hit) or build cache (miss).
-	if n.cacheTreeEnabled && !culled {
+	if n.cacheTree != nil && !culled {
 		containerTransform32 := affine32(viewWorld)
 		containerAlpha := float32(n.worldAlpha)
 
-		if !n.cacheTreeDirty && len(n.cachedCommands) > 0 {
+		if !n.cacheTree.dirty && len(n.cacheTree.commands) > 0 {
 			// Cache hit  -  delta remap and replay.
 			s.replayCacheAsTree(n, containerTransform32, containerAlpha, treeOrder)
 			return
@@ -175,12 +175,12 @@ func (s *Scene) traverse(n *Node, treeOrder *int) {
 			}
 			s.commands = append(s.commands, cmd)
 		case NodeTypeMesh:
-			if len(n.Vertices) == 0 || len(n.Indices) == 0 {
+			if len(n.mesh.Vertices) == 0 || len(n.mesh.Indices) == 0 {
 				break
 			}
 			tintColor := Color{n.color.r, n.color.g, n.color.b, n.color.a * n.worldAlpha}
 			dst := ensureTransformedVerts(n)
-			transformVertices(n.Vertices, dst, viewWorld, tintColor)
+			transformVertices(n.mesh.Vertices, dst, viewWorld, tintColor)
 			*treeOrder++
 			s.commands = append(s.commands, RenderCommand{
 				Type:        CommandMesh,
@@ -190,8 +190,8 @@ func (s *Scene) traverse(n *Node, treeOrder *int) {
 				GlobalOrder: n.globalOrder,
 				treeOrder:   *treeOrder,
 				meshVerts:   dst,
-				meshInds:    n.Indices,
-				meshImage:   n.MeshImage,
+				meshInds:    n.mesh.Indices,
+				meshImage:   n.mesh.Image,
 			})
 		case NodeTypeParticleEmitter:
 			if n.Emitter != nil && n.Emitter.alive > 0 {
@@ -531,21 +531,21 @@ func invertAffine32(m [6]float32) [6]float32 {
 // replayCacheAsTree replays cached commands with delta remap for transform
 // and alpha changes. Animated tiles read live TextureRegion from source node.
 func (s *Scene) replayCacheAsTree(n *Node, containerTransform32 [6]float32, containerAlpha float32, treeOrder *int) {
-	transformChanged := containerTransform32 != n.cachedParentTransform
-	alphaChanged := containerAlpha != n.cachedParentAlpha
+	transformChanged := containerTransform32 != n.cacheTree.parentTransform
+	alphaChanged := containerAlpha != n.cacheTree.parentAlpha
 
 	var delta [6]float32
 	if transformChanged {
-		inv := invertAffine32(n.cachedParentTransform)
+		inv := invertAffine32(n.cacheTree.parentTransform)
 		delta = multiplyAffine32(containerTransform32, inv)
 	}
 	var alphaRatio float32 = 1.0
-	if alphaChanged && n.cachedParentAlpha > 1e-6 {
-		alphaRatio = containerAlpha / n.cachedParentAlpha
+	if alphaChanged && n.cacheTree.parentAlpha > 1e-6 {
+		alphaRatio = containerAlpha / n.cacheTree.parentAlpha
 	}
 
-	for i := range n.cachedCommands {
-		src := &n.cachedCommands[i]
+	for i := range n.cacheTree.commands {
+		src := &n.cacheTree.commands[i]
 		cmd := src.cmd // copy from cache
 		if transformChanged {
 			cmd.Transform = multiplyAffine32(delta, cmd.Transform)
@@ -625,27 +625,27 @@ func (s *Scene) buildCacheAsTree(n *Node, containerTransform32 [6]float32, conta
 
 	if blocked {
 		// Can't cache  -  disable and fall through. Commands are already emitted.
-		n.cacheTreeDirty = true
+		n.cacheTree.dirty = true
 		return
 	}
 
 	// Store in cachedCommands.
-	if cap(n.cachedCommands) < len(newCmds) {
-		n.cachedCommands = make([]cachedCmd, len(newCmds))
+	if cap(n.cacheTree.commands) < len(newCmds) {
+		n.cacheTree.commands = make([]cachedCmd, len(newCmds))
 	}
-	n.cachedCommands = n.cachedCommands[:len(newCmds)]
+	n.cacheTree.commands = n.cacheTree.commands[:len(newCmds)]
 
 	for i := range newCmds {
-		n.cachedCommands[i] = cachedCmd{
+		n.cacheTree.commands[i] = cachedCmd{
 			cmd:          newCmds[i],
 			source:       nil, // static by default (two-tier)
 			sourceNodeID: newCmds[i].emittingNodeID,
 		}
 	}
 
-	n.cachedParentTransform = containerTransform32
-	n.cachedParentAlpha = containerAlpha
-	n.cacheTreeDirty = false
+	n.cacheTree.parentTransform = containerTransform32
+	n.cacheTree.parentAlpha = containerAlpha
+	n.cacheTree.dirty = false
 }
 
 // emitNodeCommandInline emits a command for the node itself (used by buildCacheAsTree
