@@ -62,22 +62,22 @@ func (g *TweenGroup) Cancel()  // stop the tween early
 
 ## Easing Functions
 
-The `ease` package from gween provides standard easing curves:
+Willow re-exports all gween easing functions as `willow.Ease*` constants. Type `willow.Ease` in your editor to see every option via autocomplete  -  no extra import needed.
 
 | Function | Description |
 |----------|-------------|
-| `ease.Linear` | Constant speed |
-| `ease.InQuad` | Accelerating from zero |
-| `ease.OutQuad` | Decelerating to zero |
-| `ease.InOutQuad` | Accelerate then decelerate |
-| `ease.InCubic` | Cubic ease in |
-| `ease.OutCubic` | Cubic ease out |
-| `ease.InOutCubic` | Cubic ease in/out |
-| `ease.OutBack` | Overshoot then settle |
-| `ease.OutBounce` | Bouncing effect |
-| `ease.OutElastic` | Elastic spring effect |
+| `willow.EaseLinear` | Constant speed |
+| `willow.EaseInQuad` | Accelerating from zero |
+| `willow.EaseOutQuad` | Decelerating to zero |
+| `willow.EaseInOutQuad` | Accelerate then decelerate |
+| `willow.EaseInCubic` | Cubic ease in |
+| `willow.EaseOutCubic` | Cubic ease out |
+| `willow.EaseInOutCubic` | Cubic ease in/out |
+| `willow.EaseOutBack` | Overshoot then settle |
+| `willow.EaseOutBounce` | Bouncing effect |
+| `willow.EaseOutElastic` | Elastic spring effect |
 
-See the [gween documentation](https://github.com/tanema/gween) for the full list.
+All 45 easing curves from gween are available: `In`, `Out`, `InOut`, and `OutIn` variants for Quad, Cubic, Quart, Quint, Sine, Expo, Circ, Elastic, Back, and Bounce. You can also import `github.com/tanema/gween/ease` directly or pass any `willow.EaseFunc` (custom easing function).
 
 ## Chaining Tweens
 

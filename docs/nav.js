@@ -22,6 +22,7 @@ const NAV_TABS = [
             items: [
                 { label: "Scene", page: "scene" },
                 { label: "Nodes", page: "nodes" },
+                { label: "Node Index", page: "node-index" },
                 { label: "Transforms", page: "transforms" },
             ]
         },

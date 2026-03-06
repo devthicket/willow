@@ -1007,6 +1007,38 @@ func (n *Node) ChildAt(index int) *Node {
 	return n.children[index]
 }
 
+// FindChild returns the first direct child matching the name pattern, or nil.
+// Supports % wildcards: "enemy" (exact), "enemy%" (starts with),
+// "%boss" (ends with), "%ene%" (contains).
+func (n *Node) FindChild(pattern string) *Node {
+	inner, mode := parsePattern(pattern)
+	for _, c := range n.children {
+		if matchPattern(c.Name, inner, mode) {
+			return c
+		}
+	}
+	return nil
+}
+
+// FindDescendant returns the first descendant (depth-first) matching the name
+// pattern, or nil. Supports % wildcards (see FindChild).
+func (n *Node) FindDescendant(pattern string) *Node {
+	inner, mode := parsePattern(pattern)
+	return n.findDescendant(inner, mode)
+}
+
+func (n *Node) findDescendant(inner string, mode wildMode) *Node {
+	for _, c := range n.children {
+		if matchPattern(c.Name, inner, mode) {
+			return c
+		}
+		if found := c.findDescendant(inner, mode); found != nil {
+			return found
+		}
+	}
+	return nil
+}
+
 // SetChildIndex moves child to a new index among its siblings.
 // Panics if child is not a child of n or if index is out of range.
 func (n *Node) SetChildIndex(child *Node, index int) {

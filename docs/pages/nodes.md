@@ -86,7 +86,13 @@ parent.RemoveChildren()  // remove all
 children := parent.Children()   // read-only slice
 count := parent.NumChildren()
 first := parent.ChildAt(0)
+
+// Find by name (supports % wildcards)
+child := parent.FindChild("health_bar")
+desc := parent.FindDescendant("enemy%")   // depth-first search
 ```
+
+For repeated lookups or tag-based grouping, use [NodeIndex](?page=node-index) instead of tree walks.
 
 ## ZIndex and Draw Order
 
@@ -147,6 +153,7 @@ Disposing a node also disposes all its children. Disposed nodes cannot be reused
 
 ## Next Steps
 
+- [Node Index](?page=node-index)  -  tag-based grouping and fast lookups
 - [Transforms](?page=transforms)  -  position, scale, rotation, pivot, and dirty flags
 - [Solid-Color Sprites](?page=solid-color-sprites)  -  creating shapes without textures
 - [Sprites](?page=sprites)  -  TextureRegion and image display

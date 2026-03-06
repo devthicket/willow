@@ -479,7 +479,7 @@ content.SetMask(maskRoot)
 Tweens on nodes that are part of a Scene are updated automatically each frame  -  no manual `Update(dt)` call is needed. Just create the tween and it runs:
 
 ```go
-willow.TweenPosition(node, 200, 300, willow.TweenConfig{Duration: 1.0, Ease: ease.OutCubic})  // starts automatically
+willow.TweenPosition(node, 200, 300, willow.TweenConfig{Duration: 1.0, Ease: willow.EaseOutCubic})  // starts automatically
 ```
 
 ## SetUpdateFunc Replaces  -  It Does Not Chain
