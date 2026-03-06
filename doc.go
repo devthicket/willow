@@ -55,6 +55,21 @@
 //	box.SetSize(80, 40)
 //	box.SetColor(willow.RGBA(0.3, 0.7, 1, 1))
 //
+// # Finding nodes
+//
+// For quick tree searches, use [Node.FindChild] (direct children) or
+// [Node.FindDescendant] (recursive depth-first). Both support % wildcards:
+//
+//	bar := enemy.FindChild("health_bar")
+//	boss := scene.Root().FindDescendant("boss%")  // starts with "boss"
+//
+// For repeated lookups or tag-based grouping, use [NodeIndex]:
+//
+//	idx := willow.NewNodeIndex()
+//	idx.Add(enemy, "enemy", "damageable")
+//	enemies := idx.FindByTag("enemy")
+//	boss := idx.FindByName("boss%")
+//
 // # Key features
 //
 // Willow includes cameras with follow/scroll-to/zoom, two text systems
@@ -63,6 +78,10 @@
 // integer-only scaling), CPU-simulated particles, mesh/polygon/rope geometry,
 // Kage shader filters, texture caching, masking, blend modes, lighting layers,
 // and tweens (via [gween]).
+//
+// All 45 gween easing functions are re-exported as [EaseLinear],
+// [EaseOutCubic], [EaseOutBounce], etc. for autocomplete discoverability
+// without an extra import.
 //
 // See the full docs for guides on each feature:
 // https://phanxgames.github.io/willow/

@@ -137,7 +137,7 @@ go run ./examples/lighting # dungeon scene with torches and wisps
 
 ## Features
 
-- **Scene graph** - Parent/child transform inheritance (position, rotation, scale, skew, pivot) with alpha propagation and Pixi-style `ZIndex` sibling reordering.
+- **Scene graph** - Parent/child transform inheritance (position, rotation, scale, skew, pivot) with alpha propagation and Pixi-style `ZIndex` sibling reordering. Tree search by name with `FindChild`/`FindDescendant` (supports `%` wildcards).
 - **Sprite batching** - [TexturePacker](https://www.codeandweb.com/texturepacker) JSON atlas loading with multi-page, trimmed, and rotated region support. Consecutive draws are grouped automatically into single `DrawImage` calls.
 - **Camera system** - Multiple independent viewports with smooth follow, scroll-to animation (45+ easings), bounds clamping, frustum culling, and world/screen coordinate conversion.
 - **Input and interaction** - Hierarchical hit testing with pluggable shapes (rect, circle, polygon). Pointer capture, drag dead zones, multi-touch, and two-finger pinch with rotation. Callbacks per-node or scene-wide.
@@ -147,7 +147,8 @@ go run ./examples/lighting # dungeon scene with torches and wisps
 - **Subtree command caching** - `SetCacheAsTree` caches all render commands for a container's subtree and replays them with delta transform remapping. Camera panning, parent movement, and alpha changes never invalidate the cache. Animated tiles (same-page UV swaps) are handled automatically via a two-tier source pointer - no invalidation, no API overhead. Manual and auto-invalidation modes. Includes sort-skip optimization when the entire scene is cache hits.
 - **Filters and effects** - Composable filter chains via Kage shaders. Built-in: color matrix, blur, outline, pixel-perfect outline, pixel-perfect inline, palette swap. Render-target masking and `CacheAsTexture`.
 - **Lighting** - Dedicated lighting layer using erase-blend render targets with automatic compositing.
-- **Animation** - Tweening via [gween](https://github.com/tanema/gween) with 45+ easing functions. Convenience wrappers for position, scale, rotation, alpha, and color. Auto-stops on node disposal.
+- **Node index** - Opt-in `NodeIndex` registry for tag-based grouping and O(1) lookups by name or tag. Supports `%` wildcards, multi-tag intersection queries, and zero-allocation iteration. No overhead for nodes that aren't indexed.
+- **Animation** - Tweening via [gween](https://github.com/tanema/gween) with 45+ easing functions re-exported as `willow.Ease*` for autocomplete discoverability. Convenience wrappers for position, scale, rotation, alpha, and color. Auto-stops on node disposal.
 - **Debug mode** - Performance timers, batch counting, tree depth warnings, and disposed-node assertions via `scene.SetDebugMode(true)`.
 
 ---
