@@ -37,7 +37,7 @@ func main() {
 	}
 
 	scene := willow.NewScene()
-	scene.ClearColor = willow.Color{R: 0.1, G: 0.1, B: 0.1, A: 1}
+	scene.ClearColor = willow.RGB(0.1, 0.1, 0.1)
 
 	cam := scene.NewCamera(willow.Rect{X: 0, Y: 0, Width: screenW, Height: screenH})
 	cam.X = (mapWidth * tileSize) / 2
@@ -81,27 +81,28 @@ func main() {
 		Name: "ground", Width: mapWidth, Height: mapHeight,
 		Data: groundData, Regions: regions, AtlasImage: img,
 	})
-	ground.Node().RenderLayer = 0
+	ground.Node().SetRenderLayer(0)
 
 	// Decor tile layer (RenderLayer 1).
 	decor := viewport.AddTileLayer(willow.TileLayerConfig{
 		Name: "decor", Width: mapWidth, Height: mapHeight,
 		Data: decorData, Regions: regions, AtlasImage: img,
 	})
-	decor.Node().RenderLayer = 1
+	decor.Node().SetRenderLayer(1)
 
 	// Sandwich entity layer (RenderLayer 2)  -  a few colored sprites as "NPCs".
 	entityLayer := willow.NewContainer("entities")
-	entityLayer.RenderLayer = 2
+	entityLayer.SetRenderLayer(2)
 	viewport.AddChild(entityLayer)
 
 	for i := range 20 {
 		npc := willow.NewSprite("npc", willow.TextureRegion{})
-		npc.ScaleX = 16
-		npc.ScaleY = 16
-		npc.Color = willow.Color{R: 1, G: 0.3, B: 0.3, A: 1}
-		npc.X = float64(rand.IntN(mapWidth*tileSize-tileSize)) + float64(tileSize)/2
-		npc.Y = float64(rand.IntN(mapHeight*tileSize-tileSize)) + float64(tileSize)/2
+		npc.SetScale(16, 16)
+		npc.SetColor(willow.RGB(1, 0.3, 0.3))
+		npc.SetPosition(
+			float64(rand.IntN(mapWidth*tileSize-tileSize))+float64(tileSize)/2,
+			float64(rand.IntN(mapHeight*tileSize-tileSize))+float64(tileSize)/2,
+		)
 		_ = i
 		entityLayer.AddChild(npc)
 	}
@@ -117,7 +118,7 @@ func main() {
 		Name: "upper", Width: mapWidth, Height: mapHeight,
 		Data: upperData, Regions: regions, AtlasImage: img,
 	})
-	upper.Node().RenderLayer = 3
+	upper.Node().SetRenderLayer(3)
 
 	// Camera panning via drag.
 	scene.SetDragDeadZone(0)

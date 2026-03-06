@@ -227,7 +227,7 @@ func main() {
 
 	// --- Scene setup ---
 	scene := willow.NewScene()
-	scene.ClearColor = willow.Color{R: 0.05, G: 0.12, B: 0.28, A: 1}
+	scene.ClearColor = willow.RGB(0.05, 0.12, 0.28)
 
 	cam := scene.NewCamera(willow.Rect{X: 0, Y: 0, Width: screenW, Height: screenH})
 	cam.X = screenW / 2
@@ -241,7 +241,7 @@ func main() {
 
 	maskRoot := willow.NewContainer("mask-root")
 	maskChild := willow.NewPolygon("porthole", circlePoints(portholeRadius, portholeSegs))
-	maskChild.Color = willow.Color{R: 1, G: 1, B: 1, A: 1}
+	maskChild.SetColor(willow.RGB(1, 1, 1))
 	maskChild.SetPosition(screenW/2, screenH/2)
 	maskRoot.AddChild(maskChild)
 	underwaterContainer.SetMask(maskRoot)
@@ -250,27 +250,27 @@ func main() {
 	// --- Deep water mesh (ZIndex 0) ---
 	deepGrid := willow.NewDistortionGrid("deep-water", waterImg, totalCols, totalRows)
 	deepGrid.Node().SetPosition(float64(-bufTiles*tileSize), float64(-bufTiles*tileSize))
-	deepGrid.Node().Color = willow.Color{R: 0.35, G: 0.55, B: 0.75, A: 1.0}
-	deepGrid.Node().ZIndex = 0
+	deepGrid.Node().SetColor(willow.RGB(0.35, 0.55, 0.75))
+	deepGrid.Node().SetZIndex(0)
 	underwaterContainer.AddChild(deepGrid.Node())
 	d.deepGrid = deepGrid
 
 	// --- Sandy floor (ZIndex 2) ---
 	sandFloor := willow.NewSprite("sand-floor", willow.TextureRegion{})
 	sandFloor.SetCustomImage(sandImg)
-	sandFloor.Color = willow.Color{R: 0.9, G: 0.75, B: 0.55, A: 1.0}
+	sandFloor.SetColor(willow.RGB(0.9, 0.75, 0.55))
 	sandFloor.SetPosition(0, screenH*0.65)
-	sandFloor.ZIndex = 2
+	sandFloor.SetZIndex(2)
 	underwaterContainer.AddChild(sandFloor)
 
 	// --- Seaweed (ZIndex 3) ---
 	for i := range numSeaweed {
 		sw := willow.NewSprite("seaweed", willow.TextureRegion{})
 		sw.SetScale(10+float64(i%3)*3, 80+float64(i)*15)
-		sw.Color = willow.Color{R: 0.2, G: 0.8 + float64(i)*0.03, B: 0.3, A: 1.0}
+		sw.SetColor(willow.RGB(0.2, 0.8+float64(i)*0.03, 0.3))
 		sw.SetPivot(0, 1)
 		sw.SetPosition(60+float64(i)*120, screenH*0.65-2)
-		sw.ZIndex = 3
+		sw.SetZIndex(3)
 		underwaterContainer.AddChild(sw)
 		d.seaweed[i] = sw
 	}
@@ -278,8 +278,8 @@ func main() {
 	// --- Mid water mesh (ZIndex 5) ---
 	midGrid := willow.NewDistortionGrid("mid-water", waterImg, totalCols, totalRows)
 	midGrid.Node().SetPosition(float64(-bufTiles*tileSize), float64(-bufTiles*tileSize))
-	midGrid.Node().Color = willow.Color{R: 0.5, G: 0.7, B: 0.9, A: 0.3}
-	midGrid.Node().ZIndex = 5
+	midGrid.Node().SetColor(willow.RGBA(0.5, 0.7, 0.9, 0.3))
+	midGrid.Node().SetZIndex(5)
 	underwaterContainer.AddChild(midGrid.Node())
 	d.midGrid = midGrid
 
@@ -289,7 +289,7 @@ func main() {
 	whelp.SetScale(2, 2)
 	whelp.SetPivot(0.5, 0.5)
 	whelp.SetPosition(screenW/2, screenH*0.45)
-	whelp.ZIndex = 16
+	whelp.SetZIndex(16)
 	underwaterContainer.AddChild(whelp)
 	d.whelp = whelp
 
@@ -306,12 +306,12 @@ func main() {
 			StartAlpha:   willow.Range{Min: 0.5, Max: 0.7},
 			EndAlpha:     willow.Range{Min: 0.0, Max: 0.1},
 			Gravity:      willow.Vec2{X: 8, Y: -3},
-			StartColor:   willow.Color{R: 0.7, G: 0.9, B: 1.0, A: 1},
-			EndColor:     willow.Color{R: 0.5, G: 0.8, B: 1.0, A: 1},
+			StartColor:   willow.RGB(0.7, 0.9, 1.0),
+			EndColor:     willow.RGB(0.5, 0.8, 1.0),
 			BlendMode:    willow.BlendAdd,
 		})
 		b.SetPosition(60+float64(i)*120, screenH*0.65-2)
-		b.ZIndex = 15
+		b.SetZIndex(15)
 		b.Emitter.Start()
 		underwaterContainer.AddChild(b)
 	}
@@ -325,13 +325,13 @@ func main() {
 			Y:         float64(screenH) * 0.4,
 			Radius:    220,
 			Intensity: 1.0,
-			Color:     willow.Color{R: 0.4, G: 0.7, B: 1.0, A: 1},
+			Color:     willow.RGB(0.4, 0.7, 1.0),
 			Enabled:   true,
 		}
 		lightLayer.AddLight(light)
 		lights[i] = light
 	}
-	lightLayer.Node().ZIndex = 18
+	lightLayer.Node().SetZIndex(18)
 	underwaterContainer.AddChild(lightLayer.Node())
 	d.lightLayer = lightLayer
 	d.lights = lights
@@ -339,8 +339,8 @@ func main() {
 	// --- Near water mesh (ZIndex 20) ---
 	nearGrid := willow.NewDistortionGrid("near-water", waterImg, totalCols, totalRows)
 	nearGrid.Node().SetPosition(float64(-bufTiles*tileSize), float64(-bufTiles*tileSize))
-	nearGrid.Node().Color = willow.Color{R: 0.6, G: 0.8, B: 1.0, A: 0.5}
-	nearGrid.Node().ZIndex = 20
+	nearGrid.Node().SetColor(willow.RGBA(0.6, 0.8, 1.0, 0.5))
+	nearGrid.Node().SetZIndex(20)
 	underwaterContainer.AddChild(nearGrid.Node())
 	d.nearGrid = nearGrid
 
@@ -358,12 +358,12 @@ func main() {
 		StartAlpha:   willow.Range{Min: 0.9, Max: 1.0},
 		EndAlpha:     willow.Range{Min: 0.0, Max: 0.0},
 		Gravity:      willow.Vec2{X: 0, Y: -40},
-		StartColor:   willow.Color{R: 0.8, G: 0.95, B: 1.0, A: 1},
-		EndColor:     willow.Color{R: 0.3, G: 0.6, B: 1.0, A: 1},
+		StartColor:   willow.RGB(0.8, 0.95, 1.0),
+		EndColor:     willow.RGB(0.3, 0.6, 1.0),
 		BlendMode:    willow.BlendAdd,
 		WorldSpace:   true,
 	})
-	burst.ZIndex = 55
+	burst.SetZIndex(55)
 	scene.Root().AddChild(burst)
 	d.burst = burst
 
@@ -378,22 +378,22 @@ func main() {
 			{X: 0, Y: 0}, {X: screenW, Y: 0},
 			{X: screenW, Y: screenH}, {X: 0, Y: screenH},
 		})
-		rect.Color = willow.Color{R: 1, G: 1, B: 1, A: 1}
+		rect.SetColor(willow.RGB(1, 1, 1))
 		root.AddChild(rect)
 		hole := willow.NewPolygon("surf-mask-hole", circlePoints(portholeRadius, portholeSegs))
-		hole.Color = willow.Color{R: 1, G: 1, B: 1, A: 1}
-		hole.BlendMode = willow.BlendErase
+		hole.SetColor(willow.RGB(1, 1, 1))
+		hole.SetBlendMode(willow.BlendErase)
 		hole.SetPosition(screenW/2, screenH/2)
 		root.AddChild(hole)
 		return root, hole
 	}
 
 	surf1Container := willow.NewContainer("surf1")
-	surf1Container.ZIndex = 50
+	surf1Container.SetZIndex(50)
 	overlay1Grid := willow.NewDistortionGrid("overlay1", waterImg, totalCols, totalRows)
 	overlay1Grid.Node().SetPosition(float64(-bufTiles*tileSize), float64(-bufTiles*tileSize))
-	overlay1Grid.Node().Color = willow.Color{R: 0.75, G: 0.92, B: 1.0, A: 1}
-	overlay1Grid.Node().BlendMode = willow.BlendScreen
+	overlay1Grid.Node().SetColor(willow.RGB(0.75, 0.92, 1.0))
+	overlay1Grid.Node().SetBlendMode(willow.BlendScreen)
 	surf1Container.AddChild(overlay1Grid.Node())
 	mask1, hole1 := makeInvertedMask()
 	surf1Container.SetMask(mask1)
@@ -401,11 +401,11 @@ func main() {
 	d.overlayGrid1 = overlay1Grid
 
 	surf2Container := willow.NewContainer("surf2")
-	surf2Container.ZIndex = 52
+	surf2Container.SetZIndex(52)
 	overlay2Grid := willow.NewDistortionGrid("overlay2", waterImg2, totalCols, totalRows)
 	overlay2Grid.Node().SetPosition(float64(-bufTiles*tileSize), float64(-bufTiles*tileSize))
-	overlay2Grid.Node().Color = willow.Color{R: 2, G: 2, B: 2, A: 0.6}
-	overlay2Grid.Node().BlendMode = willow.BlendScreen
+	overlay2Grid.Node().SetColor(willow.RGBA(2, 2, 2, 0.6))
+	overlay2Grid.Node().SetBlendMode(willow.BlendScreen)
 	surf2Container.AddChild(overlay2Grid.Node())
 	mask2, hole2 := makeInvertedMask()
 	surf2Container.SetMask(mask2)
@@ -419,7 +419,7 @@ func main() {
 	const hintText = "move cursor to explore  |  click for bubbles"
 	hint := makeLabel(hintText)
 	hint.SetPosition(float64(screenW)/2-float64(len(hintText)*6)/2, float64(screenH)-20)
-	hint.ZIndex = 70
+	hint.SetZIndex(70)
 	scene.Root().AddChild(hint)
 
 	scene.SetUpdateFunc(d.update)

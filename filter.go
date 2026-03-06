@@ -426,10 +426,10 @@ func (f *OutlineFilter) Apply(src, dst *ebiten.Image) {
 		op.ColorScale.Reset()
 		op.GeoM.Translate(off[0], off[1])
 		op.ColorScale.Scale(
-			float32(f.Color.R*f.Color.A),
-			float32(f.Color.G*f.Color.A),
-			float32(f.Color.B*f.Color.A),
-			float32(f.Color.A),
+			float32(f.Color.r*f.Color.a),
+			float32(f.Color.g*f.Color.a),
+			float32(f.Color.b*f.Color.a),
+			float32(f.Color.a),
 		)
 		dst.DrawImage(src, op)
 	}
@@ -470,10 +470,10 @@ func NewPixelPerfectOutlineFilter(c Color) *PixelPerfectOutlineFilter {
 func (f *PixelPerfectOutlineFilter) Apply(src, dst *ebiten.Image) {
 	shader := ensurePPOutlineShader()
 	// Premultiply the outline color for the shader (write in-place, no alloc).
-	f.colorF32[0] = float32(f.Color.R * f.Color.A)
-	f.colorF32[1] = float32(f.Color.G * f.Color.A)
-	f.colorF32[2] = float32(f.Color.B * f.Color.A)
-	f.colorF32[3] = float32(f.Color.A)
+	f.colorF32[0] = float32(f.Color.r * f.Color.a)
+	f.colorF32[1] = float32(f.Color.g * f.Color.a)
+	f.colorF32[2] = float32(f.Color.b * f.Color.a)
+	f.colorF32[3] = float32(f.Color.a)
 	bounds := src.Bounds()
 	f.shaderOp.Images[0] = src
 	f.shaderOp.Uniforms = f.uniforms
@@ -510,10 +510,10 @@ func NewPixelPerfectInlineFilter(c Color) *PixelPerfectInlineFilter {
 func (f *PixelPerfectInlineFilter) Apply(src, dst *ebiten.Image) {
 	shader := ensurePPInlineShader()
 	// Write in-place, no alloc.
-	f.colorF32[0] = float32(f.Color.R * f.Color.A)
-	f.colorF32[1] = float32(f.Color.G * f.Color.A)
-	f.colorF32[2] = float32(f.Color.B * f.Color.A)
-	f.colorF32[3] = float32(f.Color.A)
+	f.colorF32[0] = float32(f.Color.r * f.Color.a)
+	f.colorF32[1] = float32(f.Color.g * f.Color.a)
+	f.colorF32[2] = float32(f.Color.b * f.Color.a)
+	f.colorF32[3] = float32(f.Color.a)
 	bounds := src.Bounds()
 	f.shaderOp.Images[0] = src
 	f.shaderOp.Uniforms = f.uniforms
@@ -593,10 +593,10 @@ func (f *PaletteFilter) ensurePaletteTex(w, h int) {
 			}
 			c := f.Palette[idx]
 			off := (row*w + x) * 4
-			f.pixBuf[off+0] = byte(c.R*c.A*255 + 0.5)
-			f.pixBuf[off+1] = byte(c.G*c.A*255 + 0.5)
-			f.pixBuf[off+2] = byte(c.B*c.A*255 + 0.5)
-			f.pixBuf[off+3] = byte(c.A*255 + 0.5)
+			f.pixBuf[off+0] = byte(c.r*c.a*255 + 0.5)
+			f.pixBuf[off+1] = byte(c.g*c.a*255 + 0.5)
+			f.pixBuf[off+2] = byte(c.b*c.a*255 + 0.5)
+			f.pixBuf[off+3] = byte(c.a*255 + 0.5)
 		}
 	}
 	f.paletteTex.WritePixels(f.pixBuf)

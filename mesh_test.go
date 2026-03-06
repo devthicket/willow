@@ -244,8 +244,8 @@ func TestMeshTraverseEmitsTransformedVerts(t *testing.T) {
 	}
 	inds := []uint16{0, 1, 2}
 	n := NewMesh("m", nil, verts, inds)
-	n.X = 50
-	n.Y = 100
+	n.x = 50
+	n.y = 100
 	s.Root().AddChild(n)
 
 	traverseScene(s)
@@ -288,8 +288,8 @@ func TestMeshTraverseColorTint(t *testing.T) {
 	}
 	inds := []uint16{0}
 	n := NewMesh("m", nil, verts, inds)
-	n.Color = Color{0.5, 0.8, 1.0, 1.0}
-	n.Alpha = 0.5
+	n.color = Color{0.5, 0.8, 1.0, 1.0}
+	n.alpha = 0.5
 	s.Root().AddChild(n)
 
 	traverseScene(s)

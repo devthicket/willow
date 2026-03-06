@@ -278,7 +278,7 @@ func nodeDimensions(n *Node) (w, h float64) {
 			b := n.customImage.Bounds()
 			return float64(b.Dx()), float64(b.Dy())
 		}
-		return float64(n.TextureRegion.OriginalW), float64(n.TextureRegion.OriginalH)
+		return float64(n.textureRegion.OriginalW), float64(n.textureRegion.OriginalH)
 	case NodeTypeMesh:
 		n.recomputeMeshAABB()
 		return n.meshAABB.Width, n.meshAABB.Height

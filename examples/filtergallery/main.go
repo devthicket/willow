@@ -49,7 +49,7 @@ func main() {
 	}
 
 	scene := willow.NewScene()
-	scene.ClearColor = willow.Color{R: 0.08, G: 0.06, B: 0.12, A: 1}
+	scene.ClearColor = willow.RGB(0.08, 0.06, 0.12)
 
 	cam := scene.NewCamera(willow.Rect{X: 0, Y: 0, Width: screenW, Height: screenH})
 	cam.X = screenW / 2
@@ -59,19 +59,15 @@ func main() {
 	// Whelp sprite: centered in upper area, scaled 2x.
 	whelp := willow.NewSprite("whelp", willow.TextureRegion{})
 	whelp.SetCustomImage(whelpImg)
-	whelp.ScaleX = 2
-	whelp.ScaleY = 2
-	whelp.PivotX = 64 // half of 128px
-	whelp.PivotY = 64
-	whelp.X = screenW / 2
-	whelp.Y = 180
+	whelp.SetScale(2, 2)
+	whelp.SetPivot(64, 64) // half of 128px
+	whelp.SetPosition(screenW/2, 180)
 	whelp.Invalidate()
 	scene.Root().AddChild(whelp)
 
 	// Status label showing active filters.
 	statusLabel := makeLabel("No filters active")
-	statusLabel.X = screenW/2 - float64(len("No filters active")*6)/2
-	statusLabel.Y = 320
+	statusLabel.SetPosition(screenW/2-float64(len("No filters active")*6)/2, 320)
 	scene.Root().AddChild(statusLabel)
 
 	// Create filter instances.
@@ -85,9 +81,9 @@ func main() {
 		0, 0, 0, 1, 0,
 	}
 
-	outline := willow.NewOutlineFilter(3, willow.Color{R: 1, G: 0.85, B: 0.2, A: 1})
-	inline := willow.NewPixelPerfectInlineFilter(willow.Color{R: 0, G: 1, B: 1, A: 1})
-	ppOutline := willow.NewPixelPerfectOutlineFilter(willow.Color{R: 1, G: 0.3, B: 0.3, A: 1})
+	outline := willow.NewOutlineFilter(3, willow.RGB(1, 0.85, 0.2))
+	inline := willow.NewPixelPerfectInlineFilter(willow.RGB(0, 1, 1))
+	ppOutline := willow.NewPixelPerfectOutlineFilter(willow.RGB(1, 0.3, 0.3))
 
 	brightness := willow.NewColorMatrixFilter()
 	grayscale := willow.NewColorMatrixFilter()
@@ -103,12 +99,11 @@ func main() {
 	var retroPalette [256]willow.Color
 	for i := 0; i < 256; i++ {
 		t := float64(i) / 255.0
-		retroPalette[i] = willow.Color{
-			R: 0.5 + 0.5*math.Cos(2*math.Pi*t),
-			G: 0.5 + 0.5*math.Cos(2*math.Pi*t+2*math.Pi/3),
-			B: 0.5 + 0.5*math.Cos(2*math.Pi*t+4*math.Pi/3),
-			A: 1,
-		}
+		retroPalette[i] = willow.RGB(
+			0.5+0.5*math.Cos(2*math.Pi*t),
+			0.5+0.5*math.Cos(2*math.Pi*t+2*math.Pi/3),
+			0.5+0.5*math.Cos(2*math.Pi*t+4*math.Pi/3),
+		)
 	}
 	palette.SetPalette(retroPalette)
 
@@ -185,8 +180,7 @@ func main() {
 			text = fmt.Sprintf("Active: %s", strings.Join(names, ", "))
 		}
 		statusLabel = makeLabel(text)
-		statusLabel.X = screenW/2 - float64(len(text)*6)/2
-		statusLabel.Y = 320
+		statusLabel.SetPosition(screenW/2-float64(len(text)*6)/2, 320)
 		scene.Root().AddChild(statusLabel)
 	}
 
@@ -198,17 +192,15 @@ func main() {
 		by := startY + float64(row)*(btnH+btnGap)
 
 		// Background button.
-		bg := willow.NewRect("btn-bg-"+entry.label, btnW, btnH, willow.Color{R: 0.2, G: 0.2, B: 0.25, A: 1})
-		bg.X = bx
-		bg.Y = by
+		bg := willow.NewRect("btn-bg-"+entry.label, btnW, btnH, willow.RGB(0.2, 0.2, 0.25))
+		bg.SetPosition(bx, by)
 		scene.Root().AddChild(bg)
 		entry.bg = bg
 
 		// Checkbox indicator.
 		checkSp := willow.NewSprite("check-"+entry.label, willow.TextureRegion{})
 		checkSp.SetCustomImage(uncheckedImg)
-		checkSp.X = bx + 6
-		checkSp.Y = by + 8
+		checkSp.SetPosition(bx+6, by+8)
 		checkSp.Invalidate()
 		scene.Root().AddChild(checkSp)
 		entry.checkSp = checkSp
@@ -217,8 +209,7 @@ func main() {
 
 		// Label text.
 		label := makeLabel(entry.label)
-		label.X = bx + 24
-		label.Y = by + 7
+		label.SetPosition(bx+24, by+7)
 		scene.Root().AddChild(label)
 
 		// Click handler.
@@ -226,10 +217,10 @@ func main() {
 		bg.OnClick(func(ctx willow.ClickContext) {
 			e.active = !e.active
 			if e.active {
-				e.bg.Color = willow.Color{R: 0.15, G: 0.4, B: 0.2, A: 1}
+				e.bg.SetColor(willow.RGB(0.15, 0.4, 0.2))
 				e.checkSp.SetCustomImage(e.checkImg[1])
 			} else {
-				e.bg.Color = willow.Color{R: 0.2, G: 0.2, B: 0.25, A: 1}
+				e.bg.SetColor(willow.RGB(0.2, 0.2, 0.25))
 				e.checkSp.SetCustomImage(e.checkImg[0])
 			}
 			e.bg.Invalidate()

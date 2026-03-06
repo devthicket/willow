@@ -38,14 +38,14 @@ const (
 // ---- colors ---------------------------------------------------------------
 
 var colors = [numCables]willow.Color{
-	{R: 0.95, G: 0.30, B: 0.25, A: 1}, // red
-	{R: 0.25, G: 0.65, B: 0.95, A: 1}, // blue
-	{R: 0.35, G: 0.88, B: 0.40, A: 1}, // green
-	{R: 0.95, G: 0.75, B: 0.15, A: 1}, // gold
-	{R: 0.75, G: 0.35, B: 0.90, A: 1}, // purple
-	{R: 0.95, G: 0.50, B: 0.15, A: 1}, // orange
-	{R: 0.20, G: 0.85, B: 0.80, A: 1}, // teal
-	{R: 0.90, G: 0.35, B: 0.60, A: 1}, // pink
+	willow.RGB(0.95, 0.30, 0.25), // red
+	willow.RGB(0.25, 0.65, 0.95), // blue
+	willow.RGB(0.35, 0.88, 0.40), // green
+	willow.RGB(0.95, 0.75, 0.15), // gold
+	willow.RGB(0.75, 0.35, 0.90), // purple
+	willow.RGB(0.95, 0.50, 0.15), // orange
+	willow.RGB(0.20, 0.85, 0.80), // teal
+	willow.RGB(0.90, 0.35, 0.60), // pink
 }
 
 // ---- data model -----------------------------------------------------------
@@ -93,7 +93,7 @@ type puzzle struct {
 
 func main() {
 	scene := willow.NewScene()
-	scene.ClearColor = willow.Color{R: 0.06, G: 0.05, B: 0.10, A: 1}
+	scene.ClearColor = willow.RGB(0.06, 0.05, 0.10)
 
 	// Camera centered on screen so world origin = top-left corner.
 	cam := scene.NewCamera(willow.Rect{Width: screenW, Height: screenH})
@@ -147,25 +147,19 @@ func (p *puzzle) createSocketSprites() {
 func (p *puzzle) addSocketSprite(pos willow.Vec2, col willow.Color) {
 	// Colored ring (hint).
 	ring := willow.NewSprite("ring", willow.TextureRegion{})
-	ring.ScaleX = (socketRadius + 4) * 2
-	ring.ScaleY = (socketRadius + 4) * 2
-	ring.PivotX = 0.5
-	ring.PivotY = 0.5
-	ring.X = pos.X
-	ring.Y = pos.Y
-	ring.Color = col
-	ring.Alpha = 0.35
+	ring.SetScale((socketRadius+4)*2, (socketRadius+4)*2)
+	ring.SetPivot(0.5, 0.5)
+	ring.SetPosition(pos.X, pos.Y)
+	ring.SetColor(col)
+	ring.SetAlpha(0.35)
 	p.scene.Root().AddChild(ring)
 
 	// Inner dot.
 	dot := willow.NewSprite("socket", willow.TextureRegion{})
-	dot.ScaleX = socketRadius * 2
-	dot.ScaleY = socketRadius * 2
-	dot.PivotX = 0.5
-	dot.PivotY = 0.5
-	dot.X = pos.X
-	dot.Y = pos.Y
-	dot.Color = willow.Color{R: 0.18, G: 0.18, B: 0.22, A: 1}
+	dot.SetScale(socketRadius*2, socketRadius*2)
+	dot.SetPivot(0.5, 0.5)
+	dot.SetPosition(pos.X, pos.Y)
+	dot.SetColor(willow.RGB(0.18, 0.18, 0.22))
 	p.scene.Root().AddChild(dot)
 }
 
@@ -175,7 +169,7 @@ func (p *puzzle) addSocketSprite(pos willow.Vec2, col willow.Color) {
 // pointers (&c.start, &c.end) remain stable. If cable were a value in an
 // array, resizing or copying the array would invalidate those pointers.
 func (p *puzzle) createCables() {
-	solvedColor := willow.Color{R: 0.3, G: 1.0, B: 0.5, A: 1}
+	solvedColor := willow.RGB(0.3, 1.0, 0.5)
 
 	for i := range numCables {
 		c := &cable{
@@ -222,13 +216,10 @@ func (p *puzzle) makePeg(cableIdx, startIdx int, sockets []willow.Vec2) peg {
 	col := colors[cableIdx]
 
 	sp := willow.NewSprite("peg", willow.TextureRegion{})
-	sp.ScaleX = pegRadius * 2
-	sp.ScaleY = pegRadius * 2
-	sp.PivotX = 0.5
-	sp.PivotY = 0.5
-	sp.X = startPos.X
-	sp.Y = startPos.Y
-	sp.Color = col
+	sp.SetScale(pegRadius*2, pegRadius*2)
+	sp.SetPivot(0.5, 0.5)
+	sp.SetPosition(startPos.X, startPos.Y)
+	sp.SetColor(col)
 
 	pg := peg{
 		node:   sp,
@@ -243,13 +234,12 @@ func (p *puzzle) makePeg(cableIdx, startIdx int, sockets []willow.Vec2) peg {
 	isLeft := &sockets[0] == &p.leftSockets[0]
 
 	sp.OnDrag(func(ctx willow.DragContext) {
-		sp.X += ctx.DeltaX
-		sp.Y += ctx.DeltaY
+		sp.SetPosition(sp.X()+ctx.DeltaX, sp.Y()+ctx.DeltaY)
 		sp.Invalidate()
 
 		pg := p.pegPtr(cableIdx, isLeft)
-		pg.pos.X = sp.X
-		pg.pos.Y = sp.Y
+		pg.pos.X = sp.X()
+		pg.pos.Y = sp.Y()
 		pg.socket = -1
 	})
 
@@ -259,8 +249,8 @@ func (p *puzzle) makePeg(cableIdx, startIdx int, sockets []willow.Vec2) peg {
 
 		for si := range numCables {
 			sock := sockets[si]
-			dx := sock.X - sp.X
-			dy := sock.Y - sp.Y
+			dx := sock.X - sp.X()
+			dy := sock.Y - sp.Y()
 			dist := math.Sqrt(dx*dx + dy*dy)
 			if dist < bestDist && !p.socketTaken(si, cableIdx, isLeft) {
 				bestDist = dist
@@ -269,11 +259,10 @@ func (p *puzzle) makePeg(cableIdx, startIdx int, sockets []willow.Vec2) peg {
 		}
 
 		if best >= 0 {
-			sp.X = sockets[best].X
-			sp.Y = sockets[best].Y
+			sp.SetPosition(sockets[best].X, sockets[best].Y)
 			sp.Invalidate()
-			pg.pos.X = sp.X
-			pg.pos.Y = sp.Y
+			pg.pos.X = sp.X()
+			pg.pos.Y = sp.Y()
 			pg.socket = best
 		}
 
@@ -359,14 +348,13 @@ func (p *puzzle) update() error {
 		elapsed := p.time - p.wonAt
 		pulse := 0.7 + 0.3*math.Sin(elapsed*4.0)
 		for _, c := range p.cables {
-			c.node.Alpha = pulse
+			c.node.SetAlpha(pulse)
 			c.node.Invalidate()
 		}
 		for i := range numCables {
 			breathe := pegRadius*2 + 4*math.Sin(elapsed*3.0+float64(i)*0.4)
 			for _, pg := range []*peg{&p.leftPegs[i], &p.rightPegs[i]} {
-				pg.node.ScaleX = breathe
-				pg.node.ScaleY = breathe
+				pg.node.SetScale(breathe, breathe)
 				pg.node.Invalidate()
 			}
 		}
@@ -405,9 +393,9 @@ func makeRopeTexture(col willow.Color, brightness float64) *ebiten.Image {
 		center := float64(ropeWidth) / 2
 		dist := math.Abs(float64(y)-center) / center
 		b := brightness * (1.0 - dist*0.5)
-		r := uint8(clamp01(col.R*b) * 255)
-		g := uint8(clamp01(col.G*b) * 255)
-		bl := uint8(clamp01(col.B*b) * 255)
+		r := uint8(clamp01(col.R()*b) * 255)
+		g := uint8(clamp01(col.G()*b) * 255)
+		bl := uint8(clamp01(col.B()*b) * 255)
 		c := willow.ColorFromRGBA(r, g, bl, 255)
 		for x := range ropeTexW {
 			img.Set(x, y, c)

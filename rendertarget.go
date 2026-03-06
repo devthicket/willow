@@ -249,13 +249,13 @@ func renderSubtree(s *Scene, n *Node, target *ebiten.Image, bounds Rect) {
 // current s.commands buffer. Similar to traverse() but uses explicit
 // transforms rather than world transforms.
 func renderSubtreeWalk(s *Scene, n *Node, parentTransform [6]float64, parentAlpha float64, treeOrder *int) {
-	if !n.Visible {
+	if !n.visible {
 		return
 	}
 
 	local := computeLocalTransform(n)
 	transform := multiplyAffine(parentTransform, local)
-	alpha := parentAlpha * n.Alpha
+	alpha := parentAlpha * n.alpha
 
 	// Nested special node (mask, cache, or filter): render it to its own RT
 	// and emit a command using the computed local transform.
@@ -329,9 +329,9 @@ func renderSpecialSubtreeNode(s *Scene, n *Node, localTransform [6]float64, alph
 		Type:        CommandSprite,
 		Transform:   affine32(adjustedTransform),
 		Color:       color32{1, 1, 1, float32(alpha)},
-		BlendMode:   n.BlendMode,
-		RenderLayer: n.RenderLayer,
-		GlobalOrder: n.GlobalOrder,
+		BlendMode:   n.blendMode,
+		RenderLayer: n.renderLayer,
+		GlobalOrder: n.globalOrder,
 		treeOrder:   *treeOrder,
 		directImage: result,
 	})
@@ -339,7 +339,7 @@ func renderSpecialSubtreeNode(s *Scene, n *Node, localTransform [6]float64, alph
 
 // emitNodeCommand emits a render command for a single node at the given transform.
 func emitNodeCommand(s *Scene, n *Node, transform [6]float64, alpha float64, treeOrder *int) {
-	if !n.Renderable {
+	if !n.renderable {
 		return
 	}
 	t32 := affine32(transform)
@@ -349,32 +349,32 @@ func emitNodeCommand(s *Scene, n *Node, transform [6]float64, alpha float64, tre
 		cmd := RenderCommand{
 			Type:        CommandSprite,
 			Transform:   t32,
-			Color:       color32{float32(n.Color.R), float32(n.Color.G), float32(n.Color.B), float32(n.Color.A * alpha)},
-			BlendMode:   n.BlendMode,
-			RenderLayer: n.RenderLayer,
-			GlobalOrder: n.GlobalOrder,
+			Color:       color32{float32(n.color.r), float32(n.color.g), float32(n.color.b), float32(n.color.a * alpha)},
+			BlendMode:   n.blendMode,
+			RenderLayer: n.renderLayer,
+			GlobalOrder: n.globalOrder,
 			treeOrder:   *treeOrder,
 		}
 		if n.customImage != nil {
 			cmd.directImage = n.customImage
 		} else {
-			cmd.TextureRegion = n.TextureRegion
+			cmd.TextureRegion = n.textureRegion
 		}
 		s.commands = append(s.commands, cmd)
 	case NodeTypeMesh:
 		if len(n.Vertices) == 0 || len(n.Indices) == 0 {
 			return
 		}
-		tintColor := Color{n.Color.R, n.Color.G, n.Color.B, n.Color.A * alpha}
+		tintColor := Color{n.color.r, n.color.g, n.color.b, n.color.a * alpha}
 		dst := ensureTransformedVerts(n)
 		transformVertices(n.Vertices, dst, transform, tintColor)
 		*treeOrder++
 		s.commands = append(s.commands, RenderCommand{
 			Type:        CommandMesh,
 			Transform:   t32,
-			BlendMode:   n.BlendMode,
-			RenderLayer: n.RenderLayer,
-			GlobalOrder: n.GlobalOrder,
+			BlendMode:   n.blendMode,
+			RenderLayer: n.renderLayer,
+			GlobalOrder: n.globalOrder,
 			treeOrder:   *treeOrder,
 			meshVerts:   dst,
 			meshInds:    n.Indices,
@@ -391,12 +391,12 @@ func emitNodeCommand(s *Scene, n *Node, transform [6]float64, alpha float64, tre
 			s.commands = append(s.commands, RenderCommand{
 				Type:               CommandParticle,
 				Transform:          affine32(particleTransform),
-				TextureRegion:      n.TextureRegion,
+				TextureRegion:      n.textureRegion,
 				directImage:        n.customImage,
-				Color:              color32{float32(n.Color.R), float32(n.Color.G), float32(n.Color.B), float32(n.Color.A * alpha)},
-				BlendMode:          n.BlendMode,
-				RenderLayer:        n.RenderLayer,
-				GlobalOrder:        n.GlobalOrder,
+				Color:              color32{float32(n.color.r), float32(n.color.g), float32(n.color.b), float32(n.color.a * alpha)},
+				BlendMode:          n.blendMode,
+				RenderLayer:        n.renderLayer,
+				GlobalOrder:        n.globalOrder,
 				treeOrder:          *treeOrder,
 				emitter:            n.Emitter,
 				worldSpaceParticle: ws,

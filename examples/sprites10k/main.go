@@ -42,7 +42,7 @@ func main() {
 	}
 
 	scene := willow.NewScene()
-	scene.ClearColor = willow.Color{R: 0.06, G: 0.06, B: 0.09, A: 1}
+	scene.ClearColor = willow.RGB(0.06, 0.06, 0.09)
 
 	scene.RegisterPage(0, whelpImg)
 	region := willow.TextureRegion{
@@ -59,22 +59,18 @@ func main() {
 	for i := range sprites {
 		sp := willow.NewSprite("whelp", region)
 
-		sp.X = rand.Float64() * screenW
-		sp.Y = rand.Float64() * screenH
+		sp.SetPosition(rand.Float64()*screenW, rand.Float64()*screenH)
 
-		sp.PivotX = 64
-		sp.PivotY = 64
+		sp.SetPivot(64, 64)
 
 		base := 0.15 + rand.Float64()*0.2
-		sp.ScaleX = base
-		sp.ScaleY = base
+		sp.SetScale(base, base)
 
-		sp.Color = willow.Color{
-			R: 0.5 + rand.Float64()*0.5,
-			G: 0.5 + rand.Float64()*0.5,
-			B: 0.5 + rand.Float64()*0.5,
-			A: 1,
-		}
+		sp.SetColor(willow.RGB(
+			0.5+rand.Float64()*0.5,
+			0.5+rand.Float64()*0.5,
+			0.5+rand.Float64()*0.5,
+		))
 
 		root.AddChild(sp)
 
@@ -101,32 +97,32 @@ func main() {
 			s := &sprites[i]
 			n := s.node
 
-			n.X += s.dx
-			n.Y += s.dy
+			nx := n.X() + s.dx
+			ny := n.Y() + s.dy
 
 			size := s.scaleBase * 128
-			if n.X < -size/2 {
-				n.X = -size / 2
+			if nx < -size/2 {
+				nx = -size / 2
 				s.dx = -s.dx
-			} else if n.X > screenW-size/2 {
-				n.X = screenW - size/2
+			} else if nx > screenW-size/2 {
+				nx = screenW - size/2
 				s.dx = -s.dx
 			}
-			if n.Y < -size/2 {
-				n.Y = -size / 2
+			if ny < -size/2 {
+				ny = -size / 2
 				s.dy = -s.dy
-			} else if n.Y > screenH-size/2 {
-				n.Y = screenH - size/2
+			} else if ny > screenH-size/2 {
+				ny = screenH - size/2
 				s.dy = -s.dy
 			}
+			n.SetPosition(nx, ny)
 
-			n.Rotation += s.rotSpeed
+			n.SetRotation(n.Rotation() + s.rotSpeed)
 
 			sc := s.scaleBase + s.scaleAmp*math.Sin(t*s.scaleSpeed+s.phase)
-			n.ScaleX = sc
-			n.ScaleY = sc
+			n.SetScale(sc, sc)
 
-			n.Alpha = 0.5 + 0.5*math.Sin(t*s.alphaSpeed+s.phase)
+			n.SetAlpha(0.5 + 0.5*math.Sin(t*s.alphaSpeed+s.phase))
 
 			n.Invalidate()
 		}

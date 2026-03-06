@@ -36,11 +36,11 @@ const (
 
 var tweenLabels = [5]string{"Position", "Scale", "Rotation", "Alpha", "Color"}
 var tweenColors = [5]willow.Color{
-	{R: 0.4, G: 0.8, B: 1.0, A: 1}, // cyan
-	{R: 1.0, G: 0.6, B: 0.2, A: 1}, // orange
-	{R: 0.6, G: 1.0, B: 0.4, A: 1}, // green
-	{R: 0.9, G: 0.9, B: 0.3, A: 1}, // yellow
-	{R: 1.0, G: 0.4, B: 0.7, A: 1}, // pink
+	willow.RGB(0.4, 0.8, 1.0), // cyan
+	willow.RGB(1.0, 0.6, 0.2), // orange
+	willow.RGB(0.6, 1.0, 0.4), // green
+	willow.RGB(0.9, 0.9, 0.3), // yellow
+	willow.RGB(1.0, 0.4, 0.7), // pink
 }
 
 // easingEntry pairs a display name with its gween function.
@@ -64,7 +64,7 @@ func main() {
 	}
 
 	scene := willow.NewScene()
-	scene.ClearColor = willow.Color{R: 0.08, G: 0.06, B: 0.12, A: 1}
+	scene.ClearColor = willow.RGB(0.08, 0.06, 0.12)
 
 	cam := scene.NewCamera(willow.Rect{X: 0, Y: 0, Width: screenW, Height: screenH})
 	cam.X = screenW / 2
@@ -80,12 +80,9 @@ func main() {
 	for i := 0; i < 5; i++ {
 		sp := willow.NewSprite("whelp-"+tweenLabels[i], willow.TextureRegion{})
 		sp.SetCustomImage(whelpImg)
-		sp.ScaleX = 1.5
-		sp.ScaleY = 1.5
-		sp.PivotX = 64
-		sp.PivotY = 64
-		sp.X = startX + float64(i)*spacing
-		sp.Y = spriteY
+		sp.SetScale(1.5, 1.5)
+		sp.SetPivot(64, 64)
+		sp.SetPosition(startX+float64(i)*spacing, spriteY)
 		sp.Invalidate()
 		scene.Root().AddChild(sp)
 		sprites[i] = sp
@@ -95,21 +92,18 @@ func main() {
 	for i := 0; i < 5; i++ {
 		label := makeLabel(tweenLabels[i])
 		lw := float64(len(tweenLabels[i]) * 6)
-		label.X = startX + float64(i)*spacing - lw/2
-		label.Y = spriteY + 80
+		label.SetPosition(startX+float64(i)*spacing-lw/2, spriteY+80)
 		scene.Root().AddChild(label)
 
 		// Colored indicator dot.
 		dot := willow.NewRect("dot", lw+8, 3, tweenColors[i])
-		dot.X = startX + float64(i)*spacing - lw/2 - 4
-		dot.Y = spriteY + 96
+		dot.SetPosition(startX+float64(i)*spacing-lw/2-4, spriteY+96)
 		scene.Root().AddChild(dot)
 	}
 
 	// Status label showing current easing.
 	statusLabel := makeLabel("Select an easing function")
-	statusLabel.X = screenW/2 - float64(len("Select an easing function")*6)/2
-	statusLabel.Y = 290
+	statusLabel.SetPosition(screenW/2-float64(len("Select an easing function")*6)/2, 290)
 	scene.Root().AddChild(statusLabel)
 
 	// Define easing functions.
@@ -144,7 +138,7 @@ func main() {
 			sp.SetScale(1.5, 1.5)
 			sp.SetRotation(0)
 			sp.SetAlpha(1)
-			sp.SetColor(willow.Color{R: 1, G: 1, B: 1, A: 1})
+			sp.SetColor(willow.RGB(1, 1, 1))
 		}
 	}
 
@@ -168,8 +162,7 @@ func main() {
 	updateStatusLabel := func(text string) {
 		statusLabel.RemoveFromParent()
 		statusLabel = makeLabel(text)
-		statusLabel.X = screenW/2 - float64(len(text)*6)/2
-		statusLabel.Y = 290
+		statusLabel.SetPosition(screenW/2-float64(len(text)*6)/2, 290)
 		scene.Root().AddChild(statusLabel)
 	}
 
@@ -182,8 +175,8 @@ func main() {
 	gridStartX := (screenW - gridW) / 2
 	gridStartY := 340.0
 
-	activeColor := willow.Color{R: 0.15, G: 0.4, B: 0.2, A: 1}
-	inactiveColor := willow.Color{R: 0.2, G: 0.2, B: 0.25, A: 1}
+	activeColor := willow.RGB(0.15, 0.4, 0.2)
+	inactiveColor := willow.RGB(0.2, 0.2, 0.25)
 
 	for i, entry := range easings {
 		col := i % cols
@@ -194,16 +187,14 @@ func main() {
 
 		// Button background.
 		bg := willow.NewRect("btn-"+entry.label, btnW, btnH, inactiveColor)
-		bg.X = bx
-		bg.Y = by
+		bg.SetPosition(bx, by)
 		scene.Root().AddChild(bg)
 		entry.bg = bg
 
 		// Label.
 		label := makeLabel(entry.label)
 		lw := float64(len(entry.label) * 6)
-		label.X = bx + (btnW-lw)/2
-		label.Y = by + 7
+		label.SetPosition(bx+(btnW-lw)/2, by+7)
 		scene.Root().AddChild(label)
 
 		// Click handler.
@@ -225,8 +216,7 @@ func main() {
 
 	// "Replay" instruction hint.
 	hint := makeLabel("Click a button to see each easing curve applied to all 5 tween properties")
-	hint.X = screenW/2 - float64(len("Click a button to see each easing curve applied to all 5 tween properties")*6)/2
-	hint.Y = screenH - 40
+	hint.SetPosition(screenW/2-float64(len("Click a button to see each easing curve applied to all 5 tween properties")*6)/2, screenH-40)
 	scene.Root().AddChild(hint)
 
 	// Update loop: auto-restart when all tweens finish (ticking is automatic).
@@ -273,10 +263,9 @@ func makeLabel(s string) *willow.Node {
 }
 
 func randomBrightColor() willow.Color {
-	return willow.Color{
-		R: 0.3 + rand.Float64()*0.7,
-		G: 0.3 + rand.Float64()*0.7,
-		B: 0.3 + rand.Float64()*0.7,
-		A: 1,
-	}
+	return willow.RGB(
+		0.3+rand.Float64()*0.7,
+		0.3+rand.Float64()*0.7,
+		0.3+rand.Float64()*0.7,
+	)
 }

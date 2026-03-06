@@ -682,14 +682,14 @@ func emitPixelTextCommand(tb *TextBlock, n *Node, worldTransform [6]float64, com
 		Type:      CommandBitmapText,
 		Transform: affine32(scaledWT),
 		Color: color32{
-			float32(tb.Color.R * n.Color.R),
-			float32(tb.Color.G * n.Color.G),
-			float32(tb.Color.B * n.Color.B),
-			float32(tb.Color.A * n.Color.A * n.worldAlpha),
+			float32(tb.Color.r * n.color.r),
+			float32(tb.Color.g * n.color.g),
+			float32(tb.Color.b * n.color.b),
+			float32(tb.Color.a * n.color.a * n.worldAlpha),
 		},
-		BlendMode:    n.BlendMode,
-		RenderLayer:  n.RenderLayer,
-		GlobalOrder:  n.GlobalOrder,
+		BlendMode:    n.blendMode,
+		RenderLayer:  n.renderLayer,
+		GlobalOrder:  n.globalOrder,
 		treeOrder:    *treeOrder,
 		bmpVerts:     tb.sdfVerts,
 		bmpInds:      tb.sdfInds,
@@ -892,10 +892,10 @@ func (tb *TextBlock) ensureUniforms(f *SpriteFont, displayScale float64) {
 
 	fillColor := tb.Color
 	fillPremul := [4]float32{
-		float32(fillColor.R * fillColor.A),
-		float32(fillColor.G * fillColor.A),
-		float32(fillColor.B * fillColor.A),
-		float32(fillColor.A),
+		float32(fillColor.r * fillColor.a),
+		float32(fillColor.g * fillColor.a),
+		float32(fillColor.b * fillColor.a),
+		float32(fillColor.a),
 	}
 
 	if tb.sdfUniforms == nil {
@@ -925,27 +925,27 @@ func (tb *TextBlock) ensureUniforms(f *SpriteFont, displayScale float64) {
 		e := tb.TextEffects
 		tb.sdfUniforms["OutlineWidth"] = float32(e.OutlineWidth / f.distanceRange)
 		tb.sdfUniforms["OutlineColor"] = []float32{
-			float32(e.OutlineColor.R * e.OutlineColor.A),
-			float32(e.OutlineColor.G * e.OutlineColor.A),
-			float32(e.OutlineColor.B * e.OutlineColor.A),
-			float32(e.OutlineColor.A),
+			float32(e.OutlineColor.r * e.OutlineColor.a),
+			float32(e.OutlineColor.g * e.OutlineColor.a),
+			float32(e.OutlineColor.b * e.OutlineColor.a),
+			float32(e.OutlineColor.a),
 		}
 		tb.sdfUniforms["GlowWidth"] = float32(e.GlowWidth / f.distanceRange)
 		tb.sdfUniforms["GlowColor"] = []float32{
-			float32(e.GlowColor.R * e.GlowColor.A),
-			float32(e.GlowColor.G * e.GlowColor.A),
-			float32(e.GlowColor.B * e.GlowColor.A),
-			float32(e.GlowColor.A),
+			float32(e.GlowColor.r * e.GlowColor.a),
+			float32(e.GlowColor.g * e.GlowColor.a),
+			float32(e.GlowColor.b * e.GlowColor.a),
+			float32(e.GlowColor.a),
 		}
 		tb.sdfUniforms["ShadowOffset"] = []float32{
 			float32(e.ShadowOffset.X),
 			float32(e.ShadowOffset.Y),
 		}
 		tb.sdfUniforms["ShadowColor"] = []float32{
-			float32(e.ShadowColor.R * e.ShadowColor.A),
-			float32(e.ShadowColor.G * e.ShadowColor.A),
-			float32(e.ShadowColor.B * e.ShadowColor.A),
-			float32(e.ShadowColor.A),
+			float32(e.ShadowColor.r * e.ShadowColor.a),
+			float32(e.ShadowColor.g * e.ShadowColor.a),
+			float32(e.ShadowColor.b * e.ShadowColor.a),
+			float32(e.ShadowColor.a),
 		}
 		tb.sdfUniforms["ShadowSoftness"] = float32(e.ShadowSoftness / f.distanceRange)
 	}
@@ -1000,10 +1000,10 @@ func emitSDFTextCommand(tb *TextBlock, n *Node, worldTransform [6]float64, comma
 	commands = append(commands, RenderCommand{
 		Type:         CommandSDF,
 		Transform:    affine32(scaledWT),
-		Color:        color32{float32(n.Color.R), float32(n.Color.G), float32(n.Color.B), float32(n.Color.A * n.worldAlpha)},
-		BlendMode:    n.BlendMode,
-		RenderLayer:  n.RenderLayer,
-		GlobalOrder:  n.GlobalOrder,
+		Color:        color32{float32(n.color.r), float32(n.color.g), float32(n.color.b), float32(n.color.a * n.worldAlpha)},
+		BlendMode:    n.blendMode,
+		RenderLayer:  n.renderLayer,
+		GlobalOrder:  n.globalOrder,
 		treeOrder:    *treeOrder,
 		sdfVerts:     tb.sdfVerts,
 		sdfInds:      tb.sdfInds,

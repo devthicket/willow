@@ -193,10 +193,10 @@ func applyDrawOpts(op *ebiten.DrawImageOptions, opts RenderTextureDrawOpts, offs
 		c = ColorWhite
 	}
 	op.ColorScale.Scale(
-		float32(c.R*c.A*alpha),
-		float32(c.G*c.A*alpha),
-		float32(c.B*c.A*alpha),
-		float32(c.A*alpha),
+		float32(c.r*c.a*alpha),
+		float32(c.g*c.a*alpha),
+		float32(c.b*c.a*alpha),
+		float32(c.a*alpha),
 	)
 	op.Blend = opts.BlendMode.EbitenBlend()
 }
@@ -213,10 +213,10 @@ func (rt *RenderTexture) Dispose() {
 // toRGBA converts a willow Color to a color.RGBA (premultiplied).
 func (c Color) toRGBA() colorRGBA {
 	return colorRGBA{
-		R: uint8(clamp01(c.R*c.A) * 255),
-		G: uint8(clamp01(c.G*c.A) * 255),
-		B: uint8(clamp01(c.B*c.A) * 255),
-		A: uint8(clamp01(c.A) * 255),
+		R: uint8(clamp01(c.r*c.a) * 255),
+		G: uint8(clamp01(c.g*c.a) * 255),
+		B: uint8(clamp01(c.b*c.a) * 255),
+		A: uint8(clamp01(c.a) * 255),
 	}
 }
 

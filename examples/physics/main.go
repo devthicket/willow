@@ -41,7 +41,7 @@ type body struct {
 
 func main() {
 	scene := willow.NewScene()
-	scene.ClearColor = willow.Color{R: 0.06, G: 0.06, B: 0.09, A: 1}
+	scene.ClearColor = willow.RGB(0.06, 0.06, 0.09)
 
 	root := scene.Root()
 	bodies := make([]body, shapeCount)
@@ -49,12 +49,11 @@ func main() {
 	for i := range bodies {
 		radius := 25.0 + rand.Float64()*15.0
 		mass := radius / 20.0
-		color := willow.Color{
-			R: 0.3 + rand.Float64()*0.7,
-			G: 0.3 + rand.Float64()*0.7,
-			B: 0.3 + rand.Float64()*0.7,
-			A: 1,
-		}
+		color := willow.RGB(
+			0.3+rand.Float64()*0.7,
+			0.3+rand.Float64()*0.7,
+			0.3+rand.Float64()*0.7,
+		)
 
 		var node *willow.Node
 		shapeType := rand.IntN(5)
@@ -72,11 +71,13 @@ func main() {
 			node = willow.NewRegularPolygon("hexagon", 6, radius)
 		}
 
-		node.Color = color
+		node.SetColor(color)
 
 		// Place shapes spread across the full screen area
-		node.X = radius + rand.Float64()*(screenW-2*radius)
-		node.Y = radius + rand.Float64()*(screenH-2*radius)
+		node.SetPosition(
+			radius+rand.Float64()*(screenW-2*radius),
+			radius+rand.Float64()*(screenH-2*radius),
+		)
 
 		node.HitShape = willow.HitCircle{Radius: radius}
 
@@ -109,8 +110,7 @@ func main() {
 			b.vx = clamp(b.vx, -maxVel, maxVel)
 			b.vy = clamp(b.vy, -maxVel, maxVel)
 
-			b.node.X += b.vx
-			b.node.Y += b.vy
+			b.node.SetPosition(b.node.X()+b.vx, b.node.Y()+b.vy)
 		}
 
 		// Multiple solver passes to resolve overlaps without jitter
@@ -118,21 +118,21 @@ func main() {
 			// Wall/floor/ceiling collisions
 			for i := range bodies {
 				b := &bodies[i]
-				x, y, r := b.node.X, b.node.Y, b.radius
+				x, y, r := b.node.X(), b.node.Y(), b.radius
 
 				if x-r < 0 {
-					b.node.X = r
+					b.node.SetX(r)
 					b.vx = math.Abs(b.vx) * restitution
 				} else if x+r > screenW {
-					b.node.X = screenW - r
+					b.node.SetX(screenW - r)
 					b.vx = -math.Abs(b.vx) * restitution
 				}
 
 				if y-r < 0 {
-					b.node.Y = r
+					b.node.SetY(r)
 					b.vy = math.Abs(b.vy) * restitution
 				} else if y+r > screenH {
-					b.node.Y = screenH - r
+					b.node.SetY(screenH - r)
 					b.vy = -math.Abs(b.vy) * restitution
 				}
 			}
@@ -143,8 +143,8 @@ func main() {
 				for j := i + 1; j < len(bodies); j++ {
 					b := &bodies[j]
 
-					dx := b.node.X - a.node.X
-					dy := b.node.Y - a.node.Y
+					dx := b.node.X() - a.node.X()
+					dy := b.node.Y() - a.node.Y()
 					distSq := dx*dx + dy*dy
 					minDist := a.radius + b.radius
 
@@ -159,10 +159,14 @@ func main() {
 					// Positional correction  -  push apart proportional to mass
 					overlap := minDist - dist
 					totalMass := a.mass + b.mass
-					a.node.X -= nx * overlap * (b.mass / totalMass)
-					a.node.Y -= ny * overlap * (b.mass / totalMass)
-					b.node.X += nx * overlap * (a.mass / totalMass)
-					b.node.Y += ny * overlap * (a.mass / totalMass)
+					a.node.SetPosition(
+						a.node.X()-nx*overlap*(b.mass/totalMass),
+						a.node.Y()-ny*overlap*(b.mass/totalMass),
+					)
+					b.node.SetPosition(
+						b.node.X()+nx*overlap*(a.mass/totalMass),
+						b.node.Y()+ny*overlap*(a.mass/totalMass),
+					)
 
 					// Only apply velocity impulse on the first pass
 					if pass > 0 {
@@ -191,15 +195,13 @@ func main() {
 			if b.flashTimer > 0 {
 				b.flashTimer--
 				t := float64(b.flashTimer) / flashFrames
-				b.node.Color = willow.Color{
-					R: b.baseColor.R + (1-b.baseColor.R)*t,
-					G: b.baseColor.G + (1-b.baseColor.G)*t,
-					B: b.baseColor.B + (1-b.baseColor.B)*t,
-					A: 1,
-				}
+				b.node.SetColor(willow.RGB(
+					b.baseColor.R()+(1-b.baseColor.R())*t,
+					b.baseColor.G()+(1-b.baseColor.G())*t,
+					b.baseColor.B()+(1-b.baseColor.B())*t,
+				))
 				scale := 1.0 + 0.4*t*t
-				b.node.ScaleX = scale
-				b.node.ScaleY = scale
+				b.node.SetScale(scale, scale)
 			}
 
 			b.node.Invalidate()
@@ -231,8 +233,8 @@ func clamp(v, min, max float64) float64 {
 // explode applies a radial blast from the clicked body, flinging nearby shapes
 // outward with force that falls off with distance. Lighter shapes fly further.
 func explode(bodies []body, src int) {
-	cx := bodies[src].node.X
-	cy := bodies[src].node.Y
+	cx := bodies[src].node.X()
+	cy := bodies[src].node.Y()
 
 	bodies[src].vy = -blastForce * (1.0 / bodies[src].mass)
 	bodies[src].vx += (rand.Float64() - 0.5) * 10
@@ -243,8 +245,8 @@ func explode(bodies []body, src int) {
 			continue
 		}
 		b := &bodies[i]
-		dx := b.node.X - cx
-		dy := b.node.Y - cy
+		dx := b.node.X() - cx
+		dy := b.node.Y() - cy
 		dist := math.Sqrt(dx*dx + dy*dy)
 
 		if dist > blastRadius || dist < 0.1 {

@@ -40,7 +40,7 @@ func TestSingleSpriteEmitsOneCommand(t *testing.T) {
 func TestInvisibleNodeNoCommands(t *testing.T) {
 	s := NewScene()
 	sprite := NewSprite("s", TextureRegion{Width: 32, Height: 32})
-	sprite.Visible = false
+	sprite.visible = false
 	s.Root().AddChild(sprite)
 
 	traverseScene(s)
@@ -53,7 +53,7 @@ func TestInvisibleNodeNoCommands(t *testing.T) {
 func TestInvisibleSubtreeSkipped(t *testing.T) {
 	s := NewScene()
 	parent := NewContainer("parent")
-	parent.Visible = false
+	parent.visible = false
 	child := NewSprite("child", TextureRegion{Width: 32, Height: 32})
 	parent.AddChild(child)
 	s.Root().AddChild(parent)
@@ -68,7 +68,7 @@ func TestInvisibleSubtreeSkipped(t *testing.T) {
 func TestNonRenderableNodeSkipped(t *testing.T) {
 	s := NewScene()
 	parent := NewSprite("parent", TextureRegion{Width: 32, Height: 32})
-	parent.Renderable = false
+	parent.renderable = false
 	child := NewSprite("child", TextureRegion{Width: 16, Height: 16})
 	parent.AddChild(child)
 	s.Root().AddChild(parent)
@@ -121,9 +121,9 @@ func TestTreeOrderAssignment(t *testing.T) {
 func TestWorldAlphaInCommand(t *testing.T) {
 	s := NewScene()
 	parent := NewContainer("parent")
-	parent.Alpha = 0.5
+	parent.alpha = 0.5
 	child := NewSprite("child", TextureRegion{Width: 32, Height: 32})
-	child.Alpha = 0.8
+	child.alpha = 0.8
 	parent.AddChild(child)
 	s.Root().AddChild(parent)
 
@@ -143,9 +143,9 @@ func TestWorldAlphaInCommand(t *testing.T) {
 func TestRenderLayerSorting(t *testing.T) {
 	s := NewScene()
 	a := NewSprite("a", TextureRegion{Width: 1})
-	a.RenderLayer = 1
+	a.renderLayer = 1
 	b := NewSprite("b", TextureRegion{Width: 2})
-	b.RenderLayer = 0
+	b.renderLayer = 0
 	s.Root().AddChild(a)
 	s.Root().AddChild(b)
 
@@ -163,9 +163,9 @@ func TestRenderLayerSorting(t *testing.T) {
 func TestGlobalOrderSorting(t *testing.T) {
 	s := NewScene()
 	a := NewSprite("a", TextureRegion{Width: 1})
-	a.GlobalOrder = 10
+	a.globalOrder = 10
 	b := NewSprite("b", TextureRegion{Width: 2})
-	b.GlobalOrder = 5
+	b.globalOrder = 5
 	s.Root().AddChild(a)
 	s.Root().AddChild(b)
 
@@ -348,8 +348,8 @@ func TestCacheAsTree_MatchesUncached(t *testing.T) {
 		container := NewContainer("c")
 		for i := 0; i < 10; i++ {
 			sp := NewSprite("sp", TextureRegion{Width: 32, Height: 32, OriginalW: 32, OriginalH: 32})
-			sp.X = float64(i * 40)
-			sp.Alpha = 0.8
+			sp.x = float64(i * 40)
+			sp.alpha = 0.8
 			container.AddChild(sp)
 		}
 		s.Root().AddChild(container)
@@ -446,7 +446,7 @@ func TestCacheAsTree_DeltaRemap_CameraPan(t *testing.T) {
 	s := NewScene()
 	container := NewContainer("c")
 	sp := NewSprite("sp", TextureRegion{Width: 32, Height: 32, OriginalW: 32, OriginalH: 32})
-	sp.X = 100
+	sp.x = 100
 	container.AddChild(sp)
 	s.Root().AddChild(container)
 	container.SetCacheAsTree(true, CacheTreeManual)
@@ -455,7 +455,7 @@ func TestCacheAsTree_DeltaRemap_CameraPan(t *testing.T) {
 	ref := NewScene()
 	refContainer := NewContainer("c")
 	refSp := NewSprite("sp", TextureRegion{Width: 32, Height: 32, OriginalW: 32, OriginalH: 32})
-	refSp.X = 100
+	refSp.x = 100
 	refContainer.AddChild(refSp)
 	ref.Root().AddChild(refContainer)
 
@@ -493,7 +493,7 @@ func TestCacheAsTree_DeltaRemap_CameraPan(t *testing.T) {
 func TestCacheAsTree_AlphaRemap(t *testing.T) {
 	s := NewScene()
 	parent := NewContainer("parent")
-	parent.Alpha = 0.5
+	parent.alpha = 0.5
 	container := NewContainer("c")
 	sp := NewSprite("sp", TextureRegion{Width: 32, Height: 32, OriginalW: 32, OriginalH: 32})
 	container.AddChild(sp)
@@ -511,7 +511,7 @@ func TestCacheAsTree_AlphaRemap(t *testing.T) {
 	}
 
 	// Change parent alpha.
-	parent.Alpha = 0.8
+	parent.alpha = 0.8
 	parent.alphaDirty = true
 	traverseScene(s) // replay with alpha remap
 	// New worldAlpha = 0.8 * 1.0 = 0.8

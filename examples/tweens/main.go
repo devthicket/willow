@@ -51,7 +51,7 @@ func main() {
 	}
 
 	scene := willow.NewScene()
-	scene.ClearColor = willow.Color{R: 0.1, G: 0.1, B: 0.15, A: 1}
+	scene.ClearColor = willow.RGB(0.1, 0.1, 0.15)
 
 	// Pick five distinct tiles from the tileset (4x4 grid of 32×32 tiles).
 	tileIndices := []int{0, 3, 5, 9, 14}
@@ -67,12 +67,9 @@ func main() {
 	makeSprite := func(name string, tile *ebiten.Image, x, y float64) *willow.Node {
 		n := willow.NewSprite(name, willow.TextureRegion{})
 		n.SetCustomImage(tile)
-		n.X = x
-		n.Y = y
-		n.ScaleX = 2
-		n.ScaleY = 2
-		n.PivotX = 0.5
-		n.PivotY = 0.5
+		n.SetPosition(x, y)
+		n.SetScale(2, 2)
+		n.SetPivot(0.5, 0.5)
 		scene.Root().AddChild(n)
 		return n
 	}
@@ -92,11 +89,11 @@ func main() {
 	d.colorNode = makeSprite("color", tiles[4], startX+4*spacing, cy)
 
 	// Labels via small colored indicators below each tile.
-	addLabel(scene, startX, cy+50, willow.Color{R: 0.4, G: 0.8, B: 1.0, A: 1})           // position: cyan
-	addLabel(scene, startX+spacing, cy+50, willow.Color{R: 1.0, G: 0.6, B: 0.2, A: 1})   // scale: orange
-	addLabel(scene, startX+2*spacing, cy+50, willow.Color{R: 0.6, G: 1.0, B: 0.4, A: 1}) // rotation: green
-	addLabel(scene, startX+3*spacing, cy+50, willow.Color{R: 0.9, G: 0.9, B: 0.3, A: 1}) // alpha: yellow
-	addLabel(scene, startX+4*spacing, cy+50, willow.Color{R: 1.0, G: 0.4, B: 0.7, A: 1}) // color: pink
+	addLabel(scene, startX, cy+50, willow.RGB(0.4, 0.8, 1.0))           // position: cyan
+	addLabel(scene, startX+spacing, cy+50, willow.RGB(1.0, 0.6, 0.2))   // scale: orange
+	addLabel(scene, startX+2*spacing, cy+50, willow.RGB(0.6, 1.0, 0.4)) // rotation: green
+	addLabel(scene, startX+3*spacing, cy+50, willow.RGB(0.9, 0.9, 0.3)) // alpha: yellow
+	addLabel(scene, startX+4*spacing, cy+50, willow.RGB(1.0, 0.4, 0.7)) // color: pink
 
 	d.startTweens()
 
@@ -128,7 +125,7 @@ func (d *demo) resetPositions() {
 	d.scaleNode.SetScale(2, 2)
 	d.rotNode.SetRotation(0)
 	d.alphaNode.SetAlpha(1)
-	d.colorNode.SetColor(willow.Color{R: 1, G: 1, B: 1, A: 1})
+	d.colorNode.SetColor(willow.RGB(1, 1, 1))
 }
 
 func (d *demo) startTweens() {
@@ -168,16 +165,14 @@ func (d *demo) update() error {
 // addLabel places a small colored dot below a tile as a visual indicator.
 func addLabel(scene *willow.Scene, x, y float64, c willow.Color) {
 	dot := willow.NewRect("label", 8, 4, c)
-	dot.X = x - 4 // center the 8px-wide dot under the tile
-	dot.Y = y
+	dot.SetPosition(x-4, y) // center the 8px-wide dot under the tile
 	scene.Root().AddChild(dot)
 }
 
 func randomBrightColor() willow.Color {
-	return willow.Color{
-		R: 0.3 + rand.Float64()*0.7,
-		G: 0.3 + rand.Float64()*0.7,
-		B: 0.3 + rand.Float64()*0.7,
-		A: 1,
-	}
+	return willow.RGB(
+		0.3+rand.Float64()*0.7,
+		0.3+rand.Float64()*0.7,
+		0.3+rand.Float64()*0.7,
+	)
 }

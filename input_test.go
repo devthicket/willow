@@ -185,7 +185,7 @@ func TestHitTest_SkipsInvisible(t *testing.T) {
 	a.Interactable = true
 	b := NewSprite("b", TextureRegion{OriginalW: 100, OriginalH: 100})
 	b.Interactable = true
-	b.Visible = false
+	b.visible = false
 
 	s.Root().AddChild(a)
 	s.Root().AddChild(b)
@@ -252,8 +252,8 @@ func TestHitTest_TransformedNode(t *testing.T) {
 	s := NewScene()
 	a := NewSprite("a", TextureRegion{OriginalW: 100, OriginalH: 100})
 	a.Interactable = true
-	a.X = 200
-	a.Y = 200
+	a.x = 200
+	a.y = 200
 
 	s.Root().AddChild(a)
 	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
@@ -272,11 +272,11 @@ func TestHitTest_RotatedNode(t *testing.T) {
 	s := NewScene()
 	a := NewSprite("a", TextureRegion{OriginalW: 100, OriginalH: 100})
 	a.Interactable = true
-	a.PivotX = 50
-	a.PivotY = 50
-	a.X = 50
-	a.Y = 50
-	a.Rotation = math.Pi / 4 // 45 degrees
+	a.pivotX = 50
+	a.pivotY = 50
+	a.x = 50
+	a.y = 50
+	a.rotation = math.Pi / 4 // 45 degrees
 
 	s.Root().AddChild(a)
 	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
@@ -375,10 +375,10 @@ func TestPointerCapture(t *testing.T) {
 	s := NewScene()
 	a := NewSprite("a", TextureRegion{OriginalW: 100, OriginalH: 100})
 	a.Interactable = true
-	a.X = 0
+	a.x = 0
 	b := NewSprite("b", TextureRegion{OriginalW: 100, OriginalH: 100})
 	b.Interactable = true
-	b.X = 200
+	b.x = 200
 
 	s.Root().AddChild(a)
 	s.Root().AddChild(b)
@@ -505,7 +505,7 @@ func TestClickNotFiredOnDifferentNode(t *testing.T) {
 	a.Interactable = true
 	b := NewSprite("b", TextureRegion{OriginalW: 50, OriginalH: 100})
 	b.Interactable = true
-	b.X = 50
+	b.x = 50
 
 	s.Root().AddChild(a)
 	s.Root().AddChild(b)
@@ -528,8 +528,8 @@ func TestContextCoordinates(t *testing.T) {
 	s := NewScene()
 	sprite := NewSprite("s", TextureRegion{OriginalW: 100, OriginalH: 100})
 	sprite.Interactable = true
-	sprite.X = 50
-	sprite.Y = 50
+	sprite.x = 50
+	sprite.y = 50
 	s.Root().AddChild(sprite)
 	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
 
@@ -858,7 +858,7 @@ func TestCollectInteractable_SkipsInvisibleSubtree(t *testing.T) {
 	s := NewScene()
 	container := NewContainer("c")
 	container.Interactable = true
-	container.Visible = false
+	container.visible = false
 
 	child := NewSprite("child", TextureRegion{OriginalW: 100, OriginalH: 100})
 	child.Interactable = true
@@ -940,8 +940,8 @@ func BenchmarkHitTest_1000Nodes(b *testing.B) {
 	for i := 0; i < 1000; i++ {
 		n := NewSprite("n", TextureRegion{OriginalW: 10, OriginalH: 10})
 		n.Interactable = true
-		n.X = float64(i%100) * 12
-		n.Y = float64(i/100) * 12
+		n.x = float64(i%100) * 12
+		n.y = float64(i/100) * 12
 		s.Root().AddChild(n)
 	}
 	updateWorldTransform(s.root, identityTransform, 1.0, false, false)

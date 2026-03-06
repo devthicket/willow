@@ -27,7 +27,7 @@ type demo struct {
 
 func main() {
 	scene := willow.NewScene()
-	scene.ClearColor = willow.Color{R: 0.04, G: 0.04, B: 0.07, A: 1}
+	scene.ClearColor = willow.RGB(0.04, 0.04, 0.07)
 
 	// --- Fountain (left)  -  BlendNormal, gravity --------------------------------
 	// Particles arc upward and fall back down; alpha and scale fade at death.
@@ -42,17 +42,16 @@ func main() {
 		StartAlpha:   willow.Range{Min: 0.8, Max: 1.0},
 		EndAlpha:     willow.Range{Min: 0.0, Max: 0.05},
 		Gravity:      willow.Vec2{X: 0, Y: 240},
-		StartColor:   willow.Color{R: 0.3, G: 0.65, B: 1.0, A: 1},
-		EndColor:     willow.Color{R: 0.85, G: 0.95, B: 1.0, A: 1},
+		StartColor:   willow.RGB(0.3, 0.65, 1.0),
+		EndColor:     willow.RGB(0.85, 0.95, 1.0),
 		BlendMode:    willow.BlendNormal,
 	})
-	fountain.X = 160
-	fountain.Y = 500
+	fountain.SetPosition(160, 500)
 	fountain.Emitter.Start()
 	scene.Root().AddChild(fountain)
 
 	// Decorative base plate under the fountain.
-	addBase(scene, 160, 505, willow.Color{R: 0.2, G: 0.35, B: 0.5, A: 1})
+	addBase(scene, 160, 505, willow.RGB(0.2, 0.35, 0.5))
 
 	// --- Campfire (center)  -  fire in BlendAdd, smoke in BlendNormal -----------
 	// Fire uses additive blending so overlapping particles brighten naturally.
@@ -67,12 +66,11 @@ func main() {
 		StartAlpha:   willow.Range{Min: 0.75, Max: 1.0},
 		EndAlpha:     willow.Range{Min: 0.0, Max: 0.0},
 		Gravity:      willow.Vec2{X: 0, Y: -15},
-		StartColor:   willow.Color{R: 1.0, G: 0.75, B: 0.15, A: 1},
-		EndColor:     willow.Color{R: 0.9, G: 0.1, B: 0.0, A: 1},
+		StartColor:   willow.RGB(1.0, 0.75, 0.15),
+		EndColor:     willow.RGB(0.9, 0.1, 0.0),
 		BlendMode:    willow.BlendAdd,
 	})
-	fire.X = 400
-	fire.Y = 500
+	fire.SetPosition(400, 500)
 	fire.Emitter.Start()
 	scene.Root().AddChild(fire)
 
@@ -88,16 +86,15 @@ func main() {
 		StartAlpha:   willow.Range{Min: 0.12, Max: 0.22},
 		EndAlpha:     willow.Range{Min: 0.0, Max: 0.0},
 		Gravity:      willow.Vec2{X: 8, Y: -5},
-		StartColor:   willow.Color{R: 0.45, G: 0.45, B: 0.45, A: 1},
-		EndColor:     willow.Color{R: 0.25, G: 0.25, B: 0.28, A: 1},
+		StartColor:   willow.RGB(0.45, 0.45, 0.45),
+		EndColor:     willow.RGB(0.25, 0.25, 0.28),
 		BlendMode:    willow.BlendNormal,
 	})
-	smoke.X = 400
-	smoke.Y = 490
+	smoke.SetPosition(400, 490)
 	smoke.Emitter.Start()
 	scene.Root().AddChild(smoke)
 
-	addBase(scene, 400, 505, willow.Color{R: 0.45, G: 0.3, B: 0.1, A: 1})
+	addBase(scene, 400, 505, willow.RGB(0.45, 0.3, 0.1))
 
 	// --- Sparkler (right)  -  BlendAdd, radial ----------------------------------
 	// Particles shoot out in all directions with slight gravity; the additive
@@ -113,16 +110,15 @@ func main() {
 		StartAlpha:   willow.Range{Min: 0.8, Max: 1.0},
 		EndAlpha:     willow.Range{Min: 0.0, Max: 0.0},
 		Gravity:      willow.Vec2{X: 0, Y: 40},
-		StartColor:   willow.Color{R: 1.0, G: 0.95, B: 0.3, A: 1},
-		EndColor:     willow.Color{R: 0.5, G: 0.1, B: 0.9, A: 1},
+		StartColor:   willow.RGB(1.0, 0.95, 0.3),
+		EndColor:     willow.RGB(0.5, 0.1, 0.9),
 		BlendMode:    willow.BlendAdd,
 	})
-	sparkler.X = 640
-	sparkler.Y = 500
+	sparkler.SetPosition(640, 500)
 	sparkler.Emitter.Start()
 	scene.Root().AddChild(sparkler)
 
-	addBase(scene, 640, 505, willow.Color{R: 0.4, G: 0.2, B: 0.5, A: 1})
+	addBase(scene, 640, 505, willow.RGB(0.4, 0.2, 0.5))
 
 	// --- Burst emitter (triggered on click) -----------------------------------
 	// WorldSpace=true keeps particles in world-space after the emitter moves;
@@ -138,8 +134,8 @@ func main() {
 		StartAlpha:   willow.Range{Min: 0.9, Max: 1.0},
 		EndAlpha:     willow.Range{Min: 0.0, Max: 0.0},
 		Gravity:      willow.Vec2{X: 0, Y: 180},
-		StartColor:   willow.Color{R: 1.0, G: 1.0, B: 0.6, A: 1},
-		EndColor:     willow.Color{R: 1.0, G: 0.15, B: 0.0, A: 1},
+		StartColor:   willow.RGB(1.0, 1.0, 0.6),
+		EndColor:     willow.RGB(1.0, 0.15, 0.0),
 		BlendMode:    willow.BlendAdd,
 		WorldSpace:   true,
 	})
@@ -180,7 +176,6 @@ func (d *demo) update() error {
 // addBase places a thin colored bar at (cx, y) to mark an emitter's origin.
 func addBase(scene *willow.Scene, cx, y float64, c willow.Color) {
 	bar := willow.NewRect("base", 60, 5, c)
-	bar.X = cx - 30
-	bar.Y = y
+	bar.SetPosition(cx-30, y)
 	scene.Root().AddChild(bar)
 }

@@ -4,17 +4,44 @@ import "github.com/hajimehoshi/ebiten/v2"
 
 // Color represents an RGBA color with components in [0, 1]. Not premultiplied.
 // Premultiplication occurs at render submission time.
+//
+// Use [RGB] or [RGBA] to construct colors. RGB defaults alpha to 1 (fully opaque),
+// eliminating the common mistake of forgetting alpha.
 type Color struct {
-	R, G, B, A float64
+	r, g, b, a float64
 }
+
+// RGB creates an opaque Color from red, green, blue components in [0, 1].
+// Alpha is set to 1 (fully opaque).
+func RGB(r, g, b float64) Color {
+	return Color{r: r, g: g, b: b, a: 1}
+}
+
+// RGBA creates a Color from red, green, blue, alpha components in [0, 1].
+func RGBA(r, g, b, a float64) Color {
+	return Color{r: r, g: g, b: b, a: a}
+}
+
+// R returns the red component in [0, 1].
+func (c Color) R() float64 { return c.r }
+
+// G returns the green component in [0, 1].
+func (c Color) G() float64 { return c.g }
+
+// B returns the blue component in [0, 1].
+func (c Color) B() float64 { return c.b }
+
+// A returns the alpha component in [0, 1].
+func (c Color) A() float64 { return c.a }
 
 // RGBA returns the alpha-premultiplied red, green, blue and alpha values
 // scaled to [0, 0xFFFF]. This satisfies the image/color.Color interface.
+// Note: this is the interface method, not the RGBA constructor function.
 func (c Color) RGBA() (r, g, b, a uint32) {
-	r = uint32(clamp01(c.R*c.A) * 0xffff)
-	g = uint32(clamp01(c.G*c.A) * 0xffff)
-	b = uint32(clamp01(c.B*c.A) * 0xffff)
-	a = uint32(clamp01(c.A) * 0xffff)
+	r = uint32(clamp01(c.r*c.a) * 0xffff)
+	g = uint32(clamp01(c.g*c.a) * 0xffff)
+	b = uint32(clamp01(c.b*c.a) * 0xffff)
+	a = uint32(clamp01(c.a) * 0xffff)
 	return
 }
 
@@ -22,10 +49,10 @@ func (c Color) RGBA() (r, g, b, a uint32) {
 // The returned Color is non-premultiplied with components in [0, 1].
 func ColorFromRGBA(r, g, b, a uint8) Color {
 	return Color{
-		R: float64(r) / 255,
-		G: float64(g) / 255,
-		B: float64(b) / 255,
-		A: float64(a) / 255,
+		r: float64(r) / 255,
+		g: float64(g) / 255,
+		b: float64(b) / 255,
+		a: float64(a) / 255,
 	}
 }
 
@@ -40,22 +67,28 @@ func ColorFromHSV(h, s, v float64) Color {
 	t := v * (1 - s*(1-f))
 	switch i % 6 {
 	case 0:
-		return Color{R: v, G: t, B: p, A: 1}
+		return Color{v, t, p, 1}
 	case 1:
-		return Color{R: q, G: v, B: p, A: 1}
+		return Color{q, v, p, 1}
 	case 2:
-		return Color{R: p, G: v, B: t, A: 1}
+		return Color{p, v, t, 1}
 	case 3:
-		return Color{R: p, G: q, B: v, A: 1}
+		return Color{p, q, v, 1}
 	case 4:
-		return Color{R: t, G: p, B: v, A: 1}
+		return Color{t, p, v, 1}
 	default:
-		return Color{R: v, G: p, B: q, A: 1}
+		return Color{v, p, q, 1}
 	}
 }
 
 // ColorWhite is the default tint (no color modification).
 var ColorWhite = Color{1, 1, 1, 1}
+
+// ColorBlack is opaque black.
+var ColorBlack = Color{0, 0, 0, 1}
+
+// ColorTransparent is fully transparent black.
+var ColorTransparent = Color{0, 0, 0, 0}
 
 // Vec2 is a 2D vector used for positions, offsets, sizes, and directions
 // throughout the API.

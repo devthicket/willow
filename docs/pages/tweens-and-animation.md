@@ -23,7 +23,7 @@ tween := willow.TweenScale(node, 2, 2, willow.TweenConfig{Duration: 0.5, Ease: e
 tween := willow.TweenAlpha(node, 0.5, willow.TweenConfig{Duration: 0.8})
 
 // Tint to red over 1 second
-tween := willow.TweenColor(node, willow.Color{R: 1, G: 0, B: 0, A: 1}, willow.TweenConfig{Duration: 1.0, Ease: ease.InOutQuad})
+tween := willow.TweenColor(node, willow.RGB(1, 0, 0), willow.TweenConfig{Duration: 1.0, Ease: ease.InOutQuad})
 
 // Rotate to 90 degrees over 0.5 seconds
 tween := willow.TweenRotation(node, math.Pi/2, willow.TweenConfig{Duration: 0.5, Ease: ease.InOutCubic})
@@ -104,11 +104,9 @@ current = willow.TweenPosition(node, 300, 200, willow.TweenConfig{Duration: 1.0,
 scene := willow.NewScene()
 
 box := willow.NewSprite("box", willow.TextureRegion{})
-box.Color = willow.Color{R: 0.3, G: 0.7, B: 1, A: 1}
-box.ScaleX = 50
-box.ScaleY = 50
-box.X = 100
-box.Y = 200
+box.SetColor(willow.RGBA(0.3, 0.7, 1, 1))
+box.SetSize(50, 50)
+box.SetPosition(100, 200)
 scene.Root().AddChild(box)
 
 // Tween auto-ticks because box is already on the scene.

@@ -9,8 +9,8 @@ import (
 
 func TestTweenPositionReachesTarget(t *testing.T) {
 	node := NewContainer("pos")
-	node.X = 10
-	node.Y = 20
+	node.x = 10
+	node.y = 20
 
 	g := TweenPosition(node, 100, 200, TweenConfig{Duration: 1.0, Ease: ease.Linear})
 
@@ -21,11 +21,11 @@ func TestTweenPositionReachesTarget(t *testing.T) {
 	if !g.Done {
 		t.Fatal("expected Done after full duration")
 	}
-	if math.Abs(node.X-100) > 0.5 {
-		t.Errorf("X = %f, want ~100", node.X)
+	if math.Abs(node.x-100) > 0.5 {
+		t.Errorf("X = %f, want ~100", node.x)
 	}
-	if math.Abs(node.Y-200) > 0.5 {
-		t.Errorf("Y = %f, want ~200", node.Y)
+	if math.Abs(node.y-200) > 0.5 {
+		t.Errorf("Y = %f, want ~200", node.y)
 	}
 }
 
@@ -40,18 +40,18 @@ func TestTweenScaleReachesTarget(t *testing.T) {
 	if !g.Done {
 		t.Fatal("expected Done after full duration")
 	}
-	if math.Abs(node.ScaleX-2.0) > 0.01 {
-		t.Errorf("ScaleX = %f, want ~2.0", node.ScaleX)
+	if math.Abs(node.scaleX-2.0) > 0.01 {
+		t.Errorf("ScaleX = %f, want ~2.0", node.scaleX)
 	}
-	if math.Abs(node.ScaleY-3.0) > 0.01 {
-		t.Errorf("ScaleY = %f, want ~3.0", node.ScaleY)
+	if math.Abs(node.scaleY-3.0) > 0.01 {
+		t.Errorf("ScaleY = %f, want ~3.0", node.scaleY)
 	}
 }
 
 func TestTweenColorAllComponents(t *testing.T) {
 	node := NewContainer("color")
-	node.Color = Color{R: 1, G: 0, B: 0, A: 1}
-	target := Color{R: 0, G: 1, B: 0.5, A: 0.5}
+	node.color = Color{r: 1, g: 0, b: 0, a: 1}
+	target := Color{r: 0, g: 1, b: 0.5, a: 0.5}
 
 	g := TweenColor(node, target, TweenConfig{Duration: 1.0, Ease: ease.Linear})
 
@@ -61,23 +61,23 @@ func TestTweenColorAllComponents(t *testing.T) {
 	if !g.Done {
 		t.Fatal("expected Done after full duration")
 	}
-	if math.Abs(node.Color.R-target.R) > 0.01 {
-		t.Errorf("R = %f, want %f", node.Color.R, target.R)
+	if math.Abs(node.color.r-target.r) > 0.01 {
+		t.Errorf("R = %f, want %f", node.color.r, target.r)
 	}
-	if math.Abs(node.Color.G-target.G) > 0.01 {
-		t.Errorf("G = %f, want %f", node.Color.G, target.G)
+	if math.Abs(node.color.g-target.g) > 0.01 {
+		t.Errorf("G = %f, want %f", node.color.g, target.g)
 	}
-	if math.Abs(node.Color.B-target.B) > 0.01 {
-		t.Errorf("B = %f, want %f", node.Color.B, target.B)
+	if math.Abs(node.color.b-target.b) > 0.01 {
+		t.Errorf("B = %f, want %f", node.color.b, target.b)
 	}
-	if math.Abs(node.Color.A-target.A) > 0.01 {
-		t.Errorf("A = %f, want %f", node.Color.A, target.A)
+	if math.Abs(node.color.a-target.a) > 0.01 {
+		t.Errorf("A = %f, want %f", node.color.a, target.a)
 	}
 }
 
 func TestTweenAlphaInterpolates(t *testing.T) {
 	node := NewContainer("alpha")
-	node.Alpha = 1.0
+	node.alpha = 1.0
 
 	tw := TweenAlpha(node, 0.0, TweenConfig{Duration: 1.0, Ease: ease.Linear})
 
@@ -86,8 +86,8 @@ func TestTweenAlphaInterpolates(t *testing.T) {
 	if tw.Done {
 		t.Fatal("should not be done at halfway")
 	}
-	if math.Abs(node.Alpha-0.5) > 0.05 {
-		t.Errorf("Alpha = %f, want ~0.5 at halfway", node.Alpha)
+	if math.Abs(node.alpha-0.5) > 0.05 {
+		t.Errorf("Alpha = %f, want ~0.5 at halfway", node.alpha)
 	}
 
 	// Finish.
@@ -95,14 +95,14 @@ func TestTweenAlphaInterpolates(t *testing.T) {
 	if !tw.Done {
 		t.Fatal("should be done after full duration")
 	}
-	if math.Abs(node.Alpha-0.0) > 0.01 {
-		t.Errorf("Alpha = %f, want ~0.0", node.Alpha)
+	if math.Abs(node.alpha-0.0) > 0.01 {
+		t.Errorf("Alpha = %f, want ~0.0", node.alpha)
 	}
 }
 
 func TestTweenRotationReachesTarget(t *testing.T) {
 	node := NewContainer("rot")
-	node.Rotation = 0
+	node.rotation = 0
 
 	tw := TweenRotation(node, math.Pi, TweenConfig{Duration: 1.0, Ease: ease.Linear})
 
@@ -112,8 +112,8 @@ func TestTweenRotationReachesTarget(t *testing.T) {
 	if !tw.Done {
 		t.Fatal("expected done after full duration")
 	}
-	if math.Abs(node.Rotation-math.Pi) > 0.05 {
-		t.Errorf("Rotation = %f, want ~%f", node.Rotation, math.Pi)
+	if math.Abs(node.rotation-math.Pi) > 0.05 {
+		t.Errorf("Rotation = %f, want ~%f", node.rotation, math.Pi)
 	}
 }
 
@@ -160,8 +160,8 @@ func TestTweenGroupMarksDirty(t *testing.T) {
 
 func TestTweenGroupDisposedNode(t *testing.T) {
 	node := NewContainer("disposed")
-	node.X = 10
-	node.Y = 20
+	node.x = 10
+	node.y = 20
 
 	g := TweenPosition(node, 100, 200, TweenConfig{Duration: 1.0, Ease: ease.Linear})
 
@@ -174,11 +174,11 @@ func TestTweenGroupDisposedNode(t *testing.T) {
 		t.Fatal("expected Done after disposed node detected")
 	}
 	// Values should not have changed.
-	if node.X != 10 {
-		t.Errorf("X changed to %f on disposed node", node.X)
+	if node.x != 10 {
+		t.Errorf("X changed to %f on disposed node", node.x)
 	}
-	if node.Y != 20 {
-		t.Errorf("Y changed to %f on disposed node", node.Y)
+	if node.y != 20 {
+		t.Errorf("Y changed to %f on disposed node", node.y)
 	}
 }
 
@@ -196,14 +196,14 @@ func TestTweenGroupDisposedMidAnimation(t *testing.T) {
 
 	// Dispose mid-animation.
 	node.Dispose()
-	savedX := node.X
-	savedY := node.Y
+	savedX := node.x
+	savedY := node.y
 
 	g.Update(0.1)
 	if !g.Done {
 		t.Fatal("expected Done after node disposed mid-animation")
 	}
-	if node.X != savedX || node.Y != savedY {
+	if node.x != savedX || node.y != savedY {
 		t.Error("node fields should not change after disposal")
 	}
 }
@@ -221,8 +221,8 @@ func TestTweenEasingFunctionsProduceDifferentCurves(t *testing.T) {
 	gC.Update(0.5)
 
 	// OutCubic should be ahead of linear at midpoint.
-	if math.Abs(nodeL.X-nodeC.X) < 1.0 {
-		t.Errorf("easing curves should produce different values at midpoint: linear=%f cubic=%f", nodeL.X, nodeC.X)
+	if math.Abs(nodeL.x-nodeC.x) < 1.0 {
+		t.Errorf("easing curves should produce different values at midpoint: linear=%f cubic=%f", nodeL.x, nodeC.x)
 	}
 }
 

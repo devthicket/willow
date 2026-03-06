@@ -12,28 +12,28 @@ var identityTransform = [6]float64{1, 0, 0, 1, 0, 0}
 //
 //	Translate(-PivotX, -PivotY) -> Scale -> Skew -> Rotate -> Translate(X, Y)
 func computeLocalTransform(n *Node) [6]float64 {
-	sx := n.ScaleX
-	sy := n.ScaleY
+	sx := n.scaleX
+	sy := n.scaleY
 
 	// Fast path: no rotation and no skew (the common case for static sprites).
 	// Avoids Sincos and Tan entirely  -  just scale + pivot + translate.
-	if n.Rotation == 0 && n.SkewX == 0 && n.SkewY == 0 {
-		return [6]float64{sx, 0, 0, sy, -n.PivotX*sx + n.X, -n.PivotY*sy + n.Y}
+	if n.rotation == 0 && n.skewX == 0 && n.skewY == 0 {
+		return [6]float64{sx, 0, 0, sy, -n.pivotX*sx + n.x, -n.pivotY*sy + n.y}
 	}
 
 	var sin, cos float64
-	if n.Rotation != 0 {
-		sin, cos = math.Sincos(n.Rotation)
+	if n.rotation != 0 {
+		sin, cos = math.Sincos(n.rotation)
 	} else {
 		cos = 1
 	}
 
 	var tanSkewX, tanSkewY float64
-	if n.SkewX != 0 {
-		tanSkewX = math.Tan(n.SkewX)
+	if n.skewX != 0 {
+		tanSkewX = math.Tan(n.skewX)
 	}
-	if n.SkewY != 0 {
-		tanSkewY = math.Tan(n.SkewY)
+	if n.skewY != 0 {
+		tanSkewY = math.Tan(n.skewY)
 	}
 
 	// After Scale * Translate(-pivot):
@@ -45,8 +45,8 @@ func computeLocalTransform(n *Node) [6]float64 {
 	c := tanSkewX * sy
 	d := sy
 
-	px := n.PivotX
-	py := n.PivotY
+	px := n.pivotX
+	py := n.pivotY
 	preTx := -px*sx - tanSkewX*py*sy
 	preTy := -tanSkewY*px*sx - py*sy
 
@@ -59,7 +59,7 @@ func computeLocalTransform(n *Node) [6]float64 {
 	rty := sin*preTx + cos*preTy
 
 	// After Translate(X, Y):
-	return [6]float64{ra, rb, rc, rd, rtx + n.X, rty + n.Y}
+	return [6]float64{ra, rb, rc, rd, rtx + n.x, rty + n.y}
 }
 
 // multiplyAffine multiplies two 2D affine matrices: result = parent * child.
@@ -107,7 +107,7 @@ func transformPoint(m [6]float64, x, y float64) (float64, float64) {
 // parentRecomputed indicates whether the parent's transform was recomputed this frame.
 // parentAlphaChanged indicates whether the parent's alpha changed (without a full transform recompute).
 func updateWorldTransform(n *Node, parentTransform [6]float64, parentAlpha float64, parentRecomputed bool, parentAlphaChanged bool) {
-	if !n.Visible {
+	if !n.visible {
 		return
 	}
 	recompute := n.transformDirty || parentRecomputed
@@ -115,11 +115,11 @@ func updateWorldTransform(n *Node, parentTransform [6]float64, parentAlpha float
 	if recompute {
 		local := computeLocalTransform(n)
 		n.worldTransform = multiplyAffine(parentTransform, local)
-		n.worldAlpha = parentAlpha * n.Alpha
+		n.worldAlpha = parentAlpha * n.alpha
 		n.transformDirty = false
 		n.alphaDirty = false
 	} else if alphaChanged {
-		n.worldAlpha = parentAlpha * n.Alpha
+		n.worldAlpha = parentAlpha * n.alpha
 		n.alphaDirty = false
 	}
 
@@ -132,53 +132,53 @@ func updateWorldTransform(n *Node, parentTransform [6]float64, parentAlpha float
 
 // SetPosition sets the node's local X and Y and marks it dirty.
 func (n *Node) SetPosition(x, y float64) {
-	n.X = x
-	n.Y = y
+	n.x = x
+	n.y = y
 	n.transformDirty = true
 	invalidateAncestorCache(n)
 }
 
 // SetX sets the node's local X and marks it dirty.
 func (n *Node) SetX(x float64) {
-	n.X = x
+	n.x = x
 	n.transformDirty = true
 	invalidateAncestorCache(n)
 }
 
 // SetY sets the node's local Y and marks it dirty.
 func (n *Node) SetY(y float64) {
-	n.Y = y
+	n.y = y
 	n.transformDirty = true
 	invalidateAncestorCache(n)
 }
 
 // SetScale sets the node's ScaleX and ScaleY and marks it dirty.
 func (n *Node) SetScale(sx, sy float64) {
-	n.ScaleX = sx
-	n.ScaleY = sy
+	n.scaleX = sx
+	n.scaleY = sy
 	n.transformDirty = true
 	invalidateAncestorCache(n)
 }
 
 // SetRotation sets the node's rotation (in radians) and marks it dirty.
 func (n *Node) SetRotation(r float64) {
-	n.Rotation = r
+	n.rotation = r
 	n.transformDirty = true
 	invalidateAncestorCache(n)
 }
 
 // SetSkew sets the node's SkewX and SkewY (in radians) and marks it dirty.
 func (n *Node) SetSkew(sx, sy float64) {
-	n.SkewX = sx
-	n.SkewY = sy
+	n.skewX = sx
+	n.skewY = sy
 	n.transformDirty = true
 	invalidateAncestorCache(n)
 }
 
 // SetPivot sets the node's PivotX and PivotY and marks it dirty.
 func (n *Node) SetPivot(px, py float64) {
-	n.PivotX = px
-	n.PivotY = py
+	n.pivotX = px
+	n.pivotY = py
 	n.transformDirty = true
 	invalidateAncestorCache(n)
 }
@@ -187,7 +187,7 @@ func (n *Node) SetPivot(px, py float64) {
 // Unlike other transform setters, this only triggers a worldAlpha recomputation
 // (a single multiply), skipping the full matrix recompute.
 func (n *Node) SetAlpha(a float64) {
-	n.Alpha = a
+	n.alpha = a
 	n.alphaDirty = true
 	invalidateAncestorCache(n)
 }

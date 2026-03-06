@@ -180,10 +180,10 @@ func TestCustomShaderFilterUniforms(t *testing.T) {
 func TestPaletteFilterDefaultGrayscale(t *testing.T) {
 	f := NewPaletteFilter()
 	// Entry 0 should be black, entry 255 should be white.
-	if f.Palette[0].R != 0 || f.Palette[0].G != 0 || f.Palette[0].B != 0 {
+	if f.Palette[0].r != 0 || f.Palette[0].g != 0 || f.Palette[0].b != 0 {
 		t.Error("palette[0] should be black")
 	}
-	if f.Palette[255].R != 1 || f.Palette[255].G != 1 || f.Palette[255].B != 1 {
+	if f.Palette[255].r != 1 || f.Palette[255].g != 1 || f.Palette[255].b != 1 {
 		t.Error("palette[255] should be white")
 	}
 }
@@ -197,7 +197,7 @@ func TestPaletteFilterSetPalette(t *testing.T) {
 	if !f.paletteDirty {
 		t.Error("paletteDirty should be true after SetPalette")
 	}
-	if f.Palette[0].R != 1 || f.Palette[0].G != 0 {
+	if f.Palette[0].r != 1 || f.Palette[0].g != 0 {
 		t.Error("palette not updated")
 	}
 }

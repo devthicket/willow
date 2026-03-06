@@ -67,7 +67,7 @@ type LightLayer struct {
 func NewLightLayer(w, h int, ambientAlpha float64) *LightLayer {
 	rt := NewRenderTexture(w, h)
 	node := rt.NewSpriteNode("light_layer")
-	node.BlendMode = BlendMultiply
+	node.blendMode = BlendMultiply
 
 	ll := &LightLayer{
 		rt:           rt,
@@ -167,7 +167,7 @@ func (ll *LightLayer) Redraw() {
 			continue
 		}
 		// Get target's pivot in world space.
-		wx, wy := l.Target.LocalToWorld(l.Target.PivotX, l.Target.PivotY)
+		wx, wy := l.Target.LocalToWorld(l.Target.pivotX, l.Target.pivotY)
 		// Convert to light layer's local coordinate space.
 		lx, ly := ll.node.WorldToLocal(wx, wy)
 		l.X = lx + l.OffsetX
@@ -236,9 +236,9 @@ func (ll *LightLayer) Redraw() {
 		op.ColorScale.Reset()
 		tintAlpha := info.intensity * 0.3
 		op.ColorScale.Scale(
-			float32(c.R)*tintAlpha,
-			float32(c.G)*tintAlpha,
-			float32(c.B)*tintAlpha,
+			float32(c.r)*tintAlpha,
+			float32(c.g)*tintAlpha,
+			float32(c.b)*tintAlpha,
 			tintAlpha,
 		)
 		op.Blend = ll.addBlend

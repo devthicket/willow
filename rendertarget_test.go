@@ -153,8 +153,8 @@ func TestSubtreeBoundsSingleSprite(t *testing.T) {
 func TestSubtreeBoundsWithChildren(t *testing.T) {
 	parent := NewContainer("parent")
 	child := NewSprite("child", TextureRegion{Width: 20, Height: 20, OriginalW: 20, OriginalH: 20})
-	child.X = 50
-	child.Y = 50
+	child.x = 50
+	child.y = 50
 	parent.AddChild(child)
 
 	b := subtreeBounds(parent)
@@ -168,8 +168,8 @@ func TestSubtreeBoundsMultipleChildren(t *testing.T) {
 	parent := NewContainer("parent")
 	a := NewSprite("a", TextureRegion{Width: 10, Height: 10, OriginalW: 10, OriginalH: 10})
 	b := NewSprite("b", TextureRegion{Width: 10, Height: 10, OriginalW: 10, OriginalH: 10})
-	b.X = 100
-	b.Y = 100
+	b.x = 100
+	b.y = 100
 	parent.AddChild(a)
 	parent.AddChild(b)
 

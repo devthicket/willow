@@ -6,24 +6,23 @@ Willow lets you create solid-color rectangles without loading any textures. Pass
 
 ```go
 rect := willow.NewSprite("rect", willow.TextureRegion{})
-rect.Color = willow.Color{R: 0, G: 0.5, B: 1, A: 1}  // blue
-rect.ScaleX = 200  // width in pixels
-rect.ScaleY = 50   // height in pixels
+rect.SetColor(willow.RGB(0, 0.5, 1))  // blue
+rect.SetSize(200, 50)                 // width and height in pixels
 scene.Root().AddChild(rect)
 ```
 
-The `Color` field tints the white pixel to produce the fill color, and `ScaleX`/`ScaleY` control the size. This is the standard way to draw solid-color shapes in Willow.
+`SetColor()` tints the white pixel to produce the fill color, and `SetSize()` controls the dimensions. This is the standard way to draw solid-color shapes in Willow.
 
 ### NewRect Shorthand
 
 `NewRect` combines all three steps (create sprite, set color, set size) into one call:
 
 ```go
-rect := willow.NewRect("rect", 200, 50, willow.Color{R: 0, G: 0.5, B: 1, A: 1})
+rect := willow.NewRect("rect", 200, 50, willow.RGB(0, 0.5, 1))
 scene.Root().AddChild(rect)
 ```
 
-This is equivalent to creating a `NewSprite` with `TextureRegion{}`, then setting `ScaleX`, `ScaleY`, and `Color`.
+This is equivalent to creating a `NewSprite` with `TextureRegion{}`, then calling `SetSize()` and `SetColor()`.
 
 ## Why Not Create Images Directly?
 
@@ -35,28 +34,26 @@ Never create unique `*ebiten.Image` instances for solid colors. Each unique imag
 
 ```go
 bg := willow.NewSprite("bg", willow.TextureRegion{})
-bg.Color = willow.Color{R: 0.1, G: 0.1, B: 0.15, A: 0.9}
-bg.ScaleX = 400
-bg.ScaleY = 300
+bg.SetColor(willow.RGBA(0.1, 0.1, 0.15, 0.9))
+bg.SetSize(400, 300)
 ```
 
 ### Debug visualization
 
 ```go
 hitbox := willow.NewSprite("hitbox", willow.TextureRegion{})
-hitbox.Color = willow.Color{R: 1, G: 0, B: 0, A: 0.3}
-hitbox.ScaleX = float64(width)
-hitbox.ScaleY = float64(height)
+hitbox.SetColor(willow.RGBA(1, 0, 0, 0.3))
+hitbox.SetSize(float64(width), float64(height))
 entity.AddChild(hitbox)
 ```
 
-### Color from `Node.Color`
+### Changing Color at Runtime
 
-Since `Color` is a field on `Node`, you can change it at any time  -  no need to rebuild or swap textures:
+Since color is a property on `Node`, you can change it at any time  -  no need to rebuild or swap textures:
 
 ```go
 // Flash red on hit
-sprite.Color = willow.Color{R: 1, G: 0.2, B: 0.2, A: 1}
+sprite.SetColor(willow.RGB(1, 0.2, 0.2))
 ```
 
 ## Color Conversions

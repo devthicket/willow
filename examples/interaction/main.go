@@ -21,24 +21,23 @@ const (
 
 func main() {
 	scene := willow.NewScene()
-	scene.ClearColor = willow.Color{R: 0.137, G: 0.118, B: 0.176, A: 1} // dark purple
+	scene.ClearColor = willow.RGB(0.137, 0.118, 0.176) // dark purple
 
 	colors := []willow.Color{
-		{R: 0.9, G: 0.3, B: 0.3, A: 1}, // red
-		{R: 0.3, G: 0.7, B: 0.9, A: 1}, // blue
-		{R: 0.3, G: 0.9, B: 0.5, A: 1}, // green
+		willow.RGB(0.9, 0.3, 0.3), // red
+		willow.RGB(0.3, 0.7, 0.9), // blue
+		willow.RGB(0.3, 0.9, 0.5), // green
 	}
 
 	altColors := []willow.Color{
-		{R: 1.0, G: 0.7, B: 0.2, A: 1}, // orange
-		{R: 0.8, G: 0.3, B: 0.9, A: 1}, // purple
-		{R: 0.9, G: 0.9, B: 0.3, A: 1}, // yellow
+		willow.RGB(1.0, 0.7, 0.2), // orange
+		willow.RGB(0.8, 0.3, 0.9), // purple
+		willow.RGB(0.9, 0.9, 0.3), // yellow
 	}
 
 	for i, c := range colors {
 		box := makeBox(fmt.Sprintf("box%d", i), c, altColors[i])
-		box.X = float64(120 + i*160)
-		box.Y = 200
+		box.SetPosition(float64(120+i*160), 200)
 		scene.Root().AddChild(box)
 	}
 
@@ -59,16 +58,16 @@ func makeBox(name string, primary, alt willow.Color) *willow.Node {
 	current := true
 	node.OnClick(func(ctx willow.ClickContext) {
 		if current {
-			node.Color = alt
+			node.SetColor(alt)
 		} else {
-			node.Color = primary
+			node.SetColor(primary)
 		}
 		current = !current
 	})
 
 	// Move on drag.
 	node.OnDrag(func(ctx willow.DragContext) {
-		node.SetPosition(node.X+ctx.DeltaX, node.Y+ctx.DeltaY)
+		node.SetPosition(node.X()+ctx.DeltaX, node.Y()+ctx.DeltaY)
 	})
 
 	return node

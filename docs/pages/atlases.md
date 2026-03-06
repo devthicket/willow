@@ -86,7 +86,7 @@ All atlas pages are owned by a global `AtlasManager` shared across every scene. 
             ┌──────────┘     │      └──────────┐
             │                │                 │
      scene.LoadAtlas    NewFontFromTTF    NewAtlas/Add
-     scene.RegisterPage LoadSpriteFont   NewBatchAtlas/Pack
+     scene.RegisterPage LoadDistanceFieldFont   NewBatchAtlas/Pack
 ```
 
 Key properties:

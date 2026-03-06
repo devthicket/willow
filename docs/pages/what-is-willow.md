@@ -38,7 +38,7 @@ Scene
 
 The tree isn't just for organization  -  **parent-child relationships do real work**. When you move a parent, all its children move with it. Hide a parent, and its children disappear. A parent's opacity multiplies into its children. You group things together and the relationships handle the rest. The Player node above carries its Sword and HealthBar along automatically  -  no manual bookkeeping.
 
-This is the core difference between a retained-mode engine and a raw immediate-mode API. Without a display tree, you manually position and draw every sprite every frame. With one, you set properties on a node once and the tree remembers. Move a character? Set `node.X`. The tree persists between frames, so Willow knows what changed and what didn't.
+This is the core difference between a retained-mode engine and a raw immediate-mode API. Without a display tree, you manually position and draw every sprite every frame. With one, you set properties on a node once and the tree remembers. Move a character? Call `node.SetX(newX)`. The tree persists between frames, so Willow knows what changed and what didn't.
 
 Each frame, Willow walks this tree top-to-bottom, computes final transforms, culls anything off-screen, and submits the result to Ebitengine. You describe the scene; Willow figures out the rendering.
 
@@ -47,7 +47,7 @@ Each frame, Willow walks this tree top-to-bottom, computes final transforms, cul
 - **Scene graph**  -  tree of nodes with parent-child transforms, visibility, and render ordering
 - **Sprites & atlas**  -  TexturePacker JSON loading, automatic batching
 - **Camera & viewport**  -  follow, scroll-to, zoom, culling, multi-camera
-- **Text**  -  two font systems: **SpriteFont** for TTF/OTF via signed distance field (SDF) rendering with resolution-independent scaling, outlines, glows, and shadows; **PixelFont** for pixel-perfect bitmap spritesheet fonts with integer-only scaling
+- **Text**  -  two font systems: **DistanceFieldFont** for TTF/OTF via signed distance field (SDF) rendering with resolution-independent scaling, outlines, glows, and shadows; **PixelFont** for pixel-perfect bitmap spritesheet fonts with integer-only scaling
 - **Input**  -  hit testing, click/drag/pinch gestures with typed callbacks
 - **Particles**  -  CPU-simulated emitters with pooled allocation
 - **Tweens & animation**  -  frame sequences, easing via gween

@@ -342,8 +342,8 @@ func TestSubmitBatchesCoalesced_Integration(t *testing.T) {
 	}
 	for i := 0; i < 100; i++ {
 		sp := NewSprite("sp", region)
-		sp.X = float64(i%10) * 40
-		sp.Y = float64(i/10) * 40
+		sp.x = float64(i%10) * 40
+		sp.y = float64(i/10) * 40
 		s.Root().AddChild(sp)
 	}
 	screen := ebiten.NewImage(640, 480)

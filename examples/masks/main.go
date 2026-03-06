@@ -41,10 +41,9 @@ func (d *demo) update() error {
 	d.time += dt
 
 	// Panel 0: star mask  -  rotate and pulse the shape child.
-	d.starShape.Rotation = d.time * 0.9
+	d.starShape.SetRotation(d.time * 0.9)
 	s := 1.0 + 0.20*math.Sin(d.time*1.8)
-	d.starShape.ScaleX = s
-	d.starShape.ScaleY = s
+	d.starShape.SetScale(s, s)
 	d.starShape.Invalidate()
 
 	// Panel 1: whelp mask  -  move the sprite child to the cursor.
@@ -79,7 +78,7 @@ func main() {
 	}
 
 	scene := willow.NewScene()
-	scene.ClearColor = willow.Color{R: 0.09, G: 0.09, B: 0.14, A: 1}
+	scene.ClearColor = willow.RGB(0.09, 0.09, 0.14)
 
 	d := &demo{}
 
@@ -93,11 +92,9 @@ func main() {
 	for row := range 24 {
 		for col := range 15 {
 			tile := willow.NewSprite("t", willow.TextureRegion{})
-			tile.ScaleX = 19
-			tile.ScaleY = 19
-			tile.X = float64(col) * 20
-			tile.Y = float64(row) * 20
-			tile.Color = willow.ColorFromHSV(float64(col+row)/37.0, 0.82, 0.92)
+			tile.SetScale(19, 19)
+			tile.SetPosition(float64(col)*20, float64(row)*20)
+			tile.SetColor(willow.ColorFromHSV(float64(col+row)/37.0, 0.82, 0.92))
 			p0.AddChild(tile)
 		}
 	}
@@ -105,9 +102,8 @@ func main() {
 	// Mask root is a container; star shape is its child so transforms apply.
 	maskRoot0 := willow.NewContainer("mask-root-0")
 	starShape := willow.NewStar("star", 140, 56, 5)
-	starShape.X = panelW / 2  // 150  -  centre of panel
-	starShape.Y = screenH / 2 // 240
-	starShape.Color = willow.Color{R: 1, G: 1, B: 1, A: 1}
+	starShape.SetPosition(panelW/2, screenH/2) // centre of panel
+	starShape.SetColor(willow.RGB(1, 1, 1))
 	maskRoot0.AddChild(starShape)
 	p0.SetMask(maskRoot0)
 
@@ -117,7 +113,7 @@ func main() {
 		{X: 0, Y: 0}, {X: panelW, Y: 0},
 		{X: panelW, Y: screenH}, {X: 0, Y: screenH},
 	})
-	clip0Rect.Color = willow.Color{R: 1, G: 1, B: 1, A: 1}
+	clip0Rect.SetColor(willow.RGB(1, 1, 1))
 	clip0.SetMask(clip0Rect)
 	clip0.AddChild(p0)
 	scene.Root().AddChild(clip0)
@@ -132,23 +128,21 @@ func main() {
 	// Eight bold horizontal rainbow stripes filling the full panel height.
 	// Warm palette: crimson → red → orange-red → orange → amber → gold → tan → sienna.
 	stripeColors := []willow.Color{
-		{R: 0.80, G: 0.08, B: 0.05, A: 1},
-		{R: 0.97, G: 0.18, B: 0.08, A: 1},
-		{R: 1.00, G: 0.38, B: 0.04, A: 1},
-		{R: 1.00, G: 0.58, B: 0.00, A: 1},
-		{R: 1.00, G: 0.74, B: 0.00, A: 1},
-		{R: 0.94, G: 0.84, B: 0.04, A: 1},
-		{R: 0.88, G: 0.54, B: 0.18, A: 1},
-		{R: 0.72, G: 0.28, B: 0.10, A: 1},
+		willow.RGB(0.80, 0.08, 0.05),
+		willow.RGB(0.97, 0.18, 0.08),
+		willow.RGB(1.00, 0.38, 0.04),
+		willow.RGB(1.00, 0.58, 0.00),
+		willow.RGB(1.00, 0.74, 0.00),
+		willow.RGB(0.94, 0.84, 0.04),
+		willow.RGB(0.88, 0.54, 0.18),
+		willow.RGB(0.72, 0.28, 0.10),
 	}
 	const stripeH = 60.0
 	for i, c := range stripeColors {
 		s := willow.NewSprite("stripe", willow.TextureRegion{})
-		s.ScaleX = panelW
-		s.ScaleY = stripeH
-		s.X = 0
-		s.Y = float64(i) * stripeH
-		s.Color = c
+		s.SetScale(panelW, stripeH)
+		s.SetPosition(0, float64(i)*stripeH)
+		s.SetColor(c)
 		p1.AddChild(s)
 	}
 
@@ -156,19 +150,18 @@ func main() {
 	maskRoot1 := willow.NewContainer("mask-root-1")
 	whelpChild := willow.NewSprite("whelp-mask", willow.TextureRegion{})
 	whelpChild.SetCustomImage(whelpImg)
-	whelpChild.ScaleX = 2 // 128 px → 256 px
-	whelpChild.ScaleY = 2
+	whelpChild.SetScale(2, 2) // 128 px → 256 px
 	maskRoot1.AddChild(whelpChild)
 	p1.SetMask(maskRoot1)
 
 	// Clip container: carries the panel's world offset and hard-clips to panel bounds.
 	clip1 := willow.NewContainer("clip-1")
-	clip1.X = panelW // 300
+	clip1.SetX(panelW) // 300
 	clip1Rect := willow.NewPolygon("clip-rect-1", []willow.Vec2{
 		{X: 0, Y: 0}, {X: panelW, Y: 0},
 		{X: panelW, Y: screenH}, {X: 0, Y: screenH},
 	})
-	clip1Rect.Color = willow.Color{R: 1, G: 1, B: 1, A: 1}
+	clip1Rect.SetColor(willow.RGB(1, 1, 1))
 	clip1.SetMask(clip1Rect)
 	clip1.AddChild(p1)
 	scene.Root().AddChild(clip1)
@@ -185,25 +178,23 @@ func main() {
 
 	// Cool palette: navy → royal blue → sky blue → cyan → teal → indigo → violet → emerald.
 	barColors := []willow.Color{
-		{R: 0.05, G: 0.10, B: 0.62, A: 1},
-		{R: 0.10, G: 0.32, B: 0.88, A: 1},
-		{R: 0.14, G: 0.58, B: 0.94, A: 1},
-		{R: 0.00, G: 0.76, B: 0.86, A: 1},
-		{R: 0.04, G: 0.64, B: 0.58, A: 1},
-		{R: 0.28, G: 0.18, B: 0.80, A: 1},
-		{R: 0.54, G: 0.14, B: 0.84, A: 1},
-		{R: 0.08, G: 0.72, B: 0.42, A: 1},
+		willow.RGB(0.05, 0.10, 0.62),
+		willow.RGB(0.10, 0.32, 0.88),
+		willow.RGB(0.14, 0.58, 0.94),
+		willow.RGB(0.00, 0.76, 0.86),
+		willow.RGB(0.04, 0.64, 0.58),
+		willow.RGB(0.28, 0.18, 0.80),
+		willow.RGB(0.54, 0.14, 0.84),
+		willow.RGB(0.08, 0.72, 0.42),
 	}
 	// Two copies for a seamless loop.
 	const barH = 60.0
 	for copy := range 2 {
 		for i, c := range barColors {
 			bar := willow.NewSprite("bar", willow.TextureRegion{})
-			bar.ScaleX = panelW
-			bar.ScaleY = barH - 2 // 2 px gap between bars
-			bar.X = 0
-			bar.Y = float64(copy*len(barColors)+i) * barH
-			bar.Color = c
+			bar.SetScale(panelW, barH-2) // 2 px gap between bars
+			bar.SetPosition(0, float64(copy*len(barColors)+i)*barH)
+			bar.SetColor(c)
 			scrollContent.AddChild(bar)
 		}
 	}
@@ -216,28 +207,26 @@ func main() {
 		{X: 0, Y: 0}, {X: panelW, Y: 0},
 		{X: panelW, Y: screenH}, {X: 0, Y: screenH},
 	})
-	eraseRect.Color = willow.Color{R: 1, G: 1, B: 1, A: 1}
+	eraseRect.SetColor(willow.RGB(1, 1, 1))
 	eraseRoot.AddChild(eraseRect)
 
 	whelpStatic := willow.NewSprite("whelp-static", willow.TextureRegion{})
 	whelpStatic.SetCustomImage(whelpImg)
-	whelpStatic.ScaleX = 2 // 128 px → 256 px
-	whelpStatic.ScaleY = 2
-	whelpStatic.X = (panelW - 256) / 2        // centred horizontally
-	whelpStatic.Y = (screenH - 256) / 2       // centred vertically
-	whelpStatic.BlendMode = willow.BlendErase // punch the alpha through the white rect
+	whelpStatic.SetScale(2, 2)                               // 128 px → 256 px
+	whelpStatic.SetPosition((panelW-256)/2, (screenH-256)/2) // centred
+	whelpStatic.SetBlendMode(willow.BlendErase)              // punch the alpha through the white rect
 	eraseRoot.AddChild(whelpStatic)
 
 	p2.SetMask(eraseRoot)
 
 	// Clip container: carries the world offset and hard-clips to panel bounds.
 	clip2 := willow.NewContainer("clip-2")
-	clip2.X = panelW * 2 // 600
+	clip2.SetX(panelW * 2) // 600
 	clip2Rect := willow.NewPolygon("clip-rect-2", []willow.Vec2{
 		{X: 0, Y: 0}, {X: panelW, Y: 0},
 		{X: panelW, Y: screenH}, {X: 0, Y: screenH},
 	})
-	clip2Rect.Color = willow.Color{R: 1, G: 1, B: 1, A: 1}
+	clip2Rect.SetColor(willow.RGB(1, 1, 1))
 	clip2.SetMask(clip2Rect)
 	clip2.AddChild(p2)
 	scene.Root().AddChild(clip2)
@@ -247,11 +236,10 @@ func main() {
 
 	for _, divX := range []float64{panelW, panelW * 2} {
 		div := willow.NewSprite("div", willow.TextureRegion{})
-		div.ScaleX = 2
-		div.ScaleY = screenH
-		div.X = divX - 1
-		div.Color = willow.Color{R: 1, G: 1, B: 1, A: 0.25}
-		div.ZIndex = 10
+		div.SetScale(2, screenH)
+		div.SetX(divX - 1)
+		div.SetColor(willow.RGBA(1, 1, 1, 0.25))
+		div.SetZIndex(10)
 		scene.Root().AddChild(div)
 	}
 
@@ -260,17 +248,15 @@ func main() {
 	for i, lbl := range []string{"Star Mask", "Cursor Mask", "Erase Mask"} {
 		x := float64(i)*panelW + panelW/2 - float64(len(lbl)*6)/2
 		n := makeLabel(lbl)
-		n.X = x
-		n.Y = 8
-		n.ZIndex = 10
+		n.SetPosition(x, 8)
+		n.SetZIndex(10)
 		scene.Root().AddChild(n)
 	}
 
 	const hintText = "move cursor over centre panel  |  whelp erased from right panel"
 	hint := makeLabel(hintText)
-	hint.X = float64(screenW)/2 - float64(len(hintText)*6)/2
-	hint.Y = float64(screenH) - 18
-	hint.ZIndex = 10
+	hint.SetPosition(float64(screenW)/2-float64(len(hintText)*6)/2, float64(screenH)-18)
+	hint.SetZIndex(10)
 	scene.Root().AddChild(hint)
 
 	scene.SetUpdateFunc(d.update)

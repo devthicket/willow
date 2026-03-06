@@ -103,7 +103,7 @@ func (g *game) update() error {
 		frac := f.remaining / 0.6
 		f.light.Intensity = frac
 		f.light.Radius = 180 * frac
-		f.sprite.Alpha = frac
+		f.sprite.SetAlpha(frac)
 		f.sprite.Invalidate()
 		alive = append(alive, f)
 	}
@@ -114,12 +114,11 @@ func (g *game) update() error {
 }
 
 func (g *game) spawnFlash(x, y float64) {
-	color := willow.Color{
-		R: 0.8 + rand.Float64()*0.2,
-		G: 0.7 + rand.Float64()*0.3,
-		B: 0.3 + rand.Float64()*0.4,
-		A: 1,
-	}
+	color := willow.RGB(
+		0.8+rand.Float64()*0.2,
+		0.7+rand.Float64()*0.3,
+		0.3+rand.Float64()*0.4,
+	)
 
 	light := &willow.Light{
 		X:         x,
@@ -133,13 +132,10 @@ func (g *game) spawnFlash(x, y float64) {
 
 	// Visual burst sprite.
 	sp := willow.NewSprite("flash", willow.TextureRegion{})
-	sp.ScaleX = 20
-	sp.ScaleY = 20
-	sp.PivotX = 0.5
-	sp.PivotY = 0.5
-	sp.X = x
-	sp.Y = y
-	sp.Color = color
+	sp.SetScale(20, 20)
+	sp.SetPivot(0.5, 0.5)
+	sp.SetPosition(x, y)
+	sp.SetColor(color)
 	// Insert before the light layer node (second to last child).
 	g.scene.Root().AddChild(sp)
 
@@ -152,7 +148,7 @@ func (g *game) spawnFlash(x, y float64) {
 
 func main() {
 	scene := willow.NewScene()
-	scene.ClearColor = willow.Color{R: 0.04, G: 0.03, B: 0.03, A: 1}
+	scene.ClearColor = willow.RGB(0.04, 0.03, 0.03)
 
 	cam := scene.NewCamera(willow.Rect{X: 0, Y: 0, Width: screenW, Height: screenH})
 	cam.X = screenW / 2
@@ -164,25 +160,23 @@ func main() {
 	cols := int(screenW/tileW) + 1
 	rows := int(screenH/tileH) + 1
 	stoneColors := []willow.Color{
-		{R: 0.18, G: 0.16, B: 0.14, A: 1},
-		{R: 0.15, G: 0.13, B: 0.11, A: 1},
-		{R: 0.20, G: 0.17, B: 0.14, A: 1},
-		{R: 0.16, G: 0.14, B: 0.12, A: 1},
+		willow.RGB(0.18, 0.16, 0.14),
+		willow.RGB(0.15, 0.13, 0.11),
+		willow.RGB(0.20, 0.17, 0.14),
+		willow.RGB(0.16, 0.14, 0.12),
 	}
 	for row := range rows {
 		for col := range cols {
 			tile := willow.NewSprite("tile", willow.TextureRegion{})
-			tile.X = float64(col) * tileW
-			tile.Y = float64(row) * tileH
-			tile.ScaleX = tileW - 1
-			tile.ScaleY = tileH - 1
-			tile.Color = stoneColors[(row*cols+col+row)%len(stoneColors)]
+			tile.SetPosition(float64(col)*tileW, float64(row)*tileH)
+			tile.SetScale(tileW-1, tileH-1)
+			tile.SetColor(stoneColors[(row*cols+col+row)%len(stoneColors)])
 			scene.Root().AddChild(tile)
 		}
 	}
 
 	// ---- Walls around edges -------------------------------------------------
-	wallColor := willow.Color{R: 0.10, G: 0.09, B: 0.08, A: 1}
+	wallColor := willow.RGB(0.10, 0.09, 0.08)
 	wallThick := 24.0
 	walls := [][4]float64{
 		{0, 0, screenW, wallThick},                   // top
@@ -192,11 +186,9 @@ func main() {
 	}
 	for _, w := range walls {
 		wall := willow.NewSprite("wall", willow.TextureRegion{})
-		wall.X = w[0]
-		wall.Y = w[1]
-		wall.ScaleX = w[2]
-		wall.ScaleY = w[3]
-		wall.Color = wallColor
+		wall.SetPosition(w[0], w[1])
+		wall.SetScale(w[2], w[3])
+		wall.SetColor(wallColor)
 		scene.Root().AddChild(wall)
 	}
 
@@ -210,48 +202,42 @@ func main() {
 		{400, 300}, // center pillar
 	}
 	pillarW, pillarH := 40.0, 40.0
-	pillarColor := willow.Color{R: 0.12, G: 0.11, B: 0.10, A: 1}
+	pillarColor := willow.RGB(0.12, 0.11, 0.10)
 	for _, pd := range pillarDefs {
 		p := willow.NewSprite("pillar", willow.TextureRegion{})
-		p.X = pd.x - pillarW/2
-		p.Y = pd.y - pillarH/2
-		p.ScaleX = pillarW
-		p.ScaleY = pillarH
-		p.Color = pillarColor
+		p.SetPosition(pd.x-pillarW/2, pd.y-pillarH/2)
+		p.SetScale(pillarW, pillarH)
+		p.SetColor(pillarColor)
 		scene.Root().AddChild(p)
 	}
 
 	// ---- Treasure and crates ------------------------------------------------
 	// Scattered objects to show how lighting reveals scene detail.
-	crateColor := willow.Color{R: 0.35, G: 0.22, B: 0.10, A: 1}
+	crateColor := willow.RGB(0.35, 0.22, 0.10)
 	cratePositions := [][2]float64{
 		{100, 100}, {700, 100}, {100, 500}, {700, 500},
 		{300, 200}, {500, 400}, {350, 480},
 	}
 	for _, pos := range cratePositions {
 		crate := willow.NewSprite("crate", willow.TextureRegion{})
-		crate.X = pos[0]
-		crate.Y = pos[1]
-		crate.ScaleX = 22
-		crate.ScaleY = 22
-		crate.Color = crateColor
+		crate.SetPosition(pos[0], pos[1])
+		crate.SetScale(22, 22)
+		crate.SetColor(crateColor)
 		scene.Root().AddChild(crate)
 	}
 
 	// Gem clusters near center.
 	gemColors := []willow.Color{
-		{R: 0.2, G: 0.8, B: 0.3, A: 1},
-		{R: 0.8, G: 0.2, B: 0.3, A: 1},
-		{R: 0.3, G: 0.3, B: 0.9, A: 1},
+		willow.RGB(0.2, 0.8, 0.3),
+		willow.RGB(0.8, 0.2, 0.3),
+		willow.RGB(0.3, 0.3, 0.9),
 	}
 	gemPositions := [][2]float64{{370, 260}, {430, 260}, {400, 340}}
 	for i, pos := range gemPositions {
 		gem := willow.NewSprite("gem", willow.TextureRegion{})
-		gem.X = pos[0]
-		gem.Y = pos[1]
-		gem.ScaleX = 10
-		gem.ScaleY = 10
-		gem.Color = gemColors[i%len(gemColors)]
+		gem.SetPosition(pos[0], pos[1])
+		gem.SetScale(10, 10)
+		gem.SetColor(gemColors[i%len(gemColors)])
 		scene.Root().AddChild(gem)
 	}
 
@@ -266,23 +252,23 @@ func main() {
 	}
 	torchDefs := []torchDef{
 		{180, 160,
-			willow.Color{R: 1.0, G: 0.65, B: 0.1, A: 1},
-			willow.Color{R: 1.0, G: 0.85, B: 0.4, A: 1}},
+			willow.RGB(1.0, 0.65, 0.1),
+			willow.RGB(1.0, 0.85, 0.4)},
 		{620, 160,
-			willow.Color{R: 0.4, G: 0.6, B: 1.0, A: 1},
-			willow.Color{R: 0.6, G: 0.8, B: 1.0, A: 1}},
+			willow.RGB(0.4, 0.6, 1.0),
+			willow.RGB(0.6, 0.8, 1.0)},
 		{180, 440,
-			willow.Color{R: 1.0, G: 0.45, B: 0.05, A: 1},
-			willow.Color{R: 1.0, G: 0.65, B: 0.25, A: 1}},
+			willow.RGB(1.0, 0.45, 0.05),
+			willow.RGB(1.0, 0.65, 0.25)},
 		{620, 440,
-			willow.Color{R: 0.75, G: 0.25, B: 1.0, A: 1},
-			willow.Color{R: 0.88, G: 0.45, B: 1.0, A: 1}},
+			willow.RGB(0.75, 0.25, 1.0),
+			willow.RGB(0.88, 0.45, 1.0)},
 		{400, 300,
-			willow.Color{R: 0.9, G: 0.9, B: 0.5, A: 1},
-			willow.Color{R: 1.0, G: 1.0, B: 0.7, A: 1}},
+			willow.RGB(0.9, 0.9, 0.5),
+			willow.RGB(1.0, 1.0, 0.7)},
 	}
 
-	offColor := willow.Color{R: 0.15, G: 0.13, B: 0.10, A: 1}
+	offColor := willow.RGB(0.15, 0.13, 0.10)
 	torches := make([]torchEntry, 0, len(torchDefs))
 
 	for _, td := range torchDefs {
@@ -297,13 +283,10 @@ func main() {
 		lightLayer.AddLight(light)
 
 		flame := willow.NewSprite("torch", willow.TextureRegion{})
-		flame.X = td.x
-		flame.Y = td.y
-		flame.PivotX = 0.5
-		flame.PivotY = 0.5
-		flame.ScaleX = 14
-		flame.ScaleY = 14
-		flame.Color = td.spriteColor
+		flame.SetPosition(td.x, td.y)
+		flame.SetPivot(0.5, 0.5)
+		flame.SetScale(14, 14)
+		flame.SetColor(td.spriteColor)
 		scene.Root().AddChild(flame)
 
 		idx := len(torches)
@@ -318,9 +301,9 @@ func main() {
 			tc := &torches[idx]
 			tc.light.Enabled = !tc.light.Enabled
 			if tc.light.Enabled {
-				tc.sprite.Color = tc.onColor
+				tc.sprite.SetColor(tc.onColor)
 			} else {
-				tc.sprite.Color = tc.offColor
+				tc.sprite.SetColor(tc.offColor)
 				tc.light.Intensity = 0
 			}
 			tc.sprite.Invalidate()
@@ -329,9 +312,9 @@ func main() {
 
 	// ---- Wisps (autonomous floating lights) ---------------------------------
 	wispColors := []willow.Color{
-		{R: 0.3, G: 1.0, B: 0.5, A: 1},
-		{R: 0.5, G: 0.8, B: 1.0, A: 1},
-		{R: 1.0, G: 0.7, B: 0.3, A: 1},
+		willow.RGB(0.3, 1.0, 0.5),
+		willow.RGB(0.5, 0.8, 1.0),
+		willow.RGB(1.0, 0.7, 0.3),
 	}
 	wisps := make([]wisp, 3)
 	for i := range wisps {
@@ -339,13 +322,10 @@ func main() {
 		sy := 150 + rand.Float64()*(screenH-300)
 
 		node := willow.NewSprite("wisp", willow.TextureRegion{})
-		node.X = sx
-		node.Y = sy
-		node.PivotX = 0.5
-		node.PivotY = 0.5
-		node.ScaleX = 8
-		node.ScaleY = 8
-		node.Color = wispColors[i]
+		node.SetPosition(sx, sy)
+		node.SetPivot(0.5, 0.5)
+		node.SetScale(8, 8)
+		node.SetColor(wispColors[i])
 		scene.Root().AddChild(node)
 
 		light := &willow.Light{
@@ -367,14 +347,13 @@ func main() {
 
 	// ---- Cursor lantern -----------------------------------------------------
 	cursor := willow.NewContainer("cursor")
-	cursor.X = screenW / 2
-	cursor.Y = screenH / 2
+	cursor.SetPosition(screenW/2, screenH/2)
 	scene.Root().AddChild(cursor)
 
 	lantern := &willow.Light{
 		Radius:    160,
 		Intensity: 0.9,
-		Color:     willow.Color{R: 1.0, G: 0.95, B: 0.85, A: 1},
+		Color:     willow.RGB(1.0, 0.95, 0.85),
 		Enabled:   true,
 		Target:    cursor,
 	}
@@ -386,8 +365,7 @@ func main() {
 	// ---- HUD labels (added after light layer so they're always visible) -----
 	hintText := "Move mouse to explore. Click torches to toggle. Click empty space for a flash."
 	hint := makeLabel(hintText)
-	hint.X = screenW/2 - float64(len(hintText)*6)/2
-	hint.Y = screenH - 20
+	hint.SetPosition(screenW/2-float64(len(hintText)*6)/2, screenH-20)
 	scene.Root().AddChild(hint)
 
 	// ---- Click handler for flash spawning -----------------------------------

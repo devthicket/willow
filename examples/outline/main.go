@@ -21,12 +21,12 @@ const (
 )
 
 var outlineColors = []willow.Color{
-	{R: 1, G: 0.85, B: 0.2, A: 1}, // gold
-	{R: 0.3, G: 1, B: 0.5, A: 1},  // green
-	{R: 0.4, G: 0.7, B: 1, A: 1},  // sky blue
-	{R: 1, G: 0.3, B: 0.4, A: 1},  // red
-	{R: 0.8, G: 0.4, B: 1, A: 1},  // purple
-	{R: 1, G: 1, B: 1, A: 1},      // white
+	willow.RGB(1, 0.85, 0.2), // gold
+	willow.RGB(0.3, 1, 0.5),  // green
+	willow.RGB(0.4, 0.7, 1),  // sky blue
+	willow.RGB(1, 0.3, 0.4),  // red
+	willow.RGB(0.8, 0.4, 1),  // purple
+	willow.RGB(1, 1, 1),      // white
 }
 
 func main() {
@@ -42,7 +42,7 @@ func main() {
 	}
 
 	scene := willow.NewScene()
-	scene.ClearColor = willow.Color{R: 0.08, G: 0.08, B: 0.12, A: 1}
+	scene.ClearColor = willow.RGB(0.08, 0.08, 0.12)
 
 	colorIdx := 0
 	c := outlineColors[colorIdx]
@@ -72,18 +72,15 @@ func main() {
 		sp := willow.NewSprite("whelp", willow.TextureRegion{})
 		sp.SetCustomImage(whelpImg)
 		sp.Filters = col.filters
-		sp.X = x
-		sp.Y = cy
-		sp.PivotX = whelpW / 2
-		sp.PivotY = whelpH / 2
+		sp.SetPosition(x, cy)
+		sp.SetPivot(whelpW/2, whelpH/2)
 		scene.Root().AddChild(sp)
 		if col.filters != nil {
 			filteredNodes = append(filteredNodes, sp)
 		}
 
 		label := makeLabel(col.label)
-		label.X = x - float64(len(col.label)*6)/2
-		label.Y = cy + whelpH/2 + 8
+		label.SetPosition(x-float64(len(col.label)*6)/2, cy+whelpH/2+8)
 		scene.Root().AddChild(label)
 	}
 

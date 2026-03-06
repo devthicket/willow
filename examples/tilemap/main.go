@@ -35,7 +35,7 @@ func main() {
 	}
 
 	scene := willow.NewScene()
-	scene.ClearColor = willow.Color{R: 0.1, G: 0.1, B: 0.1, A: 1}
+	scene.ClearColor = willow.RGB(0.1, 0.1, 0.1)
 
 	cam := scene.NewCamera(willow.Rect{X: 0, Y: 0, Width: screenW, Height: screenH})
 	cam.X = (mapWidth * tileSize) / 2
@@ -63,8 +63,7 @@ func main() {
 
 			tile := willow.NewSprite("tile", willow.TextureRegion{})
 			tile.SetCustomImage(sub)
-			tile.X = float64(x * tileSize)
-			tile.Y = float64(y * tileSize)
+			tile.SetPosition(float64(x*tileSize), float64(y*tileSize))
 			mapContainer.AddChild(tile)
 		}
 	}

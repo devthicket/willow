@@ -9,7 +9,7 @@ Willow can create polygon shapes from a list of points, automatically triangulat
 poly := willow.NewPolygon("triangle", []willow.Vec2{
     {X: 0, Y: 0}, {X: 100, Y: 0}, {X: 50, Y: 80},
 })
-poly.Color = willow.Color{R: 0, G: 1, B: 0, A: 1}
+poly.SetColor(willow.RGB(0, 1, 0))
 ```
 
 ```go
@@ -26,11 +26,11 @@ For common shapes, use the built-in constructors instead of computing vertices m
 ```go
 // Regular hexagon centered at origin with radius 50
 hex := willow.NewRegularPolygon("hexagon", 6, 50)
-hex.Color = willow.Color{R: 0, G: 1, B: 0, A: 1}
+hex.SetColor(willow.RGB(0, 1, 0))
 
 // 5-pointed star with outer radius 60 and inner radius 25
 star := willow.NewStar("star", 60, 25, 5)
-star.Color = willow.Color{R: 1, G: 1, B: 0, A: 1}
+star.SetColor(willow.RGB(1, 1, 0))
 ```
 
 `NewRegularPolygon` accepts any side count (minimum 3). The first vertex points straight up. `NewStar` alternates between outer tips and inner valleys.

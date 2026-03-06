@@ -38,7 +38,7 @@ Produces `myfont.png` (atlas image) and `myfont.json` (glyph metrics).
 The tool produces two files:
 
 - **`<out>.png`** — grayscale atlas image where each pixel encodes distance from the nearest glyph edge
-- **`<out>.json`** — glyph metrics (advance widths, offsets, atlas coordinates) consumed by `willow.LoadSpriteFont`
+- **`<out>.json`** — glyph metrics (advance widths, offsets, atlas coordinates) consumed by `willow.LoadDistanceFieldFont`
 
 ## Loading in Willow
 
@@ -46,11 +46,11 @@ The tool produces two files:
 metricsJSON, _ := os.ReadFile("myfont.json")
 atlasImg, _, _ := ebitenutil.NewImageFromFile("myfont.png")
 
-font, err := willow.LoadSpriteFont(metricsJSON, 0)  // page index 0
+font, err := willow.LoadDistanceFieldFont(metricsJSON, 0)  // page index 0
 scene.RegisterPage(0, atlasImg)
 
 label := willow.NewText("title", "Hello!", font)
-label.TextBlock.FontSize = 24
+label.SetFontSize(24)
 scene.Root().AddChild(label)
 ```
 

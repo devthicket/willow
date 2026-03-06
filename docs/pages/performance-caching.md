@@ -20,7 +20,7 @@ node.SetCacheAsTree(true, willow.CacheTreeManual)
 node.SetCacheAsTree(true, willow.CacheTreeAuto)
 ```
 
-In auto mode, calling `SetPosition()`, `SetColor()`, `SetVisible()`, or any property setter on a descendant node automatically invalidates ancestor caches. Direct field assignment (e.g., `node.X = 10`) does **not** trigger auto-invalidation  -  call `Invalidate()` or `InvalidateCacheTree()` manually.
+In auto mode, calling `SetPosition()`, `SetColor()`, `SetVisible()`, or any property setter on a descendant node automatically invalidates ancestor caches.
 
 ### Manual Invalidation
 
@@ -85,8 +85,7 @@ bg := willow.NewContainer("background")
 for x := 0; x < 20; x++ {
     for y := 0; y < 15; y++ {
         tile := willow.NewSprite("tile", atlas.Region("grass"))
-        tile.X = float64(x * 32)
-        tile.Y = float64(y * 32)
+        tile.SetPosition(float64(x*32), float64(y*32))
         bg.AddChild(tile)
     }
 }

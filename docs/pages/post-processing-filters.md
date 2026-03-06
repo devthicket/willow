@@ -19,7 +19,7 @@ type Filter interface {
 
 ```go
 sprite.Filters = []willow.Filter{
-    willow.NewOutlineFilter(2, willow.Color{R: 1, G: 0, B: 0, A: 1}),
+    willow.NewOutlineFilter(2, willow.RGB(1, 0, 0)),
     willow.NewBlurFilter(3),
 }
 ```
@@ -61,7 +61,7 @@ sprite.Filters = []willow.Filter{blur}
 8-direction offset outline at any thickness:
 
 ```go
-outline := willow.NewOutlineFilter(3, willow.Color{R: 0, G: 0, B: 0, A: 1})
+outline := willow.NewOutlineFilter(3, willow.RGB(0, 0, 0))
 sprite.Filters = []willow.Filter{outline}
 ```
 
@@ -70,7 +70,7 @@ sprite.Filters = []willow.Filter{outline}
 1-pixel crisp outline via Kage shader (cardinal neighbor test):
 
 ```go
-ppOutline := willow.NewPixelPerfectOutlineFilter(willow.Color{R: 1, G: 1, B: 0, A: 1})
+ppOutline := willow.NewPixelPerfectOutlineFilter(willow.RGB(1, 1, 0))
 sprite.Filters = []willow.Filter{ppOutline}
 ```
 
@@ -79,7 +79,7 @@ sprite.Filters = []willow.Filter{ppOutline}
 Recolors edge pixels that border transparent areas:
 
 ```go
-ppInline := willow.NewPixelPerfectInlineFilter(willow.Color{R: 1, G: 0, B: 0, A: 1})
+ppInline := willow.NewPixelPerfectInlineFilter(willow.RGB(1, 0, 0))
 sprite.Filters = []willow.Filter{ppInline}
 ```
 
@@ -99,7 +99,7 @@ Set a custom palette:
 var palette [256]willow.Color
 for i := range palette {
     t := float64(i) / 255
-    palette[i] = willow.Color{R: t, G: 0, B: 1 - t, A: 1}
+    palette[i] = willow.RGB(t, 0, 1 - t)
 }
 pf.SetPalette(palette)
 ```

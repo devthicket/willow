@@ -2,7 +2,7 @@
 
 Willow has two font types that both implement the `Font` interface:
 
-- **SpriteFont**  -  SDF (Signed Distance Field) font converted from TTF/OTF, smooth at any size, supports outlines/glows/shadows
+- **DistanceFieldFont**  -  SDF (Signed Distance Field) font converted from TTF/OTF, smooth at any size, supports outlines/glows/shadows
 - **PixelFont**  -  bitmap spritesheet, pixel-perfect integer scaling, ideal for retro/pixel art games
 
 ## Font Interface
@@ -14,7 +14,7 @@ type Font interface {
 }
 ```
 
-Both `*SpriteFont` and `*PixelFont` implement this interface. All measurements are in native pixels. Use `TextBlock.MeasureDisplay()` for display-scaled values.
+Both `*DistanceFieldFont` and `*PixelFont` implement this interface. All measurements are in native pixels. Use `TextBlock.MeasureDisplay()` for display-scaled values.
 
 ## Creating Text Nodes
 
@@ -22,9 +22,8 @@ Both font types use the same constructor:
 
 ```go
 label := willow.NewText("label", "Hello, Willow!", font)
-label.TextBlock.FontSize = 24
-label.X = 100
-label.Y = 50
+label.SetFontSize(24)
+label.SetPosition(100, 50)
 scene.Root().AddChild(label)
 ```
 
@@ -41,7 +40,7 @@ type TextBlock struct {
     WrapWidth  float64      // screen pixels; 0 = no wrapping
     Color       Color
     LineHeight  float64       // 0 = use Font.LineHeight()
-    TextEffects *TextEffects  // nil = no effects (SpriteFont only)
+    TextEffects *TextEffects  // nil = no effects (DistanceFieldFont only)
 }
 ```
 
@@ -69,8 +68,7 @@ Alignment is relative to the node's X position (left-aligned) or within the `Wra
 Set `WrapWidth` to enable automatic line breaking. Values are in screen pixels:
 
 ```go
-node.TextBlock.WrapWidth = 400  // wrap at 400 screen pixels
-node.TextBlock.Invalidate()
+node.SetWrapWidth(400)  // wrap at 400 screen pixels
 ```
 
 ## Measuring Text
@@ -86,13 +84,13 @@ dispW, dispH := node.TextBlock.MeasureDisplay("Hello!")
 
 ---
 
-## SpriteFont (SDF)
+## DistanceFieldFont (SDF)
 
 SDF stands for **Signed Distance Field**  -  a technique where each pixel in the font atlas stores how far it is from the nearest glyph edge, rather than a simple on/off value. This lets the GPU reconstruct sharp edges at any scale using a single texture lookup, and enables effects like outlines, glows, and drop shadows in the same shader pass.
 
-SpriteFont converts TTF/OTF font files into an SDF glyph atlas (a texture). This conversion can happen at runtime or offline ahead of time using the `fontgen` CLI tool. Either way, the result is the same: a texture that the GPU samples each frame for resolution-independent text rendering.
+DistanceFieldFont converts TTF/OTF font files into an SDF glyph atlas (a texture). This conversion can happen at runtime or offline ahead of time using the `fontgen` CLI tool. Either way, the result is the same: a texture that the GPU samples each frame for resolution-independent text rendering.
 
-### Creating a SpriteFont
+### Creating a DistanceFieldFont
 
 #### From TTF at Runtime
 
@@ -110,7 +108,7 @@ For faster startup or to avoid bundling TTF files, pre-generate the atlas offlin
 
 ```go
 metricsJSON, _ := os.ReadFile("font.json")
-font, err := willow.LoadSpriteFont(metricsJSON, 2) // page index 2
+font, err := willow.LoadDistanceFieldFont(metricsJSON, 2) // page index 2
 scene.RegisterPage(2, atlasImage)
 ```
 
@@ -124,16 +122,16 @@ The `cmd/fontgen` CLI tool converts a TTF/OTF file into an SDF atlas ahead of ti
 go run ./cmd/fontgen -font input.ttf -size 80 -range 8 -out output
 ```
 
-Produces `output.png` (atlas texture) and `output.json` (glyph metrics). Load these with `LoadSpriteFont` as shown above.
+Produces `output.png` (atlas texture) and `output.json` (glyph metrics). Load these with `LoadDistanceFieldFont` as shown above.
 
 ### FontSize
 
-**FontSize** is applied at render time as a scale factor (`FontSize / native line height`), independent of `ScaleX`/`ScaleY`. Defaults to 16.
+**FontSize** is applied at render time as a scale factor (`FontSize / native line height`), independent of `ScaleX()`/`ScaleY()`. Defaults to 16.
 
 ### Advanced: Runtime Generation with Manual Page Registration
 
 ```go
-font, atlasImg, _, err := willow.LoadSpriteFontFromTTF(ttfData, willow.SDFGenOptions{
+font, atlasImg, _, err := willow.LoadDistanceFieldFontFromTTF(ttfData, willow.SDFGenOptions{
     Size:          80,
     DistanceRange: 8,
     PageIndex:     2,
@@ -146,19 +144,18 @@ scene.RegisterPage(2, atlasImg)
 Set `TextEffects` on a TextBlock for outline, glow, and shadow:
 
 ```go
-node.TextBlock.TextEffects = &willow.TextEffects{
+node.SetTextEffects(&willow.TextEffects{
     OutlineWidth:   2.0,
-    OutlineColor:   willow.Color{R: 0, G: 0, B: 0, A: 1},
+    OutlineColor:   willow.RGB(0, 0, 0),
     GlowWidth:      3.0,
-    GlowColor:      willow.Color{R: 0.2, G: 0.5, B: 1, A: 0.6},
+    GlowColor:      willow.RGBA(0.2, 0.5, 1, 0.6),
     ShadowOffset:   willow.Vec2{X: 3, Y: 3},
-    ShadowColor:    willow.Color{R: 0, G: 0, B: 0, A: 0.7},
+    ShadowColor:    willow.RGBA(0, 0, 0, 0.7),
     ShadowSoftness: 1.5,
-}
-node.TextBlock.Invalidate()
+})
 ```
 
-All effects are rendered in a single shader pass  -  no multi-pass overhead. Text effects are SpriteFont-only and have no effect on PixelFont.
+All effects are rendered in a single shader pass  -  no multi-pass overhead. Text effects are DistanceFieldFont-only and have no effect on PixelFont.
 
 ---
 
@@ -189,14 +186,13 @@ Space characters do not need a glyph in the spritesheet  -  they advance the cur
 
 ### Scaling
 
-PixelFont scaling is controlled per-node via `TextBlock.FontSize`, the same as SpriteFont. The scale factor is `FontSize / cellH`, rounded to the nearest integer to stay pixel-perfect (minimum 1x).
+PixelFont scaling is controlled per-node via `SetFontSize()`, the same as DistanceFieldFont. The scale factor is `FontSize / cellH`, rounded to the nearest integer to stay pixel-perfect (minimum 1x).
 
 ```go
 // With a 16px cell height:
-label.TextBlock.FontSize = 16  // 1x (native size, also the default)
-label.TextBlock.FontSize = 32  // 2x
-label.TextBlock.FontSize = 48  // 3x
-label.TextBlock.Invalidate()
+label.SetFontSize(16)  // 1x (native size, also the default)
+label.SetFontSize(32)  // 2x
+label.SetFontSize(48)  // 3x
 ```
 
 Fractional values are rounded: FontSize 20 with cellH 16 rounds to 1x, FontSize 28 rounds to 2x.
@@ -219,26 +215,25 @@ font.TrimCell(2, 4, 2, 4)  // trim 2px top/bottom, 4px left/right
 
 ### Rendering
 
-PixelFont renders with `DrawTriangles` and `FilterNearest`  -  no shader is used. `TextBlock.Color` is the fill color; `Node.Color` multiplies on top as a tint (same as how Node.Color tints sprites):
+PixelFont renders with `DrawTriangles` and `FilterNearest`  -  no shader is used. `SetTextColor()` sets the fill color; `SetColor()` multiplies on top as a tint (same as how node color tints sprites):
 
 ```go
 label := willow.NewText("msg", "Game Over", font)
-label.TextBlock.Color = willow.Color{R: 1, G: 0.3, B: 0.3, A: 1}  // red fill
-label.TextBlock.Invalidate()
-label.Color = willow.Color{R: 0.8, G: 0.8, B: 0.8, A: 1}          // optional dim tint
+label.SetTextColor(willow.RGB(1, 0.3, 0.3))  // red fill
+label.SetColor(willow.RGB(0.8, 0.8, 0.8))   // optional dim tint
 ```
 
 ### What Works
 
-- `TextBlock.FontSize`  -  integer scaling
-- `TextBlock.WrapWidth`  -  word wrapping
-- `TextBlock.Align`  -  left, center, right alignment
-- `TextBlock.Color`  -  fill color (primary text color)
-- `Node.Color`  -  tint multiplier on top of fill (same as sprites)
+- `SetFontSize()`  -  integer scaling
+- `SetWrapWidth()`  -  word wrapping
+- `SetAlign()`  -  left, center, right alignment
+- `SetTextColor()`  -  fill color (primary text color)
+- `SetColor()`  -  tint multiplier on top of fill (same as sprites)
 
 ### What Does Not Apply
 
-- `TextBlock.TextEffects`  -  outline, glow, shadow (SpriteFont only)
+- `SetTextEffects()`  -  outline, glow, shadow (DistanceFieldFont only)
 
 ## Next Steps
 

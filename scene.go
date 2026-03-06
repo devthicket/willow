@@ -196,7 +196,7 @@ func Run(scene *Scene, cfg RunConfig) error {
 	g := &gameShell{scene: scene, w: w, h: h}
 	if cfg.ShowFPS {
 		g.fpsWid = NewFPSWidget()
-		g.fpsWid.X, g.fpsWid.Y = 8, 8
+		g.fpsWid.x, g.fpsWid.y = 8, 8
 	}
 
 	return ebiten.RunGame(g)
@@ -223,14 +223,14 @@ func (g *gameShell) Update() error {
 }
 
 func (g *gameShell) Draw(screen *ebiten.Image) {
-	if g.scene.ClearColor.A > 0 {
+	if g.scene.ClearColor.a > 0 {
 		screen.Fill(g.scene.ClearColor.toRGBA())
 	}
 	g.scene.Draw(screen)
 	// Draw FPS widget in screen space (unaffected by cameras).
 	if g.fpsWid != nil && g.fpsWid.CustomImage() != nil {
 		var op ebiten.DrawImageOptions
-		op.GeoM.Translate(g.fpsWid.X, g.fpsWid.Y)
+		op.GeoM.Translate(g.fpsWid.x, g.fpsWid.y)
 		screen.DrawImage(g.fpsWid.CustomImage(), &op)
 	}
 	if g.scene.postDrawFunc != nil {
@@ -268,7 +268,7 @@ func (s *Scene) Update() {
 }
 
 func updateNodesAndParticles(n *Node, dt float64) {
-	if !n.Visible {
+	if !n.visible {
 		return
 	}
 	if n.OnUpdate != nil {

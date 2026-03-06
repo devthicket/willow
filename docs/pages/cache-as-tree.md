@@ -18,7 +18,7 @@ node.SetCacheAsTree(true, willow.CacheTreeAuto)
 node.SetCacheAsTree(true, willow.CacheTreeManual)
 ```
 
-In auto mode, calling `SetPosition()`, `SetColor()`, `SetVisible()`, or any property setter on a descendant node automatically invalidates ancestor caches. Direct field assignment (e.g., `node.X = 10`) does **not** trigger auto-invalidation  -  call `Invalidate()` or `InvalidateCacheTree()` manually.
+In auto mode, calling `SetPosition()`, `SetColor()`, `SetVisible()`, or any property setter on a descendant node automatically invalidates ancestor caches.
 
 ## Manual Invalidation
 

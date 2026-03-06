@@ -45,20 +45,20 @@
 //	scene.Root().AddChild(container)
 //
 //	sprite := willow.NewSprite("hero", atlas.Region("hero_idle"))
-//	sprite.X, sprite.Y = 100, 50
+//	sprite.SetPosition(100, 50)
 //	container.AddChild(sprite)
 //
 // For solid-color rectangles, use [NewSprite] with a zero-value
-// [TextureRegion] and set [Node.Color] and [Node.ScaleX]/[Node.ScaleY]:
+// [TextureRegion] and set color and size:
 //
 //	box := willow.NewSprite("box", willow.TextureRegion{})
-//	box.ScaleX, box.ScaleY = 80, 40
-//	box.Color = willow.Color{R: 0.3, G: 0.7, B: 1, A: 1}
+//	box.SetSize(80, 40)
+//	box.SetColor(willow.RGBA(0.3, 0.7, 1, 1))
 //
 // # Key features
 //
 // Willow includes cameras with follow/scroll-to/zoom, two text systems
-// (SDF-based [SpriteFont] for smooth TTF/OTF scaling with outlines, glows,
+// (SDF-based [DistanceFieldFont] for smooth TTF/OTF scaling with outlines, glows,
 // and shadows; pixel-perfect [PixelFont] for bitmap spritesheet fonts with
 // integer-only scaling), CPU-simulated particles, mesh/polygon/rope geometry,
 // Kage shader filters, texture caching, masking, blend modes, lighting layers,

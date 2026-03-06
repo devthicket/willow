@@ -17,10 +17,10 @@ import (
 // already has worldAlpha baked in, so no double-alpha correction is needed.
 func transformVertices(src, dst []ebiten.Vertex, transform [6]float64, tint Color) {
 	a, b, c, d, tx, ty := transform[0], transform[1], transform[2], transform[3], transform[4], transform[5]
-	cr := float32(tint.R)
-	cg := float32(tint.G)
-	cb := float32(tint.B)
-	ca := float32(tint.A)
+	cr := float32(tint.r)
+	cg := float32(tint.g)
+	cb := float32(tint.b)
+	ca := float32(tint.a)
 
 	for i := range src {
 		s := &src[i]

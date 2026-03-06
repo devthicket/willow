@@ -26,7 +26,7 @@ light := &willow.Light{
     Radius:    150,
     Intensity: 1.0,
     Enabled:   true,
-    Color:     willow.Color{R: 1, G: 0.9, B: 0.7, A: 1},
+    Color:     willow.RGB(1, 0.9, 0.7),
 }
 lightLayer.AddLight(light)
 ```
@@ -61,7 +61,7 @@ Use a custom texture instead of the default feathered circle:
 
 ```go
 light.TextureRegion = atlas.Region("flashlight_cone")
-light.Rotation = math.Pi / 4  // angled
+light.Rotation = math.Pi / 4   // angled
 ```
 
 Register atlas pages with the light layer:
@@ -134,7 +134,7 @@ torch := &willow.Light{
     Radius:    120,
     Intensity: 1.0,
     Enabled:   true,
-    Color:     willow.Color{R: 1, G: 0.85, B: 0.6, A: 1},
+    Color:     willow.RGB(1, 0.85, 0.6),
     Target:    playerNode,
 }
 ll.AddLight(torch)
@@ -145,7 +145,7 @@ campfire := &willow.Light{
     Radius:    80,
     Intensity: 0.8,
     Enabled:   true,
-    Color:     willow.Color{R: 1, G: 0.6, B: 0.2, A: 1},
+    Color:     willow.RGB(1, 0.6, 0.2),
 }
 ll.AddLight(campfire)
 

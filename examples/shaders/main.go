@@ -60,7 +60,7 @@ func main() {
 	}
 
 	scene := willow.NewScene()
-	scene.ClearColor = willow.Color{R: 0.08, G: 0.06, B: 0.12, A: 1}
+	scene.ClearColor = willow.RGB(0.08, 0.06, 0.12)
 
 	// 1:1 camera: screen pixels map directly to world coordinates.
 	cam := scene.NewCamera(willow.Rect{X: 0, Y: 0, Width: screenW, Height: screenH})
@@ -182,8 +182,7 @@ func main() {
 
 		x := startX + float64(col*(pw+gridGap))
 		y := startY + float64(row*(ph+gridGap))
-		sprite.X = x
-		sprite.Y = y
+		sprite.SetPosition(x, y)
 		scene.Root().AddChild(sprite)
 
 		panels[i] = &shaderPanel{
@@ -193,8 +192,7 @@ func main() {
 
 		// Pre-render the label text into a sprite and overlay it on the panel.
 		label := makeLabel(def.name)
-		label.X = x + 4
-		label.Y = y + 2
+		label.SetPosition(x+4, y+2)
 		scene.Root().AddChild(label)
 	}
 

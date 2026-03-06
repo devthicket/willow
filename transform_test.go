@@ -33,23 +33,23 @@ func TestLocalTransformIdentity(t *testing.T) {
 
 func TestLocalTransformTranslation(t *testing.T) {
 	n := NewContainer("test")
-	n.X = 10
-	n.Y = 20
+	n.x = 10
+	n.y = 20
 	got := computeLocalTransform(n)
 	assertMatrix(t, "translation", got, [6]float64{1, 0, 0, 1, 10, 20})
 }
 
 func TestLocalTransformScale(t *testing.T) {
 	n := NewContainer("test")
-	n.ScaleX = 2
-	n.ScaleY = 3
+	n.scaleX = 2
+	n.scaleY = 3
 	got := computeLocalTransform(n)
 	assertMatrix(t, "scale", got, [6]float64{2, 0, 0, 3, 0, 0})
 }
 
 func TestLocalTransformRotation90(t *testing.T) {
 	n := NewContainer("test")
-	n.Rotation = math.Pi / 2
+	n.rotation = math.Pi / 2
 	got := computeLocalTransform(n)
 	// cos(90)=0, sin(90)=1 → a=0, b=1, c=-1, d=0
 	assertMatrix(t, "rot90", got, [6]float64{0, 1, -1, 0, 0, 0})
@@ -57,10 +57,10 @@ func TestLocalTransformRotation90(t *testing.T) {
 
 func TestLocalTransformPivot(t *testing.T) {
 	n := NewContainer("test")
-	n.X = 100
-	n.Y = 200
-	n.PivotX = 16
-	n.PivotY = 16
+	n.x = 100
+	n.y = 200
+	n.pivotX = 16
+	n.pivotY = 16
 	got := computeLocalTransform(n)
 	// T(100,200) * T(-16,-16) = [1,0,0,1, 84, 184]
 	assertMatrix(t, "pivot", got, [6]float64{1, 0, 0, 1, 84, 184})
@@ -68,7 +68,7 @@ func TestLocalTransformPivot(t *testing.T) {
 
 func TestLocalTransformSkew(t *testing.T) {
 	n := NewContainer("test")
-	n.SkewX = math.Pi / 4 // tan = 1
+	n.skewX = math.Pi / 4 // tan = 1
 	got := computeLocalTransform(n)
 	// After skew(π/4, 0): a=1, b=0, c=tan(π/4)=1, d=1
 	// No rotation, so stays the same
@@ -77,11 +77,11 @@ func TestLocalTransformSkew(t *testing.T) {
 
 func TestLocalTransformCombined(t *testing.T) {
 	n := NewContainer("test")
-	n.X = 50
-	n.Y = 100
-	n.ScaleX = 2
-	n.ScaleY = 2
-	n.Rotation = math.Pi / 2
+	n.x = 50
+	n.y = 100
+	n.scaleX = 2
+	n.scaleY = 2
+	n.rotation = math.Pi / 2
 
 	got := computeLocalTransform(n)
 	// Scale(2,2) then Rotate(90°):
@@ -121,8 +121,8 @@ func TestInvertAffine(t *testing.T) {
 func TestInvertAffineComplex(t *testing.T) {
 	// Scale + rotation
 	n := NewContainer("test")
-	n.ScaleX = 2
-	n.Rotation = math.Pi / 3
+	n.scaleX = 2
+	n.rotation = math.Pi / 3
 	m := computeLocalTransform(n)
 	inv := invertAffine(m)
 	result := multiplyAffine(m, inv)
@@ -136,8 +136,8 @@ func TestWorldTransformParentChild(t *testing.T) {
 	child := NewContainer("child")
 	parent.AddChild(child)
 
-	parent.X = 100
-	child.X = 10
+	parent.x = 100
+	child.x = 10
 
 	updateWorldTransform(parent, identityTransform, 1.0, false, false)
 
@@ -152,8 +152,8 @@ func TestAlphaPropagation(t *testing.T) {
 	child := NewContainer("child")
 	parent.AddChild(child)
 
-	parent.Alpha = 0.5
-	child.Alpha = 0.5
+	parent.alpha = 0.5
+	child.alpha = 0.5
 
 	updateWorldTransform(parent, identityTransform, 1.0, false, false)
 
@@ -166,14 +166,14 @@ func TestDirtyFlagSkipsClean(t *testing.T) {
 	child := NewContainer("child")
 	parent.AddChild(child)
 
-	parent.X = 100
-	child.X = 10
+	parent.x = 100
+	child.x = 10
 	updateWorldTransform(parent, identityTransform, 1.0, false, false)
 
 	// Clear dirty, change child X directly (without setter → stays clean)
 	child.transformDirty = false
 	parent.transformDirty = false
-	child.X = 999 // dirty flag NOT set
+	child.x = 999 // dirty flag NOT set
 
 	updateWorldTransform(parent, identityTransform, 1.0, false, false)
 
@@ -186,8 +186,8 @@ func TestDirtyFlagRecomputes(t *testing.T) {
 	child := NewContainer("child")
 	parent.AddChild(child)
 
-	parent.X = 100
-	child.X = 10
+	parent.x = 100
+	child.x = 10
 	updateWorldTransform(parent, identityTransform, 1.0, false, false)
 
 	child.SetPosition(20, 0) // marks dirty
@@ -201,8 +201,8 @@ func TestParentRecomputedPropagates(t *testing.T) {
 	child := NewContainer("child")
 	parent.AddChild(child)
 
-	parent.X = 100
-	child.X = 10
+	parent.x = 100
+	child.x = 10
 	updateWorldTransform(parent, identityTransform, 1.0, false, false)
 
 	// Move parent  -  child is not directly dirty but must update
@@ -219,13 +219,13 @@ func TestWorldToLocalRoundtrip(t *testing.T) {
 	child := NewContainer("child")
 	parent.AddChild(child)
 
-	parent.X = 100
-	parent.Y = 50
-	child.X = 10
-	child.Y = 20
-	child.ScaleX = 2
-	child.ScaleY = 3
-	child.Rotation = math.Pi / 6
+	parent.x = 100
+	parent.y = 50
+	child.x = 10
+	child.y = 20
+	child.scaleX = 2
+	child.scaleY = 3
+	child.rotation = math.Pi / 6
 
 	updateWorldTransform(parent, identityTransform, 1.0, false, false)
 
@@ -239,8 +239,8 @@ func TestWorldToLocalRoundtrip(t *testing.T) {
 
 func TestLocalToWorldIdentity(t *testing.T) {
 	n := NewContainer("test")
-	n.X = 50
-	n.Y = 100
+	n.x = 50
+	n.y = 100
 	updateWorldTransform(n, identityTransform, 1.0, true, true)
 
 	wx, wy := n.LocalToWorld(0, 0)
@@ -254,7 +254,7 @@ func TestDeepHierarchy(t *testing.T) {
 	nodes := make([]*Node, 10)
 	for i := range nodes {
 		nodes[i] = NewContainer("")
-		nodes[i].X = 10
+		nodes[i].x = 10
 		if i > 0 {
 			nodes[i-1].AddChild(nodes[i])
 		}
@@ -332,8 +332,8 @@ func TestInvertAffineBothZeroScales(t *testing.T) {
 
 func TestWorldToLocalZeroScale(t *testing.T) {
 	n := NewContainer("test")
-	n.ScaleX = 0
-	n.ScaleY = 0
+	n.scaleX = 0
+	n.scaleY = 0
 	updateWorldTransform(n, identityTransform, 1.0, true, true)
 
 	// Should not panic; returns identity-transformed point.
@@ -347,13 +347,13 @@ func TestWorldToLocalZeroScale(t *testing.T) {
 
 func BenchmarkComputeLocalTransform(b *testing.B) {
 	n := NewContainer("bench")
-	n.X = 100
-	n.Y = 200
-	n.ScaleX = 2
-	n.ScaleY = 3
-	n.Rotation = 0.5
-	n.PivotX = 16
-	n.PivotY = 16
+	n.x = 100
+	n.y = 200
+	n.scaleX = 2
+	n.scaleY = 3
+	n.rotation = 0.5
+	n.pivotX = 16
+	n.pivotY = 16
 	b.ReportAllocs()
 	for b.Loop() {
 		_ = computeLocalTransform(n)
@@ -374,11 +374,11 @@ func BenchmarkUpdateWorldTransform10k(b *testing.B) {
 	root := NewContainer("root")
 	for i := 0; i < 100; i++ {
 		parent := NewContainer("")
-		parent.X = float64(i)
+		parent.x = float64(i)
 		root.AddChild(parent)
 		for j := 0; j < 100; j++ {
 			child := NewContainer("")
-			child.X = float64(j)
+			child.x = float64(j)
 			parent.AddChild(child)
 		}
 	}

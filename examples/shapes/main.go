@@ -33,12 +33,11 @@ func (r *rotator) update() error {
 
 func main() {
 	scene := willow.NewScene()
-	scene.ClearColor = willow.Color{R: 0.098, G: 0.098, B: 0.137, A: 1}
+	scene.ClearColor = willow.RGB(0.098, 0.098, 0.137)
 
 	// Parent container at screen center, rotating around its own origin.
 	container := willow.NewContainer("group")
-	container.X = screenW / 2
-	container.Y = screenH / 2
+	container.SetPosition(screenW/2, screenH/2)
 	container.Interactable = true
 	scene.Root().AddChild(container)
 
@@ -73,15 +72,14 @@ func spawnShapes(container *willow.Node) {
 			{X: 35, Y: 30},
 			{X: -35, Y: 30},
 		})
-		tri.Color = willow.Color{R: rand.Float64(), G: rand.Float64(), B: rand.Float64(), A: 1}
-		tri.X = (rand.Float64() - 0.5) * screenW * 2
-		tri.Y = (rand.Float64() - 0.5) * screenH * 2
+		tri.SetColor(willow.RGB(rand.Float64(), rand.Float64(), rand.Float64()))
+		tri.SetPosition((rand.Float64()-0.5)*screenW*2, (rand.Float64()-0.5)*screenH*2)
 		container.AddChild(tri)
 
 		// Independent rotation.
 		spin := (rand.Float64() - 0.5) * 0.1
 		tri.OnUpdate = func(dt float64) {
-			tri.Rotation += spin
+			tri.SetRotation(tri.Rotation() + spin)
 		}
 	}
 
@@ -93,30 +91,28 @@ func spawnShapes(container *willow.Node) {
 			{X: 25, Y: 25},
 			{X: -25, Y: 25},
 		})
-		sq.Color = willow.Color{R: rand.Float64(), G: rand.Float64(), B: rand.Float64(), A: 1}
-		sq.X = (rand.Float64() - 0.5) * screenW * 2
-		sq.Y = (rand.Float64() - 0.5) * screenH * 2
+		sq.SetColor(willow.RGB(rand.Float64(), rand.Float64(), rand.Float64()))
+		sq.SetPosition((rand.Float64()-0.5)*screenW*2, (rand.Float64()-0.5)*screenH*2)
 		container.AddChild(sq)
 
 		// Independent rotation.
 		spin := (rand.Float64() - 0.5) * 0.05
 		sq.OnUpdate = func(dt float64) {
-			sq.Rotation += spin
+			sq.SetRotation(sq.Rotation() + spin)
 		}
 	}
 
 	// Pentagons.
 	for range numPentagons {
 		pent := willow.NewRegularPolygon("pentagon", 5, 30)
-		pent.Color = willow.Color{R: rand.Float64(), G: rand.Float64(), B: rand.Float64(), A: 1}
-		pent.X = (rand.Float64() - 0.5) * screenW * 2
-		pent.Y = (rand.Float64() - 0.5) * screenH * 2
+		pent.SetColor(willow.RGB(rand.Float64(), rand.Float64(), rand.Float64()))
+		pent.SetPosition((rand.Float64()-0.5)*screenW*2, (rand.Float64()-0.5)*screenH*2)
 		container.AddChild(pent)
 
 		// Independent rotation.
 		spin := (rand.Float64() - 0.5) * 0.08
 		pent.OnUpdate = func(dt float64) {
-			pent.Rotation += spin
+			pent.SetRotation(pent.Rotation() + spin)
 		}
 
 		// Small orbiting diamond on each pentagon.
@@ -126,8 +122,8 @@ func spawnShapes(container *willow.Node) {
 			{X: 0, Y: 12},
 			{X: -10, Y: 0},
 		})
-		diamond.Color = willow.Color{R: rand.Float64(), G: rand.Float64(), B: rand.Float64(), A: 1}
-		diamond.X = 45
+		diamond.SetColor(willow.RGB(rand.Float64(), rand.Float64(), rand.Float64()))
+		diamond.SetX(45)
 		pent.AddChild(diamond)
 	}
 }

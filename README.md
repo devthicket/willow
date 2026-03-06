@@ -99,11 +99,9 @@ func main() {
 	scene := willow.NewScene()
 
 	sprite := willow.NewSprite("hero", willow.TextureRegion{})
-	sprite.ScaleX = 40
-	sprite.ScaleY = 40
-	sprite.Color = willow.Color{R: 0.3, G: 0.7, B: 1, A: 1}
-	sprite.X = 300
-	sprite.Y = 220
+	sprite.SetSize(40, 40)
+	sprite.SetColor(willow.RGBA(0.3, 0.7, 1, 1))
+	sprite.SetPosition(300, 220)
 	scene.Root().AddChild(sprite)
 
 	if err := willow.Run(scene, willow.RunConfig{
@@ -143,7 +141,7 @@ go run ./examples/lighting # dungeon scene with torches and wisps
 - **Sprite batching** - [TexturePacker](https://www.codeandweb.com/texturepacker) JSON atlas loading with multi-page, trimmed, and rotated region support. Consecutive draws are grouped automatically into single `DrawImage` calls.
 - **Camera system** - Multiple independent viewports with smooth follow, scroll-to animation (45+ easings), bounds clamping, frustum culling, and world/screen coordinate conversion.
 - **Input and interaction** - Hierarchical hit testing with pluggable shapes (rect, circle, polygon). Pointer capture, drag dead zones, multi-touch, and two-finger pinch with rotation. Callbacks per-node or scene-wide.
-- **Text rendering** - Two font systems: **SpriteFont** (SDF) for TTF/OTF with resolution-independent scaling, GPU-accelerated outlines, shadows, and glow; **PixelFont** (Bitmap) for pixel-perfect bitmap spritesheet fonts with integer-only scaling (1x, 2x, 3x) and cell trimming. Both support alignment, word wrapping, and line height overrides. Offline `fontgen` CLI to pre-bake SDF atlases, or generate at runtime.
+- **Text rendering** - Two font systems: **DistanceFieldFont** (SDF) for TTF/OTF with resolution-independent scaling, GPU-accelerated outlines, shadows, and glow; **PixelFont** (Bitmap) for pixel-perfect bitmap spritesheet fonts with integer-only scaling (1x, 2x, 3x) and cell trimming. Both support alignment, word wrapping, and line height overrides. Offline `fontgen` CLI to pre-bake SDF atlases, or generate at runtime.
 - **Particle system** - CPU-simulated with preallocated pools. Configurable emit rate, lifetime, speed, gravity, and scale/alpha/color interpolation. Optional world-space emission.
 - **Mesh support** - `DrawTriangles` with preallocated vertex and index buffers. High-level helpers for rope meshes, filled polygons, and deformable grids.
 - **Subtree command caching** - `SetCacheAsTree` caches all render commands for a container's subtree and replays them with delta transform remapping. Camera panning, parent movement, and alpha changes never invalidate the cache. Animated tiles (same-page UV swaps) are handled automatically via a two-tier source pointer - no invalidation, no API overhead. Manual and auto-invalidation modes. Includes sort-skip optimization when the entire scene is cache hits.

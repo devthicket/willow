@@ -23,7 +23,7 @@ player := willow.NewSprite("player", atlas.Region("player_idle"))
 
 // Text
 label := willow.NewText("score", "Score: 0", myFont)
-label.TextBlock.FontSize = 16
+label.SetFontSize(16)
 
 // Particle emitter
 emitter := willow.NewParticleEmitter("sparks", emitterConfig)
@@ -36,13 +36,15 @@ mesh := willow.NewMesh("grid", img, vertices, indices)
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `Visible` | `bool` | Whether the node (and children) are rendered |
-| `Renderable` | `bool` | Whether this specific node renders (children still can) |
-| `Alpha` | `float64` | Opacity `[0,1]`, multiplied with parent's alpha |
-| `Color` | `Color` | Multiplicative tint; `{1,1,1,1}` = no tint |
-| `BlendMode` | `BlendMode` | Blend operation (see below) |
-| `RenderLayer` | `uint8` | Primary sort key; lower values draw first |
-| `GlobalOrder` | `int` | Secondary sort key within same RenderLayer |
+| Property | Getter | Setter | Description |
+|----------|--------|--------|-------------|
+| Visible | `Visible()` | `SetVisible(v)` | Whether the node (and children) are rendered |
+| Renderable | `Renderable()` | `SetRenderable(r)` | Whether this specific node renders (children still can) |
+| Alpha | `Alpha()` | `SetAlpha(a)` | Opacity `[0,1]`, multiplied with parent's alpha |
+| Color | `Color()` | `SetColor(c)` | Multiplicative tint; white = no tint |
+| BlendMode | `BlendMode()` | `SetBlendMode(b)` | Blend operation (see below) |
+| RenderLayer | `RenderLayer()` | `SetRenderLayer(l)` | Primary sort key; lower values draw first |
+| GlobalOrder | `GlobalOrder()` | `SetGlobalOrder(o)` | Secondary sort key within same RenderLayer |
 
 ## Blend Modes
 
@@ -63,7 +65,7 @@ mesh := willow.NewMesh("grid", img, vertices, indices)
 |-------|------|-------------|
 | `Name` | `string` | Human-readable label |
 | `ID` | `uint32` | Auto-assigned unique identifier |
-| `ZIndex` | `int` | Draw order among siblings; higher = on top |
+| `ZIndex` (via `ZIndex()` / `SetZIndex(z)`) | `int` | Draw order among siblings; higher = on top |
 | `EntityID` | `uint32` | ECS entity bridge |
 | `UserData` | `any` | Arbitrary user data |
 
@@ -103,7 +105,7 @@ Attach per-node logic that runs each frame during `scene.Update()`:
 
 ```go
 node.OnUpdate = func(dt float64) {
-    node.X += speed * dt
+    node.SetX(node.X() + speed * dt)
 }
 ```
 
@@ -117,9 +119,7 @@ node.OnClick(func(ctx willow.ClickContext) {
 })
 
 node.OnDrag(func(ctx willow.DragContext) {
-    node.X += ctx.DeltaX
-    node.Y += ctx.DeltaY
-    node.Invalidate()
+    node.SetPosition(node.X()+ctx.DeltaX, node.Y()+ctx.DeltaY)
 })
 ```
 

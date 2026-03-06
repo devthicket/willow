@@ -97,10 +97,10 @@ func (g *TweenGroup) autoRegister(node *Node) {
 func TweenPosition(node *Node, toX, toY float64, cfg TweenConfig) *TweenGroup {
 	fn := tweenEase(cfg)
 	g := &TweenGroup{count: 2, target: node}
-	g.tweens[0] = gween.New(float32(node.X), float32(toX), cfg.Duration, fn)
-	g.tweens[1] = gween.New(float32(node.Y), float32(toY), cfg.Duration, fn)
-	g.fields[0] = &node.X
-	g.fields[1] = &node.Y
+	g.tweens[0] = gween.New(float32(node.x), float32(toX), cfg.Duration, fn)
+	g.tweens[1] = gween.New(float32(node.y), float32(toY), cfg.Duration, fn)
+	g.fields[0] = &node.x
+	g.fields[1] = &node.y
 	g.autoRegister(node)
 	return g
 }
@@ -110,10 +110,10 @@ func TweenPosition(node *Node, toX, toY float64, cfg TweenConfig) *TweenGroup {
 func TweenScale(node *Node, toSX, toSY float64, cfg TweenConfig) *TweenGroup {
 	fn := tweenEase(cfg)
 	g := &TweenGroup{count: 2, target: node}
-	g.tweens[0] = gween.New(float32(node.ScaleX), float32(toSX), cfg.Duration, fn)
-	g.tweens[1] = gween.New(float32(node.ScaleY), float32(toSY), cfg.Duration, fn)
-	g.fields[0] = &node.ScaleX
-	g.fields[1] = &node.ScaleY
+	g.tweens[0] = gween.New(float32(node.scaleX), float32(toSX), cfg.Duration, fn)
+	g.tweens[1] = gween.New(float32(node.scaleY), float32(toSY), cfg.Duration, fn)
+	g.fields[0] = &node.scaleX
+	g.fields[1] = &node.scaleY
 	g.autoRegister(node)
 	return g
 }
@@ -123,14 +123,14 @@ func TweenScale(node *Node, toSX, toSY float64, cfg TweenConfig) *TweenGroup {
 func TweenColor(node *Node, to Color, cfg TweenConfig) *TweenGroup {
 	fn := tweenEase(cfg)
 	g := &TweenGroup{count: 4, target: node}
-	g.tweens[0] = gween.New(float32(node.Color.R), float32(to.R), cfg.Duration, fn)
-	g.tweens[1] = gween.New(float32(node.Color.G), float32(to.G), cfg.Duration, fn)
-	g.tweens[2] = gween.New(float32(node.Color.B), float32(to.B), cfg.Duration, fn)
-	g.tweens[3] = gween.New(float32(node.Color.A), float32(to.A), cfg.Duration, fn)
-	g.fields[0] = &node.Color.R
-	g.fields[1] = &node.Color.G
-	g.fields[2] = &node.Color.B
-	g.fields[3] = &node.Color.A
+	g.tweens[0] = gween.New(float32(node.color.r), float32(to.r), cfg.Duration, fn)
+	g.tweens[1] = gween.New(float32(node.color.g), float32(to.g), cfg.Duration, fn)
+	g.tweens[2] = gween.New(float32(node.color.b), float32(to.b), cfg.Duration, fn)
+	g.tweens[3] = gween.New(float32(node.color.a), float32(to.a), cfg.Duration, fn)
+	g.fields[0] = &node.color.r
+	g.fields[1] = &node.color.g
+	g.fields[2] = &node.color.b
+	g.fields[3] = &node.color.a
 	g.autoRegister(node)
 	return g
 }
@@ -140,8 +140,8 @@ func TweenColor(node *Node, to Color, cfg TweenConfig) *TweenGroup {
 func TweenAlpha(node *Node, to float64, cfg TweenConfig) *TweenGroup {
 	fn := tweenEase(cfg)
 	g := &TweenGroup{count: 1, target: node}
-	g.tweens[0] = gween.New(float32(node.Alpha), float32(to), cfg.Duration, fn)
-	g.fields[0] = &node.Alpha
+	g.tweens[0] = gween.New(float32(node.alpha), float32(to), cfg.Duration, fn)
+	g.fields[0] = &node.alpha
 	g.autoRegister(node)
 	return g
 }
@@ -151,8 +151,8 @@ func TweenAlpha(node *Node, to float64, cfg TweenConfig) *TweenGroup {
 func TweenRotation(node *Node, to float64, cfg TweenConfig) *TweenGroup {
 	fn := tweenEase(cfg)
 	g := &TweenGroup{count: 1, target: node}
-	g.tweens[0] = gween.New(float32(node.Rotation), float32(to), cfg.Duration, fn)
-	g.fields[0] = &node.Rotation
+	g.tweens[0] = gween.New(float32(node.rotation), float32(to), cfg.Duration, fn)
+	g.fields[0] = &node.rotation
 	g.autoRegister(node)
 	return g
 }

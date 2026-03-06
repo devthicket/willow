@@ -14,14 +14,15 @@ Every node has a local transform defined by position, scale, rotation, skew, and
 
 ## Transform Properties
 
-| Property | Fields | Setter | Description |
+| Property | Getter | Setter | Description |
 |----------|--------|--------|-------------|
-| Position | `X`, `Y` | `SetPosition(x, y)` | Local pixel offset from parent |
-| Scale | `ScaleX`, `ScaleY` | `SetScale(sx, sy)` | Multiplier (1.0 = original) |
-| Rotation | `Rotation` | `SetRotation(r)` | Radians, clockwise |
-| Skew | `SkewX`, `SkewY` | `SetSkew(sx, sy)` | Shear in radians |
-| Pivot | `PivotX`, `PivotY` | `SetPivot(px, py)` | Transform origin in local pixels |
-| Alpha | `Alpha` | `SetAlpha(a)` | Opacity [0,1], inherited from parent |
+| Position | `X()`, `Y()` | `SetPosition(x, y)` / `SetX(x)` / `SetY(y)` | Local pixel offset from parent |
+| Scale | `ScaleX()`, `ScaleY()` | `SetScale(sx, sy)` | Multiplier (1.0 = original) |
+| Size | `Width()`, `Height()` | `SetSize(w, h)` | Pixel dimensions |
+| Rotation | `Rotation()` | `SetRotation(r)` | Radians, clockwise |
+| Skew | `SkewX()`, `SkewY()` | `SetSkew(sx, sy)` | Shear in radians |
+| Pivot | `PivotX()`, `PivotY()` | `SetPivot(px, py)` | Transform origin in local pixels |
+| Alpha | `Alpha()` | `SetAlpha(a)` | Opacity [0,1], inherited from parent |
 
 ## Setter Methods vs. Direct Assignment
 
@@ -29,16 +30,9 @@ Every node has a local transform defined by position, scale, rotation, skew, and
 1. Mark the node's transform as dirty
 2. Invalidate ancestor cache-as-tree caches
 
-**Direct field assignment** (`node.X = 10`) does *not* trigger dirty marking. Use it for bulk updates, then call `Invalidate()` once:
+Node fields are private; use **setter methods** for all mutations:
 
 ```go
-// Bulk update  -  one dirty mark
-node.X = 100
-node.Y = 200
-node.ScaleX = 2
-node.Invalidate()
-
-// Or use setters for automatic handling
 node.SetPosition(100, 200)
 node.SetScale(2, 2)
 ```
@@ -48,8 +42,7 @@ node.SetScale(2, 2)
 The pivot determines the center of rotation and scale:
 
 ```go
-sprite.PivotX = 32  // center of a 64px sprite
-sprite.PivotY = 32
+sprite.SetPivot(32, 32)  // center of a 64px sprite
 sprite.SetRotation(math.Pi / 4)  // rotates around center
 ```
 
@@ -73,11 +66,10 @@ Child transforms are relative to their parent:
 
 ```go
 parent := willow.NewContainer("parent")
-parent.X = 100
-parent.Y = 100
+parent.SetPosition(100, 100)
 
 child := willow.NewSprite("child", region)
-child.X = 50  // world position = (150, 100)
+child.SetX(50)  // world position = (150, 100)
 parent.AddChild(child)
 ```
 

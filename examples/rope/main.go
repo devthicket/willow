@@ -38,27 +38,26 @@ func (d *demo) update() error {
 	d.time += 1.0 / float64(ebiten.TPS())
 
 	// Orbiter circles the midpoint of the two handles.
-	mx := (d.handleA.X + d.handleB.X) / 2
-	my := (d.handleA.Y + d.handleB.Y) / 2
+	mx := (d.handleA.X() + d.handleB.X()) / 2
+	my := (d.handleA.Y() + d.handleB.Y()) / 2
 	orbitR := 80.0
-	d.orbiter.X = mx + math.Cos(d.time*1.2)*orbitR
-	d.orbiter.Y = my + math.Sin(d.time*1.2)*orbitR*0.6
+	d.orbiter.SetPosition(mx+math.Cos(d.time*1.2)*orbitR, my+math.Sin(d.time*1.2)*orbitR*0.6)
 	d.orbiter.Invalidate()
 
 	// Update the bound Vec2s  -  rope.Update() reads these by reference.
-	d.start.X = d.handleA.X
-	d.start.Y = d.handleA.Y
-	d.end.X = d.handleB.X
-	d.end.Y = d.handleB.Y
-	d.ctrl.X = d.orbiter.X
-	d.ctrl.Y = d.orbiter.Y + 40
+	d.start.X = d.handleA.X()
+	d.start.Y = d.handleA.Y()
+	d.end.X = d.handleB.X()
+	d.end.Y = d.handleB.Y()
+	d.ctrl.X = d.orbiter.X()
+	d.ctrl.Y = d.orbiter.Y() + 40
 	d.rope.Update()
 	return nil
 }
 
 func main() {
 	scene := willow.NewScene()
-	scene.ClearColor = willow.Color{R: 0.1, G: 0.1, B: 0.15, A: 1}
+	scene.ClearColor = willow.RGB(0.1, 0.1, 0.15)
 
 	cam := scene.NewCamera(willow.Rect{X: 0, Y: 0, Width: screenW, Height: screenH})
 	cam.X = screenW / 2
@@ -99,24 +98,20 @@ func main() {
 	scene.Root().AddChild(rope.Node())
 
 	// Draggable handle A (red).
-	handleA := makeHandle("handleA", willow.Color{R: 0.9, G: 0.3, B: 0.3, A: 1})
-	handleA.X = start.X
-	handleA.Y = start.Y
+	handleA := makeHandle("handleA", willow.RGB(0.9, 0.3, 0.3))
+	handleA.SetPosition(start.X, start.Y)
 	scene.Root().AddChild(handleA)
 
 	// Draggable handle B (blue).
-	handleB := makeHandle("handleB", willow.Color{R: 0.3, G: 0.5, B: 0.9, A: 1})
-	handleB.X = end.X
-	handleB.Y = end.Y
+	handleB := makeHandle("handleB", willow.RGB(0.3, 0.5, 0.9))
+	handleB.SetPosition(end.X, end.Y)
 	scene.Root().AddChild(handleB)
 
 	// Orbiting anchor (green, not draggable).
 	orbiter := willow.NewSprite("orbiter", willow.TextureRegion{})
-	orbiter.ScaleX = 12
-	orbiter.ScaleY = 12
-	orbiter.PivotX = 0.5
-	orbiter.PivotY = 0.5
-	orbiter.Color = willow.Color{R: 0.3, G: 0.9, B: 0.4, A: 1}
+	orbiter.SetScale(12, 12)
+	orbiter.SetPivot(0.5, 0.5)
+	orbiter.SetColor(willow.RGB(0.3, 0.9, 0.4))
 	scene.Root().AddChild(orbiter)
 
 	d := &demo{
@@ -144,14 +139,11 @@ func main() {
 // makeHandle creates a draggable square sprite centered on its position.
 func makeHandle(name string, c willow.Color) *willow.Node {
 	n := willow.NewSprite(name, willow.TextureRegion{})
-	n.ScaleX = handleSize
-	n.ScaleY = handleSize
-	n.PivotX = 0.5
-	n.PivotY = 0.5
-	n.Color = c
+	n.SetScale(handleSize, handleSize)
+	n.SetPivot(0.5, 0.5)
+	n.SetColor(c)
 	n.OnDrag(func(ctx willow.DragContext) {
-		n.X += ctx.DeltaX
-		n.Y += ctx.DeltaY
+		n.SetPosition(n.X()+ctx.DeltaX, n.Y()+ctx.DeltaY)
 		n.Invalidate()
 	})
 

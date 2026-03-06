@@ -7,8 +7,7 @@ Sprites are the primary way to display images in Willow. Create a sprite from a 
 ```go
 region := atlas.Region("player_idle")
 sprite := willow.NewSprite("player", region)
-sprite.X = 100
-sprite.Y = 200
+sprite.SetPosition(100, 200)
 scene.Root().AddChild(sprite)
 ```
 

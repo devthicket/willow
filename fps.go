@@ -16,7 +16,7 @@ func NewFPSWidget() *Node {
 
 	node := NewSprite("fps_widget", TextureRegion{})
 	node.SetCustomImage(img)
-	node.RenderLayer = 255 // Draw on top
+	node.renderLayer = 255 // Draw on top
 
 	var lastUpdate float64
 

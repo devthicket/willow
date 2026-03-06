@@ -15,7 +15,7 @@ rt := willow.NewRenderTexture(256, 256)
 rt.Clear()
 
 // Fill with a solid color
-rt.Fill(willow.Color{R: 0.1, G: 0.1, B: 0.2, A: 1})
+rt.Fill(willow.RGB(0.1, 0.1, 0.2))
 
 // Draw an Ebitengine image with DrawImageOptions
 rt.DrawImage(srcImage, &ebiten.DrawImageOptions{})
@@ -31,7 +31,7 @@ rt.DrawSpriteColored(region, willow.RenderTextureDrawOpts{
     X: 100, Y: 100,
     ScaleX: 2, ScaleY: 2,
     Rotation: 0.5,
-    Color: willow.Color{R: 1, G: 0.5, B: 0.5, A: 1},
+    Color: willow.RGB(1, 0.5, 0.5),
     Alpha: 0.8,
     BlendMode: willow.BlendAdd,
 }, atlas.Pages)
@@ -61,8 +61,7 @@ Create a sprite node backed by the render texture:
 
 ```go
 spriteNode := rt.NewSpriteNode("minimap")
-spriteNode.X = 600
-spriteNode.Y = 10
+spriteNode.SetPosition(600, 10)
 scene.Root().AddChild(spriteNode)
 ```
 
@@ -97,7 +96,7 @@ rt.Dispose()
 
 ```go
 rt := willow.NewRenderTexture(800, 600)
-rt.Fill(willow.Color{R: 0.05, G: 0.05, B: 0.15, A: 1})
+rt.Fill(willow.RGB(0.05, 0.05, 0.15))
 
 // Draw some stars
 for i := 0; i < 100; i++ {

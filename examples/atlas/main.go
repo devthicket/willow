@@ -109,7 +109,7 @@ func main() {
 
 	scene := willow.NewScene()
 	scene.SetDebugMode(true) // unknown region names log a warning to stderr
-	scene.ClearColor = willow.Color{R: 0.1, G: 0.1, B: 0.15, A: 1}
+	scene.ClearColor = willow.RGB(0.1, 0.1, 0.15)
 
 	// LoadAtlas parses the JSON, registers atlas pages with the scene, and
 	// returns an Atlas for named region lookups.
@@ -128,13 +128,11 @@ func main() {
 		col := float64(i % gridCols)
 		row := float64(i / gridCols)
 		sp := willow.NewSprite(name, atlas.Region(name))
-		sp.X = startX + col*(displaySize+gridPad)
-		sp.Y = startY + row*(displaySize+gridPad)
-		sp.ScaleX = displayScale
-		sp.ScaleY = displayScale
+		sp.SetPosition(startX+col*(displaySize+gridPad), startY+row*(displaySize+gridPad))
+		sp.SetScale(displayScale, displayScale)
 		sp.HitShape = willow.HitRect{Width: tileSize, Height: tileSize}
 		sp.OnClick(func(ctx willow.ClickContext) {
-			if ctx.Node.Alpha > 0.5 {
+			if ctx.Node.Alpha() > 0.5 {
 				ctx.Node.SetAlpha(0.25)
 			} else {
 				ctx.Node.SetAlpha(1)
@@ -148,10 +146,8 @@ func main() {
 	// Click it to dynamically register whelp.png as atlas page 1 and reveal the sprite.
 	const missingName = "dragon"
 	missing := willow.NewSprite(missingName, atlas.Region(missingName))
-	missing.X = startX
-	missing.Y = startY + 2*(displaySize+gridPad)
-	missing.ScaleX = displaySize // scale 1px → 80px
-	missing.ScaleY = displaySize
+	missing.SetPosition(startX, startY+2*(displaySize+gridPad))
+	missing.SetScale(displaySize, displaySize) // scale 1px → 80px
 	missing.HitShape = willow.HitRect{Width: 1, Height: 1}
 	missing.OnClick(func(ctx willow.ClickContext) {
 		// Append whelp.png as the next atlas page in both the scene and the Atlas.
@@ -161,16 +157,15 @@ func main() {
 
 		// Swap the TextureRegion to point at the new page.
 		const whelpW, whelpH = 128, 128
-		ctx.Node.TextureRegion = willow.TextureRegion{
+		ctx.Node.SetTextureRegion(willow.TextureRegion{
 			Page:      uint16(newPageIdx),
 			Width:     whelpW,
 			Height:    whelpH,
 			OriginalW: whelpW,
 			OriginalH: whelpH,
-		}
+		})
 		// Rescale: whelp is 128×128, we still want 80×80 on screen.
-		ctx.Node.ScaleX = displaySize / whelpW
-		ctx.Node.ScaleY = displaySize / whelpH
+		ctx.Node.SetScale(displaySize/whelpW, displaySize/whelpH)
 		ctx.Node.Invalidate()
 
 		ctx.Node.OnClick(nil) // one-shot
@@ -181,10 +176,8 @@ func main() {
 	const previewScale = 2.0
 	preview := willow.NewSprite("preview", willow.TextureRegion{})
 	preview.SetCustomImage(atlasPage)
-	preview.X = startX + displaySize + gridPad
-	preview.Y = startY + 2*(displaySize+gridPad)
-	preview.ScaleX = previewScale
-	preview.ScaleY = previewScale
+	preview.SetPosition(startX+displaySize+gridPad, startY+2*(displaySize+gridPad))
+	preview.SetScale(previewScale, previewScale)
 	scene.Root().AddChild(preview)
 
 	if err := willow.Run(scene, willow.RunConfig{

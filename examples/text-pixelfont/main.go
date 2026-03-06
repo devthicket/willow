@@ -33,13 +33,13 @@ func main() {
 	font.TrimCell(0, 4, 0, 4) // trim 4px left/right for tighter spacing
 
 	scene := willow.NewScene()
-	scene.ClearColor = willow.Color{R: 0.08, G: 0.08, B: 0.12, A: 1}
+	scene.ClearColor = willow.RGB(0.08, 0.08, 0.12)
 
 	y := 16.0
 
 	// --- Section: Scale comparison ---
 	sectionLabel := willow.NewText("section-scale", "-- Scale --", font)
-	sectionLabel.TextBlock.Color = willow.Color{R: 0.5, G: 0.5, B: 0.6, A: 1}
+	sectionLabel.TextBlock.Color = willow.RGB(0.5, 0.5, 0.6)
 	sectionLabel.TextBlock.Invalidate()
 	sectionLabel.SetPosition(20, y)
 	scene.Root().AddChild(sectionLabel)
@@ -66,7 +66,7 @@ func main() {
 
 	// --- Section: Color tinting ---
 	sectionColor := willow.NewText("section-color", "-- Color Tinting --", font)
-	sectionColor.TextBlock.Color = willow.Color{R: 0.5, G: 0.5, B: 0.6, A: 1}
+	sectionColor.TextBlock.Color = willow.RGB(0.5, 0.5, 0.6)
 	sectionColor.TextBlock.Invalidate()
 	sectionColor.SetPosition(20, y)
 	scene.Root().AddChild(sectionColor)
@@ -74,30 +74,30 @@ func main() {
 
 	labelRed := willow.NewText("red", "Danger!", font)
 	labelRed.TextBlock.FontSize = 32
-	labelRed.TextBlock.Color = willow.Color{R: 1, G: 0.3, B: 0.3, A: 1}
+	labelRed.TextBlock.Color = willow.RGB(1, 0.3, 0.3)
 	labelRed.TextBlock.Invalidate()
 	labelRed.SetPosition(20, y)
 	scene.Root().AddChild(labelRed)
 
 	labelGreen := willow.NewText("green", "Success!", font)
 	labelGreen.TextBlock.FontSize = 32
-	labelGreen.TextBlock.Color = willow.Color{R: 0.3, G: 1, B: 0.3, A: 1}
+	labelGreen.TextBlock.Color = willow.RGB(0.3, 1, 0.3)
 	labelGreen.TextBlock.Invalidate()
 	labelGreen.SetPosition(280, y)
 	scene.Root().AddChild(labelGreen)
 
 	labelBlue := willow.NewText("blue", "Info! (+ Node tint)", font)
 	labelBlue.TextBlock.FontSize = 32
-	labelBlue.TextBlock.Color = willow.Color{R: 0.4, G: 0.6, B: 1, A: 1}
+	labelBlue.TextBlock.Color = willow.RGB(0.4, 0.6, 1)
 	labelBlue.TextBlock.Invalidate()
-	labelBlue.Color = willow.Color{R: 0.8, G: 0.8, B: 1, A: 1} // Node.Color as additional tint
+	labelBlue.SetColor(willow.RGB(0.8, 0.8, 1)) // Node.Color as additional tint
 	labelBlue.SetPosition(540, y)
 	scene.Root().AddChild(labelBlue)
 	y += 44
 
 	// --- Section: Word wrapping ---
 	sectionWrap := willow.NewText("section-wrap", "-- Word Wrapping --", font)
-	sectionWrap.TextBlock.Color = willow.Color{R: 0.5, G: 0.5, B: 0.6, A: 1}
+	sectionWrap.TextBlock.Color = willow.RGB(0.5, 0.5, 0.6)
 	sectionWrap.TextBlock.Invalidate()
 	sectionWrap.SetPosition(20, y)
 	scene.Root().AddChild(sectionWrap)
@@ -112,14 +112,14 @@ func main() {
 
 	// --- Section: Alignment ---
 	sectionAlign := willow.NewText("section-align", "-- Alignment --", font)
-	sectionAlign.TextBlock.Color = willow.Color{R: 0.5, G: 0.5, B: 0.6, A: 1}
+	sectionAlign.TextBlock.Color = willow.RGB(0.5, 0.5, 0.6)
 	sectionAlign.TextBlock.Invalidate()
 	sectionAlign.SetPosition(20, y)
 	scene.Root().AddChild(sectionAlign)
 	y += 24
 
 	guideLine := func(gy float64) {
-		g := willow.NewRect("guide", 500, 1, willow.Color{R: 0.2, G: 0.2, B: 0.25, A: 1})
+		g := willow.NewRect("guide", 500, 1, willow.RGB(0.2, 0.2, 0.25))
 		g.SetPosition(20, gy)
 		scene.Root().AddChild(g)
 	}
@@ -154,7 +154,7 @@ func main() {
 
 	// --- Section: Full charset ---
 	sectionChars := willow.NewText("section-chars", "-- Full Character Set --", font)
-	sectionChars.TextBlock.Color = willow.Color{R: 0.5, G: 0.5, B: 0.6, A: 1}
+	sectionChars.TextBlock.Color = willow.RGB(0.5, 0.5, 0.6)
 	sectionChars.TextBlock.Invalidate()
 	sectionChars.SetPosition(20, y)
 	scene.Root().AddChild(sectionChars)
@@ -165,7 +165,7 @@ func main() {
 		font)
 	allChars.TextBlock.WrapWidth = 760
 	allChars.TextBlock.Invalidate()
-	allChars.TextBlock.Color = willow.Color{R: 0.9, G: 0.85, B: 0.6, A: 1}
+	allChars.TextBlock.Color = willow.RGB(0.9, 0.85, 0.6)
 	allChars.TextBlock.Invalidate()
 	allChars.SetPosition(20, y)
 	scene.Root().AddChild(allChars)

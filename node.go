@@ -111,29 +111,21 @@ type Node struct {
 	// ---- HOT: traverse flags (cache line 0) ----
 	// These 8 single-byte fields pack into the first 8 bytes with zero padding.
 
-	// Visible controls whether this node and its subtree are drawn.
-	// An invisible node is also excluded from hit testing.
-	Visible bool
-	// Renderable controls whether this node emits render commands. When false
-	// the node is skipped during drawing but its children are still traversed.
-	Renderable     bool
+	// ---- HOT: traverse flags (cache line 0) ----
+	visible        bool
+	renderable     bool
 	transformDirty bool
 	alphaDirty     bool
 	childrenSorted bool
 	// Type determines how this node is rendered (container, sprite, mesh, etc.).
-	Type NodeType
-	// RenderLayer is the primary sort key for render commands.
-	// All commands in a lower layer draw before any command in a higher layer.
-	RenderLayer uint8
-	// BlendMode selects the compositing operation used when drawing this node.
-	BlendMode BlendMode
+	Type        NodeType
+	renderLayer uint8
+	blendMode   BlendMode
 
 	// ---- HOT: computed world state (cache lines 0-1) ----
 
-	worldAlpha float64
-	// Alpha is the node's opacity in [0, 1]. Multiplied with the parent's
-	// computed alpha, so children inherit transparency.
-	Alpha          float64
+	worldAlpha     float64
+	alpha          float64
 	worldTransform [6]float64
 
 	// ---- HOT: children for iteration (cache line 1-2) ----
@@ -151,47 +143,33 @@ type Node struct {
 	cacheTreeMode         CacheTreeMode
 	cacheTreeDirty        bool
 	cachedCommands        []cachedCmd
-	cachedParentTransform [6]float32 // snapshot of container's view-world transform at cache time
-	cachedParentAlpha     float32    // snapshot of container's worldAlpha at cache time
-	// GlobalOrder is a secondary sort key within the same RenderLayer.
-	// Set it to override the default tree-order sorting.
-	GlobalOrder int
-	// TextureRegion identifies the sub-image within an atlas page to draw.
-	TextureRegion TextureRegion
-	// Color is a multiplicative tint applied to the sprite. The default
-	// {1,1,1,1} means no tint.
-	Color Color
+	cachedParentTransform [6]float32
+	cachedParentAlpha     float32
+	globalOrder           int
+	textureRegion         TextureRegion
+	color                 Color
 
 	// ---- WARM: local transform (read only when dirty) ----
 
-	// X and Y are the local-space position in pixels (origin at top-left, Y down).
-	X, Y float64
-	// ScaleX and ScaleY are the local scale factors (1.0 = no scaling).
-	ScaleX float64
-	ScaleY float64
-	// Rotation is the local rotation in radians (clockwise).
-	Rotation float64
-	// SkewX and SkewY are shear angles in radians.
-	SkewX, SkewY float64
-	// PivotX and PivotY are the transform origin in local pixels. Scale,
-	// rotation, and skew are applied around this point.
-	PivotX float64
-	PivotY float64
+	x, y         float64
+	scaleX       float64
+	scaleY       float64
+	rotation     float64
+	skewX, skewY float64
+	pivotX       float64
+	pivotY       float64
 
 	// ---- COLD: hierarchy, identity, metadata ----
 
 	// Parent points to this node's parent, or nil for the root.
 	Parent *Node
-	scene  *Scene // back-pointer to owning Scene (set by AddChild/RemoveChild)
+	scene  *Scene
 	// ID is a unique auto-assigned identifier (never zero for live nodes).
-	ID uint32
-	// ZIndex controls draw order among siblings. Higher values draw on top.
-	// Use SetZIndex to change this so the parent is notified to re-sort.
-	ZIndex int
-	// EntityID links this node to an ECS entity. When non-zero, interaction
-	// events on this node are forwarded to the Scene's EntityStore.
+	ID     uint32
+	zIndex int
+	// EntityID links this node to an ECS entity.
 	EntityID uint32
-	// Name is a human-readable label for debugging; not used for lookups.
+	// Name is a human-readable label for debugging.
 	Name string
 	// UserData is an arbitrary value the application can attach to a node.
 	UserData any
@@ -268,15 +246,126 @@ type Node struct {
 // nodeDefaults sets the common default field values shared by all constructors.
 func nodeDefaults(n *Node) {
 	n.ID = nextNodeID()
-	n.ScaleX = 1
-	n.ScaleY = 1
-	n.Alpha = 1
-	n.Color = Color{1, 1, 1, 1}
-	n.Visible = true
-	n.Renderable = true
+	n.scaleX = 1
+	n.scaleY = 1
+	n.alpha = 1
+	n.color = Color{1, 1, 1, 1}
+	n.visible = true
+	n.renderable = true
 	n.transformDirty = true
 	n.alphaDirty = true
 	n.childrenSorted = true
+}
+
+// --- Getters ---
+
+// X returns the local-space X position in pixels.
+func (n *Node) X() float64 { return n.x }
+
+// Y returns the local-space Y position in pixels.
+func (n *Node) Y() float64 { return n.y }
+
+// ScaleX returns the local X scale factor.
+func (n *Node) ScaleX() float64 { return n.scaleX }
+
+// ScaleY returns the local Y scale factor.
+func (n *Node) ScaleY() float64 { return n.scaleY }
+
+// Rotation returns the local rotation in radians (clockwise).
+func (n *Node) Rotation() float64 { return n.rotation }
+
+// SkewX returns the X shear angle in radians.
+func (n *Node) SkewX() float64 { return n.skewX }
+
+// SkewY returns the Y shear angle in radians.
+func (n *Node) SkewY() float64 { return n.skewY }
+
+// PivotX returns the X transform origin in local pixels.
+func (n *Node) PivotX() float64 { return n.pivotX }
+
+// PivotY returns the Y transform origin in local pixels.
+func (n *Node) PivotY() float64 { return n.pivotY }
+
+// Alpha returns the node's opacity in [0, 1].
+func (n *Node) Alpha() float64 { return n.alpha }
+
+// Color returns the node's multiplicative tint color.
+func (n *Node) Color() Color { return n.color }
+
+// Visible returns whether this node and its subtree are drawn.
+func (n *Node) Visible() bool { return n.visible }
+
+// Renderable returns whether this node emits render commands.
+func (n *Node) Renderable() bool { return n.renderable }
+
+// BlendMode returns the compositing operation used when drawing this node.
+func (n *Node) BlendMode() BlendMode { return n.blendMode }
+
+// RenderLayer returns the primary sort key for render commands.
+func (n *Node) RenderLayer() uint8 { return n.renderLayer }
+
+// GlobalOrder returns the secondary sort key within the same RenderLayer.
+func (n *Node) GlobalOrder() int { return n.globalOrder }
+
+// ZIndex returns the draw order among siblings.
+func (n *Node) ZIndex() int { return n.zIndex }
+
+// TextureRegion returns the sub-image region within an atlas page.
+func (n *Node) TextureRegion() TextureRegion { return n.textureRegion }
+
+// Width returns the effective pixel width of this node.
+// For WhitePixel sprites, this equals ScaleX. For textured sprites,
+// this equals ScaleX * region width. For non-sprite nodes, returns 0.
+func (n *Node) Width() float64 {
+	if n.Type != NodeTypeSprite {
+		return 0
+	}
+	if n.customImage != nil {
+		return n.scaleX * float64(n.customImage.Bounds().Dx())
+	}
+	if n.textureRegion == (TextureRegion{}) {
+		return n.scaleX // WhitePixel: 1x1, scale IS the size
+	}
+	return n.scaleX * float64(n.textureRegion.OriginalW)
+}
+
+// Height returns the effective pixel height of this node.
+// For WhitePixel sprites, this equals ScaleY. For textured sprites,
+// this equals ScaleY * region height. For non-sprite nodes, returns 0.
+func (n *Node) Height() float64 {
+	if n.Type != NodeTypeSprite {
+		return 0
+	}
+	if n.customImage != nil {
+		return n.scaleY * float64(n.customImage.Bounds().Dy())
+	}
+	if n.textureRegion == (TextureRegion{}) {
+		return n.scaleY // WhitePixel: 1x1, scale IS the size
+	}
+	return n.scaleY * float64(n.textureRegion.OriginalH)
+}
+
+// SetSize sets the node's visual size in pixels. For WhitePixel sprites,
+// this sets ScaleX/ScaleY directly. For textured sprites, it computes
+// the appropriate scale to achieve the given pixel dimensions.
+func (n *Node) SetSize(w, h float64) {
+	if n.customImage == WhitePixel || n.textureRegion == (TextureRegion{}) {
+		n.scaleX = w
+		n.scaleY = h
+	} else if n.customImage != nil {
+		b := n.customImage.Bounds()
+		if b.Dx() > 0 {
+			n.scaleX = w / float64(b.Dx())
+		}
+		if b.Dy() > 0 {
+			n.scaleY = h / float64(b.Dy())
+		}
+	} else if n.textureRegion.OriginalW > 0 && n.textureRegion.OriginalH > 0 {
+		n.scaleX = w / float64(n.textureRegion.OriginalW)
+		n.scaleY = h / float64(n.textureRegion.OriginalH)
+	}
+	n.transformDirty = true
+	invalidateAncestorCache(n)
 }
 
 // NewContainer creates a container node with no visual representation.
@@ -288,7 +377,7 @@ func NewContainer(name string) *Node {
 
 // NewSprite creates a sprite node that renders a texture region.
 func NewSprite(name string, region TextureRegion) *Node {
-	n := &Node{Name: name, Type: NodeTypeSprite, TextureRegion: region}
+	n := &Node{Name: name, Type: NodeTypeSprite, textureRegion: region}
 	nodeDefaults(n)
 	// If no region is specified (zero value), default to WhitePixel
 	if region == (TextureRegion{}) {
@@ -301,9 +390,8 @@ func NewSprite(name string, region TextureRegion) *Node {
 // around NewSprite with an empty TextureRegion (WhitePixel), sized via ScaleX/Y.
 func NewRect(name string, w, h float64, c Color) *Node {
 	n := NewSprite(name, TextureRegion{})
-	n.ScaleX = w
-	n.ScaleY = h
-	n.Color = c
+	n.SetSize(w, h)
+	n.color = c
 	return n
 }
 
@@ -327,8 +415,8 @@ func NewParticleEmitter(name string, cfg EmitterConfig) *Node {
 	n := &Node{
 		Name:          name,
 		Type:          NodeTypeParticleEmitter,
-		TextureRegion: cfg.Region,
-		BlendMode:     cfg.BlendMode,
+		textureRegion: cfg.Region,
+		blendMode:     cfg.BlendMode,
 		Emitter:       emitter,
 	}
 	nodeDefaults(n)
@@ -379,19 +467,19 @@ func (n *Node) CustomImage() *ebiten.Image {
 
 // SetColor sets the node's tint color and invalidates ancestor static caches.
 func (n *Node) SetColor(c Color) {
-	n.Color = c
+	n.color = c
 	invalidateAncestorCache(n)
 }
 
 // SetBlendMode sets the node's blend mode and invalidates ancestor static caches.
 func (n *Node) SetBlendMode(b BlendMode) {
-	n.BlendMode = b
+	n.blendMode = b
 	invalidateAncestorCache(n)
 }
 
 // SetVisible sets the node's visibility and invalidates ancestor caches.
 func (n *Node) SetVisible(v bool) {
-	n.Visible = v
+	n.visible = v
 	if n.cacheTreeEnabled {
 		n.cacheTreeDirty = true
 	}
@@ -400,7 +488,7 @@ func (n *Node) SetVisible(v bool) {
 
 // SetRenderable sets whether the node emits render commands and invalidates ancestor static caches.
 func (n *Node) SetRenderable(r bool) {
-	n.Renderable = r
+	n.renderable = r
 	invalidateAncestorCache(n)
 }
 
@@ -409,8 +497,8 @@ func (n *Node) SetRenderable(r bool) {
 // cache is NOT invalidated  -  instead the node is registered as animated so replay
 // reads the live TextureRegion. Page changes always invalidate.
 func (n *Node) SetTextureRegion(r TextureRegion) {
-	pageChanged := n.TextureRegion.Page != r.Page
-	n.TextureRegion = r
+	pageChanged := n.textureRegion.Page != r.Page
+	n.textureRegion = r
 	if pageChanged {
 		invalidateAncestorCache(n)
 		return
@@ -422,7 +510,7 @@ func (n *Node) SetTextureRegion(r TextureRegion) {
 
 // SetRenderLayer sets the node's render layer and invalidates ancestor static caches.
 func (n *Node) SetRenderLayer(l uint8) {
-	n.RenderLayer = l
+	n.renderLayer = l
 	invalidateAncestorCache(n)
 }
 
@@ -442,9 +530,55 @@ func (n *Node) SetFont(f Font) {
 	invalidateAncestorCache(n)
 }
 
+// --- Text convenience setters ---
+// These delegate to TextBlock fields and auto-invalidate layout.
+// Panics if called on a node without a TextBlock (programmer error).
+
+// SetFontSize sets the text display size in pixels and invalidates layout.
+func (n *Node) SetFontSize(size float64) {
+	n.TextBlock.FontSize = size
+	n.TextBlock.Invalidate()
+	invalidateAncestorCache(n)
+}
+
+// SetTextColor sets the text fill color and invalidates the shader uniforms.
+func (n *Node) SetTextColor(c Color) {
+	n.TextBlock.Color = c
+	n.TextBlock.Invalidate()
+	invalidateAncestorCache(n)
+}
+
+// SetAlign sets horizontal text alignment and invalidates layout.
+func (n *Node) SetAlign(a TextAlign) {
+	n.TextBlock.Align = a
+	n.TextBlock.Invalidate()
+	invalidateAncestorCache(n)
+}
+
+// SetWrapWidth sets the maximum line width for word wrapping and invalidates layout.
+func (n *Node) SetWrapWidth(w float64) {
+	n.TextBlock.WrapWidth = w
+	n.TextBlock.Invalidate()
+	invalidateAncestorCache(n)
+}
+
+// SetLineHeight overrides the font's default line height and invalidates layout.
+func (n *Node) SetLineHeight(h float64) {
+	n.TextBlock.LineHeight = h
+	n.TextBlock.Invalidate()
+	invalidateAncestorCache(n)
+}
+
+// SetTextEffects sets text effects (outline, glow, shadow) and invalidates uniforms.
+func (n *Node) SetTextEffects(e *TextEffects) {
+	n.TextBlock.TextEffects = e
+	n.TextBlock.Invalidate()
+	invalidateAncestorCache(n)
+}
+
 // SetGlobalOrder sets the node's global order and invalidates ancestor static caches.
 func (n *Node) SetGlobalOrder(o int) {
-	n.GlobalOrder = o
+	n.globalOrder = o
 	invalidateAncestorCache(n)
 }
 
@@ -755,10 +889,10 @@ func (n *Node) SetChildIndex(child *Node, index int) {
 // SetZIndex sets the node's ZIndex and marks the parent's children as unsorted,
 // so the next traversal will re-sort siblings by ZIndex.
 func (n *Node) SetZIndex(z int) {
-	if n.ZIndex == z {
+	if n.zIndex == z {
 		return
 	}
-	n.ZIndex = z
+	n.zIndex = z
 	if n.Parent != nil {
 		n.Parent.childrenSorted = false
 	}

@@ -44,15 +44,14 @@ cfg := willow.EmitterConfig{
     StartAlpha:   willow.Range{Min: 0.8, Max: 1.0},
     EndAlpha:     willow.Range{Min: 0, Max: 0},
     Gravity:      willow.Vec2{X: 0, Y: 200},
-    StartColor:   willow.Color{R: 1, G: 0.8, B: 0.2, A: 1},
-    EndColor:     willow.Color{R: 1, G: 0.2, B: 0, A: 1},
+    StartColor:   willow.RGB(1, 0.8, 0.2),
+    EndColor:     willow.RGB(1, 0.2, 0),
     Region:       atlas.Region("particle"),
     BlendMode:    willow.BlendAdd,
 }
 
 emitter := willow.NewParticleEmitter("sparks", cfg)
-emitter.X = 400
-emitter.Y = 300
+emitter.SetPosition(400, 300)
 scene.Root().AddChild(emitter)
 ```
 
@@ -95,8 +94,8 @@ Use `TextureRegion{}` for untextured particles  -  they use the 1x1 WhitePixel a
 ```go
 cfg := willow.EmitterConfig{
     Region:     willow.TextureRegion{},
-    StartColor: willow.Color{R: 1, G: 1, B: 1, A: 1},
-    EndColor:   willow.Color{R: 0, G: 0, B: 1, A: 0},
+    StartColor: willow.RGB(1, 1, 1),
+    EndColor:   willow.RGBA(0, 0, 1, 0),
     // ...
 }
 ```

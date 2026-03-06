@@ -124,7 +124,7 @@ Create polygon shapes from a list of points (ear-clip triangulated):
 poly := willow.NewPolygon("triangle", []willow.Vec2{
     {X: 0, Y: 0}, {X: 100, Y: 0}, {X: 50, Y: 80},
 })
-poly.Color = willow.Color{R: 0, G: 1, B: 0, A: 1}
+poly.SetColor(willow.RGB(0, 1, 0))
 
 // Textured polygon
 texPoly := willow.NewPolygonTextured("shape", textureImg, []willow.Vec2{

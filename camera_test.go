@@ -127,8 +127,8 @@ func TestCameraFollow(t *testing.T) {
 	cam := scene.NewCamera(Rect{X: 0, Y: 0, Width: 800, Height: 600})
 
 	target := NewSprite("target", TextureRegion{})
-	target.X = 200
-	target.Y = 150
+	target.x = 200
+	target.y = 150
 	target.transformDirty = false
 	target.worldTransform = [6]float64{1, 0, 0, 1, 200, 150}
 	scene.Root().AddChild(target)
@@ -343,14 +343,14 @@ func TestCulling_IntegrationWithScene(t *testing.T) {
 
 	// Sprite inside viewport
 	visible := NewSprite("visible", TextureRegion{Width: 64, Height: 64, OriginalW: 64, OriginalH: 64, Page: 0})
-	visible.X = 400
-	visible.Y = 300
+	visible.x = 400
+	visible.y = 300
 	scene.Root().AddChild(visible)
 
 	// Sprite far outside viewport
 	hidden := NewSprite("hidden", TextureRegion{Width: 64, Height: 64, OriginalW: 64, OriginalH: 64, Page: 0})
-	hidden.X = 5000
-	hidden.Y = 5000
+	hidden.x = 5000
+	hidden.y = 5000
 	scene.Root().AddChild(hidden)
 
 	// Register a dummy page so commands can be emitted
@@ -376,13 +376,13 @@ func TestCulling_DisabledShowsAll(t *testing.T) {
 	cam.dirty = true
 
 	visible := NewSprite("s1", TextureRegion{Width: 64, Height: 64, OriginalW: 64, OriginalH: 64})
-	visible.X = 400
-	visible.Y = 300
+	visible.x = 400
+	visible.y = 300
 	scene.Root().AddChild(visible)
 
 	hidden := NewSprite("s2", TextureRegion{Width: 64, Height: 64, OriginalW: 64, OriginalH: 64})
-	hidden.X = 5000
-	hidden.Y = 5000
+	hidden.x = 5000
+	hidden.y = 5000
 	scene.Root().AddChild(hidden)
 
 	screen := ebiten.NewImage(800, 600)
@@ -496,12 +496,12 @@ func BenchmarkCulling_10000Nodes(b *testing.B) {
 		s := NewSprite("s", TextureRegion{Width: 32, Height: 32, OriginalW: 32, OriginalH: 32, Page: 0})
 		if i%2 == 0 {
 			// Inside viewport
-			s.X = float64(i%40) * 20
-			s.Y = float64(i/40) * 20
+			s.x = float64(i%40) * 20
+			s.y = float64(i/40) * 20
 		} else {
 			// Outside viewport
-			s.X = 5000
-			s.Y = 5000
+			s.x = 5000
+			s.y = 5000
 		}
 		scene.Root().AddChild(s)
 	}

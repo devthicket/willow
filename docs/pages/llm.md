@@ -58,14 +58,10 @@ For WhitePixel sprites (created with `willow.TextureRegion{}`), **do not set Hit
 ```go
 // Correct  -  let the default AABB handle it:
 sp := willow.NewSprite("handle", willow.TextureRegion{})
-sp.ScaleX = 32
-sp.ScaleY = 32
-sp.PivotX = 0.5  // 1×1 WhitePixel, so 0.5 is the true center
-sp.PivotY = 0.5
+sp.SetSize(32, 32)
+sp.SetPivot(0.5, 0.5)  // 1×1 WhitePixel, so 0.5 is the true center
 sp.OnDrag(func(ctx willow.DragContext) {
-    sp.X += ctx.DeltaX
-    sp.Y += ctx.DeltaY
-    sp.Invalidate()
+    sp.SetPosition(sp.X()+ctx.DeltaX, sp.Y()+ctx.DeltaY)
 })
 ```
 
@@ -84,13 +80,12 @@ node.HitShape = willow.HitCircle{Radius: 32}                 // circular
 
 ## WhitePixel Sprites (Solid Color Shapes)
 
-Create solid-color shapes with an empty TextureRegion. Size them with ScaleX/Y and tint with Color:
+Create solid-color shapes with an empty TextureRegion. Size them with `SetSize()` and tint with `SetColor()`:
 
 ```go
 sprite := willow.NewSprite("box", willow.TextureRegion{})
-sprite.ScaleX = 40   // width in pixels
-sprite.ScaleY = 40   // height in pixels
-sprite.Color = willow.Color{R: 1, G: 0, B: 0, A: 1}  // red
+sprite.SetSize(40, 40)                    // width and height in pixels
+sprite.SetColor(willow.RGB(1, 0, 0))      // red
 ```
 
 Do **not** create unique `ebiten.Image` instances for solid-color rectangles.
@@ -103,7 +98,7 @@ Create arbitrary polygon shapes with a slice of Vec2 points:
 tri := willow.NewPolygon("triangle", []willow.Vec2{
     {X: 0, Y: -40}, {X: 35, Y: 30}, {X: -35, Y: 30},
 })
-tri.Color = willow.Color{R: 1, G: 1, B: 1, A: 1}  // must set  -  Color{} is invisible
+tri.SetColor(willow.RGB(1, 1, 1))  // must set  -  zero color is invisible
 ```
 
 Update vertices at runtime with the free function:
@@ -126,58 +121,48 @@ scene.Root().AddChild(group)
 
 Use `container.RemoveChildren()` to detach all children. Use `child.RemoveFromParent()` to detach one child without destroying it.
 
-## Invalidate After Direct Field Mutation
+## Use Setter Methods for Property Changes
 
-Setting `node.X`, `node.Y`, or any other field directly does **not** invalidate the transform  -  the node will not move on screen until you call `Invalidate()`. Either call it yourself or use the setter methods which handle it for you:
-
-```go
-// Option A: direct fields + manual Invalidate (preferred in hot loops)
-node.X += dx
-node.Y += dy
-node.Rotation += 0.01
-node.Invalidate()  // required  -  without this, nothing visually changes
-
-// Option B: setter methods (call Invalidate internally)
-node.SetPosition(node.X + dx, node.Y + dy)
-node.SetRotation(node.Rotation + 0.01)
-```
-
-Available setter methods: `SetPosition(x, y)`, `SetScale(sx, sy)`, `SetRotation(r)`, `SetPivot(px, py)`, `SetAlpha(a)`, `SetZIndex(z)`.
-
-This is the most common mistake: assigning `node.X = 100` and wondering why the node didn't move.
-
-## Alpha vs Color.A
-
-`Alpha` and `Color.A` are separate fields that multiply together. Use `Alpha` for fading nodes in/out. Use `Color` for tinting.
+Node fields are private. Use setter methods which automatically invalidate the transform:
 
 ```go
-node.Alpha = 0.5                                  // 50% transparent
-node.SetAlpha(0.5)                                 // same, with auto-invalidate
-node.Color = willow.Color{R: 1, G: 0, B: 0, A: 1} // red tint at full color alpha
+node.SetPosition(node.X() + dx, node.Y() + dy)
+node.SetRotation(node.Rotation() + 0.01)
 ```
 
-`nodeDefaults` initializes both `Alpha = 1` and `Color = {1,1,1,1}`, so new nodes are fully visible.
+Available setter methods: `SetPosition(x, y)`, `SetX(x)`, `SetY(y)`, `SetScale(sx, sy)`, `SetSize(w, h)`, `SetRotation(r)`, `SetPivot(px, py)`, `SetAlpha(a)`, `SetColor(c)`, `SetVisible(v)`, `SetZIndex(z)`, `SetRenderLayer(l)`, `SetGlobalOrder(o)`, `SetBlendMode(b)`, `SetRenderable(r)`, `SetTextureRegion(r)`.
+
+## Alpha vs Color.A()
+
+`Alpha()` and `Color().A()` are separate properties that multiply together. Use `SetAlpha()` for fading nodes in/out. Use `SetColor()` for tinting.
+
+```go
+node.SetAlpha(0.5)                                 // 50% transparent
+node.SetColor(willow.RGB(1, 0, 0))                 // red tint at full color alpha
+```
+
+`nodeDefaults` initializes both Alpha to 1 and Color to white `{1,1,1,1}`, so new nodes are fully visible.
 
 ## Color Zero Value Makes Nodes Invisible
 
-`Color` is multiplicative. The zero value `Color{}` means `{R:0, G:0, B:0, A:0}`  -  fully transparent black. `NewSprite` initializes Color to `{1,1,1,1}` automatically, but if you manually set `Color` to a zero struct, the node vanishes:
+Color is multiplicative. A zero-value color means `{R:0, G:0, B:0, A:0}`  -  fully transparent black. `NewSprite` initializes Color to white automatically, but if you set it to a zero color, the node vanishes:
 
 ```go
 // WRONG  -  sprite will be invisible:
-sprite.Color = willow.Color{}  // alpha 0 → invisible
+sprite.SetColor(willow.RGBA(0, 0, 0, 0))  // alpha 0 → invisible
 
 // CORRECT  -  no tint:
-sprite.Color = willow.Color{R: 1, G: 1, B: 1, A: 1}
+sprite.SetColor(willow.RGB(1, 1, 1))
 ```
 
 ## Rotation Is Radians, Not Degrees
 
 ```go
 // WRONG:
-node.Rotation = 90  // this is ~14 full rotations, not 90°
+node.SetRotation(90)  // this is ~14 full rotations, not 90°
 
 // CORRECT:
-node.Rotation = math.Pi / 2  // 90° clockwise
+node.SetRotation(math.Pi / 2)  // 90° clockwise
 ```
 
 ## Pivot Is Local Pixels, Not Normalized
@@ -186,33 +171,30 @@ PivotX/Y are in **local pixel coordinates**, not normalized 0–1. To center a s
 
 ```go
 // WRONG  -  0.5 pixels, not center:
-sprite.PivotX = 0.5
-sprite.PivotY = 0.5
+sprite.SetPivot(0.5, 0.5)
 
 // CORRECT for a 64×64 atlas sprite:
-sprite.PivotX = 32  // half of 64px width
-sprite.PivotY = 32
+sprite.SetPivot(32, 32)  // half of 64px width/height
 
 // CORRECT for a SetCustomImage sprite:
 sprite.SetCustomImage(img)
-sprite.PivotX = float64(img.Bounds().Dx()) / 2
-sprite.PivotY = float64(img.Bounds().Dy()) / 2
+sprite.SetPivot(float64(img.Bounds().Dx())/2, float64(img.Bounds().Dy())/2)
 ```
 
-WhitePixel sprites are 1×1, so `PivotX = 0.5` does center them  -  but only by coincidence. For any image larger than 1×1 (atlas regions, custom images), always use `width/2` and `height/2`.
+WhitePixel sprites are 1×1, so `SetPivot(0.5, 0.5)` does center them  -  but only by coincidence. For any image larger than 1×1 (atlas regions, custom images), always use `width/2` and `height/2`.
 
 ## Visible vs Renderable
 
-`Visible = false` skips the node **and all its children**. If you want to hide only the parent's visual while keeping children visible, use `Renderable = false`:
+`SetVisible(false)` skips the node **and all its children**. If you want to hide only the parent's visual while keeping children visible, use `SetRenderable(false)`:
 
 ```go
-parent.Visible = false     // hides parent AND all children
-parent.Renderable = false  // hides only this node's visual; children still render
+parent.SetVisible(false)     // hides parent AND all children
+parent.SetRenderable(false)  // hides only this node's visual; children still render
 ```
 
 ## Scene Graph Z-Order
 
-Nodes render in tree order (depth-first). Later children render on top of earlier ones. Control z-order by adding nodes in the right sequence or setting `ZIndex`:
+Nodes render in tree order (depth-first). Later children render on top of earlier ones. Control z-order by adding nodes in the right sequence or using `SetZIndex()`:
 
 ```go
 // Ropes first (behind), then handles (on top)
@@ -220,11 +202,9 @@ scene.Root().AddChild(ropeNode)
 scene.Root().AddChild(handleNode)
 
 // Or use ZIndex for explicit ordering within a parent:
-ropeNode.ZIndex = 0
-handleNode.ZIndex = 10
+ropeNode.SetZIndex(0)
+handleNode.SetZIndex(10)
 ```
-
-You can use `node.ZIndex = n` (direct field, requires `Invalidate`) or `node.SetZIndex(n)` (auto-invalidates).
 
 ## Input Context Structs
 
@@ -278,7 +258,7 @@ node.OnDragEnd(func(ctx willow.DragContext) {
 
 ```go
 node.OnUpdate = func(dt float64) {  // float64, not float32
-    node.Rotation += 0.02
+    node.SetRotation(node.Rotation() + 0.02)
 }
 ```
 
@@ -428,7 +408,7 @@ Use shelf mode when images arrive over time and may need updating. Use batch mod
 
 ## BlendMode
 
-Set `node.BlendMode` for compositing effects:
+Use `node.SetBlendMode()` for compositing effects:
 
 ```go
 willow.BlendNormal    // standard alpha blending (default)
@@ -469,7 +449,7 @@ A light can follow a node automatically:
 light := &willow.Light{
     Target: playerNode,  // syncs world position from node on Redraw()
     Radius: 200,
-    Color:  willow.Color{R: 1, G: 0.9, B: 0.7, A: 1},
+    Color:  willow.RGB(1, 0.9, 0.7),
 }
 lightLayer.AddLight(light)
 ```
@@ -489,7 +469,7 @@ content.SetMask(mask)
 ```go
 maskRoot := willow.NewContainer("mask-root")
 shape := willow.NewPolygon("star", starPoints)
-shape.X = 150  // transforms on children ARE applied
+shape.SetX(150)  // transforms on children ARE applied
 maskRoot.AddChild(shape)
 content.SetMask(maskRoot)
 ```
@@ -558,48 +538,49 @@ willow.EmitterConfig{
 
 ## Text
 
-Willow has two font types: `*SpriteFont` (SDF-based, smooth scaling) and `*PixelFont` (bitmap, pixel-perfect integer scaling). Both implement the `Font` interface and work with `NewText`.
+Willow has two font types: `*DistanceFieldFont` (SDF-based, smooth scaling) and `*PixelFont` (bitmap, pixel-perfect integer scaling). Both implement the `Font` interface and work with `NewText`.
 
-### SpriteFont (SDF)
+### DistanceFieldFont (SDF)
 
 The primary constructor is `NewFontFromTTF`:
 
 ```go
-font, err := willow.NewFontFromTTF(ttfData, 80)  // returns (*SpriteFont, error)
+font, err := willow.NewFontFromTTF(ttfData, 80)  // returns (*DistanceFieldFont, error)
 label := willow.NewText("label", "Hello", font)   // returns *Node
-label.TextBlock.FontSize = 24                       // display size in pixels (default 16)
+label.SetFontSize(24)                              // display size in pixels (default 16)
 scene.Root().AddChild(label)
 ```
 
 `NewFontFromTTF` generates the font atlas and registers the page automatically  -  no `RegisterPage` call needed. Size is the rasterization size (higher = sharper when scaled up). Use 0 for the default (80px).
 
-**FontSize** is applied at render time as a scale factor, independent of `ScaleX`/`ScaleY`. This means you can animate node scale without affecting text size, and vice versa. Defaults to 16. Set to 0 to use the font's native atlas size.
+**FontSize** is applied at render time as a scale factor, independent of `ScaleX()`/`ScaleY()`. This means you can animate node scale without affecting text size, and vice versa. Defaults to 16. Set to 0 to use the font's native atlas size.
 
 **WrapWidth** is in screen pixels. No manual division by scale is needed.
 
-Set `TextEffects` on the `TextBlock` (not the node) for outline, glow, and shadow. `nil` means plain fill only:
+Use `SetTextEffects()` for outline, glow, and shadow. `nil` means plain fill only:
 
 ```go
-label.TextBlock.TextEffects = &willow.TextEffects{
+label.SetTextEffects(&willow.TextEffects{
     OutlineWidth: 2.0,
-    OutlineColor: willow.Color{R: 0, G: 0, B: 0, A: 1},
-}
-label.TextBlock.Invalidate()
+    OutlineColor: willow.RGB(0, 0, 0),
+})
 ```
 
-### TextBlock Properties
+### Text Properties
+
+Use convenience setters on the node for common text properties:
 
 ```go
 label.TextBlock.Content = "New text"
-label.TextBlock.FontSize = 24
-label.TextBlock.Align = willow.TextAlignCenter
-label.TextBlock.WrapWidth = 400                      // screen pixels
-label.TextBlock.Color = willow.Color{R: 1, G: 1, B: 1, A: 1}
-label.TextBlock.TextEffects = &willow.TextEffects{OutlineWidth: 2, OutlineColor: willow.Color{A: 1}}
-label.TextBlock.Invalidate()  // NOT label.Invalidate()
+label.TextBlock.Invalidate()                         // for Content, use TextBlock directly
+label.SetFontSize(24)
+label.SetAlign(willow.TextAlignCenter)
+label.SetWrapWidth(400)                              // screen pixels
+label.SetTextColor(willow.RGB(1, 1, 1))
+label.SetTextEffects(&willow.TextEffects{OutlineWidth: 2, OutlineColor: willow.RGBA(0, 0, 0, 1)})
 ```
 
-Changing `TextBlock` properties requires `node.TextBlock.Invalidate()`  -  not `node.Invalidate()`.
+Text convenience setters (`SetFontSize`, `SetTextColor`, `SetAlign`, `SetWrapWidth`, `SetLineHeight`, `SetTextEffects`) handle `TextBlock.Invalidate()` automatically. For `TextBlock.Content`, call `TextBlock.Invalidate()` manually.
 
 ### Font Measurement
 
@@ -628,8 +609,7 @@ scene.Root().AddChild(label)
 **FontSize** controls integer scaling via `TextBlock.FontSize`. The scale factor is `FontSize / cellH`, rounded to the nearest integer (minimum 1x). With a 16px cell: FontSize 16 = 1x, 32 = 2x, 48 = 3x.
 
 ```go
-label.TextBlock.FontSize = 32  // 2x scale for a 16px cell font
-label.TextBlock.Invalidate()
+label.SetFontSize(32)  // 2x scale for a 16px cell font
 ```
 
 **TrimCell** trims dead pixels from each side of every cell, tightening character spacing. Parameters follow CSS order: top, right, bottom, left.
@@ -638,11 +618,11 @@ label.TextBlock.Invalidate()
 font.TrimCell(0, 4, 0, 4)  // trim 4px left/right: 16px cell → 8px advance
 ```
 
-**WrapWidth** and **Align** work the same as SpriteFont. No shader is used  -  bitmap text renders with `DrawTriangles` and `FilterNearest`.
+**WrapWidth** and **Align** work the same as DistanceFieldFont. No shader is used  -  bitmap text renders with `DrawTriangles` and `FilterNearest`.
 
-**Color** works consistently across both font types: `TextBlock.Color` is the fill color, `Node.Color` is a tint multiplier on top (same as how Node.Color tints sprites). The final pixel color is `TextBlock.Color * Node.Color`.
+**Color** works consistently across both font types: `SetTextColor()` sets the fill color, `SetColor()` is a tint multiplier on top (same as how node color tints sprites). The final pixel color is `TextColor * Color`.
 
-**TextEffects** (outline, glow, shadow) are SpriteFont-only and have no effect on PixelFont.
+**TextEffects** (outline, glow, shadow) are DistanceFieldFont-only and have no effect on PixelFont.
 
 ## Filters Is a Slice
 
@@ -675,7 +655,7 @@ layer := viewport.AddTileLayer(willow.TileLayerConfig{
     Name: "ground", Width: mapW, Height: mapH,
     Data: gidData, Regions: regions, AtlasImage: tilesetImg,
 })
-layer.Node().RenderLayer = 0  // controls draw order within the viewport
+layer.Node().SetRenderLayer(0)  // controls draw order within the viewport
 ```
 
 GID data is `[]uint32`. GID 0 is reserved as empty (not rendered). Valid tile IDs start at 1:

@@ -366,7 +366,7 @@ func nodeContainsLocal(n *Node, lx, ly float64) bool {
 // appending interactable leaf nodes to buf. Skips Visible=false or
 // Interactable=false subtrees.
 func (s *Scene) collectInteractable(n *Node, buf []*Node) []*Node {
-	if !n.Visible || !n.Interactable {
+	if !n.visible || !n.Interactable {
 		return buf
 	}
 

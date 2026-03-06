@@ -93,7 +93,7 @@ func affine32(m [6]float64) [6]float32 {
 // transforms are computed by updateWorldTransform in Update, and traverse
 // applies s.viewTransform locally for screen-space output.
 func (s *Scene) traverse(n *Node, treeOrder *int) {
-	if !n.Visible {
+	if !n.visible {
 		return
 	}
 
@@ -103,7 +103,7 @@ func (s *Scene) traverse(n *Node, treeOrder *int) {
 	// Determine if this node is culled. Culling only suppresses this node's
 	// command emission  -  children are ALWAYS traversed because any node type
 	// may have children whose world positions differ from the parent's AABB.
-	culled := s.cullActive && n.Renderable && shouldCull(n, viewWorld, s.cullBounds)
+	culled := s.cullActive && n.renderable && shouldCull(n, viewWorld, s.cullBounds)
 
 	// CacheAsTree: replay cached commands (hit) or build cache (miss).
 	if n.cacheTreeEnabled && !culled {
@@ -152,23 +152,23 @@ func (s *Scene) traverse(n *Node, treeOrder *int) {
 
 	// Emit command for renderable leaf-type nodes
 	preCmdLen := len(s.commands)
-	if n.Renderable && !culled {
+	if n.renderable && !culled {
 		switch n.Type {
 		case NodeTypeSprite:
 			*treeOrder++
 			cmd := RenderCommand{
 				Type:        CommandSprite,
 				Transform:   affine32(viewWorld),
-				Color:       color32{float32(n.Color.R), float32(n.Color.G), float32(n.Color.B), float32(n.Color.A * n.worldAlpha)},
-				BlendMode:   n.BlendMode,
-				RenderLayer: n.RenderLayer,
-				GlobalOrder: n.GlobalOrder,
+				Color:       color32{float32(n.color.r), float32(n.color.g), float32(n.color.b), float32(n.color.a * n.worldAlpha)},
+				BlendMode:   n.blendMode,
+				RenderLayer: n.renderLayer,
+				GlobalOrder: n.globalOrder,
 				treeOrder:   *treeOrder,
 			}
 			if n.customImage != nil {
 				cmd.directImage = n.customImage
 			} else {
-				cmd.TextureRegion = n.TextureRegion
+				cmd.TextureRegion = n.textureRegion
 			}
 			if building {
 				cmd.emittingNodeID = n.ID
@@ -178,16 +178,16 @@ func (s *Scene) traverse(n *Node, treeOrder *int) {
 			if len(n.Vertices) == 0 || len(n.Indices) == 0 {
 				break
 			}
-			tintColor := Color{n.Color.R, n.Color.G, n.Color.B, n.Color.A * n.worldAlpha}
+			tintColor := Color{n.color.r, n.color.g, n.color.b, n.color.a * n.worldAlpha}
 			dst := ensureTransformedVerts(n)
 			transformVertices(n.Vertices, dst, viewWorld, tintColor)
 			*treeOrder++
 			s.commands = append(s.commands, RenderCommand{
 				Type:        CommandMesh,
 				Transform:   affine32(viewWorld),
-				BlendMode:   n.BlendMode,
-				RenderLayer: n.RenderLayer,
-				GlobalOrder: n.GlobalOrder,
+				BlendMode:   n.blendMode,
+				RenderLayer: n.renderLayer,
+				GlobalOrder: n.globalOrder,
 				treeOrder:   *treeOrder,
 				meshVerts:   dst,
 				meshInds:    n.Indices,
@@ -204,12 +204,12 @@ func (s *Scene) traverse(n *Node, treeOrder *int) {
 				s.commands = append(s.commands, RenderCommand{
 					Type:               CommandParticle,
 					Transform:          affine32(particleTransform),
-					TextureRegion:      n.TextureRegion,
+					TextureRegion:      n.textureRegion,
 					directImage:        n.customImage,
-					Color:              color32{float32(n.Color.R), float32(n.Color.G), float32(n.Color.B), float32(n.Color.A * n.worldAlpha)},
-					BlendMode:          n.BlendMode,
-					RenderLayer:        n.RenderLayer,
-					GlobalOrder:        n.GlobalOrder,
+					Color:              color32{float32(n.color.r), float32(n.color.g), float32(n.color.b), float32(n.color.a * n.worldAlpha)},
+					BlendMode:          n.blendMode,
+					RenderLayer:        n.renderLayer,
+					GlobalOrder:        n.globalOrder,
 					treeOrder:          *treeOrder,
 					emitter:            n.Emitter,
 					worldSpaceParticle: ws,
@@ -261,7 +261,7 @@ func (s *Scene) rebuildSortedChildren(n *Node) {
 	for i := 1; i < nc; i++ {
 		key := n.sortedChildren[i]
 		j := i - 1
-		for j >= 0 && n.sortedChildren[j].ZIndex > key.ZIndex {
+		for j >= 0 && n.sortedChildren[j].zIndex > key.zIndex {
 			n.sortedChildren[j+1] = n.sortedChildren[j]
 			j--
 		}
@@ -395,9 +395,9 @@ func (s *Scene) renderSpecialNode(n *Node, treeOrder *int) {
 			Type:        CommandSprite,
 			Transform:   at32,
 			Color:       color32{1, 1, 1, float32(n.worldAlpha)},
-			BlendMode:   n.BlendMode,
-			RenderLayer: n.RenderLayer,
-			GlobalOrder: n.GlobalOrder,
+			BlendMode:   n.blendMode,
+			RenderLayer: n.renderLayer,
+			GlobalOrder: n.globalOrder,
 			treeOrder:   *treeOrder,
 			directImage: n.cacheTexture,
 		})
@@ -460,9 +460,9 @@ func (s *Scene) renderSpecialNode(n *Node, treeOrder *int) {
 			Type:        CommandSprite,
 			Transform:   at32,
 			Color:       color32{1, 1, 1, float32(n.worldAlpha)},
-			BlendMode:   n.BlendMode,
-			RenderLayer: n.RenderLayer,
-			GlobalOrder: n.GlobalOrder,
+			BlendMode:   n.blendMode,
+			RenderLayer: n.renderLayer,
+			GlobalOrder: n.globalOrder,
 			treeOrder:   *treeOrder,
 			directImage: n.cacheTexture,
 		})
@@ -477,9 +477,9 @@ func (s *Scene) renderSpecialNode(n *Node, treeOrder *int) {
 		Type:                 CommandSprite,
 		Transform:            at32,
 		Color:                color32{1, 1, 1, float32(n.worldAlpha)},
-		BlendMode:            n.BlendMode,
-		RenderLayer:          n.RenderLayer,
-		GlobalOrder:          n.GlobalOrder,
+		BlendMode:            n.blendMode,
+		RenderLayer:          n.renderLayer,
+		GlobalOrder:          n.globalOrder,
 		treeOrder:            *treeOrder,
 		directImage:          result,
 		transientDirectImage: true,
@@ -558,7 +558,7 @@ func (s *Scene) replayCacheAsTree(n *Node, containerTransform32 [6]float32, cont
 		}
 		// Two-tier texture: nil source = static, non-nil = animated
 		if src.source != nil {
-			cmd.TextureRegion = src.source.TextureRegion
+			cmd.TextureRegion = src.source.textureRegion
 		}
 		*treeOrder++
 		cmd.treeOrder = *treeOrder
@@ -582,8 +582,8 @@ func (s *Scene) buildCacheAsTree(n *Node, containerTransform32 [6]float32, conta
 
 	// Emit the container's own command if renderable.
 	viewWorld := multiplyAffine(s.viewTransform, n.worldTransform)
-	culled := s.cullActive && n.Renderable && shouldCull(n, viewWorld, s.cullBounds)
-	if n.Renderable && !culled {
+	culled := s.cullActive && n.renderable && shouldCull(n, viewWorld, s.cullBounds)
+	if n.renderable && !culled {
 		s.emitNodeCommandInline(n, treeOrder)
 		// Tag the just-emitted command(s) with the node ID.
 		for i := startIdx; i < len(s.commands); i++ {
@@ -658,16 +658,16 @@ func (s *Scene) emitNodeCommandInline(n *Node, treeOrder *int) {
 		cmd := RenderCommand{
 			Type:        CommandSprite,
 			Transform:   affine32(viewWorld),
-			Color:       color32{float32(n.Color.R), float32(n.Color.G), float32(n.Color.B), float32(n.Color.A * n.worldAlpha)},
-			BlendMode:   n.BlendMode,
-			RenderLayer: n.RenderLayer,
-			GlobalOrder: n.GlobalOrder,
+			Color:       color32{float32(n.color.r), float32(n.color.g), float32(n.color.b), float32(n.color.a * n.worldAlpha)},
+			BlendMode:   n.blendMode,
+			RenderLayer: n.renderLayer,
+			GlobalOrder: n.globalOrder,
 			treeOrder:   *treeOrder,
 		}
 		if n.customImage != nil {
 			cmd.directImage = n.customImage
 		} else {
-			cmd.TextureRegion = n.TextureRegion
+			cmd.TextureRegion = n.textureRegion
 		}
 		s.commands = append(s.commands, cmd)
 	case NodeTypeText:

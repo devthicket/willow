@@ -24,12 +24,12 @@ type bouncer struct {
 }
 
 func (b *bouncer) update() error {
-	b.node.SetPosition(b.node.X+b.dx, b.node.Y+b.dy)
+	b.node.SetPosition(b.node.X()+b.dx, b.node.Y()+b.dy)
 
-	if b.node.X < 0 || b.node.X+spriteW > screenW {
+	if b.node.X() < 0 || b.node.X()+spriteW > screenW {
 		b.dx = -b.dx
 	}
-	if b.node.Y < 0 || b.node.Y+spriteH > screenH {
+	if b.node.Y() < 0 || b.node.Y()+spriteH > screenH {
 		b.dy = -b.dy
 	}
 	return nil
@@ -37,11 +37,10 @@ func (b *bouncer) update() error {
 
 func main() {
 	scene := willow.NewScene()
-	scene.ClearColor = willow.Color{R: 0.118, G: 0.118, B: 0.157, A: 1}
+	scene.ClearColor = willow.RGB(0.118, 0.118, 0.157)
 
-	sprite := willow.NewRect("box", spriteW, spriteH, willow.Color{R: 80.0 / 255.0, G: 180.0 / 255.0, B: 1, A: 1})
-	sprite.X = 100
-	sprite.Y = 100
+	sprite := willow.NewRect("box", spriteW, spriteH, willow.RGB(80.0/255.0, 180.0/255.0, 1))
+	sprite.SetPosition(100, 100)
 	scene.Root().AddChild(sprite)
 
 	b := &bouncer{node: sprite, dx: 2, dy: 1.5}

@@ -233,7 +233,7 @@ func (v *TileMapViewport) update(dt float64) {
 	}
 
 	for _, layer := range v.layers {
-		if !layer.node.Visible {
+		if !layer.node.visible {
 			continue
 		}
 
@@ -442,9 +442,9 @@ func (l *TileMapLayer) emitCommands(s *Scene, treeOrder *int) {
 	}
 
 	// Get the accumulated color from the node's parent chain.
-	r := float32(l.node.Color.R * l.node.worldAlpha)
-	g := float32(l.node.Color.G * l.node.worldAlpha)
-	b := float32(l.node.Color.B * l.node.worldAlpha)
+	r := float32(l.node.color.r * l.node.worldAlpha)
+	g := float32(l.node.color.g * l.node.worldAlpha)
+	b := float32(l.node.color.b * l.node.worldAlpha)
 	a := float32(l.node.worldAlpha)
 
 	// Premultiply.
@@ -519,10 +519,10 @@ func (l *TileMapLayer) emitCommands(s *Scene, treeOrder *int) {
 		*treeOrder++
 		s.commands = append(s.commands, RenderCommand{
 			Type:         CommandTilemap,
-			RenderLayer:  l.node.RenderLayer,
-			GlobalOrder:  l.node.GlobalOrder,
+			RenderLayer:  l.node.renderLayer,
+			GlobalOrder:  l.node.globalOrder,
 			treeOrder:    *treeOrder,
-			BlendMode:    l.node.BlendMode,
+			BlendMode:    l.node.blendMode,
 			tilemapVerts: l.vertices[offset*4 : end*4],
 			tilemapInds:  l.indices[:batchTiles*6],
 			tilemapImage: l.atlasImage,
@@ -533,7 +533,7 @@ func (l *TileMapLayer) emitCommands(s *Scene, treeOrder *int) {
 // updateAnimations scans layers for animated tiles and updates their UVs.
 func (v *TileMapViewport) updateAnimations() {
 	for _, layer := range v.layers {
-		if layer.anims == nil || !layer.node.Visible {
+		if layer.anims == nil || !layer.node.visible {
 			continue
 		}
 

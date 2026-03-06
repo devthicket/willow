@@ -15,7 +15,7 @@ func TestTextBlock_ColorTint(t *testing.T) {
 	}
 
 	// Verify the color is preserved on the TextBlock
-	if tb.Color.R != 0.5 || tb.Color.G != 0.8 || tb.Color.B != 1.0 || tb.Color.A != 0.9 {
+	if tb.Color.r != 0.5 || tb.Color.g != 0.8 || tb.Color.b != 1.0 || tb.Color.a != 0.9 {
 		t.Errorf("TextBlock color = %+v, want {0.5 0.8 1.0 0.9}", tb.Color)
 	}
 }
@@ -48,8 +48,8 @@ func TestNewText_DefaultFontSize(t *testing.T) {
 	if n.TextBlock.FontSize != 16 {
 		t.Errorf("FontSize = %f, want 16", n.TextBlock.FontSize)
 	}
-	if n.ScaleX != 1 || n.ScaleY != 1 {
-		t.Errorf("Scale = (%f, %f), want (1, 1)", n.ScaleX, n.ScaleY)
+	if n.scaleX != 1 || n.scaleY != 1 {
+		t.Errorf("Scale = (%f, %f), want (1, 1)", n.scaleX, n.scaleY)
 	}
 }
 

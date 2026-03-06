@@ -17,8 +17,8 @@ func TestNewSpriteDefaults(t *testing.T) {
 	region := TextureRegion{Width: 32, Height: 32, OriginalW: 32, OriginalH: 32}
 	n := NewSprite("spr", region)
 	assertNodeDefaults(t, n, "spr", NodeTypeSprite)
-	if n.TextureRegion != region {
-		t.Errorf("TextureRegion = %v, want %v", n.TextureRegion, region)
+	if n.textureRegion != region {
+		t.Errorf("TextureRegion = %v, want %v", n.textureRegion, region)
 	}
 }
 
@@ -53,19 +53,19 @@ func assertNodeDefaults(t *testing.T, n *Node, name string, typ NodeType) {
 	if n.Type != typ {
 		t.Errorf("Type = %d, want %d", n.Type, typ)
 	}
-	if n.ScaleX != 1 || n.ScaleY != 1 {
-		t.Errorf("Scale = (%v, %v), want (1, 1)", n.ScaleX, n.ScaleY)
+	if n.scaleX != 1 || n.scaleY != 1 {
+		t.Errorf("Scale = (%v, %v), want (1, 1)", n.scaleX, n.scaleY)
 	}
-	if n.Alpha != 1 {
-		t.Errorf("Alpha = %v, want 1", n.Alpha)
+	if n.alpha != 1 {
+		t.Errorf("Alpha = %v, want 1", n.alpha)
 	}
-	if n.Color != (Color{1, 1, 1, 1}) {
-		t.Errorf("Color = %v, want white", n.Color)
+	if n.color != (Color{1, 1, 1, 1}) {
+		t.Errorf("Color = %v, want white", n.color)
 	}
-	if !n.Visible {
+	if !n.visible {
 		t.Error("Visible should be true")
 	}
-	if !n.Renderable {
+	if !n.renderable {
 		t.Error("Renderable should be true")
 	}
 	if !n.transformDirty {

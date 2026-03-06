@@ -37,7 +37,7 @@ type demo struct {
 
 func main() {
 	scene := willow.NewScene()
-	scene.ClearColor = willow.Color{R: 0.08, G: 0.08, B: 0.1, A: 1}
+	scene.ClearColor = willow.RGB(0.08, 0.08, 0.1)
 
 	// Try to load a system font by name, fall back to Go Regular.
 	ttfData, err := willow.LoadFontFromSystemAsTtf("Arial")
@@ -55,11 +55,10 @@ func main() {
 	// ---- Title ----------------------------------------------------------------------------------------------------------------------------------
 	title := willow.NewText("title", "Willow  -  Text", font)
 	title.TextBlock.FontSize = sizeLarge
-	title.TextBlock.Color = willow.Color{R: 1, G: 1, B: 1, A: 1}
+	title.TextBlock.Color = willow.RGB(1, 1, 1)
 	title.TextBlock.Align = willow.TextAlignRight
 	title.TextBlock.WrapWidth = screenW - 48
-	title.X = 24
-	title.Y = 18
+	title.SetPosition(24, 18)
 	root.AddChild(title)
 
 	// ---- Colors --------------------------------------------------------------------------------------------------------------------------------
@@ -69,18 +68,17 @@ func main() {
 		label string
 		color willow.Color
 	}{
-		{"White", willow.Color{R: 1, G: 1, B: 1, A: 1}},
-		{"Cyan", willow.Color{R: 0.4, G: 0.9, B: 1, A: 1}},
-		{"Orange", willow.Color{R: 1, G: 0.6, B: 0.2, A: 1}},
-		{"Pink", willow.Color{R: 1, G: 0.4, B: 0.7, A: 1}},
+		{"White", willow.RGB(1, 1, 1)},
+		{"Cyan", willow.RGB(0.4, 0.9, 1)},
+		{"Orange", willow.RGB(1, 0.6, 0.2)},
+		{"Pink", willow.RGB(1, 0.4, 0.7)},
 	}
 	x := 24.0
 	for _, c := range colors {
 		n := willow.NewText("color-"+c.label, c.label, font)
 		n.TextBlock.FontSize = sizeMedium
 		n.TextBlock.Color = c.color
-		n.X = x
-		n.Y = 82
+		n.SetPosition(x, 82)
 		root.AddChild(n)
 		w, _ := n.TextBlock.MeasureDisplay(c.label)
 		x += w + 24
@@ -101,11 +99,10 @@ func main() {
 	} {
 		n := willow.NewText("align-"+a.name, a.text, font)
 		n.TextBlock.FontSize = sizeMedium
-		n.TextBlock.Color = willow.Color{R: 0.8, G: 0.8, B: 0.8, A: 1}
+		n.TextBlock.Color = willow.RGB(0.8, 0.8, 0.8)
 		n.TextBlock.Align = a.align
 		n.TextBlock.WrapWidth = screenW - 48
-		n.X = 24
-		n.Y = a.y
+		n.SetPosition(24, a.y)
 		root.AddChild(n)
 	}
 
@@ -114,7 +111,7 @@ func main() {
 	const colY = 240.0
 	addLabel(root, font, "Multi-line Alignment  (wrap 300px)", 24, 224)
 
-	guideColor := willow.Color{R: 0.25, G: 0.3, B: 0.35, A: 1}
+	guideColor := willow.RGB(0.25, 0.3, 0.35)
 	colOffsets := []float64{24, 280, 536}
 	for _, cx := range colOffsets {
 		addGuideLine(root, cx, colY, 80, guideColor)
@@ -126,9 +123,9 @@ func main() {
 		align willow.TextAlign
 		color willow.Color
 	}{
-		{willow.TextAlignLeft, willow.Color{R: 0.7, G: 0.9, B: 0.7, A: 1}},
-		{willow.TextAlignCenter, willow.Color{R: 0.7, G: 0.8, B: 1, A: 1}},
-		{willow.TextAlignRight, willow.Color{R: 1, G: 0.8, B: 0.7, A: 1}},
+		{willow.TextAlignLeft, willow.RGB(0.7, 0.9, 0.7)},
+		{willow.TextAlignCenter, willow.RGB(0.7, 0.8, 1)},
+		{willow.TextAlignRight, willow.RGB(1, 0.8, 0.7)},
 	}
 	for i, wa := range wrapAligns {
 		n := willow.NewText(fmt.Sprintf("wrap-%d", i), multiLine, font)
@@ -136,8 +133,7 @@ func main() {
 		n.TextBlock.Color = wa.color
 		n.TextBlock.Align = wa.align
 		n.TextBlock.WrapWidth = wrapW
-		n.X = colOffsets[i]
-		n.Y = colY
+		n.SetPosition(colOffsets[i], colY)
 		root.AddChild(n)
 	}
 
@@ -147,69 +143,64 @@ func main() {
 	// Plain
 	plain := willow.NewText("fx-plain", "Plain Text", font)
 	plain.TextBlock.FontSize = sizeEffect
-	plain.TextBlock.Color = willow.Color{R: 1, G: 1, B: 1, A: 1}
-	plain.X = 24
-	plain.Y = 370
+	plain.TextBlock.Color = willow.RGB(1, 1, 1)
+	plain.SetPosition(24, 370)
 	root.AddChild(plain)
 
 	// Outline
 	outlined := willow.NewText("fx-outline", "Outlined", font)
 	outlined.TextBlock.FontSize = sizeEffect
-	outlined.TextBlock.Color = willow.Color{R: 1, G: 0.95, B: 0.7, A: 1}
+	outlined.TextBlock.Color = willow.RGB(1, 0.95, 0.7)
 
 	outlined.TextBlock.TextEffects = &willow.TextEffects{
 		OutlineWidth: 2.0,
-		OutlineColor: willow.Color{R: 0.1, G: 0.1, B: 0.3, A: 1},
+		OutlineColor: willow.RGB(0.1, 0.1, 0.3),
 	}
-	outlined.X = 24
-	outlined.Y = 420
+	outlined.SetPosition(24, 420)
 	root.AddChild(outlined)
 
 	// Glow
 	glowing := willow.NewText("fx-glow", "Glowing", font)
 	glowing.TextBlock.FontSize = sizeEffect
-	glowing.TextBlock.Color = willow.Color{R: 0.4, G: 0.9, B: 1, A: 1}
+	glowing.TextBlock.Color = willow.RGB(0.4, 0.9, 1)
 
 	glowing.TextBlock.TextEffects = &willow.TextEffects{
 		GlowWidth: 3.0,
-		GlowColor: willow.Color{R: 0.2, G: 0.5, B: 1, A: 0.6},
+		GlowColor: willow.RGBA(0.2, 0.5, 1, 0.6),
 	}
-	glowing.X = 24
-	glowing.Y = 470
+	glowing.SetPosition(24, 470)
 	glowing.SetCacheAsTexture(true)
 	root.AddChild(glowing)
 
 	// Shadow
 	shadow := willow.NewText("fx-shadow", "Shadow", font)
 	shadow.TextBlock.FontSize = sizeEffect
-	shadow.TextBlock.Color = willow.Color{R: 1, G: 1, B: 1, A: 1}
+	shadow.TextBlock.Color = willow.RGB(1, 1, 1)
 
 	shadow.TextBlock.TextEffects = &willow.TextEffects{
 		ShadowOffset:   willow.Vec2{X: 3, Y: 3},
-		ShadowColor:    willow.Color{R: 0, G: 0, B: 0, A: 0.7},
+		ShadowColor:    willow.RGBA(0, 0, 0, 0.7),
 		ShadowSoftness: 1.5,
 	}
-	shadow.X = 24
-	shadow.Y = 520
+	shadow.SetPosition(24, 520)
 	shadow.SetCacheAsTexture(true)
 	root.AddChild(shadow)
 
 	// All effects combined
 	allFx := willow.NewText("fx-all", "All Effects", font)
 	allFx.TextBlock.FontSize = sizeEffect
-	allFx.TextBlock.Color = willow.Color{R: 1, G: 0.85, B: 0.3, A: 1}
+	allFx.TextBlock.Color = willow.RGB(1, 0.85, 0.3)
 
 	allFx.TextBlock.TextEffects = &willow.TextEffects{
 		OutlineWidth:   1.5,
-		OutlineColor:   willow.Color{R: 0.2, G: 0, B: 0, A: 1},
+		OutlineColor:   willow.RGB(0.2, 0, 0),
 		GlowWidth:      2.0,
-		GlowColor:      willow.Color{R: 1, G: 0.4, B: 0, A: 0.4},
+		GlowColor:      willow.RGBA(1, 0.4, 0, 0.4),
 		ShadowOffset:   willow.Vec2{X: 2, Y: 2},
-		ShadowColor:    willow.Color{R: 0, G: 0, B: 0, A: 0.5},
+		ShadowColor:    willow.RGBA(0, 0, 0, 0.5),
 		ShadowSoftness: 1.0,
 	}
-	allFx.X = 24
-	allFx.Y = 570
+	allFx.SetPosition(24, 570)
 	allFx.SetCacheAsTexture(true)
 	root.AddChild(allFx)
 
@@ -218,9 +209,8 @@ func main() {
 
 	counter := willow.NewText("counter", "Frame: 0", font)
 	counter.TextBlock.FontSize = sizeMedium
-	counter.TextBlock.Color = willow.Color{R: 0.5, G: 1, B: 0.5, A: 1}
-	counter.X = 450
-	counter.Y = 370
+	counter.TextBlock.Color = willow.RGB(0.5, 1, 0.5)
+	counter.SetPosition(450, 370)
 	root.AddChild(counter)
 
 	d := &demo{scene: scene, counter: counter}
@@ -252,20 +242,17 @@ func (d *demo) update() error {
 func addLabel(root *willow.Node, font willow.Font, s string, x, y float64) {
 	n := willow.NewText("section-"+s, s, font)
 	n.TextBlock.FontSize = sizeSmall
-	n.TextBlock.Color = willow.Color{R: 0.4, G: 0.5, B: 0.6, A: 1}
-	n.X = x
-	n.Y = y
+	n.TextBlock.Color = willow.RGB(0.4, 0.5, 0.6)
+	n.SetPosition(x, y)
 	root.AddChild(n)
 }
 
 // addGuideLine draws a thin vertical line at (x, y) with the given height.
 func addGuideLine(root *willow.Node, x, y, height float64, color willow.Color) {
 	line := willow.NewSprite("guide", willow.TextureRegion{})
-	line.Color = color
-	line.X = x
-	line.Y = y
-	line.ScaleX = 1
-	line.ScaleY = height
+	line.SetColor(color)
+	line.SetPosition(x, y)
+	line.SetScale(1, height)
 	root.AddChild(line)
 }
 

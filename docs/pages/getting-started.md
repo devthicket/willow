@@ -29,11 +29,9 @@ func main() {
     scene := willow.NewScene()
 
     sprite := willow.NewSprite("hero", willow.TextureRegion{})
-    sprite.ScaleX = 40
-    sprite.ScaleY = 40
-    sprite.Color = willow.Color{R: 0.3, G: 0.7, B: 1, A: 1}
-    sprite.X = 300
-    sprite.Y = 220
+    sprite.SetSize(40, 40)
+    sprite.SetColor(willow.RGBA(0.3, 0.7, 1, 1))
+    sprite.SetPosition(300, 220)
     scene.Root().AddChild(sprite)
 
     if err := willow.Run(scene, willow.RunConfig{
@@ -46,13 +44,13 @@ func main() {
 }
 ```
 
-This creates a 640x480 window with a blue square. `NewSprite` with an empty `TextureRegion{}` creates a [solid-color sprite](?page=solid-color-sprites)  -  set `Color` for the fill and `ScaleX`/`ScaleY` for the size.
+This creates a 640x480 window with a blue square. `NewSprite` with an empty `TextureRegion{}` creates a [solid-color sprite](?page=solid-color-sprites)  -  set `SetColor()` for the fill and `SetSize()` for the dimensions.
 
 Use `SetUpdateFunc` to attach game logic without a custom struct:
 
 ```go
 scene.SetUpdateFunc(func() error {
-    sprite.X += 1 // move right every frame
+    sprite.SetX(sprite.X() + 1) // move right every frame
     return nil
 })
 ```

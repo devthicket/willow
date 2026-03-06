@@ -173,7 +173,7 @@ func TestEnumValues(t *testing.T) {
 }
 
 func TestColorWhite(t *testing.T) {
-	if ColorWhite.R != 1 || ColorWhite.G != 1 || ColorWhite.B != 1 || ColorWhite.A != 1 {
+	if ColorWhite.r != 1 || ColorWhite.g != 1 || ColorWhite.b != 1 || ColorWhite.a != 1 {
 		t.Errorf("ColorWhite = %v, want {1,1,1,1}", ColorWhite)
 	}
 }
