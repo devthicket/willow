@@ -284,14 +284,14 @@ func nodeDimensions(n *Node) (w, h float64) {
 		return n.Mesh.Aabb.Width, n.Mesh.Aabb.Height
 	case NodeTypeParticleEmitter:
 		if n.Emitter != nil {
-			r := &n.Emitter.config.Region
+			r := &n.Emitter.Config.Region
 			return float64(r.OriginalW), float64(r.OriginalH)
 		}
 		return 0, 0
 	case NodeTypeText:
 		if n.TextBlock != nil {
-			n.TextBlock.layout() // ensure measured dims are current
-			return n.TextBlock.measuredW, n.TextBlock.measuredH
+			textBlockLayout(n.TextBlock) // ensure measured dims are current
+			return n.TextBlock.MeasuredW, n.TextBlock.MeasuredH
 		}
 		return 0, 0
 	default:

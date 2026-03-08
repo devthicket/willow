@@ -234,3 +234,17 @@ func (e *Emitter) ParticleColor(i int) (r, g, b float32) {
 func (e *Emitter) ParticlePos(i int) (x, y float64) {
 	return e.Particles[i].x, e.Particles[i].y
 }
+
+// ParticleVelocity returns the velocity of the particle at the given index.
+func (e *Emitter) ParticleVelocity(i int) (vx, vy float64) {
+	return e.Particles[i].vx, e.Particles[i].vy
+}
+
+// ParticleLifeFraction returns the progress fraction (0..1) of the particle's lifetime.
+func (e *Emitter) ParticleLifeFraction(i int) float64 {
+	p := &e.Particles[i]
+	if p.maxLife <= 0 {
+		return 1.0
+	}
+	return 1.0 - p.life/p.maxLife
+}

@@ -130,7 +130,7 @@ func (s *Scene) submitSprite(target *ebiten.Image, cmd *RenderCommand, op *ebite
 // submitParticles draws all alive particles for a CommandParticle command.
 func (s *Scene) submitParticles(target *ebiten.Image, cmd *RenderCommand, op *ebiten.DrawImageOptions) {
 	e := cmd.emitter
-	if e == nil || e.alive == 0 {
+	if e == nil || e.Alive == 0 {
 		return
 	}
 
@@ -163,8 +163,8 @@ func (s *Scene) submitParticles(target *ebiten.Image, cmd *RenderCommand, op *eb
 	// Transform for positioning: world transform for attached, view-only for world-space.
 	baseGeoM := commandGeoM(cmd)
 
-	for i := 0; i < e.alive; i++ {
-		p := &e.particles[i]
+	for i := 0; i < e.Alive; i++ {
+		px, py, pScale, pAlpha, pColorR, pColorG, pColorB := e.ParticleRenderData(i)
 
 		op.GeoM.Reset()
 
@@ -181,22 +181,22 @@ func (s *Scene) submitParticles(target *ebiten.Image, cmd *RenderCommand, op *eb
 
 		// Per-particle scale (around sprite center).
 		op.GeoM.Translate(-float64(r.OriginalW)/2, -float64(r.OriginalH)/2)
-		op.GeoM.Scale(float64(p.scale), float64(p.scale))
+		op.GeoM.Scale(float64(pScale), float64(pScale))
 		op.GeoM.Translate(float64(r.OriginalW)/2, float64(r.OriginalH)/2)
 
 		// Per-particle translation.
-		// For world-space particles, (p.x, p.y) are absolute world coords.
-		// For attached particles, (p.x, p.y) are relative to the emitter.
-		op.GeoM.Translate(p.x, p.y)
+		// For world-space particles, (px, py) are absolute world coords.
+		// For attached particles, (px, py) are relative to the emitter.
+		op.GeoM.Translate(px, py)
 
 		// Apply base transform (emitter world transform or view-only transform).
 		op.GeoM.Concat(baseGeoM)
 
 		// Per-particle color: particle color * emitter node color, particle alpha * emitter worldAlpha.
-		cr := p.colorR * cmd.Color.R
-		cg := p.colorG * cmd.Color.G
-		cb := p.colorB * cmd.Color.B
-		ca := p.alpha * cmd.Color.A
+		cr := pColorR * cmd.Color.R
+		cg := pColorG * cmd.Color.G
+		cb := pColorB * cmd.Color.B
+		ca := pAlpha * cmd.Color.A
 		op.ColorScale.Reset()
 		op.ColorScale.Scale(cr*ca, cg*ca, cb*ca, ca)
 
@@ -540,7 +540,7 @@ func (s *Scene) submitBitmapText(target *ebiten.Image, cmd *RenderCommand) {
 // submitParticlesBatched draws all alive particles using a single DrawTriangles32 call.
 func (s *Scene) submitParticlesBatched(target *ebiten.Image, cmd *RenderCommand) {
 	e := cmd.emitter
-	if e == nil || e.alive == 0 {
+	if e == nil || e.Alive == 0 {
 		return
 	}
 
@@ -609,13 +609,13 @@ func (s *Scene) submitParticlesBatched(target *ebiten.Image, cmd *RenderCommand)
 	s.batchVerts = s.batchVerts[:0]
 	s.batchInds = s.batchInds[:0]
 
-	for i := 0; i < e.alive; i++ {
-		p := &e.particles[i]
+	for i := 0; i < e.Alive; i++ {
+		px, py, pScale, pAlpha, pColorR, pColorG, pColorB := e.ParticleRenderData(i)
 
 		// Build per-particle local→world transform.
-		ps := float64(p.scale)
-		localTx := (offX-halfW)*ps + halfW + p.x
-		localTy := (offY-halfH)*ps + halfH + p.y
+		ps := float64(pScale)
+		localTx := (offX-halfW)*ps + halfW + px
+		localTy := (offY-halfH)*ps + halfH + py
 
 		// Concat with base: M_base * M_local
 		fa := ba * ps
@@ -626,10 +626,10 @@ func (s *Scene) submitParticlesBatched(target *ebiten.Image, cmd *RenderCommand)
 		fty := bb*localTx + bd*localTy + bty
 
 		// Per-particle color
-		ca := p.alpha * cmd.Color.A
-		cr := p.colorR * cmd.Color.R * ca
-		cg := p.colorG * cmd.Color.G * ca
-		cb := p.colorB * cmd.Color.B * ca
+		ca := pAlpha * cmd.Color.A
+		cr := pColorR * cmd.Color.R * ca
+		cg := pColorG * cmd.Color.G * ca
+		cb := pColorB * cmd.Color.B * ca
 
 		base := uint32(len(s.batchVerts))
 

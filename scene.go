@@ -275,14 +275,14 @@ func updateNodesAndParticles(n *Node, dt float64) {
 		n.OnUpdate(dt)
 	}
 	if n.Type == NodeTypeParticleEmitter && n.Emitter != nil {
-		if n.Emitter.config.WorldSpace {
-			n.Emitter.worldX = n.WorldTransform[4]
-			n.Emitter.worldY = n.WorldTransform[5]
+		if n.Emitter.Config.WorldSpace {
+			n.Emitter.WorldX = n.WorldTransform[4]
+			n.Emitter.WorldY = n.WorldTransform[5]
 		}
-		n.Emitter.update(dt)
+		n.Emitter.Update(dt)
 		// Active particles under a CacheAsTree ancestor must invalidate the
 		// cache each frame so the emitter's commands are re-emitted.
-		if n.Emitter.alive > 0 {
+		if n.Emitter.Alive > 0 {
 			invalidateAncestorCache(n)
 		}
 	}

@@ -386,8 +386,8 @@ func setupParticleDrawScene(mode BatchMode) *Scene {
 	}
 	emitterNode := NewParticleEmitter("particles", cfg)
 	emitterNode.Emitter.Start()
-	for emitterNode.Emitter.alive < cfg.MaxParticles {
-		emitterNode.Emitter.update(1.0 / 60.0)
+	for emitterNode.Emitter.Alive < cfg.MaxParticles {
+		emitterNode.Emitter.Update(1.0 / 60.0)
 	}
 	s.Root().AddChild(emitterNode)
 	return s
@@ -567,14 +567,14 @@ func BenchmarkParticle_10000Particles(b *testing.B) {
 	emitter.Start()
 
 	// Fill to capacity.
-	for emitter.alive < cfg.MaxParticles {
-		emitter.update(1.0 / 60.0)
+	for emitter.Alive < cfg.MaxParticles {
+		emitter.Update(1.0 / 60.0)
 	}
 
 	b.ResetTimer()
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		emitter.update(1.0 / 60.0)
+		emitter.Update(1.0 / 60.0)
 	}
 }
 
@@ -605,8 +605,8 @@ func BenchmarkParticle_MaxEmitters(b *testing.B) {
 	for i := range emitters {
 		emitters[i] = newParticleEmitter(cfg)
 		emitters[i].Start()
-		for emitters[i].alive < cfg.MaxParticles {
-			emitters[i].update(1.0 / 60.0)
+		for emitters[i].Alive < cfg.MaxParticles {
+			emitters[i].Update(1.0 / 60.0)
 		}
 	}
 
@@ -614,7 +614,7 @@ func BenchmarkParticle_MaxEmitters(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		for _, e := range emitters {
-			e.update(1.0 / 60.0)
+			e.Update(1.0 / 60.0)
 		}
 	}
 }
@@ -772,8 +772,8 @@ func setupMixedScene(nSprites, nEmitters int) *Scene {
 		}
 		emitterNode := NewParticleEmitter("particles", cfg)
 		emitterNode.Emitter.Start()
-		for emitterNode.Emitter.alive < cfg.MaxParticles {
-			emitterNode.Emitter.update(1.0 / 60.0)
+		for emitterNode.Emitter.Alive < cfg.MaxParticles {
+			emitterNode.Emitter.Update(1.0 / 60.0)
 		}
 		root.AddChild(emitterNode)
 	}

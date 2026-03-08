@@ -514,6 +514,13 @@ func (n *Node) IsDisposed() bool {
 	return n.Disposed
 }
 
+// Scene returns the Scene this node belongs to, or nil if not in a scene graph.
+// Returns any because node/ cannot import the root package. Callers in root
+// should type-assert to *Scene.
+func (n *Node) Scene() any {
+	return n.Scene_
+}
+
 // --- Helpers ---
 
 func invalidateAncestorCache(n *Node) {

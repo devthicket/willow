@@ -136,10 +136,10 @@ func subtreeBoundsWalk(n *Node, localTransform [6]float64, bounds *Rect, first *
 	if n.Type == NodeTypeMesh {
 		aabb = meshWorldAABB(n, localTransform)
 		hasAABB = aabb.Width > 0 || aabb.Height > 0
-	} else if n.Type == NodeTypeParticleEmitter && n.Emitter != nil && n.Emitter.alive > 0 {
-		pb := n.Emitter.bounds()
+	} else if n.Type == NodeTypeParticleEmitter && n.Emitter != nil && n.Emitter.Alive > 0 {
+		pb := n.Emitter.Bounds()
 		if pb.Width > 0 && pb.Height > 0 {
-			if n.Emitter.config.WorldSpace {
+			if n.Emitter.Config.WorldSpace {
 				// Particle positions are already in world space; the
 				// localTransform only contributes the emitter's offset.
 				// Use the raw particle bounds directly.
@@ -381,10 +381,10 @@ func emitNodeCommand(s *Scene, n *Node, transform [6]float64, alpha float64, tre
 			meshImage:   n.Mesh.Image,
 		})
 	case NodeTypeParticleEmitter:
-		if n.Emitter != nil && n.Emitter.alive > 0 {
+		if n.Emitter != nil && n.Emitter.Alive > 0 {
 			*treeOrder++
 			particleTransform := transform
-			ws := n.Emitter.config.WorldSpace
+			ws := n.Emitter.Config.WorldSpace
 			if ws {
 				particleTransform = s.viewTransform
 			}

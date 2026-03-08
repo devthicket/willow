@@ -199,8 +199,8 @@ func (n *Node) Invalidate() {
 	n.TransformDirty = true
 	n.AlphaDirty = true
 	if n.TextBlock != nil {
-		n.TextBlock.layoutDirty = true
-		n.TextBlock.uniformsDirty = true
+		n.TextBlock.LayoutDirty = true
+		n.TextBlock.UniformsDirty = true
 	}
 	invalidateAncestorCache(n)
 }

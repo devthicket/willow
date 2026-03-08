@@ -11,7 +11,7 @@ func TestTextBlock_ColorTint(t *testing.T) {
 	tb := &TextBlock{
 		Content:     "A",
 		Color:       RGBA(0.5, 0.8, 1.0, 0.9),
-		layoutDirty: true,
+		LayoutDirty: true,
 	}
 
 	// Verify the color is preserved on the TextBlock
@@ -38,8 +38,8 @@ func TestNewText_SetsTextBlock(t *testing.T) {
 	if n.TextBlock.Color != RGBA(1, 1, 1, 1) {
 		t.Errorf("TextBlock.Color = %+v, want white", n.TextBlock.Color)
 	}
-	if !n.TextBlock.layoutDirty {
-		t.Error("layoutDirty should be true initially")
+	if !n.TextBlock.LayoutDirty {
+		t.Error("LayoutDirty should be true initially")
 	}
 }
 
@@ -55,30 +55,30 @@ func TestNewText_DefaultFontSize(t *testing.T) {
 
 func TestFontScale_NilFont(t *testing.T) {
 	tb := &TextBlock{FontSize: 24}
-	if tb.fontScale() != 1.0 {
-		t.Errorf("fontScale with nil Font = %f, want 1.0", tb.fontScale())
+	if textBlockFontScale(tb) != 1.0 {
+		t.Errorf("textBlockFontScale with nil Font = %f, want 1.0", textBlockFontScale(tb))
 	}
 }
 
 func TestFontScale_ZeroFontSize(t *testing.T) {
 	tb := &TextBlock{FontSize: 0, Font: &SpriteFont{lineHeight: 80}}
-	if tb.fontScale() != 1.0 {
-		t.Errorf("fontScale with FontSize 0 = %f, want 1.0", tb.fontScale())
+	if textBlockFontScale(tb) != 1.0 {
+		t.Errorf("textBlockFontScale with FontSize 0 = %f, want 1.0", textBlockFontScale(tb))
 	}
 }
 
 func TestFontScale_NegativeFontSize(t *testing.T) {
 	tb := &TextBlock{FontSize: -1, Font: &SpriteFont{lineHeight: 80}}
-	if tb.fontScale() != 1.0 {
-		t.Errorf("fontScale with negative FontSize = %f, want 1.0", tb.fontScale())
+	if textBlockFontScale(tb) != 1.0 {
+		t.Errorf("textBlockFontScale with negative FontSize = %f, want 1.0", textBlockFontScale(tb))
 	}
 }
 
 func TestFontScale_Computed(t *testing.T) {
 	tb := &TextBlock{FontSize: 24, Font: &SpriteFont{lineHeight: 80}}
 	expected := 24.0 / 80.0
-	if math.Abs(tb.fontScale()-expected) > 1e-10 {
-		t.Errorf("fontScale = %f, want %f", tb.fontScale(), expected)
+	if math.Abs(textBlockFontScale(tb)-expected) > 1e-10 {
+		t.Errorf("textBlockFontScale = %f, want %f", textBlockFontScale(tb), expected)
 	}
 }
 

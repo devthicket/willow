@@ -2,6 +2,7 @@ package willow
 
 import (
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/phanxgames/willow/internal/node"
 )
 
 // CacheTreeMode, HitShape, and other foundation types are aliased
@@ -86,16 +87,8 @@ type cacheTreeData struct {
 	parentAlpha     float32
 }
 
-// meshData holds mesh-specific fields for NodeTypeMesh nodes.
-// Allocated by NewMesh. Only mesh nodes carry this data.
-type meshData struct {
-	Vertices         []ebiten.Vertex
-	Indices          []uint16
-	Image            *ebiten.Image
-	TransformedVerts []ebiten.Vertex // preallocated transform buffer
-	Aabb             Rect            // cached local-space AABB
-	AabbDirty        bool            // recompute AABB when true
-}
+// meshData is an alias for the internal MeshData type.
+type meshData = node.MeshData
 
 // nodeCallbacks holds per-node event handler functions. Allocated on
 // first callback setter call. Most nodes never receive callbacks.
@@ -217,7 +210,9 @@ type Node struct {
 	Interactable bool
 	// HitShape overrides the default AABB hit test with a custom shape.
 	// Nil means use the node's bounding box.
-	HitShape HitShape
+	HitShape  HitShape
+	Draggable bool
+	Pinchable bool
 
 	// ---- COLD: filters, cache, mask ----
 
@@ -232,6 +227,9 @@ type Node struct {
 
 	// ---- COLD: per-node pointer callbacks (lazily allocated) ----
 	Callbacks *nodeCallbacks
+
+	// ---- COLD: render integration ----
+	EmitFn node.EmitFn
 
 	// ---- COLD: internal ----
 	Disposed bool
@@ -507,8 +505,8 @@ func NewText(name string, content string, font Font) *Node {
 			Font:          font,
 			FontSize:      16,
 			Color:         RGBA(1, 1, 1, 1),
-			layoutDirty:   true,
-			uniformsDirty: true,
+			LayoutDirty:   true,
+			UniformsDirty: true,
 		},
 	}
 	nodeDefaults(n)
@@ -584,7 +582,7 @@ func (n *Node) SetRenderLayer(l uint8) {
 // Panics if called on a node without a TextBlock (programmer error).
 func (n *Node) SetContent(s string) {
 	n.TextBlock.Content = s
-	n.TextBlock.layoutDirty = true
+	n.TextBlock.LayoutDirty = true
 	invalidateAncestorCache(n)
 }
 
@@ -592,7 +590,7 @@ func (n *Node) SetContent(s string) {
 // Panics if called on a node without a TextBlock (programmer error).
 func (n *Node) SetFont(f Font) {
 	n.TextBlock.Font = f
-	n.TextBlock.layoutDirty = true
+	n.TextBlock.LayoutDirty = true
 	invalidateAncestorCache(n)
 }
 

@@ -304,7 +304,7 @@ func TestCoalescedDirectImageFallback(t *testing.T) {
 }
 
 func TestCoalescedParticleCount(t *testing.T) {
-	e := &ParticleEmitter{alive: 50}
+	e := &ParticleEmitter{Alive: 50}
 	cmds := []RenderCommand{
 		{Type: CommandParticle, emitter: e, BlendMode: BlendNormal},
 	}
@@ -315,7 +315,7 @@ func TestCoalescedParticleCount(t *testing.T) {
 }
 
 func TestCoalescedMixed(t *testing.T) {
-	e := &ParticleEmitter{alive: 10}
+	e := &ParticleEmitter{Alive: 10}
 	cmds := []RenderCommand{
 		{Type: CommandSprite, BlendMode: BlendNormal, TextureRegion: TextureRegion{Page: 0}},
 		{Type: CommandSprite, BlendMode: BlendNormal, TextureRegion: TextureRegion{Page: 0}},
@@ -400,8 +400,8 @@ func TestSubmitParticlesBatched_Integration(t *testing.T) {
 	emitterNode := NewParticleEmitter("particles", cfg)
 	emitterNode.Emitter.Start()
 	// Fill particles
-	for emitterNode.Emitter.alive < 50 {
-		emitterNode.Emitter.update(1.0 / 60.0)
+	for emitterNode.Emitter.Alive < 50 {
+		emitterNode.Emitter.Update(1.0 / 60.0)
 	}
 	s.Root().AddChild(emitterNode)
 

@@ -194,10 +194,10 @@ func (s *Scene) traverse(n *Node, treeOrder *int) {
 				meshImage:   n.Mesh.Image,
 			})
 		case NodeTypeParticleEmitter:
-			if n.Emitter != nil && n.Emitter.alive > 0 {
+			if n.Emitter != nil && n.Emitter.Alive > 0 {
 				*treeOrder++
 				particleTransform := viewWorld
-				ws := n.Emitter.config.WorldSpace
+				ws := n.Emitter.Config.WorldSpace
 				if ws {
 					particleTransform = s.viewTransform
 				}

@@ -101,7 +101,7 @@ func countDrawCalls(commands []RenderCommand) int {
 		switch cmd.Type {
 		case CommandParticle:
 			if cmd.emitter != nil {
-				count += cmd.emitter.alive
+				count += cmd.emitter.Alive
 			}
 		case CommandSDF:
 			count++ // each text node = 1 DrawTrianglesShader call
@@ -147,7 +147,7 @@ func countDrawCallsCoalesced(commands []RenderCommand) int {
 				count++
 				inSpriteRun = false
 			}
-			if cmd.emitter != nil && cmd.emitter.alive > 0 {
+			if cmd.emitter != nil && cmd.emitter.Alive > 0 {
 				count++ // 1 DrawTriangles32 per emitter
 			}
 		case CommandMesh:

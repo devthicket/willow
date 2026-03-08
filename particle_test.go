@@ -26,19 +26,19 @@ func defaultTestConfig(max int) EmitterConfig {
 func TestEmitterConfigCreatesPool(t *testing.T) {
 	cfg := defaultTestConfig(500)
 	e := newParticleEmitter(cfg)
-	if len(e.particles) != 500 {
-		t.Errorf("pool size = %d, want 500", len(e.particles))
+	if len(e.Particles) != 500 {
+		t.Errorf("pool size = %d, want 500", len(e.Particles))
 	}
-	if e.alive != 0 {
-		t.Errorf("alive = %d, want 0", e.alive)
+	if e.Alive != 0 {
+		t.Errorf("alive = %d, want 0", e.Alive)
 	}
 }
 
 func TestEmitterDefaultMaxParticles(t *testing.T) {
 	cfg := EmitterConfig{MaxParticles: 0}
 	e := newParticleEmitter(cfg)
-	if len(e.particles) != 128 {
-		t.Errorf("default pool size = %d, want 128", len(e.particles))
+	if len(e.Particles) != 128 {
+		t.Errorf("default pool size = %d, want 128", len(e.Particles))
 	}
 }
 
@@ -62,7 +62,7 @@ func TestStartStopReset(t *testing.T) {
 
 	// Start and spawn some particles.
 	e.Start()
-	e.update(0.1) // should spawn ~10 particles at rate 100/s
+	e.Update(0.1) // should spawn ~10 particles at rate 100/s
 	if e.AliveCount() == 0 {
 		t.Fatal("expected particles after update")
 	}
@@ -85,7 +85,7 @@ func TestParticleSpawnRate(t *testing.T) {
 	// 1 second at 60/s → should spawn 60 particles.
 	// Run 60 updates at dt=1/60 each.
 	for i := 0; i < 60; i++ {
-		e.update(1.0 / 60.0)
+		e.Update(1.0 / 60.0)
 	}
 
 	alive := e.AliveCount()
@@ -102,7 +102,7 @@ func TestSwapRemoveNoDead(t *testing.T) {
 	e.Start()
 
 	// Spawn particles.
-	e.update(0.02) // spawn ~2, all alive (life=0.05, dt=0.02)
+	e.Update(0.02) // spawn ~2, all alive (life=0.05, dt=0.02)
 	before := e.AliveCount()
 	if before == 0 {
 		t.Fatal("expected particles spawned")
@@ -110,7 +110,7 @@ func TestSwapRemoveNoDead(t *testing.T) {
 
 	// Now advance past lifetime.
 	e.Stop()
-	e.update(0.1) // all should die
+	e.Update(0.1) // all should die
 	if e.AliveCount() != 0 {
 		t.Errorf("alive = %d, want 0 after particles expire", e.AliveCount())
 	}
@@ -126,19 +126,20 @@ func TestGravityAffectsVelocity(t *testing.T) {
 	e := newParticleEmitter(cfg)
 	e.Start()
 
-	e.update(0.001) // spawn particles (emitAccum = 10 → spawn 10)
+	e.Update(0.001) // spawn particles (emitAccum = 10 → spawn 10)
 	e.Stop()
-	e.update(1.0) // simulate 1 second of gravity
+	e.Update(1.0) // simulate 1 second of gravity
 	if e.AliveCount() == 0 {
 		t.Fatal("expected alive particles")
 	}
 
 	// After 1 second with gravity Y=100, vy should be ~100.
-	p := &e.particles[0]
-	assertNear(t, "vy", p.vy, 100.0)
-	// Position: y = vy*dt = 100*1 = 100
-	if p.y < 50 {
-		t.Errorf("y = %f, expected > 50 with gravity", p.y)
+	_, vy := e.ParticleVelocity(0)
+	assertNear(t, "vy", vy, 100.0)
+	// Position: y should be significant with gravity
+	_, py := e.ParticlePos(0)
+	if py < 50 {
+		t.Errorf("y = %f, expected > 50 with gravity", py)
 	}
 }
 
@@ -156,31 +157,28 @@ func TestLifetimeInterpolation(t *testing.T) {
 	e.Start()
 
 	// Spawn one particle.
-	e.update(0.001)
+	e.Update(0.001)
 	e.Stop()
 	if e.AliveCount() != 1 {
 		t.Fatalf("alive = %d, want 1", e.AliveCount())
 	}
 
-	p := &e.particles[0]
-
 	// At t≈0: scale=2, alpha=1, color=(1,0,0)
-	// (particle just spawned, not yet updated  -  properties are at start values)
-	assertNear(t, "scale@t0", float64(p.scale), 2.0)
-	assertNear(t, "alpha@t0", float64(p.alpha), 1.0)
-	assertNear(t, "colorR@t0", float64(p.colorR), 1.0)
-	assertNear(t, "colorG@t0", float64(p.colorG), 0.0)
+	assertNear(t, "scale@t0", float64(e.ParticleScale(0)), 2.0)
+	assertNear(t, "alpha@t0", float64(e.ParticleAlpha(0)), 1.0)
+	cr, cg, _ := e.ParticleColor(0)
+	assertNear(t, "colorR@t0", float64(cr), 1.0)
+	assertNear(t, "colorG@t0", float64(cg), 0.0)
 
-	// Advance to 50% lifetime. Newly spawned particles don't get their
-	// first dt subtracted (spawned after the update loop), so the next
-	// update(0.5) brings life from 1.0 to 0.5, i.e. t = 0.5.
-	e.update(0.5)
-	t50 := 1.0 - p.life/p.maxLife
+	// Advance to 50% lifetime.
+	e.Update(0.5)
+	t50 := e.ParticleLifeFraction(0)
 	assertNear(t, "t~0.5", t50, 0.5)
-	assertNear(t, "scale@t0.5", float64(p.scale), lerp(2, 0, t50))
-	assertNear(t, "alpha@t0.5", float64(p.alpha), lerp(1, 0, t50))
-	assertNear(t, "colorR@t0.5", float64(p.colorR), lerp(1, 0, t50))
-	assertNear(t, "colorG@t0.5", float64(p.colorG), lerp(0, 1, t50))
+	assertNear(t, "scale@t0.5", float64(e.ParticleScale(0)), lerp(2, 0, t50))
+	assertNear(t, "alpha@t0.5", float64(e.ParticleAlpha(0)), lerp(1, 0, t50))
+	cr2, cg2, _ := e.ParticleColor(0)
+	assertNear(t, "colorR@t0.5", float64(cr2), lerp(1, 0, t50))
+	assertNear(t, "colorG@t0.5", float64(cg2), lerp(0, 1, t50))
 }
 
 func TestMaxParticlesCap(t *testing.T) {
@@ -189,7 +187,7 @@ func TestMaxParticlesCap(t *testing.T) {
 	e := newParticleEmitter(cfg)
 	e.Start()
 
-	e.update(1.0)
+	e.Update(1.0)
 	if e.AliveCount() > 5 {
 		t.Errorf("alive = %d, exceeds max 5", e.AliveCount())
 	}
@@ -224,7 +222,7 @@ func TestRenderCommandIncludesEmitter(t *testing.T) {
 	cfg := defaultTestConfig(100)
 	emitterNode := NewParticleEmitter("emitter", cfg)
 	emitterNode.Emitter.Start()
-	emitterNode.Emitter.update(0.1) // spawn particles
+	emitterNode.Emitter.Update(0.1) // spawn particles
 	s.Root().AddChild(emitterNode)
 
 	traverseScene(s)
@@ -314,11 +312,11 @@ func TestZeroAllocsDuringUpdate(t *testing.T) {
 
 	// Warmup: fill the pool.
 	for i := 0; i < 100; i++ {
-		e.update(1.0 / 60.0)
+		e.Update(1.0 / 60.0)
 	}
 
 	allocs := testing.AllocsPerRun(100, func() {
-		e.update(1.0 / 60.0)
+		e.Update(1.0 / 60.0)
 	})
 	if allocs > 0 {
 		t.Errorf("update allocs = %f, want 0", allocs)
@@ -338,10 +336,9 @@ func TestNodeDimensionsParticleEmitter(t *testing.T) {
 func TestConfigPointerForLiveTuning(t *testing.T) {
 	cfg := defaultTestConfig(100)
 	e := newParticleEmitter(cfg)
-	ptr := e.Config()
-	ptr.EmitRate = 999
-	if e.config.EmitRate != 999 {
-		t.Error("Config() should return pointer to internal config")
+	e.Config.EmitRate = 999
+	if e.Config.EmitRate != 999 {
+		t.Error("Config should be mutable for live tuning")
 	}
 }
 
@@ -354,14 +351,14 @@ func TestParticleMovesWithAngle(t *testing.T) {
 	e := newParticleEmitter(cfg)
 	e.Start()
 
-	e.update(1.0)
+	e.Update(1.0)
 	if e.AliveCount() == 0 {
 		t.Fatal("expected alive particles")
 	}
-	p := &e.particles[0]
 	// Moving at angle π/2 (down): vx ≈ 0, vy ≈ 100
-	assertNear(t, "vx", p.vx, 0)
-	assertNear(t, "vy", p.vy, 100)
+	vx, vy := e.ParticleVelocity(0)
+	assertNear(t, "vx", vx, 0)
+	assertNear(t, "vy", vy, 100)
 }
 
 // --- Benchmarks ---
@@ -373,13 +370,13 @@ func BenchmarkParticleUpdate_1000(b *testing.B) {
 	e.Start()
 	// Warmup.
 	for i := 0; i < 200; i++ {
-		e.update(1.0 / 60.0)
+		e.Update(1.0 / 60.0)
 	}
 
 	b.ReportAllocs()
 	b.ResetTimer()
 	for b.Loop() {
-		e.update(1.0 / 60.0)
+		e.Update(1.0 / 60.0)
 	}
 }
 
@@ -389,13 +386,13 @@ func BenchmarkParticleUpdate_10000(b *testing.B) {
 	e := newParticleEmitter(cfg)
 	e.Start()
 	for i := 0; i < 200; i++ {
-		e.update(1.0 / 60.0)
+		e.Update(1.0 / 60.0)
 	}
 
 	b.ReportAllocs()
 	b.ResetTimer()
 	for b.Loop() {
-		e.update(1.0 / 60.0)
+		e.Update(1.0 / 60.0)
 	}
 }
 
@@ -406,7 +403,7 @@ func BenchmarkParticleRender_1000(b *testing.B) {
 	emitterNode := NewParticleEmitter("e", cfg)
 	emitterNode.Emitter.Start()
 	for i := 0; i < 200; i++ {
-		emitterNode.Emitter.update(1.0 / 60.0)
+		emitterNode.Emitter.Update(1.0 / 60.0)
 	}
 	s.Root().AddChild(emitterNode)
 

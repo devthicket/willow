@@ -5,98 +5,34 @@ import (
 	"unicode/utf8"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/phanxgames/willow/internal/text"
 )
 
-// Font is the interface for text measurement and layout.
-// Implemented by SpriteFont.
-//
-// All measurements are in native atlas pixels. To get display-sized values,
-// use TextBlock.MeasureDisplay or scale manually by TextBlock.fontScale().
-type Font interface {
-	// MeasureString returns the pixel width and height of the rendered text
-	// in native atlas pixels, accounting for newlines and the font's line height.
-	MeasureString(text string) (width, height float64)
-	// LineHeight returns the vertical distance between baselines in native atlas pixels.
-	LineHeight() float64
-}
+// --- Type aliases from internal/text ---
 
-// --- TextEffects ---
+// Font is the interface for text measurement and layout.
+type Font = text.Font
 
 // TextEffects configures text effects (outline, glow, shadow) rendered in a
-// single shader pass. All widths are in distance-field units (relative to the
-// font's DistanceRange).
-type TextEffects struct {
-	OutlineWidth   float64 // 0 = no outline
-	OutlineColor   Color
-	GlowWidth      float64 // 0 = no glow
-	GlowColor      Color
-	ShadowOffset   Vec2 // (0,0) = no shadow
-	ShadowColor    Color
-	ShadowSoftness float64
-}
-
-// --- TextBlock ---
+// single shader pass.
+type TextEffects = text.TextEffects
 
 // TextBlock holds text content, formatting, and cached layout state.
-type TextBlock struct {
-	// Content is the text string to render. Supports embedded newlines.
-	Content string
-	// Font is the SpriteFont used for measurement and rendering.
-	Font Font
-	// FontSize is the desired display size in pixels. Applied at render time as a
-	// scale factor (FontSize / Font.LineHeight()), independent of ScaleX/ScaleY.
-	// Defaults to 16. Set to 0 or negative to use the font's native atlas size.
-	FontSize float64
-	// Align controls horizontal alignment within the wrap width or measured bounds.
-	Align TextAlign
-	// WrapWidth is the maximum line width in screen pixels before word wrapping.
-	// Internally converted to atlas pixels via fontScale. Zero means no wrapping.
-	WrapWidth float64
-	// Color is the fill color for the text glyphs.
-	Color Color
-	// LineHeight overrides the font's default line height. Zero uses Font.LineHeight().
-	LineHeight float64
-
-	// Cached layout (unexported)
-	layoutDirty bool
-	measuredW   float64
-	measuredH   float64
-	lines       []textLine // cached line layout
-
-	// SDF rendering fields (unexported)
-	TextEffects   *TextEffects    // nil = no effects (plain fill)
-	sdfVerts      []ebiten.Vertex // local-space glyph quads, rebuilt on layout change
-	sdfInds       []uint16        // glyph index buffer
-	sdfVertCount  int             // active vertex count
-	sdfIndCount   int             // active index count
-	sdfUniforms   map[string]any  // cached uniform map (allocated once, updated in place)
-	sdfShader     *ebiten.Shader  // cached SDF vs MSDF shader selection
-	uniformsDirty bool            // triggers uniform rebuild
-}
+type TextBlock = text.TextBlock
 
 // textLine stores one line of laid-out glyphs.
-type textLine struct {
-	glyphs []glyphPos
-	width  float64
-}
+type textLine = text.TextLine
 
 // glyphPos is the computed screen position and region for a single glyph.
-type glyphPos struct {
-	x, y   float64
-	region TextureRegion
-	page   uint16
-}
+type glyphPos = text.GlyphPos
 
-// Invalidate invalidates the cached layout and SDF image, forcing recomputation
-// on the next frame. Call this after changing Content, Font, FontSize, WrapWidth,
-// Align, LineHeight, Color, or TextEffects at runtime.
-func (tb *TextBlock) Invalidate() {
-	tb.layoutDirty = true
-	tb.uniformsDirty = true
-}
+// Glyph holds glyph metrics and atlas position.
+type Glyph = text.Glyph
 
-// lineHeight returns the effective line height for this text block in atlas pixels.
-func (tb *TextBlock) lineHeight() float64 {
+// --- Free functions replacing TextBlock methods ---
+
+// textBlockLineHeight returns the effective line height for this text block in atlas pixels.
+func textBlockLineHeight(tb *TextBlock) float64 {
 	if tb.LineHeight > 0 {
 		return tb.LineHeight
 	}
@@ -106,9 +42,9 @@ func (tb *TextBlock) lineHeight() float64 {
 	return 0
 }
 
-// fontScale returns the scale factor that maps native atlas pixels to display pixels.
+// textBlockFontScale returns the scale factor that maps native atlas pixels to display pixels.
 // Returns 1.0 when FontSize is zero/negative or Font is nil.
-func (tb *TextBlock) fontScale() float64 {
+func textBlockFontScale(tb *TextBlock) float64 {
 	if _, ok := tb.Font.(*PixelFont); ok {
 		if tb.FontSize <= 0 {
 			return 1.0
@@ -133,46 +69,35 @@ func (tb *TextBlock) fontScale() float64 {
 	return tb.FontSize / native
 }
 
-// MeasureDisplay returns the display-pixel width and height of the rendered text,
-// accounting for FontSize scaling. Equivalent to Font.MeasureString scaled by fontScale().
-func (tb *TextBlock) MeasureDisplay(text string) (width, height float64) {
-	if tb.Font == nil {
-		return 0, 0
+// textBlockLayout recomputes glyph positions if dirty. Returns the cached lines.
+func textBlockLayout(tb *TextBlock) []textLine {
+	if !tb.LayoutDirty {
+		return tb.Lines
 	}
-	w, h := tb.Font.MeasureString(text)
-	fs := tb.fontScale()
-	return w * fs, h * fs
-}
-
-// layout recomputes glyph positions if dirty. Returns the cached lines.
-func (tb *TextBlock) layout() []textLine {
-	if !tb.layoutDirty {
-		return tb.lines
-	}
-	tb.layoutDirty = false
+	tb.LayoutDirty = false
 
 	if tb.Font == nil {
-		tb.lines = tb.lines[:0]
-		tb.measuredW = 0
-		tb.measuredH = 0
-		return tb.lines
+		tb.Lines = tb.Lines[:0]
+		tb.MeasuredW = 0
+		tb.MeasuredH = 0
+		return tb.Lines
 	}
 
 	switch f := tb.Font.(type) {
 	case *SpriteFont:
-		tb.layoutSDF(f)
-		tb.rebuildLocalVerts(f)
-		tb.uniformsDirty = true
+		textBlockLayoutSDF(tb, f)
+		textBlockRebuildLocalVerts(tb, f)
+		tb.UniformsDirty = true
 	case *PixelFont:
-		tb.layoutPixel(f)
-		tb.rebuildPixelVerts(f)
+		textBlockLayoutPixel(tb, f)
+		textBlockRebuildPixelVerts(tb, f)
 	default:
-		tb.lines = tb.lines[:0]
-		tb.measuredW = 0
-		tb.measuredH = 0
+		tb.Lines = tb.Lines[:0]
+		tb.MeasuredW = 0
+		tb.MeasuredH = 0
 	}
 
-	return tb.lines
+	return tb.Lines
 }
 
 // --- glyph (internal) ---
@@ -203,19 +128,19 @@ func composeGlyphTransform(world [6]float64, localX, localY float64) [6]float64 
 	}
 }
 
-// layoutSDF computes glyph positions for an SpriteFont.
-func (tb *TextBlock) layoutSDF(f *SpriteFont) {
-	lh := tb.lineHeight()
+// textBlockLayoutSDF computes glyph positions for an SpriteFont.
+func textBlockLayoutSDF(tb *TextBlock, f *SpriteFont) {
+	lh := textBlockLineHeight(tb)
 	content := tb.Content
 
 	// Convert screen-pixel WrapWidth to atlas pixels.
-	fs := tb.fontScale()
+	fs := textBlockFontScale(tb)
 	atlasWrapWidth := 0.0
 	if tb.WrapWidth > 0 && fs > 0 {
 		atlasWrapWidth = tb.WrapWidth / fs
 	}
 
-	tb.lines = tb.lines[:0]
+	tb.Lines = tb.Lines[:0]
 
 	var maxW float64
 	var curLine textLine
@@ -228,10 +153,10 @@ func (tb *TextBlock) layoutSDF(f *SpriteFont) {
 	var hasPrev bool
 
 	flush := func() {
-		if curLine.width > maxW {
-			maxW = curLine.width
+		if curLine.Width > maxW {
+			maxW = curLine.Width
 		}
-		tb.lines = append(tb.lines, curLine)
+		tb.Lines = append(tb.Lines, curLine)
 		curLine = textLine{}
 		cursorX = 0
 		hasPrev = false
@@ -242,8 +167,8 @@ func (tb *TextBlock) layoutSDF(f *SpriteFont) {
 		i += size
 
 		if r == '\n' {
-			curLine.glyphs = append(curLine.glyphs, wordGlyphs...)
-			curLine.width += wordWidth
+			curLine.Glyphs = append(curLine.Glyphs, wordGlyphs...)
+			curLine.Width += wordWidth
 			wordGlyphs = wordGlyphs[:0]
 			wordWidth = 0
 			wordStart = i
@@ -268,9 +193,9 @@ func (tb *TextBlock) layoutSDF(f *SpriteFont) {
 		glyphY := float64(g.yOffset)
 
 		gp := glyphPos{
-			x: glyphX,
-			y: glyphY,
-			region: TextureRegion{
+			X: glyphX,
+			Y: glyphY,
+			Region: TextureRegion{
 				Page:      f.page,
 				X:         g.x,
 				Y:         g.y,
@@ -279,26 +204,26 @@ func (tb *TextBlock) layoutSDF(f *SpriteFont) {
 				OriginalW: g.width,
 				OriginalH: g.height,
 			},
-			page: f.page,
+			Page: f.page,
 		}
 
 		advance := float64(g.xAdvance) + float64(kern)
 
 		if r == ' ' {
-			curLine.glyphs = append(curLine.glyphs, wordGlyphs...)
-			curLine.width += wordWidth
+			curLine.Glyphs = append(curLine.Glyphs, wordGlyphs...)
+			curLine.Width += wordWidth
 			wordGlyphs = wordGlyphs[:0]
 			wordWidth = 0
 			wordStart = i
 
-			curLine.glyphs = append(curLine.glyphs, gp)
-			curLine.width = cursorX + advance
+			curLine.Glyphs = append(curLine.Glyphs, gp)
+			curLine.Width = cursorX + advance
 			cursorX += advance
 		} else {
 			wordGlyphs = append(wordGlyphs, gp)
 			wordWidth = cursorX + advance - (cursorX - wordWidth)
 
-			if atlasWrapWidth > 0 && cursorX+advance > atlasWrapWidth && len(curLine.glyphs) > 0 {
+			if atlasWrapWidth > 0 && cursorX+advance > atlasWrapWidth && len(curLine.Glyphs) > 0 {
 				flush()
 
 				cursorX = 0
@@ -316,126 +241,126 @@ func (tb *TextBlock) layoutSDF(f *SpriteFont) {
 		hasPrev = true
 	}
 
-	curLine.glyphs = append(curLine.glyphs, wordGlyphs...)
-	curLine.width = cursorX
-	if len(curLine.glyphs) > 0 || len(tb.lines) == 0 {
-		if curLine.width > maxW {
-			maxW = curLine.width
+	curLine.Glyphs = append(curLine.Glyphs, wordGlyphs...)
+	curLine.Width = cursorX
+	if len(curLine.Glyphs) > 0 || len(tb.Lines) == 0 {
+		if curLine.Width > maxW {
+			maxW = curLine.Width
 		}
-		tb.lines = append(tb.lines, curLine)
+		tb.Lines = append(tb.Lines, curLine)
 	}
 
 	alignW := maxW
 	if atlasWrapWidth > 0 {
 		alignW = atlasWrapWidth
 	}
-	for li := range tb.lines {
-		line := &tb.lines[li]
+	for li := range tb.Lines {
+		line := &tb.Lines[li]
 		var offsetX float64
 		switch tb.Align {
 		case TextAlignLeft:
 		case TextAlignCenter:
-			offsetX = (alignW - line.width) / 2
+			offsetX = (alignW - line.Width) / 2
 		case TextAlignRight:
-			offsetX = alignW - line.width
+			offsetX = alignW - line.Width
 		}
 		if offsetX != 0 {
-			for gi := range line.glyphs {
-				line.glyphs[gi].x += offsetX
+			for gi := range line.Glyphs {
+				line.Glyphs[gi].X += offsetX
 			}
 		}
 	}
 
-	tb.measuredW = maxW
-	tb.measuredH = float64(len(tb.lines)) * lh
+	tb.MeasuredW = maxW
+	tb.MeasuredH = float64(len(tb.Lines)) * lh
 }
 
-// rebuildLocalVerts builds local-space vertex/index buffers from the laid-out
+// textBlockRebuildLocalVerts builds local-space vertex/index buffers from the laid-out
 // glyph positions. The atlas glyph regions already include distanceRange+1
 // pixels of SDF padding, so no per-glyph expansion is needed  -  the shader
 // has sufficient distance-field data for outline, glow, and shadow effects
 // within the atlas's distance range.
-func (tb *TextBlock) rebuildLocalVerts(f *SpriteFont) {
-	lines := tb.lines
-	lh := tb.lineHeight()
+func textBlockRebuildLocalVerts(tb *TextBlock, f *SpriteFont) {
+	lines := tb.Lines
+	lh := textBlockLineHeight(tb)
 
 	glyphCount := 0
 	for _, line := range lines {
-		glyphCount += len(line.glyphs)
+		glyphCount += len(line.Glyphs)
 	}
 
 	// Grow buffers to high-water mark.
 	vertCount := glyphCount * 4
 	indCount := glyphCount * 6
-	if cap(tb.sdfVerts) < vertCount {
-		tb.sdfVerts = make([]ebiten.Vertex, vertCount)
+	if cap(tb.SdfVerts) < vertCount {
+		tb.SdfVerts = make([]ebiten.Vertex, vertCount)
 	}
-	tb.sdfVerts = tb.sdfVerts[:vertCount]
-	if cap(tb.sdfInds) < indCount {
-		tb.sdfInds = make([]uint16, indCount)
+	tb.SdfVerts = tb.SdfVerts[:vertCount]
+	if cap(tb.SdfInds) < indCount {
+		tb.SdfInds = make([]uint16, indCount)
 	}
-	tb.sdfInds = tb.sdfInds[:indCount]
+	tb.SdfInds = tb.SdfInds[:indCount]
 
 	vi := 0
 	ii := 0
 	for li, line := range lines {
 		lineY := float64(li) * lh
-		for _, gp := range line.glyphs {
+		for _, gp := range line.Glyphs {
 			// Destination in local atlas-pixel space.
-			dx := float32(gp.x)
-			dy := float32(gp.y + lineY)
-			dw := float32(gp.region.Width)
-			dh := float32(gp.region.Height)
+			dx := float32(gp.X)
+			dy := float32(gp.Y + lineY)
+			dw := float32(gp.Region.Width)
+			dh := float32(gp.Region.Height)
 
 			// Source in atlas pixel coords (1:1 mapping, no expansion).
-			sx := float32(gp.region.X)
-			sy := float32(gp.region.Y)
-			sw := float32(gp.region.Width)
-			sh := float32(gp.region.Height)
+			sx := float32(gp.Region.X)
+			sy := float32(gp.Region.Y)
+			sw := float32(gp.Region.Width)
+			sh := float32(gp.Region.Height)
 
 			base := uint16(vi)
-			tb.sdfVerts[vi] = ebiten.Vertex{
+			tb.SdfVerts[vi] = ebiten.Vertex{
 				DstX: dx, DstY: dy,
 				SrcX: sx, SrcY: sy,
 				ColorR: 1, ColorG: 1, ColorB: 1, ColorA: 1,
 			}
 			vi++
-			tb.sdfVerts[vi] = ebiten.Vertex{
+			tb.SdfVerts[vi] = ebiten.Vertex{
 				DstX: dx + dw, DstY: dy,
 				SrcX: sx + sw, SrcY: sy,
 				ColorR: 1, ColorG: 1, ColorB: 1, ColorA: 1,
 			}
 			vi++
-			tb.sdfVerts[vi] = ebiten.Vertex{
+			tb.SdfVerts[vi] = ebiten.Vertex{
 				DstX: dx, DstY: dy + dh,
 				SrcX: sx, SrcY: sy + sh,
 				ColorR: 1, ColorG: 1, ColorB: 1, ColorA: 1,
 			}
 			vi++
-			tb.sdfVerts[vi] = ebiten.Vertex{
+			tb.SdfVerts[vi] = ebiten.Vertex{
 				DstX: dx + dw, DstY: dy + dh,
 				SrcX: sx + sw, SrcY: sy + sh,
 				ColorR: 1, ColorG: 1, ColorB: 1, ColorA: 1,
 			}
 			vi++
 
-			tb.sdfInds[ii] = base
-			tb.sdfInds[ii+1] = base + 1
-			tb.sdfInds[ii+2] = base + 2
-			tb.sdfInds[ii+3] = base + 1
-			tb.sdfInds[ii+4] = base + 3
-			tb.sdfInds[ii+5] = base + 2
+			tb.SdfInds[ii] = base
+			tb.SdfInds[ii+1] = base + 1
+			tb.SdfInds[ii+2] = base + 2
+			tb.SdfInds[ii+3] = base + 1
+			tb.SdfInds[ii+4] = base + 3
+			tb.SdfInds[ii+5] = base + 2
 			ii += 6
 		}
 	}
-	tb.sdfVertCount = vi
-	tb.sdfIndCount = ii
+	tb.SdfVertCount = vi
+	tb.SdfIndCount = ii
 }
 
 // --- Pixel font layout and rendering ---
 
-// layoutPixel computes glyph positions for a PixelFont (monospaced grid).
-func (tb *TextBlock) layoutPixel(f *PixelFont) {
+// textBlockLayoutPixel computes glyph positions for a PixelFont (monospaced grid).
+func textBlockLayoutPixel(tb *TextBlock, f *PixelFont) {
 	lh := float64(f.advanceH())
 	advW := float64(f.advanceW())
 	content := tb.Content
@@ -447,7 +372,7 @@ func (tb *TextBlock) layoutPixel(f *PixelFont) {
 	srcH := f.advanceH()
 
 	// Convert screen-pixel WrapWidth to native pixels.
-	scale := tb.fontScale()
+	scale := textBlockFontScale(tb)
 	atlasWrapWidth := 0.0
 	if tb.WrapWidth > 0 && scale > 0 {
 		atlasWrapWidth = tb.WrapWidth / scale
@@ -462,7 +387,7 @@ func (tb *TextBlock) layoutPixel(f *PixelFont) {
 		}
 	}
 
-	tb.lines = tb.lines[:0]
+	tb.Lines = tb.Lines[:0]
 
 	var maxW float64
 	var curLine textLine
@@ -471,10 +396,10 @@ func (tb *TextBlock) layoutPixel(f *PixelFont) {
 	var lineCharCount int
 
 	flush := func() {
-		if curLine.width > maxW {
-			maxW = curLine.width
+		if curLine.Width > maxW {
+			maxW = curLine.Width
 		}
-		tb.lines = append(tb.lines, curLine)
+		tb.Lines = append(tb.Lines, curLine)
 		curLine = textLine{}
 		lineCharCount = 0
 	}
@@ -484,8 +409,8 @@ func (tb *TextBlock) layoutPixel(f *PixelFont) {
 		i += size
 
 		if r == '\n' {
-			curLine.glyphs = append(curLine.glyphs, wordGlyphs...)
-			curLine.width = float64(lineCharCount+wordLen) * advW
+			curLine.Glyphs = append(curLine.Glyphs, wordGlyphs...)
+			curLine.Width = float64(lineCharCount+wordLen) * advW
 			lineCharCount += wordLen
 			wordGlyphs = wordGlyphs[:0]
 			wordLen = 0
@@ -495,13 +420,13 @@ func (tb *TextBlock) layoutPixel(f *PixelFont) {
 
 		// Space advances the cursor without needing a glyph in the atlas.
 		if r == ' ' {
-			curLine.glyphs = append(curLine.glyphs, wordGlyphs...)
+			curLine.Glyphs = append(curLine.Glyphs, wordGlyphs...)
 			lineCharCount += wordLen
 			wordGlyphs = wordGlyphs[:0]
 			wordLen = 0
 
 			lineCharCount++
-			curLine.width = float64(lineCharCount) * advW
+			curLine.Width = float64(lineCharCount) * advW
 			continue
 		}
 
@@ -511,9 +436,9 @@ func (tb *TextBlock) layoutPixel(f *PixelFont) {
 		}
 
 		gp := glyphPos{
-			x: float64(lineCharCount+wordLen) * advW,
-			y: 0,
-			region: TextureRegion{
+			X: float64(lineCharCount+wordLen) * advW,
+			Y: 0,
+			Region: TextureRegion{
 				Page:      f.page,
 				X:         pg.x + uint16(srcX),
 				Y:         pg.y + uint16(srcY),
@@ -522,7 +447,7 @@ func (tb *TextBlock) layoutPixel(f *PixelFont) {
 				OriginalW: uint16(srcW),
 				OriginalH: uint16(srcH),
 			},
-			page: f.page,
+			Page: f.page,
 		}
 
 		wordGlyphs = append(wordGlyphs, gp)
@@ -533,20 +458,20 @@ func (tb *TextBlock) layoutPixel(f *PixelFont) {
 			flush()
 			// Re-position word glyphs at start of new line.
 			for gi := range wordGlyphs {
-				wordGlyphs[gi].x = float64(gi) * advW
+				wordGlyphs[gi].X = float64(gi) * advW
 			}
 		}
 	}
 
 	// Flush remaining word and line.
-	curLine.glyphs = append(curLine.glyphs, wordGlyphs...)
+	curLine.Glyphs = append(curLine.Glyphs, wordGlyphs...)
 	lineCharCount += wordLen
-	curLine.width = float64(lineCharCount) * advW
-	if len(curLine.glyphs) > 0 || len(tb.lines) == 0 {
-		if curLine.width > maxW {
-			maxW = curLine.width
+	curLine.Width = float64(lineCharCount) * advW
+	if len(curLine.Glyphs) > 0 || len(tb.Lines) == 0 {
+		if curLine.Width > maxW {
+			maxW = curLine.Width
 		}
-		tb.lines = append(tb.lines, curLine)
+		tb.Lines = append(tb.Lines, curLine)
 	}
 
 	// Alignment.
@@ -554,121 +479,121 @@ func (tb *TextBlock) layoutPixel(f *PixelFont) {
 	if atlasWrapWidth > 0 {
 		alignW = atlasWrapWidth
 	}
-	for li := range tb.lines {
-		line := &tb.lines[li]
+	for li := range tb.Lines {
+		line := &tb.Lines[li]
 		var offsetX float64
 		switch tb.Align {
 		case TextAlignLeft:
 		case TextAlignCenter:
-			offsetX = (alignW - line.width) / 2
+			offsetX = (alignW - line.Width) / 2
 		case TextAlignRight:
-			offsetX = alignW - line.width
+			offsetX = alignW - line.Width
 		}
 		if offsetX != 0 {
-			for gi := range line.glyphs {
-				line.glyphs[gi].x += offsetX
+			for gi := range line.Glyphs {
+				line.Glyphs[gi].X += offsetX
 			}
 		}
 	}
 
-	tb.measuredW = maxW
-	tb.measuredH = float64(len(tb.lines)) * lh
+	tb.MeasuredW = maxW
+	tb.MeasuredH = float64(len(tb.Lines)) * lh
 }
 
-// rebuildPixelVerts builds local-space vertex/index buffers for pixel font glyphs.
-// Reuses the sdfVerts/sdfInds fields (same quad structure, no SDF padding).
-func (tb *TextBlock) rebuildPixelVerts(f *PixelFont) {
-	lines := tb.lines
+// textBlockRebuildPixelVerts builds local-space vertex/index buffers for pixel font glyphs.
+// Reuses the SdfVerts/SdfInds fields (same quad structure, no SDF padding).
+func textBlockRebuildPixelVerts(tb *TextBlock, f *PixelFont) {
+	lines := tb.Lines
 	lh := float64(f.cellH)
 
 	glyphCount := 0
 	for _, line := range lines {
-		glyphCount += len(line.glyphs)
+		glyphCount += len(line.Glyphs)
 	}
 
 	vertCount := glyphCount * 4
 	indCount := glyphCount * 6
-	if cap(tb.sdfVerts) < vertCount {
-		tb.sdfVerts = make([]ebiten.Vertex, vertCount)
+	if cap(tb.SdfVerts) < vertCount {
+		tb.SdfVerts = make([]ebiten.Vertex, vertCount)
 	}
-	tb.sdfVerts = tb.sdfVerts[:vertCount]
-	if cap(tb.sdfInds) < indCount {
-		tb.sdfInds = make([]uint16, indCount)
+	tb.SdfVerts = tb.SdfVerts[:vertCount]
+	if cap(tb.SdfInds) < indCount {
+		tb.SdfInds = make([]uint16, indCount)
 	}
-	tb.sdfInds = tb.sdfInds[:indCount]
+	tb.SdfInds = tb.SdfInds[:indCount]
 
 	vi := 0
 	ii := 0
 	for li, line := range lines {
 		lineY := float64(li) * lh
-		for _, gp := range line.glyphs {
-			dx := float32(gp.x)
-			dy := float32(gp.y + lineY)
-			dw := float32(gp.region.Width)
-			dh := float32(gp.region.Height)
+		for _, gp := range line.Glyphs {
+			dx := float32(gp.X)
+			dy := float32(gp.Y + lineY)
+			dw := float32(gp.Region.Width)
+			dh := float32(gp.Region.Height)
 
-			sx := float32(gp.region.X)
-			sy := float32(gp.region.Y)
-			sw := float32(gp.region.Width)
-			sh := float32(gp.region.Height)
+			sx := float32(gp.Region.X)
+			sy := float32(gp.Region.Y)
+			sw := float32(gp.Region.Width)
+			sh := float32(gp.Region.Height)
 
 			base := uint16(vi)
-			tb.sdfVerts[vi] = ebiten.Vertex{
+			tb.SdfVerts[vi] = ebiten.Vertex{
 				DstX: dx, DstY: dy,
 				SrcX: sx, SrcY: sy,
 				ColorR: 1, ColorG: 1, ColorB: 1, ColorA: 1,
 			}
 			vi++
-			tb.sdfVerts[vi] = ebiten.Vertex{
+			tb.SdfVerts[vi] = ebiten.Vertex{
 				DstX: dx + dw, DstY: dy,
 				SrcX: sx + sw, SrcY: sy,
 				ColorR: 1, ColorG: 1, ColorB: 1, ColorA: 1,
 			}
 			vi++
-			tb.sdfVerts[vi] = ebiten.Vertex{
+			tb.SdfVerts[vi] = ebiten.Vertex{
 				DstX: dx, DstY: dy + dh,
 				SrcX: sx, SrcY: sy + sh,
 				ColorR: 1, ColorG: 1, ColorB: 1, ColorA: 1,
 			}
 			vi++
-			tb.sdfVerts[vi] = ebiten.Vertex{
+			tb.SdfVerts[vi] = ebiten.Vertex{
 				DstX: dx + dw, DstY: dy + dh,
 				SrcX: sx + sw, SrcY: sy + sh,
 				ColorR: 1, ColorG: 1, ColorB: 1, ColorA: 1,
 			}
 			vi++
 
-			tb.sdfInds[ii] = base
-			tb.sdfInds[ii+1] = base + 1
-			tb.sdfInds[ii+2] = base + 2
-			tb.sdfInds[ii+3] = base + 1
-			tb.sdfInds[ii+4] = base + 3
-			tb.sdfInds[ii+5] = base + 2
+			tb.SdfInds[ii] = base
+			tb.SdfInds[ii+1] = base + 1
+			tb.SdfInds[ii+2] = base + 2
+			tb.SdfInds[ii+3] = base + 1
+			tb.SdfInds[ii+4] = base + 3
+			tb.SdfInds[ii+5] = base + 2
 			ii += 6
 		}
 	}
-	tb.sdfVertCount = vi
-	tb.sdfIndCount = ii
+	tb.SdfVertCount = vi
+	tb.SdfIndCount = ii
 }
 
 // emitPixelTextCommand emits a CommandBitmapText for pixel-perfect bitmap font rendering.
 func emitPixelTextCommand(tb *TextBlock, n *Node, worldTransform [6]float64, commands []RenderCommand, treeOrder *int) []RenderCommand {
-	tb.layout()
-	if tb.measuredW == 0 || tb.measuredH == 0 {
+	textBlockLayout(tb)
+	if tb.MeasuredW == 0 || tb.MeasuredH == 0 {
 		return commands
 	}
 
 	f := tb.Font.(*PixelFont)
 
-	if tb.sdfVertCount == 0 || len(tb.sdfVerts) == 0 {
-		tb.rebuildPixelVerts(f)
+	if tb.SdfVertCount == 0 || len(tb.SdfVerts) == 0 {
+		textBlockRebuildPixelVerts(tb, f)
 	}
-	if tb.sdfVertCount == 0 {
+	if tb.SdfVertCount == 0 {
 		return commands
 	}
 
 	// Apply integer scale as an affine transform.
-	s := tb.fontScale()
+	s := textBlockFontScale(tb)
 	fst := [6]float64{s, 0, 0, s, 0, 0}
 	scaledWT := multiplyAffine(worldTransform, fst)
 
@@ -691,10 +616,10 @@ func emitPixelTextCommand(tb *TextBlock, n *Node, worldTransform [6]float64, com
 		RenderLayer:  n.RenderLayer,
 		GlobalOrder:  n.GlobalOrder,
 		treeOrder:    *treeOrder,
-		bmpVerts:     tb.sdfVerts,
-		bmpInds:      tb.sdfInds,
-		bmpVertCount: tb.sdfVertCount,
-		bmpIndCount:  tb.sdfIndCount,
+		bmpVerts:     tb.SdfVerts,
+		bmpInds:      tb.SdfInds,
+		bmpVertCount: tb.SdfVertCount,
+		bmpIndCount:  tb.SdfIndCount,
 		bmpImage:     atlasImg,
 	})
 
@@ -850,36 +775,36 @@ func Fragment(dst vec4, src vec2, color vec4) vec4 {
 // --- Lazy shader compilation ---
 
 var (
-	sdfShader  *ebiten.Shader
-	msdfShader *ebiten.Shader
+	sdfShader_  *ebiten.Shader
+	msdfShader_ *ebiten.Shader
 )
 
 func ensureSDFShader() *ebiten.Shader {
-	if sdfShader == nil {
+	if sdfShader_ == nil {
 		s, err := ebiten.NewShader([]byte(sdfShaderSrc))
 		if err != nil {
 			panic("willow: failed to compile SDF shader: " + err.Error())
 		}
-		sdfShader = s
+		sdfShader_ = s
 	}
-	return sdfShader
+	return sdfShader_
 }
 
 func ensureMSDFShader() *ebiten.Shader {
-	if msdfShader == nil {
+	if msdfShader_ == nil {
 		s, err := ebiten.NewShader([]byte(msdfShaderSrc))
 		if err != nil {
 			panic("willow: failed to compile MSDF shader: " + err.Error())
 		}
-		msdfShader = s
+		msdfShader_ = s
 	}
-	return msdfShader
+	return msdfShader_
 }
 
-// ensureUniforms builds or updates the cached uniform map for the SDF shader.
+// textBlockEnsureUniforms builds or updates the cached uniform map for the SDF shader.
 // On first call it allocates the map; on subsequent calls it updates values in place.
 // Smoothing is always updated since it depends on displayScale.
-func (tb *TextBlock) ensureUniforms(f *SpriteFont, displayScale float64) {
+func textBlockEnsureUniforms(tb *TextBlock, f *SpriteFont, displayScale float64) {
 	// Scale-aware smoothing.
 	smoothing := float32(1.5 / (f.distanceRange * displayScale))
 
@@ -898,63 +823,63 @@ func (tb *TextBlock) ensureUniforms(f *SpriteFont, displayScale float64) {
 		float32(fillColor.A()),
 	}
 
-	if tb.sdfUniforms == nil {
-		tb.sdfUniforms = make(map[string]any, 11)
-		tb.uniformsDirty = true // force full populate
+	if tb.SdfUniforms == nil {
+		tb.SdfUniforms = make(map[string]any, 11)
+		tb.UniformsDirty = true // force full populate
 	}
 
 	// Smoothing always changes with camera zoom.
-	tb.sdfUniforms["Smoothing"] = smoothing
+	tb.SdfUniforms["Smoothing"] = smoothing
 
-	if !tb.uniformsDirty {
+	if !tb.UniformsDirty {
 		return
 	}
-	tb.uniformsDirty = false
+	tb.UniformsDirty = false
 
-	tb.sdfUniforms["Threshold"] = threshold
-	tb.sdfUniforms["FillColor"] = fillPremul[:]
-	tb.sdfUniforms["OutlineWidth"] = float32(0)
-	tb.sdfUniforms["OutlineColor"] = []float32{0, 0, 0, 0}
-	tb.sdfUniforms["GlowWidth"] = float32(0)
-	tb.sdfUniforms["GlowColor"] = []float32{0, 0, 0, 0}
-	tb.sdfUniforms["ShadowOffset"] = []float32{0, 0}
-	tb.sdfUniforms["ShadowColor"] = []float32{0, 0, 0, 0}
-	tb.sdfUniforms["ShadowSoftness"] = float32(0)
+	tb.SdfUniforms["Threshold"] = threshold
+	tb.SdfUniforms["FillColor"] = fillPremul[:]
+	tb.SdfUniforms["OutlineWidth"] = float32(0)
+	tb.SdfUniforms["OutlineColor"] = []float32{0, 0, 0, 0}
+	tb.SdfUniforms["GlowWidth"] = float32(0)
+	tb.SdfUniforms["GlowColor"] = []float32{0, 0, 0, 0}
+	tb.SdfUniforms["ShadowOffset"] = []float32{0, 0}
+	tb.SdfUniforms["ShadowColor"] = []float32{0, 0, 0, 0}
+	tb.SdfUniforms["ShadowSoftness"] = float32(0)
 
 	if tb.TextEffects != nil {
 		e := tb.TextEffects
-		tb.sdfUniforms["OutlineWidth"] = float32(e.OutlineWidth / f.distanceRange)
-		tb.sdfUniforms["OutlineColor"] = []float32{
+		tb.SdfUniforms["OutlineWidth"] = float32(e.OutlineWidth / f.distanceRange)
+		tb.SdfUniforms["OutlineColor"] = []float32{
 			float32(e.OutlineColor.R() * e.OutlineColor.A()),
 			float32(e.OutlineColor.G() * e.OutlineColor.A()),
 			float32(e.OutlineColor.B() * e.OutlineColor.A()),
 			float32(e.OutlineColor.A()),
 		}
-		tb.sdfUniforms["GlowWidth"] = float32(e.GlowWidth / f.distanceRange)
-		tb.sdfUniforms["GlowColor"] = []float32{
+		tb.SdfUniforms["GlowWidth"] = float32(e.GlowWidth / f.distanceRange)
+		tb.SdfUniforms["GlowColor"] = []float32{
 			float32(e.GlowColor.R() * e.GlowColor.A()),
 			float32(e.GlowColor.G() * e.GlowColor.A()),
 			float32(e.GlowColor.B() * e.GlowColor.A()),
 			float32(e.GlowColor.A()),
 		}
-		tb.sdfUniforms["ShadowOffset"] = []float32{
+		tb.SdfUniforms["ShadowOffset"] = []float32{
 			float32(e.ShadowOffset.X),
 			float32(e.ShadowOffset.Y),
 		}
-		tb.sdfUniforms["ShadowColor"] = []float32{
+		tb.SdfUniforms["ShadowColor"] = []float32{
 			float32(e.ShadowColor.R() * e.ShadowColor.A()),
 			float32(e.ShadowColor.G() * e.ShadowColor.A()),
 			float32(e.ShadowColor.B() * e.ShadowColor.A()),
 			float32(e.ShadowColor.A()),
 		}
-		tb.sdfUniforms["ShadowSoftness"] = float32(e.ShadowSoftness / f.distanceRange)
+		tb.SdfUniforms["ShadowSoftness"] = float32(e.ShadowSoftness / f.distanceRange)
 	}
 
 	// Select shader.
 	if f.multiChannel {
-		tb.sdfShader = ensureMSDFShader()
+		tb.SdfShader = ensureMSDFShader()
 	} else {
-		tb.sdfShader = ensureSDFShader()
+		tb.SdfShader = ensureSDFShader()
 	}
 }
 
@@ -962,24 +887,24 @@ func (tb *TextBlock) ensureUniforms(f *SpriteFont, displayScale float64) {
 // The batch submitter transforms vertices to screen space and calls
 // DrawTrianglesShader  -  SDF shader runs at display resolution.
 func emitSDFTextCommand(tb *TextBlock, n *Node, worldTransform [6]float64, commands []RenderCommand, treeOrder *int) []RenderCommand {
-	tb.layout()
-	if tb.measuredW == 0 || tb.measuredH == 0 {
+	textBlockLayout(tb)
+	if tb.MeasuredW == 0 || tb.MeasuredH == 0 {
 		return commands
 	}
 
 	f := tb.Font.(*SpriteFont)
 
-	// Rebuild local verts if layout changed (layout() clears layoutDirty and
-	// triggers rebuildLocalVerts via the dirty path).
-	if tb.sdfVertCount == 0 || len(tb.sdfVerts) == 0 {
-		tb.rebuildLocalVerts(f)
+	// Rebuild local verts if layout changed (layout() clears LayoutDirty and
+	// triggers textBlockRebuildLocalVerts via the dirty path).
+	if tb.SdfVertCount == 0 || len(tb.SdfVerts) == 0 {
+		textBlockRebuildLocalVerts(tb, f)
 	}
-	if tb.sdfVertCount == 0 {
+	if tb.SdfVertCount == 0 {
 		return commands
 	}
 
-	// Apply font scale as an affine transform: atlas pixels → display pixels.
-	fontScale := tb.fontScale()
+	// Apply font scale as an affine transform: atlas pixels -> display pixels.
+	fontScale := textBlockFontScale(tb)
 	fst := [6]float64{fontScale, 0, 0, fontScale, 0, 0}
 	scaledWT := multiplyAffine(worldTransform, fst)
 
@@ -994,7 +919,7 @@ func emitSDFTextCommand(tb *TextBlock, n *Node, worldTransform [6]float64, comma
 	if displayScale < 0.05 {
 		displayScale = 0.05
 	}
-	tb.ensureUniforms(f, displayScale)
+	textBlockEnsureUniforms(tb, f, displayScale)
 
 	*treeOrder++
 	commands = append(commands, RenderCommand{
@@ -1005,13 +930,13 @@ func emitSDFTextCommand(tb *TextBlock, n *Node, worldTransform [6]float64, comma
 		RenderLayer:  n.RenderLayer,
 		GlobalOrder:  n.GlobalOrder,
 		treeOrder:    *treeOrder,
-		sdfVerts:     tb.sdfVerts,
-		sdfInds:      tb.sdfInds,
-		sdfVertCount: tb.sdfVertCount,
-		sdfIndCount:  tb.sdfIndCount,
-		sdfShader:    tb.sdfShader,
+		sdfVerts:     tb.SdfVerts,
+		sdfInds:      tb.SdfInds,
+		sdfVertCount: tb.SdfVertCount,
+		sdfIndCount:  tb.SdfIndCount,
+		sdfShader:    tb.SdfShader,
 		sdfAtlasImg:  atlasImg,
-		sdfUniforms:  tb.sdfUniforms,
+		sdfUniforms:  tb.SdfUniforms,
 	})
 
 	return commands
