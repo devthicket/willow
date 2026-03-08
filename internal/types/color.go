@@ -41,9 +41,9 @@ func (c Color) RGBA8() (r, g, b, a uint8) {
 	return
 }
 
-// ColorRGBA satisfies the image/color.Color interface.
-// Returns alpha-premultiplied red, green, blue, alpha scaled to [0, 0xFFFF].
-func (c Color) ColorRGBA() (r, g, b, a uint32) {
+// RGBA returns the alpha-premultiplied red, green, blue and alpha values
+// scaled to [0, 0xFFFF]. This satisfies the image/color.Color interface.
+func (c Color) RGBA() (r, g, b, a uint32) {
 	r = uint32(Clamp01(c.r*c.a) * 0xffff)
 	g = uint32(Clamp01(c.g*c.a) * 0xffff)
 	b = uint32(Clamp01(c.b*c.a) * 0xffff)

@@ -222,7 +222,7 @@ func (v *Viewport) update(dt float64) {
 	}
 
 	for _, layer := range v.layers {
-		if !layer.Node_.Visible {
+		if !layer.Node_.Visible_ {
 			continue
 		}
 
@@ -405,7 +405,7 @@ func (l *Layer) LateRebuildCheck() {
 // UpdateAnimations scans layers for animated tiles and updates their UVs.
 func (v *Viewport) UpdateAnimations() {
 	for _, layer := range v.layers {
-		if layer.Anims == nil || !layer.Node_.Visible {
+		if layer.Anims == nil || !layer.Node_.Visible_ {
 			continue
 		}
 

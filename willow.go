@@ -1,6 +1,13 @@
 package willow
 
-import "github.com/hajimehoshi/ebiten/v2"
+import (
+	"image/color"
+
+	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/phanxgames/willow/internal/types"
+)
+
+// --- Color (kept in root — unexported fields accessed by animation, render) ---
 
 // Color represents an RGBA color with components in [0, 1]. Not premultiplied.
 // Premultiplication occurs at render submission time.
@@ -90,160 +97,121 @@ var ColorBlack = Color{0, 0, 0, 1}
 // ColorTransparent is fully transparent black.
 var ColorTransparent = Color{0, 0, 0, 0}
 
+// --- Type aliases from internal/types ---
+
 // Vec2 is a 2D vector used for positions, offsets, sizes, and directions
 // throughout the API.
-type Vec2 struct {
-	X, Y float64
-}
+type Vec2 = types.Vec2
+
+// Rect is an axis-aligned rectangle. The coordinate system has its origin at
+// the top-left, with Y increasing downward.
+type Rect = types.Rect
+
+// Range is a general-purpose min/max range.
+// Used by the particle system (EmitterConfig) and potentially other systems.
+type Range = types.Range
+
+// BlendMode selects a compositing operation. Each maps to a specific ebiten.Blend value.
+type BlendMode = types.BlendMode
+
+// Blend mode constants.
+const (
+	BlendNormal   = types.BlendNormal
+	BlendAdd      = types.BlendAdd
+	BlendMultiply = types.BlendMultiply
+	BlendScreen   = types.BlendScreen
+	BlendErase    = types.BlendErase
+	BlendMask     = types.BlendMask
+	BlendBelow    = types.BlendBelow
+	BlendNone     = types.BlendNone
+)
+
+// NodeType distinguishes rendering behavior for a Node.
+type NodeType = types.NodeType
+
+// Node type constants.
+const (
+	NodeTypeContainer       = types.NodeTypeContainer
+	NodeTypeSprite          = types.NodeTypeSprite
+	NodeTypeMesh            = types.NodeTypeMesh
+	NodeTypeParticleEmitter = types.NodeTypeParticleEmitter
+	NodeTypeText            = types.NodeTypeText
+)
+
+// EventType identifies a kind of interaction event.
+type EventType = types.EventType
+
+// Event type constants.
+const (
+	EventPointerDown  = types.EventPointerDown
+	EventPointerUp    = types.EventPointerUp
+	EventPointerMove  = types.EventPointerMove
+	EventClick        = types.EventClick
+	EventDragStart    = types.EventDragStart
+	EventDrag         = types.EventDrag
+	EventDragEnd      = types.EventDragEnd
+	EventPinch        = types.EventPinch
+	EventPointerEnter = types.EventPointerEnter
+	EventPointerLeave = types.EventPointerLeave
+)
+
+// eventBgClick is the internal background click event type.
+var eventBgClick = types.EventBgClick
+
+// MouseButton identifies a mouse button.
+type MouseButton = types.MouseButton
+
+// Mouse button constants.
+const (
+	MouseButtonLeft   = types.MouseButtonLeft
+	MouseButtonRight  = types.MouseButtonRight
+	MouseButtonMiddle = types.MouseButtonMiddle
+)
+
+// KeyModifiers is a bitmask of keyboard modifier keys.
+// Values can be combined with bitwise OR (e.g. ModShift | ModCtrl).
+type KeyModifiers = types.KeyModifiers
+
+// Modifier key constants.
+const (
+	ModShift = types.ModShift
+	ModCtrl  = types.ModCtrl
+	ModAlt   = types.ModAlt
+	ModMeta  = types.ModMeta
+)
+
+// TextAlign controls horizontal text alignment within a TextBlock.
+type TextAlign = types.TextAlign
+
+// Text alignment constants.
+const (
+	TextAlignLeft   = types.TextAlignLeft
+	TextAlignCenter = types.TextAlignCenter
+	TextAlignRight  = types.TextAlignRight
+)
+
+// TextureRegion describes a sub-rectangle within an atlas page.
+// Value type (32 bytes) — stored directly on Node, no pointer.
+type TextureRegion = types.TextureRegion
+
+// CacheTreeMode controls how a cached subtree invalidates.
+type CacheTreeMode = types.CacheTreeMode
+
+// Cache tree mode constants.
+const (
+	CacheTreeManual = types.CacheTreeManual
+	CacheTreeAuto   = types.CacheTreeAuto
+)
+
+// HitShape is implemented by custom hit-test shapes attached to a Node.
+type HitShape = types.HitShape
+
+// --- WhitePixel ---
 
 // WhitePixel is a 1x1 white image used by default for solid color sprites.
 var WhitePixel *ebiten.Image
 
 func init() {
 	WhitePixel = ebiten.NewImage(1, 1)
-	WhitePixel.Fill(ColorWhite.toRGBA())
+	WhitePixel.Fill(color.White)
 }
-
-// Rect is an axis-aligned rectangle. The coordinate system has its origin at
-// the top-left, with Y increasing downward.
-type Rect struct {
-	X, Y, Width, Height float64
-}
-
-// Contains reports whether the point (x, y) lies inside the rectangle.
-// Points on the edge are considered inside.
-func (r Rect) Contains(x, y float64) bool {
-	return x >= r.X && x <= r.X+r.Width &&
-		y >= r.Y && y <= r.Y+r.Height
-}
-
-// Intersects reports whether r and other overlap.
-// Adjacent rectangles (sharing only an edge) are considered intersecting.
-func (r Rect) Intersects(other Rect) bool {
-	return r.X <= other.X+other.Width &&
-		r.X+r.Width >= other.X &&
-		r.Y <= other.Y+other.Height &&
-		r.Y+r.Height >= other.Y
-}
-
-// Range is a general-purpose min/max range.
-// Used by the particle system (EmitterConfig) and potentially other systems.
-type Range struct {
-	Min, Max float64
-}
-
-// BlendMode selects a compositing operation. Each maps to a specific ebiten.Blend value.
-type BlendMode uint8
-
-const (
-	BlendNormal   BlendMode = iota // source-over (standard alpha blending)
-	BlendAdd                       // additive / lighter
-	BlendMultiply                  // multiply (source * destination; only darkens)
-	BlendScreen                    // screen (1 - (1-src)*(1-dst); only brightens)
-	BlendErase                     // destination-out (punch transparent holes)
-	BlendMask                      // clip destination to source alpha
-	BlendBelow                     // destination-over (draw behind existing content)
-	BlendNone                      // opaque copy (skip blending)
-)
-
-// EbitenBlend returns the ebiten.Blend value corresponding to this BlendMode.
-func (b BlendMode) EbitenBlend() ebiten.Blend {
-	switch b {
-	case BlendNormal:
-		return ebiten.BlendSourceOver
-	case BlendAdd:
-		return ebiten.BlendLighter
-	case BlendMultiply:
-		return ebiten.Blend{
-			BlendFactorSourceRGB:        ebiten.BlendFactorDestinationColor,
-			BlendFactorSourceAlpha:      ebiten.BlendFactorDestinationAlpha,
-			BlendFactorDestinationRGB:   ebiten.BlendFactorOneMinusSourceAlpha,
-			BlendFactorDestinationAlpha: ebiten.BlendFactorOneMinusSourceAlpha,
-			BlendOperationRGB:           ebiten.BlendOperationAdd,
-			BlendOperationAlpha:         ebiten.BlendOperationAdd,
-		}
-	case BlendScreen:
-		return ebiten.Blend{
-			BlendFactorSourceRGB:        ebiten.BlendFactorOne,
-			BlendFactorSourceAlpha:      ebiten.BlendFactorOne,
-			BlendFactorDestinationRGB:   ebiten.BlendFactorOneMinusSourceColor,
-			BlendFactorDestinationAlpha: ebiten.BlendFactorOneMinusSourceAlpha,
-			BlendOperationRGB:           ebiten.BlendOperationAdd,
-			BlendOperationAlpha:         ebiten.BlendOperationAdd,
-		}
-	case BlendErase:
-		return ebiten.BlendDestinationOut
-	case BlendMask:
-		return ebiten.Blend{
-			BlendFactorSourceRGB:        ebiten.BlendFactorZero,
-			BlendFactorSourceAlpha:      ebiten.BlendFactorZero,
-			BlendFactorDestinationRGB:   ebiten.BlendFactorSourceAlpha,
-			BlendFactorDestinationAlpha: ebiten.BlendFactorSourceAlpha,
-			BlendOperationRGB:           ebiten.BlendOperationAdd,
-			BlendOperationAlpha:         ebiten.BlendOperationAdd,
-		}
-	case BlendBelow:
-		return ebiten.BlendDestinationOver
-	case BlendNone:
-		return ebiten.BlendCopy
-	default:
-		return ebiten.BlendSourceOver
-	}
-}
-
-// NodeType distinguishes rendering behavior for a Node.
-type NodeType uint8
-
-const (
-	NodeTypeContainer       NodeType = iota // group node with no visual output
-	NodeTypeSprite                          // renders a TextureRegion or custom image
-	NodeTypeMesh                            // renders arbitrary triangles via DrawTriangles
-	NodeTypeParticleEmitter                 // CPU-simulated particle system
-	NodeTypeText                            // renders text via SpriteFont
-)
-
-// EventType identifies a kind of interaction event.
-type EventType uint8
-
-const (
-	EventPointerDown  EventType = iota // fires when a pointer button is pressed
-	EventPointerUp                     // fires when a pointer button is released
-	EventPointerMove                   // fires when the pointer moves (hover, no button)
-	EventClick                         // fires on press then release over the same node
-	EventDragStart                     // fires when movement exceeds the drag dead zone
-	EventDrag                          // fires each frame while dragging
-	EventDragEnd                       // fires when the pointer is released after dragging
-	EventPinch                         // fires during a two-finger pinch/rotate gesture
-	EventPointerEnter                  // fires when the pointer enters a node's bounds
-	EventPointerLeave                  // fires when the pointer leaves a node's bounds
-	eventBgClick                       // internal: background click (no node hit)
-)
-
-// MouseButton identifies a mouse button.
-type MouseButton uint8
-
-const (
-	MouseButtonLeft   MouseButton = iota // primary (left) mouse button
-	MouseButtonRight                     // secondary (right) mouse button
-	MouseButtonMiddle                    // middle mouse button (scroll wheel click)
-)
-
-// KeyModifiers is a bitmask of keyboard modifier keys.
-// Values can be combined with bitwise OR (e.g. ModShift | ModCtrl).
-type KeyModifiers uint8
-
-const (
-	ModShift KeyModifiers = 1 << iota // Shift key
-	ModCtrl                           // Control key
-	ModAlt                            // Alt / Option key
-	ModMeta                           // Meta / Command / Windows key
-)
-
-// TextAlign controls horizontal text alignment within a TextBlock.
-type TextAlign uint8
-
-const (
-	TextAlignLeft   TextAlign = iota // align text to the left edge (default)
-	TextAlignCenter                  // center text horizontally
-	TextAlignRight                   // align text to the right edge
-)

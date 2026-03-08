@@ -98,11 +98,11 @@ func (rt *RenderTexture) DrawImageAt(src *ebiten.Image, x, y float64, blend type
 func (rt *RenderTexture) NewSpriteNode(name string) *node.Node {
 	if NewSpriteFn != nil {
 		n := NewSpriteFn(name, types.TextureRegion{})
-		n.CustomImage = rt.Img
+		n.CustomImage_ = rt.Img
 		return n
 	}
 	n := node.NewNode(name, types.NodeTypeSprite)
-	n.CustomImage = rt.Img
+	n.CustomImage_ = rt.Img
 	return n
 }
 

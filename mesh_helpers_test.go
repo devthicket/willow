@@ -11,7 +11,7 @@ import (
 
 func TestRopeBevelJoinMode(t *testing.T) {
 	// L-shaped path: bevel mode should not scale normals at the join.
-	points := []Vec2{{0, 0}, {10, 0}, {10, 10}}
+	points := []Vec2{{X: 0, Y: 0}, {X: 10, Y: 0}, {X: 10, Y: 10}}
 	r := NewRope("rope", nil, points, RopeConfig{Width: 4, JoinMode: RopeJoinBevel})
 	n := r.Node()
 	if len(n.mesh.Vertices) != 6 {
@@ -23,7 +23,7 @@ func TestRopeBevelJoinMode(t *testing.T) {
 }
 
 func TestRopeVertexAndIndexCounts(t *testing.T) {
-	points := []Vec2{{0, 0}, {10, 0}, {20, 0}, {30, 0}}
+	points := []Vec2{{X: 0, Y: 0}, {X: 10, Y: 0}, {X: 20, Y: 0}, {X: 30, Y: 0}}
 	r := NewRope("rope", nil, points, RopeConfig{Width: 4})
 	n := r.Node()
 	// 4 points → 8 vertices, 3 segments → 18 indices
@@ -36,7 +36,7 @@ func TestRopeVertexAndIndexCounts(t *testing.T) {
 }
 
 func TestRopeTwoPoints(t *testing.T) {
-	points := []Vec2{{0, 0}, {10, 0}}
+	points := []Vec2{{X: 0, Y: 0}, {X: 10, Y: 0}}
 	r := NewRope("rope", nil, points, RopeConfig{Width: 4})
 	n := r.Node()
 	// 2 points → 4 vertices, 1 segment → 6 indices
@@ -59,7 +59,7 @@ func TestRopeTwoPoints(t *testing.T) {
 }
 
 func TestRopeUVTiling(t *testing.T) {
-	points := []Vec2{{0, 0}, {10, 0}, {20, 0}}
+	points := []Vec2{{X: 0, Y: 0}, {X: 10, Y: 0}, {X: 20, Y: 0}}
 	r := NewRope("rope", nil, points, RopeConfig{Width: 4})
 	n := r.Node()
 	// Cumulative length: 0, 10, 20
@@ -75,14 +75,14 @@ func TestRopeUVTiling(t *testing.T) {
 }
 
 func TestRopeSetPointsReusesBuffer(t *testing.T) {
-	points := []Vec2{{0, 0}, {10, 0}, {20, 0}}
+	points := []Vec2{{X: 0, Y: 0}, {X: 10, Y: 0}, {X: 20, Y: 0}}
 	r := NewRope("rope", nil, points, RopeConfig{Width: 4})
 	n := r.Node()
 	vertCap := cap(n.mesh.Vertices)
 	indCap := cap(n.mesh.Indices)
 
 	// Set fewer points  -  should not reallocate.
-	r.SetPoints([]Vec2{{0, 0}, {5, 0}})
+	r.SetPoints([]Vec2{{X: 0, Y: 0}, {X: 5, Y: 0}})
 	if cap(n.mesh.Vertices) != vertCap {
 		t.Errorf("vertex cap changed from %d to %d", vertCap, cap(n.mesh.Vertices))
 	}
@@ -98,7 +98,7 @@ func TestRopeSetPointsReusesBuffer(t *testing.T) {
 }
 
 func TestRopeSinglePointNoMesh(t *testing.T) {
-	r := NewRope("rope", nil, []Vec2{{0, 0}}, RopeConfig{Width: 4})
+	r := NewRope("rope", nil, []Vec2{{X: 0, Y: 0}}, RopeConfig{Width: 4})
 	n := r.Node()
 	if len(n.mesh.Vertices) != 0 || len(n.mesh.Indices) != 0 {
 		t.Error("single point rope should have no vertices/indices")
@@ -106,7 +106,7 @@ func TestRopeSinglePointNoMesh(t *testing.T) {
 }
 
 func TestRopeInvalidatesMeshAABB(t *testing.T) {
-	points := []Vec2{{0, 0}, {10, 0}}
+	points := []Vec2{{X: 0, Y: 0}, {X: 10, Y: 0}}
 	r := NewRope("rope", nil, points, RopeConfig{Width: 4})
 	n := r.Node()
 	n.recomputeMeshAABB()
@@ -114,7 +114,7 @@ func TestRopeInvalidatesMeshAABB(t *testing.T) {
 		t.Error("AABB should not be dirty after recompute")
 	}
 
-	r.SetPoints([]Vec2{{0, 0}, {20, 0}})
+	r.SetPoints([]Vec2{{X: 0, Y: 0}, {X: 20, Y: 0}})
 	if !n.mesh.aabbDirty {
 		t.Error("AABB should be dirty after SetPoints")
 	}
@@ -258,7 +258,7 @@ func TestRopeUpdateWave(t *testing.T) {
 }
 
 func TestRopeUpdateCustom(t *testing.T) {
-	customPts := []Vec2{{0, 0}, {10, 10}, {20, 0}}
+	customPts := []Vec2{{X: 0, Y: 0}, {X: 10, Y: 10}, {X: 20, Y: 0}}
 	r := NewRope("rope", nil, nil, RopeConfig{
 		Width:     4,
 		CurveMode: RopeCurveCustom,
@@ -468,7 +468,7 @@ func TestDistortionGridColsRows(t *testing.T) {
 // --- Polygon ---
 
 func TestPolygonFanTriangulation(t *testing.T) {
-	points := []Vec2{{0, 0}, {10, 0}, {10, 10}, {0, 10}}
+	points := []Vec2{{X: 0, Y: 0}, {X: 10, Y: 0}, {X: 10, Y: 10}, {X: 0, Y: 10}}
 	n := NewPolygon("poly", points)
 	// 4 vertices, 2 triangles → 6 indices
 	if len(n.mesh.Vertices) != 4 {
@@ -487,7 +487,7 @@ func TestPolygonFanTriangulation(t *testing.T) {
 }
 
 func TestPolygonTriangle(t *testing.T) {
-	points := []Vec2{{0, 0}, {10, 0}, {5, 10}}
+	points := []Vec2{{X: 0, Y: 0}, {X: 10, Y: 0}, {X: 5, Y: 10}}
 	n := NewPolygon("tri", points)
 	if len(n.mesh.Vertices) != 3 {
 		t.Errorf("vertices = %d, want 3", len(n.mesh.Vertices))
@@ -514,15 +514,15 @@ func TestPolygonPentagon(t *testing.T) {
 }
 
 func TestPolygonWhitePixelSharing(t *testing.T) {
-	a := NewPolygon("a", []Vec2{{0, 0}, {10, 0}, {5, 10}})
-	b := NewPolygon("b", []Vec2{{0, 0}, {20, 0}, {10, 20}})
+	a := NewPolygon("a", []Vec2{{X: 0, Y: 0}, {X: 10, Y: 0}, {X: 5, Y: 10}})
+	b := NewPolygon("b", []Vec2{{X: 0, Y: 0}, {X: 20, Y: 0}, {X: 10, Y: 20}})
 	if a.mesh.Image != b.mesh.Image {
 		t.Error("untextured polygons should share the same white pixel image")
 	}
 }
 
 func TestPolygonUntexturedUV(t *testing.T) {
-	n := NewPolygon("poly", []Vec2{{0, 0}, {10, 0}, {5, 10}})
+	n := NewPolygon("poly", []Vec2{{X: 0, Y: 0}, {X: 10, Y: 0}, {X: 5, Y: 10}})
 	// Untextured: all UVs should be at center of white pixel (0.5, 0.5).
 	for i, v := range n.mesh.Vertices {
 		if v.SrcX != 0.5 || v.SrcY != 0.5 {
@@ -532,18 +532,18 @@ func TestPolygonUntexturedUV(t *testing.T) {
 }
 
 func TestPolygonTooFewPoints(t *testing.T) {
-	n := NewPolygon("tiny", []Vec2{{0, 0}, {10, 0}})
+	n := NewPolygon("tiny", []Vec2{{X: 0, Y: 0}, {X: 10, Y: 0}})
 	if len(n.mesh.Vertices) != 0 || len(n.mesh.Indices) != 0 {
 		t.Error("polygon with <3 points should have no vertices/indices")
 	}
 }
 
 func TestSetPolygonPoints(t *testing.T) {
-	n := NewPolygon("poly", []Vec2{{0, 0}, {10, 0}, {5, 10}})
+	n := NewPolygon("poly", []Vec2{{X: 0, Y: 0}, {X: 10, Y: 0}, {X: 5, Y: 10}})
 	vertCap := cap(n.mesh.Vertices)
 
 	// Update with fewer points  -  should reuse backing array.
-	SetPolygonPoints(n, []Vec2{{0, 0}, {20, 0}, {10, 20}})
+	SetPolygonPoints(n, []Vec2{{X: 0, Y: 0}, {X: 20, Y: 0}, {X: 10, Y: 20}})
 	if len(n.mesh.Vertices) != 3 {
 		t.Errorf("vertices = %d, want 3", len(n.mesh.Vertices))
 	}
@@ -557,7 +557,7 @@ func TestSetPolygonPoints(t *testing.T) {
 
 func TestNewPolygonTextured(t *testing.T) {
 	img := ebiten.NewImage(32, 32)
-	points := []Vec2{{0, 0}, {32, 0}, {32, 32}, {0, 32}}
+	points := []Vec2{{X: 0, Y: 0}, {X: 32, Y: 0}, {X: 32, Y: 32}, {X: 0, Y: 32}}
 	n := NewPolygonTextured("texPoly", img, points)
 
 	if len(n.mesh.Vertices) != 4 {
@@ -578,9 +578,9 @@ func TestNewPolygonTextured(t *testing.T) {
 }
 
 func TestSetPolygonPointsGrows(t *testing.T) {
-	n := NewPolygon("poly", []Vec2{{0, 0}, {10, 0}, {5, 10}})
+	n := NewPolygon("poly", []Vec2{{X: 0, Y: 0}, {X: 10, Y: 0}, {X: 5, Y: 10}})
 	// Grow to 5 points  -  may need new backing array.
-	points := []Vec2{{0, 0}, {10, 0}, {20, 5}, {15, 15}, {0, 10}}
+	points := []Vec2{{X: 0, Y: 0}, {X: 10, Y: 0}, {X: 20, Y: 5}, {X: 15, Y: 15}, {X: 0, Y: 10}}
 	SetPolygonPoints(n, points)
 	if len(n.mesh.Vertices) != 5 {
 		t.Errorf("vertices = %d, want 5", len(n.mesh.Vertices))

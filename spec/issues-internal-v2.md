@@ -111,6 +111,55 @@ Root called `s.submitBatchesCoalesced(target)` (unexported). Core calls
 
 ---
 
+## Phase 9 — root facade (in progress)
+
+### Callback setter rename: `SetOn*` → `On*`
+Root public API uses `n.OnPointerDown(fn)`, `n.OnClick(fn)`, etc. Internal
+node/ originally used `SetOnPointerDown(fn)`, etc. Renamed all 10 setters
+to match root's API. No callers in internal/ were affected (only defined,
+never called from internal/).
+
+### Getter methods added for renamed fields
+Added `Visible()`, `Renderable()`, `CustomImage()`, `TextureRegion()`,
+`SkewX()`, `SkewY()`, `PivotX()`, `PivotY()` getters to match root API.
+Fields were renamed with underscore suffix in a prior sub-task.
+
+### `RenderLayer` / `GlobalOrder` — no getter methods
+Root has `RenderLayer()` and `GlobalOrder()` getter methods returning
+unexported fields. In internal/node, these are exported fields (`n.RenderLayer`,
+`n.GlobalOrder`), so adding a getter method with the same name would conflict.
+Users access them directly via the exported field. No issue for type alias.
+
+### `Scene()` method stays in root
+`n.Scene()` returns `*Scene`, which is defined in root. Can't live in node/
+since node/ doesn't know about Scene. Root facade will define this method
+(or it stays as-is in the root's existing `node.go`). Since `type Node = node.Node`
+is a type alias, methods can be defined on it in root only if root is the
+defining package — but it's NOT with a type alias. **This means `Scene()` must
+move to internal/node as `Scene() any` and root casts the return.** Or root
+keeps its own Node type (not alias). Needs resolution.
+
+### `ToTexture(s *Scene)` stays in root
+Requires `*Scene` and calls `subtreeBounds`, `renderSubtree` — both reference
+root-level render logic. Cannot move to node/ or core/ without significant
+refactoring. Stays in root.
+
+### Mask/Cache/MeshAABB methods added to node/
+`SetMask`, `ClearMask`, `GetMask`, `SetCacheAsTexture`, `InvalidateCache`,
+`IsCacheEnabled`, `InvalidateMeshAABB` added to internal/node/methods.go.
+These use exported field names (`MaskNode`, `CacheEnabled`, `CacheTexture`,
+`CacheDirty`, `Mesh.AabbDirty`).
+
+### Root facade — remaining work
+- Create type aliases in root (`type Node = node.Node`, `type Color = types.Color`, etc.)
+- Remove duplicate method implementations from root .go files
+- Wire all ~20 function pointers in root init or constructors
+- Handle `TileMapLayer.emitCommands` which casts `any` to `*Scene` (must become `*render.Pipeline`)
+- Integration tests
+- Resolve `Scene()` method ownership (see above)
+
+---
+
 ## Cross-phase — integration concerns
 
 ### Root facade must wire all function pointers

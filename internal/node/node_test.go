@@ -20,7 +20,7 @@ func TestNewNode(t *testing.T) {
 	if n.ScaleX_ != 1 || n.ScaleY_ != 1 {
 		t.Errorf("Scale = (%f, %f), want (1, 1)", n.ScaleX_, n.ScaleY_)
 	}
-	if !n.Visible || !n.Renderable {
+	if !n.Visible_ || !n.Renderable_ {
 		t.Error("should be visible and renderable by default")
 	}
 }

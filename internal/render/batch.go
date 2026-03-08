@@ -592,7 +592,7 @@ func resolveAtlasPage(pageIdx uint16) *ebiten.Image {
 
 // EmitNodeCommand emits a render command for a single node at the given transform.
 func EmitNodeCommand(p *Pipeline, n *node.Node, transform [6]float64, alpha float64, treeOrder *int) {
-	if !n.Renderable {
+	if !n.Renderable_ {
 		return
 	}
 	t32 := Affine32(transform)
@@ -608,10 +608,10 @@ func EmitNodeCommand(p *Pipeline, n *node.Node, transform [6]float64, alpha floa
 			GlobalOrder: n.GlobalOrder,
 			TreeOrder:   *treeOrder,
 		}
-		if n.CustomImage != nil {
-			cmd.DirectImage = n.CustomImage
+		if n.CustomImage_ != nil {
+			cmd.DirectImage = n.CustomImage_
 		} else {
-			cmd.TextureRegion = n.TextureRegion
+			cmd.TextureRegion = n.TextureRegion_
 		}
 		p.Commands = append(p.Commands, cmd)
 
@@ -646,8 +646,8 @@ func EmitNodeCommand(p *Pipeline, n *node.Node, transform [6]float64, alpha floa
 			p.Commands = append(p.Commands, RenderCommand{
 				Type:               CommandParticle,
 				Transform:          Affine32(particleTransform),
-				TextureRegion:      n.TextureRegion,
-				DirectImage:        n.CustomImage,
+				TextureRegion:      n.TextureRegion_,
+				DirectImage:        n.CustomImage_,
 				Color:              Color32{float32(n.Color_.R()), float32(n.Color_.G()), float32(n.Color_.B()), float32(n.Color_.A() * alpha)},
 				BlendMode:          n.BlendMode_,
 				RenderLayer:        n.RenderLayer,

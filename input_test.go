@@ -58,7 +58,7 @@ func TestHitCircleContains(t *testing.T) {
 func TestHitPolygonContains(t *testing.T) {
 	// Square polygon: (0,0), (100,0), (100,100), (0,100)
 	p := HitPolygon{Points: []Vec2{
-		{0, 0}, {100, 0}, {100, 100}, {0, 100},
+		{X: 0, Y: 0}, {X: 100, Y: 0}, {X: 100, Y: 100}, {X: 0, Y: 100},
 	}}
 
 	tests := []struct {
@@ -82,7 +82,7 @@ func TestHitPolygonContains(t *testing.T) {
 
 	// Triangle
 	tri := HitPolygon{Points: []Vec2{
-		{0, 0}, {100, 0}, {50, 100},
+		{X: 0, Y: 0}, {X: 100, Y: 0}, {X: 50, Y: 100},
 	}}
 	if !tri.Contains(50, 50) {
 		t.Error("triangle should contain its center")
@@ -92,7 +92,7 @@ func TestHitPolygonContains(t *testing.T) {
 	}
 
 	// Degenerate (< 3 points)
-	degen := HitPolygon{Points: []Vec2{{0, 0}, {1, 1}}}
+	degen := HitPolygon{Points: []Vec2{{X: 0, Y: 0}, {X: 1, Y: 1}}}
 	if degen.Contains(0, 0) {
 		t.Error("degenerate polygon should not contain anything")
 	}
@@ -101,7 +101,7 @@ func TestHitPolygonContains(t *testing.T) {
 func TestHitPolygonContains_ReversedWinding(t *testing.T) {
 	// Same square but clockwise winding.
 	p := HitPolygon{Points: []Vec2{
-		{0, 100}, {100, 100}, {100, 0}, {0, 0},
+		{X: 0, Y: 100}, {X: 100, Y: 100}, {X: 100, Y: 0}, {X: 0, Y: 0},
 	}}
 	if !p.Contains(50, 50) {
 		t.Error("reversed winding polygon should still contain center point")

@@ -308,7 +308,7 @@ func TestCulling_ContainerNeverCulled(t *testing.T) {
 func TestCulling_SpriteInsideViewport(t *testing.T) {
 	n := &node.Node{}
 	n.Type = types.NodeTypeSprite
-	n.TextureRegion = types.TextureRegion{Width: 64, Height: 64, OriginalW: 64, OriginalH: 64}
+	n.TextureRegion_ = types.TextureRegion{Width: 64, Height: 64, OriginalW: 64, OriginalH: 64}
 	n.WorldTransform = [6]float64{1, 0, 0, 1, 100, 100}
 	viewport := types.Rect{X: 0, Y: 0, Width: 800, Height: 600}
 	if ShouldCull(n, n.WorldTransform, viewport) {
@@ -319,7 +319,7 @@ func TestCulling_SpriteInsideViewport(t *testing.T) {
 func TestCulling_SpriteOutsideViewport(t *testing.T) {
 	n := &node.Node{}
 	n.Type = types.NodeTypeSprite
-	n.TextureRegion = types.TextureRegion{Width: 64, Height: 64, OriginalW: 64, OriginalH: 64}
+	n.TextureRegion_ = types.TextureRegion{Width: 64, Height: 64, OriginalW: 64, OriginalH: 64}
 	n.WorldTransform = [6]float64{1, 0, 0, 1, -200, -200}
 	viewport := types.Rect{X: 0, Y: 0, Width: 800, Height: 600}
 	if !ShouldCull(n, n.WorldTransform, viewport) {

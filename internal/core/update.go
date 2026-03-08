@@ -8,7 +8,7 @@ import (
 // UpdateNodesAndParticles walks the tree depth-first, calling OnUpdate callbacks
 // and ticking particle emitters.
 func UpdateNodesAndParticles(n *node.Node, dt float64) {
-	if !n.Visible {
+	if !n.Visible_ {
 		return
 	}
 	if n.OnUpdate != nil {

@@ -17,6 +17,14 @@ func (n *Node) Alpha() float64          { return n.Alpha_ }
 func (n *Node) Color() types.Color      { return n.Color_ }
 func (n *Node) BlendMode() types.BlendMode { return n.BlendMode_ }
 func (n *Node) ZIndex() int             { return n.ZIndex_ }
+func (n *Node) Visible() bool           { return n.Visible_ }
+func (n *Node) Renderable() bool        { return n.Renderable_ }
+func (n *Node) CustomImage() *ebiten.Image { return n.CustomImage_ }
+func (n *Node) TextureRegion() types.TextureRegion { return n.TextureRegion_ }
+func (n *Node) SkewX() float64          { return n.SkewX_ }
+func (n *Node) SkewY() float64          { return n.SkewY_ }
+func (n *Node) PivotX() float64         { return n.PivotX_ }
+func (n *Node) PivotY() float64         { return n.PivotY_ }
 
 // --- Visual property setters ---
 
@@ -31,18 +39,18 @@ func (n *Node) SetBlendMode(b types.BlendMode) {
 }
 
 func (n *Node) SetVisible(v bool) {
-	n.Visible = v
+	n.Visible_ = v
 	invalidateAncestorCache(n)
 }
 
 func (n *Node) SetRenderable(r bool) {
-	n.Renderable = r
+	n.Renderable_ = r
 	invalidateAncestorCache(n)
 }
 
 func (n *Node) SetTextureRegion(r types.TextureRegion) {
-	pageChanged := n.TextureRegion.Page != r.Page
-	n.TextureRegion = r
+	pageChanged := n.TextureRegion_.Page != r.Page
+	n.TextureRegion_ = r
 	if pageChanged {
 		invalidateAncestorCache(n)
 		return
@@ -184,50 +192,50 @@ func (n *Node) Width() float64 {
 	if n.Type != types.NodeTypeSprite {
 		return 0
 	}
-	if n.CustomImage != nil {
-		return n.ScaleX_ * float64(n.CustomImage.Bounds().Dx())
+	if n.CustomImage_ != nil {
+		return n.ScaleX_ * float64(n.CustomImage_.Bounds().Dx())
 	}
-	if n.TextureRegion == (types.TextureRegion{}) {
+	if n.TextureRegion_ == (types.TextureRegion{}) {
 		return n.ScaleX_
 	}
-	return n.ScaleX_ * float64(n.TextureRegion.OriginalW)
+	return n.ScaleX_ * float64(n.TextureRegion_.OriginalW)
 }
 
 func (n *Node) Height() float64 {
 	if n.Type != types.NodeTypeSprite {
 		return 0
 	}
-	if n.CustomImage != nil {
-		return n.ScaleY_ * float64(n.CustomImage.Bounds().Dy())
+	if n.CustomImage_ != nil {
+		return n.ScaleY_ * float64(n.CustomImage_.Bounds().Dy())
 	}
-	if n.TextureRegion == (types.TextureRegion{}) {
+	if n.TextureRegion_ == (types.TextureRegion{}) {
 		return n.ScaleY_
 	}
-	return n.ScaleY_ * float64(n.TextureRegion.OriginalH)
+	return n.ScaleY_ * float64(n.TextureRegion_.OriginalH)
 }
 
 func (n *Node) SetSize(w, h float64) {
-	if n.CustomImage == WhitePixelImage || n.TextureRegion == (types.TextureRegion{}) {
+	if n.CustomImage_ == WhitePixelImage || n.TextureRegion_ == (types.TextureRegion{}) {
 		n.ScaleX_ = w
 		n.ScaleY_ = h
-	} else if n.CustomImage != nil {
-		b := n.CustomImage.Bounds()
+	} else if n.CustomImage_ != nil {
+		b := n.CustomImage_.Bounds()
 		if b.Dx() > 0 {
 			n.ScaleX_ = w / float64(b.Dx())
 		}
 		if b.Dy() > 0 {
 			n.ScaleY_ = h / float64(b.Dy())
 		}
-	} else if n.TextureRegion.OriginalW > 0 && n.TextureRegion.OriginalH > 0 {
-		n.ScaleX_ = w / float64(n.TextureRegion.OriginalW)
-		n.ScaleY_ = h / float64(n.TextureRegion.OriginalH)
+	} else if n.TextureRegion_.OriginalW > 0 && n.TextureRegion_.OriginalH > 0 {
+		n.ScaleX_ = w / float64(n.TextureRegion_.OriginalW)
+		n.ScaleY_ = h / float64(n.TextureRegion_.OriginalH)
 	}
 	n.TransformDirty = true
 	invalidateAncestorCache(n)
 }
 
 func (n *Node) SetCustomImage(img *ebiten.Image) {
-	n.CustomImage = img
+	n.CustomImage_ = img
 	invalidateAncestorCache(n)
 }
 
@@ -265,76 +273,201 @@ func (n *Node) IsCacheAsTreeEnabled() bool {
 	return n.CacheData != nil
 }
 
+// --- Mask ---
+
+func (n *Node) SetMask(maskNode *Node) {
+	n.MaskNode = maskNode
+	invalidateAncestorCache(n)
+}
+
+func (n *Node) ClearMask() {
+	n.MaskNode = nil
+	invalidateAncestorCache(n)
+}
+
+func (n *Node) GetMask() *Node {
+	return n.MaskNode
+}
+
+// --- CacheAsTexture ---
+
+func (n *Node) SetCacheAsTexture(enabled bool) {
+	if n.CacheEnabled == enabled {
+		return
+	}
+	n.CacheEnabled = enabled
+	if !enabled {
+		if n.CacheTexture != nil {
+			n.CacheTexture.Deallocate()
+			n.CacheTexture = nil
+		}
+		n.CacheDirty = false
+	} else {
+		n.CacheDirty = true
+	}
+	invalidateAncestorCache(n)
+}
+
+func (n *Node) InvalidateCache() {
+	if n.CacheEnabled {
+		n.CacheDirty = true
+	}
+}
+
+func (n *Node) IsCacheEnabled() bool {
+	return n.CacheEnabled
+}
+
+// --- Mesh AABB ---
+
+func (n *Node) InvalidateMeshAABB() {
+	if n.Mesh != nil {
+		n.Mesh.AabbDirty = true
+	}
+}
+
 // --- Interaction callback setters ---
 
-func (n *Node) SetOnPointerDown(fn func(PointerContext)) {
+func (n *Node) OnPointerDown(fn func(PointerContext)) {
 	n.EnsureCallbacks().OnPointerDown = fn
 	if fn != nil {
 		n.Interactable = true
 	}
 }
 
-func (n *Node) SetOnPointerUp(fn func(PointerContext)) {
+func (n *Node) OnPointerUp(fn func(PointerContext)) {
 	n.EnsureCallbacks().OnPointerUp = fn
 	if fn != nil {
 		n.Interactable = true
 	}
 }
 
-func (n *Node) SetOnPointerMove(fn func(PointerContext)) {
+func (n *Node) OnPointerMove(fn func(PointerContext)) {
 	n.EnsureCallbacks().OnPointerMove = fn
 	if fn != nil {
 		n.Interactable = true
 	}
 }
 
-func (n *Node) SetOnClick(fn func(ClickContext)) {
+func (n *Node) OnClick(fn func(ClickContext)) {
 	n.EnsureCallbacks().OnClick = fn
 	if fn != nil {
 		n.Interactable = true
 	}
 }
 
-func (n *Node) SetOnDragStart(fn func(DragContext)) {
+func (n *Node) OnDragStart(fn func(DragContext)) {
 	n.EnsureCallbacks().OnDragStart = fn
 	if fn != nil {
 		n.Interactable = true
 	}
 }
 
-func (n *Node) SetOnDrag(fn func(DragContext)) {
+func (n *Node) OnDrag(fn func(DragContext)) {
 	n.EnsureCallbacks().OnDrag = fn
 	if fn != nil {
 		n.Interactable = true
 	}
 }
 
-func (n *Node) SetOnDragEnd(fn func(DragContext)) {
+func (n *Node) OnDragEnd(fn func(DragContext)) {
 	n.EnsureCallbacks().OnDragEnd = fn
 	if fn != nil {
 		n.Interactable = true
 	}
 }
 
-func (n *Node) SetOnPinch(fn func(PinchContext)) {
+func (n *Node) OnPinch(fn func(PinchContext)) {
 	n.EnsureCallbacks().OnPinch = fn
 	if fn != nil {
 		n.Interactable = true
 	}
 }
 
-func (n *Node) SetOnPointerEnter(fn func(PointerContext)) {
+func (n *Node) OnPointerEnter(fn func(PointerContext)) {
 	n.EnsureCallbacks().OnPointerEnter = fn
 	if fn != nil {
 		n.Interactable = true
 	}
 }
 
-func (n *Node) SetOnPointerLeave(fn func(PointerContext)) {
+func (n *Node) OnPointerLeave(fn func(PointerContext)) {
 	n.EnsureCallbacks().OnPointerLeave = fn
 	if fn != nil {
 		n.Interactable = true
 	}
+}
+
+// --- Callback getters ---
+
+func (n *Node) GetOnPointerDown() func(PointerContext) {
+	if n.Callbacks == nil {
+		return nil
+	}
+	return n.Callbacks.OnPointerDown
+}
+
+func (n *Node) GetOnPointerUp() func(PointerContext) {
+	if n.Callbacks == nil {
+		return nil
+	}
+	return n.Callbacks.OnPointerUp
+}
+
+func (n *Node) GetOnPointerMove() func(PointerContext) {
+	if n.Callbacks == nil {
+		return nil
+	}
+	return n.Callbacks.OnPointerMove
+}
+
+func (n *Node) GetOnClick() func(ClickContext) {
+	if n.Callbacks == nil {
+		return nil
+	}
+	return n.Callbacks.OnClick
+}
+
+func (n *Node) GetOnDragStart() func(DragContext) {
+	if n.Callbacks == nil {
+		return nil
+	}
+	return n.Callbacks.OnDragStart
+}
+
+func (n *Node) GetOnDrag() func(DragContext) {
+	if n.Callbacks == nil {
+		return nil
+	}
+	return n.Callbacks.OnDrag
+}
+
+func (n *Node) GetOnDragEnd() func(DragContext) {
+	if n.Callbacks == nil {
+		return nil
+	}
+	return n.Callbacks.OnDragEnd
+}
+
+func (n *Node) GetOnPinch() func(PinchContext) {
+	if n.Callbacks == nil {
+		return nil
+	}
+	return n.Callbacks.OnPinch
+}
+
+func (n *Node) GetOnPointerEnter() func(PointerContext) {
+	if n.Callbacks == nil {
+		return nil
+	}
+	return n.Callbacks.OnPointerEnter
+}
+
+func (n *Node) GetOnPointerLeave() func(PointerContext) {
+	if n.Callbacks == nil {
+		return nil
+	}
+	return n.Callbacks.OnPointerLeave
 }
 
 // --- Disposal ---
@@ -368,7 +501,7 @@ func (n *Node) dispose() {
 	n.CacheDirty = false
 	n.MaskNode = nil
 	n.CacheData = nil
-	n.CustomImage = nil
+	n.CustomImage_ = nil
 	n.CustomEmit = nil
 	n.Mesh = nil
 	n.Emitter = nil

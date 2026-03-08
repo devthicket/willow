@@ -4,32 +4,8 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-// CacheTreeMode controls how a SetCacheAsTree node detects stale caches.
-type CacheTreeMode uint8
-
-const (
-	// CacheTreeManual requires the user to call InvalidateCacheTree() when
-	// the subtree changes. Zero overhead on setters. Best for large tilemaps.
-	CacheTreeManual CacheTreeMode = iota + 1
-	// CacheTreeAuto (the default) auto-invalidates the cache when setters on
-	// descendant nodes are called. Small per-setter overhead. Always correct.
-	CacheTreeAuto
-)
-
-// --- Placeholder types (replaced by later phases) ---
-
-// Font and TextBlock are defined in text.go (Phase 07).
-// ParticleEmitter and EmitterConfig are defined in particle.go (Phase 10).
-
-// Filter is defined in filter.go (Phase 09).
-
-// HitShape defines a custom hit testing region in local coordinates.
-// Implement this interface and assign it to Node.HitShape to override
-// the default axis-aligned bounding box test.
-type HitShape interface {
-	// Contains reports whether the local-space point (x, y) is inside the shape.
-	Contains(x, y float64) bool
-}
+// CacheTreeMode, HitShape, and other foundation types are aliased
+// from internal/types in willow.go.
 
 // --- Callback context placeholders (Phase 08) ---
 

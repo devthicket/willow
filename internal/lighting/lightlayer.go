@@ -174,7 +174,7 @@ func (ll *LightLayer) Redraw() {
 		if l.Target == nil || l.Target.IsDisposed() {
 			continue
 		}
-		wx, wy := l.Target.LocalToWorld(l.Target.PivotX, l.Target.PivotY)
+		wx, wy := l.Target.LocalToWorld(l.Target.PivotX_, l.Target.PivotY_)
 		lx, ly := ll.node_.WorldToLocal(wx, wy)
 		l.X = lx + l.OffsetX
 		l.Y = ly + l.OffsetY

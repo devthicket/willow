@@ -57,13 +57,13 @@ var (
 // Traverse walks the node tree depth-first, emitting render commands for
 // visible, renderable leaf nodes.
 func (p *Pipeline) Traverse(n *node.Node, treeOrder *int) {
-	if !n.Visible {
+	if !n.Visible_ {
 		return
 	}
 
 	viewWorld := node.MultiplyAffine(p.ViewTransform, n.WorldTransform)
 
-	culled := p.CullActive && n.Renderable && ShouldCullFn != nil && ShouldCullFn(n, viewWorld, p.CullBounds)
+	culled := p.CullActive && n.Renderable_ && ShouldCullFn != nil && ShouldCullFn(n, viewWorld, p.CullBounds)
 
 	// CacheAsTree: replay cached commands (hit) or build cache (miss).
 	ctd := GetCacheTreeData(n)
@@ -101,7 +101,7 @@ func (p *Pipeline) Traverse(n *node.Node, treeOrder *int) {
 	building := p.BuildingCacheFor != nil
 
 	preCmdLen := len(p.Commands)
-	if n.Renderable && !culled {
+	if n.Renderable_ && !culled {
 		p.emitNodeInline(n, viewWorld, treeOrder, building)
 	}
 	if !building && len(p.Commands) > preCmdLen {
@@ -136,10 +136,10 @@ func (p *Pipeline) emitNodeInline(n *node.Node, viewWorld [6]float64, treeOrder 
 			GlobalOrder: n.GlobalOrder,
 			TreeOrder:   *treeOrder,
 		}
-		if n.CustomImage != nil {
-			cmd.DirectImage = n.CustomImage
+		if n.CustomImage_ != nil {
+			cmd.DirectImage = n.CustomImage_
 		} else {
-			cmd.TextureRegion = n.TextureRegion
+			cmd.TextureRegion = n.TextureRegion_
 		}
 		if building {
 			cmd.EmittingNodeID = n.ID
@@ -177,8 +177,8 @@ func (p *Pipeline) emitNodeInline(n *node.Node, viewWorld [6]float64, treeOrder 
 			p.Commands = append(p.Commands, RenderCommand{
 				Type:               CommandParticle,
 				Transform:          Affine32(particleTransform),
-				TextureRegion:      n.TextureRegion,
-				DirectImage:        n.CustomImage,
+				TextureRegion:      n.TextureRegion_,
+				DirectImage:        n.CustomImage_,
 				Color:              nodeColor32(n),
 				BlendMode:          n.BlendMode_,
 				RenderLayer:        n.RenderLayer,
@@ -277,7 +277,7 @@ func (p *Pipeline) replayCacheAsTree(n *node.Node, ctd *CacheTreeData, container
 			cmd.Color.A *= alphaRatio
 		}
 		if src.Source != nil {
-			cmd.TextureRegion = src.Source.TextureRegion
+			cmd.TextureRegion = src.Source.TextureRegion_
 		}
 		*treeOrder++
 		cmd.TreeOrder = *treeOrder
@@ -293,8 +293,8 @@ func (p *Pipeline) buildCacheAsTree(n *node.Node, ctd *CacheTreeData, containerT
 	p.BuildingCacheFor = n
 
 	viewWorld := node.MultiplyAffine(p.ViewTransform, n.WorldTransform)
-	culled := p.CullActive && n.Renderable && ShouldCullFn != nil && ShouldCullFn(n, viewWorld, p.CullBounds)
-	if n.Renderable && !culled {
+	culled := p.CullActive && n.Renderable_ && ShouldCullFn != nil && ShouldCullFn(n, viewWorld, p.CullBounds)
+	if n.Renderable_ && !culled {
 		p.emitNodeCommandInline(n, treeOrder)
 		for i := startIdx; i < len(p.Commands); i++ {
 			p.Commands[i].EmittingNodeID = n.ID
@@ -359,10 +359,10 @@ func (p *Pipeline) emitNodeCommandInline(n *node.Node, treeOrder *int) {
 			GlobalOrder: n.GlobalOrder,
 			TreeOrder:   *treeOrder,
 		}
-		if n.CustomImage != nil {
-			cmd.DirectImage = n.CustomImage
+		if n.CustomImage_ != nil {
+			cmd.DirectImage = n.CustomImage_
 		} else {
-			cmd.TextureRegion = n.TextureRegion
+			cmd.TextureRegion = n.TextureRegion_
 		}
 		p.Commands = append(p.Commands, cmd)
 	case types.NodeTypeText:
@@ -507,7 +507,7 @@ func (p *Pipeline) renderSubtree(n *node.Node, target *ebiten.Image, bounds type
 }
 
 func (p *Pipeline) renderSubtreeWalk(n *node.Node, parentTransform [6]float64, parentAlpha float64, treeOrder *int) {
-	if !n.Visible {
+	if !n.Visible_ {
 		return
 	}
 
@@ -714,11 +714,11 @@ func WorldAABB(transform [6]float64, w, h float64) types.Rect {
 func NodeDimensions(n *node.Node) (w, h float64) {
 	switch n.Type {
 	case types.NodeTypeSprite:
-		if n.CustomImage != nil {
-			b := n.CustomImage.Bounds()
+		if n.CustomImage_ != nil {
+			b := n.CustomImage_.Bounds()
 			return float64(b.Dx()), float64(b.Dy())
 		}
-		return float64(n.TextureRegion.OriginalW), float64(n.TextureRegion.OriginalH)
+		return float64(n.TextureRegion_.OriginalW), float64(n.TextureRegion_.OriginalH)
 	case types.NodeTypeMesh:
 		if n.Mesh != nil {
 			mesh.RecomputeMeshAABB(n)

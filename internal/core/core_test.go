@@ -172,7 +172,7 @@ func TestCountDrawCallsCoalesced_Empty(t *testing.T) {
 
 func TestUpdateNodesAndParticles_CallsOnUpdate(t *testing.T) {
 	root := node.NewNode("root", types.NodeTypeContainer)
-	root.Visible = true
+	root.Visible_ = true
 	called := false
 	root.OnUpdate = func(dt float64) { called = true }
 	UpdateNodesAndParticles(root, 0.016)
@@ -183,7 +183,7 @@ func TestUpdateNodesAndParticles_CallsOnUpdate(t *testing.T) {
 
 func TestUpdateNodesAndParticles_SkipsInvisible(t *testing.T) {
 	root := node.NewNode("root", types.NodeTypeContainer)
-	root.Visible = false
+	root.Visible_ = false
 	called := false
 	root.OnUpdate = func(dt float64) { called = true }
 	UpdateNodesAndParticles(root, 0.016)

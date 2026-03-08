@@ -11,8 +11,8 @@ func ComputeLocalTransform(n *Node) [6]float64 {
 	sx := n.ScaleX_
 	sy := n.ScaleY_
 
-	if n.Rotation_ == 0 && n.SkewX == 0 && n.SkewY == 0 {
-		return [6]float64{sx, 0, 0, sy, -n.PivotX*sx + n.X_, -n.PivotY*sy + n.Y_}
+	if n.Rotation_ == 0 && n.SkewX_ == 0 && n.SkewY_ == 0 {
+		return [6]float64{sx, 0, 0, sy, -n.PivotX_*sx + n.X_, -n.PivotY_*sy + n.Y_}
 	}
 
 	var sin, cos float64
@@ -23,11 +23,11 @@ func ComputeLocalTransform(n *Node) [6]float64 {
 	}
 
 	var tanSkewX, tanSkewY float64
-	if n.SkewX != 0 {
-		tanSkewX = math.Tan(n.SkewX)
+	if n.SkewX_ != 0 {
+		tanSkewX = math.Tan(n.SkewX_)
 	}
-	if n.SkewY != 0 {
-		tanSkewY = math.Tan(n.SkewY)
+	if n.SkewY_ != 0 {
+		tanSkewY = math.Tan(n.SkewY_)
 	}
 
 	a := sx
@@ -35,8 +35,8 @@ func ComputeLocalTransform(n *Node) [6]float64 {
 	c := tanSkewX * sy
 	d := sy
 
-	px := n.PivotX
-	py := n.PivotY
+	px := n.PivotX_
+	py := n.PivotY_
 	preTx := -px*sx - tanSkewX*py*sy
 	preTy := -tanSkewY*px*sx - py*sy
 
@@ -87,7 +87,7 @@ func TransformPoint(m [6]float64, x, y float64) (float64, float64) {
 
 // UpdateWorldTransform recomputes a node's worldTransform and worldAlpha.
 func UpdateWorldTransform(n *Node, parentTransform [6]float64, parentAlpha float64, parentRecomputed bool, parentAlphaChanged bool) {
-	if !n.Visible {
+	if !n.Visible_ {
 		return
 	}
 	recompute := n.TransformDirty || parentRecomputed
@@ -143,15 +143,15 @@ func (n *Node) SetRotation(r float64) {
 }
 
 func (n *Node) SetSkew(sx, sy float64) {
-	n.SkewX = sx
-	n.SkewY = sy
+	n.SkewX_ = sx
+	n.SkewY_ = sy
 	n.TransformDirty = true
 	invalidateAncestorCache(n)
 }
 
 func (n *Node) SetPivot(px, py float64) {
-	n.PivotX = px
-	n.PivotY = py
+	n.PivotX_ = px
+	n.PivotY_ = py
 	n.TransformDirty = true
 	invalidateAncestorCache(n)
 }

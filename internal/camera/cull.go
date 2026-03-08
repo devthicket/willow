@@ -31,11 +31,11 @@ func WorldAABB(transform [6]float64, w, h float64) types.Rect {
 func NodeDimensions(n *node.Node) (w, h float64) {
 	switch n.Type {
 	case types.NodeTypeSprite:
-		if n.CustomImage != nil {
-			b := n.CustomImage.Bounds()
+		if n.CustomImage_ != nil {
+			b := n.CustomImage_.Bounds()
 			return float64(b.Dx()), float64(b.Dy())
 		}
-		return float64(n.TextureRegion.OriginalW), float64(n.TextureRegion.OriginalH)
+		return float64(n.TextureRegion_.OriginalW), float64(n.TextureRegion_.OriginalH)
 	case types.NodeTypeMesh:
 		mesh.RecomputeMeshAABB(n)
 		return n.Mesh.Aabb.Width, n.Mesh.Aabb.Height

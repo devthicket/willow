@@ -2,7 +2,6 @@ package willow
 
 import (
 	"math"
-	"math/rand/v2"
 )
 
 // particle holds per-particle simulation state. Unexported; managed by ParticleEmitter.
@@ -267,10 +266,4 @@ func lerp32(a, b, t float32) float32 {
 	return a + (b-a)*t
 }
 
-// Random returns a random float64 in [Min, Max].
-func (r Range) Random() float64 {
-	if r.Min == r.Max {
-		return r.Min
-	}
-	return r.Min + rand.Float64()*(r.Max-r.Min)
-}
+// Range.Random() is defined in internal/types/range.go.

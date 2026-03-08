@@ -9,7 +9,7 @@ import (
 // --- Rect.Contains ---
 
 func TestRectContains(t *testing.T) {
-	r := Rect{10, 20, 100, 50}
+	r := Rect{X: 10, Y: 20, Width: 100, Height: 50}
 	tests := []struct {
 		name   string
 		x, y   float64
@@ -41,25 +41,25 @@ func TestRectContains(t *testing.T) {
 // --- Rect.Intersects ---
 
 func TestRectIntersects(t *testing.T) {
-	base := Rect{10, 10, 100, 100}
+	base := Rect{X: 10, Y: 10, Width: 100, Height: 100}
 	tests := []struct {
 		name   string
 		other  Rect
 		expect bool
 	}{
-		{"overlapping", Rect{50, 50, 100, 100}, true},
-		{"fully contained", Rect{20, 20, 10, 10}, true},
-		{"containing", Rect{0, 0, 200, 200}, true},
-		{"adjacent right", Rect{110, 10, 50, 50}, true},
-		{"adjacent bottom", Rect{10, 110, 50, 50}, true},
-		{"adjacent left", Rect{-50, 10, 60, 50}, true},
-		{"adjacent top", Rect{10, -50, 50, 60}, true},
-		{"disjoint right", Rect{111, 10, 50, 50}, false},
-		{"disjoint left", Rect{-100, 10, 50, 50}, false},
-		{"disjoint above", Rect{10, -100, 50, 50}, false},
-		{"disjoint below", Rect{10, 111, 50, 50}, false},
-		{"same rect", Rect{10, 10, 100, 100}, true},
-		{"zero-size at corner", Rect{110, 110, 0, 0}, true},
+		{"overlapping", Rect{X: 50, Y: 50, Width: 100, Height: 100}, true},
+		{"fully contained", Rect{X: 20, Y: 20, Width: 10, Height: 10}, true},
+		{"containing", Rect{X: 0, Y: 0, Width: 200, Height: 200}, true},
+		{"adjacent right", Rect{X: 110, Y: 10, Width: 50, Height: 50}, true},
+		{"adjacent bottom", Rect{X: 10, Y: 110, Width: 50, Height: 50}, true},
+		{"adjacent left", Rect{X: -50, Y: 10, Width: 60, Height: 50}, true},
+		{"adjacent top", Rect{X: 10, Y: -50, Width: 50, Height: 60}, true},
+		{"disjoint right", Rect{X: 111, Y: 10, Width: 50, Height: 50}, false},
+		{"disjoint left", Rect{X: -100, Y: 10, Width: 50, Height: 50}, false},
+		{"disjoint above", Rect{X: 10, Y: -100, Width: 50, Height: 50}, false},
+		{"disjoint below", Rect{X: 10, Y: 111, Width: 50, Height: 50}, false},
+		{"same rect", Rect{X: 10, Y: 10, Width: 100, Height: 100}, true},
+		{"zero-size at corner", Rect{X: 110, Y: 110, Width: 0, Height: 0}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -181,7 +181,7 @@ func TestColorWhite(t *testing.T) {
 // --- Benchmarks (verify zero allocations) ---
 
 func BenchmarkRectContains(b *testing.B) {
-	r := Rect{10, 20, 100, 50}
+	r := Rect{X: 10, Y: 20, Width: 100, Height: 50}
 	b.ReportAllocs()
 	for b.Loop() {
 		_ = r.Contains(50, 40)
@@ -189,8 +189,8 @@ func BenchmarkRectContains(b *testing.B) {
 }
 
 func BenchmarkRectIntersects(b *testing.B) {
-	r := Rect{10, 20, 100, 50}
-	other := Rect{50, 40, 80, 60}
+	r := Rect{X: 10, Y: 20, Width: 100, Height: 50}
+	other := Rect{X: 50, Y: 40, Width: 80, Height: 60}
 	b.ReportAllocs()
 	for b.Loop() {
 		_ = r.Intersects(other)

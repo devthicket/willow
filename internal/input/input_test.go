@@ -104,11 +104,11 @@ func TestNodeContainsLocal_DimFn(t *testing.T) {
 func TestCollectInteractable_SkipsInvisible(t *testing.T) {
 	root := node.NewNode("root", types.NodeTypeContainer)
 	root.Interactable = true
-	root.Visible = true
+	root.Visible_ = true
 
 	child := node.NewNode("child", types.NodeTypeSprite)
 	child.Interactable = true
-	child.Visible = false
+	child.Visible_ = false
 	root.Children_ = []*node.Node{child}
 
 	buf := collectInteractable(root, nil)
@@ -122,11 +122,11 @@ func TestCollectInteractable_SkipsInvisible(t *testing.T) {
 func TestCollectInteractable_SkipsNonInteractable(t *testing.T) {
 	root := node.NewNode("root", types.NodeTypeContainer)
 	root.Interactable = true
-	root.Visible = true
+	root.Visible_ = true
 
 	child := node.NewNode("child", types.NodeTypeSprite)
 	child.Interactable = false
-	child.Visible = true
+	child.Visible_ = true
 	root.Children_ = []*node.Node{child}
 
 	buf := collectInteractable(root, nil)
@@ -145,15 +145,15 @@ func TestHitTest_ReverseOrder(t *testing.T) {
 	m := NewManager()
 	root := node.NewNode("root", types.NodeTypeContainer)
 	root.Interactable = true
-	root.Visible = true
+	root.Visible_ = true
 
 	c1 := node.NewNode("c1", types.NodeTypeSprite)
 	c1.Interactable = true
-	c1.Visible = true
+	c1.Visible_ = true
 
 	c2 := node.NewNode("c2", types.NodeTypeSprite)
 	c2.Interactable = true
-	c2.Visible = true
+	c2.Visible_ = true
 
 	root.Children_ = []*node.Node{c1, c2}
 

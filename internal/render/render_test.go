@@ -186,7 +186,7 @@ func TestRebuildSortedChildren(t *testing.T) {
 
 func TestSubtreeBounds_SingleSprite(t *testing.T) {
 	n := node.NewNode("sprite", types.NodeTypeSprite)
-	n.TextureRegion = types.TextureRegion{Width: 32, Height: 32, OriginalW: 32, OriginalH: 32}
+	n.TextureRegion_ = types.TextureRegion{Width: 32, Height: 32, OriginalW: 32, OriginalH: 32}
 	b := SubtreeBounds(n)
 	if b.Width != 32 || b.Height != 32 {
 		t.Errorf("bounds = (%f, %f), want (32, 32)", b.Width, b.Height)

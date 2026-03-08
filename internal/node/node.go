@@ -135,8 +135,8 @@ type PinchContext struct {
 // all node types to avoid interface dispatch on the hot path.
 type Node struct {
 	// ---- HOT: traverse flags (cache line 0) ----
-	Visible        bool
-	Renderable     bool
+	Visible_       bool
+	Renderable_    bool
 	TransformDirty bool
 	AlphaDirty     bool
 	ChildrenSorted bool
@@ -154,10 +154,10 @@ type Node struct {
 	SortedChildren []*Node
 
 	// ---- HOT: render command fields ----
-	CustomImage   *ebiten.Image
+	CustomImage_  *ebiten.Image
 	CacheData     any // opaque *render.CacheTreeData — node/ never inspects
 	GlobalOrder   int
-	TextureRegion types.TextureRegion
+	TextureRegion_ types.TextureRegion
 	Color_        types.Color
 
 	// ---- WARM: local transform ----
@@ -165,9 +165,9 @@ type Node struct {
 	ScaleX_      float64
 	ScaleY_      float64
 	Rotation_    float64
-	SkewX, SkewY float64
-	PivotX       float64
-	PivotY       float64
+	SkewX_, SkewY_ float64
+	PivotX_        float64
+	PivotY_        float64
 
 	// ---- COLD: hierarchy, identity, metadata ----
 	Parent   *Node
@@ -222,8 +222,8 @@ func NewNode(name string, nodeType types.NodeType) *Node {
 		ScaleY_:        1,
 		Alpha_:         1,
 		Color_:         types.ColorWhite,
-		Visible:        true,
-		Renderable:     true,
+		Visible_:       true,
+		Renderable_:    true,
 		TransformDirty: true,
 		AlphaDirty:     true,
 		ChildrenSorted: true,

@@ -9,14 +9,14 @@ func defaultTestConfig(max int) EmitterConfig {
 	return EmitterConfig{
 		MaxParticles: max,
 		EmitRate:     100,
-		Lifetime:     Range{1.0, 1.0},
-		Speed:        Range{100, 100},
-		Angle:        Range{0, 0},
-		StartScale:   Range{1, 1},
-		EndScale:     Range{0.5, 0.5},
-		StartAlpha:   Range{1, 1},
-		EndAlpha:     Range{0, 0},
-		Gravity:      Vec2{0, 0},
+		Lifetime:     Range{Min: 1.0, Max: 1.0},
+		Speed:        Range{Min: 100, Max: 100},
+		Angle:        Range{Min: 0, Max: 0},
+		StartScale:   Range{Min: 1, Max: 1},
+		EndScale:     Range{Min: 0.5, Max: 0.5},
+		StartAlpha:   Range{Min: 1, Max: 1},
+		EndAlpha:     Range{Min: 0, Max: 0},
+		Gravity:      Vec2{X: 0, Y: 0},
 		StartColor:   Color{1, 1, 1, 1},
 		EndColor:     Color{0, 0, 0, 1},
 		Region:       TextureRegion{Width: 16, Height: 16, OriginalW: 16, OriginalH: 16},
@@ -96,7 +96,7 @@ func TestParticleSpawnRate(t *testing.T) {
 
 func TestSwapRemoveNoDead(t *testing.T) {
 	cfg := defaultTestConfig(100)
-	cfg.Lifetime = Range{0.05, 0.05}
+	cfg.Lifetime = Range{Min: 0.05, Max: 0.05}
 	cfg.EmitRate = 100
 	e := newParticleEmitter(cfg)
 	e.Start()
@@ -118,10 +118,10 @@ func TestSwapRemoveNoDead(t *testing.T) {
 
 func TestGravityAffectsVelocity(t *testing.T) {
 	cfg := defaultTestConfig(10)
-	cfg.Gravity = Vec2{0, 100}
-	cfg.Speed = Range{0, 0} // no initial velocity
-	cfg.Angle = Range{0, 0}
-	cfg.Lifetime = Range{10, 10}
+	cfg.Gravity = Vec2{X: 0, Y: 100}
+	cfg.Speed = Range{Min: 0, Max: 0} // no initial velocity
+	cfg.Angle = Range{Min: 0, Max: 0}
+	cfg.Lifetime = Range{Min: 10, Max: 10}
 	cfg.EmitRate = 10000
 	e := newParticleEmitter(cfg)
 	e.Start()
@@ -145,11 +145,11 @@ func TestGravityAffectsVelocity(t *testing.T) {
 func TestLifetimeInterpolation(t *testing.T) {
 	cfg := defaultTestConfig(1)
 	cfg.EmitRate = 1000 // ensure at least 1 spawns immediately
-	cfg.Lifetime = Range{1, 1}
-	cfg.StartScale = Range{2, 2}
-	cfg.EndScale = Range{0, 0}
-	cfg.StartAlpha = Range{1, 1}
-	cfg.EndAlpha = Range{0, 0}
+	cfg.Lifetime = Range{Min: 1, Max: 1}
+	cfg.StartScale = Range{Min: 2, Max: 2}
+	cfg.EndScale = Range{Min: 0, Max: 0}
+	cfg.StartAlpha = Range{Min: 1, Max: 1}
+	cfg.EndAlpha = Range{Min: 0, Max: 0}
 	cfg.StartColor = Color{1, 0, 0, 1}
 	cfg.EndColor = Color{0, 1, 0, 1}
 	e := newParticleEmitter(cfg)
@@ -196,7 +196,7 @@ func TestMaxParticlesCap(t *testing.T) {
 }
 
 func TestRangeRandom(t *testing.T) {
-	r := Range{10, 20}
+	r := Range{Min: 10, Max: 20}
 	for i := 0; i < 100; i++ {
 		v := r.Random()
 		if v < 10 || v > 20 {
@@ -205,7 +205,7 @@ func TestRangeRandom(t *testing.T) {
 	}
 
 	// Equal min/max.
-	r2 := Range{5, 5}
+	r2 := Range{Min: 5, Max: 5}
 	for i := 0; i < 10; i++ {
 		if r2.Random() != 5 {
 			t.Fatal("Random() with Min==Max should return Min")
@@ -348,9 +348,9 @@ func TestConfigPointerForLiveTuning(t *testing.T) {
 func TestParticleMovesWithAngle(t *testing.T) {
 	cfg := defaultTestConfig(1)
 	cfg.EmitRate = 10000
-	cfg.Speed = Range{100, 100}
-	cfg.Angle = Range{math.Pi / 2, math.Pi / 2} // straight down
-	cfg.Lifetime = Range{10, 10}
+	cfg.Speed = Range{Min: 100, Max: 100}
+	cfg.Angle = Range{Min: math.Pi / 2, Max: math.Pi / 2} // straight down
+	cfg.Lifetime = Range{Min: 10, Max: 10}
 	e := newParticleEmitter(cfg)
 	e.Start()
 
