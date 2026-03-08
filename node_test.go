@@ -17,8 +17,8 @@ func TestNewSpriteDefaults(t *testing.T) {
 	region := TextureRegion{Width: 32, Height: 32, OriginalW: 32, OriginalH: 32}
 	n := NewSprite("spr", region)
 	assertNodeDefaults(t, n, "spr", NodeTypeSprite)
-	if n.textureRegion != region {
-		t.Errorf("TextureRegion = %v, want %v", n.textureRegion, region)
+	if n.TextureRegion_ != region {
+		t.Errorf("TextureRegion = %v, want %v", n.TextureRegion_, region)
 	}
 }
 
@@ -27,7 +27,7 @@ func TestNewMeshDefaults(t *testing.T) {
 	inds := []uint16{0}
 	n := NewMesh("mesh", nil, verts, inds)
 	assertNodeDefaults(t, n, "mesh", NodeTypeMesh)
-	if len(n.mesh.Vertices) != 1 || len(n.mesh.Indices) != 1 {
+	if len(n.Mesh.Vertices) != 1 || len(n.Mesh.Indices) != 1 {
 		t.Errorf("Vertices/Indices not set")
 	}
 }
@@ -53,22 +53,22 @@ func assertNodeDefaults(t *testing.T, n *Node, name string, typ NodeType) {
 	if n.Type != typ {
 		t.Errorf("Type = %d, want %d", n.Type, typ)
 	}
-	if n.scaleX != 1 || n.scaleY != 1 {
-		t.Errorf("Scale = (%v, %v), want (1, 1)", n.scaleX, n.scaleY)
+	if n.ScaleX_ != 1 || n.ScaleY_ != 1 {
+		t.Errorf("Scale = (%v, %v), want (1, 1)", n.ScaleX_, n.ScaleY_)
 	}
-	if n.alpha != 1 {
-		t.Errorf("Alpha = %v, want 1", n.alpha)
+	if n.Alpha_ != 1 {
+		t.Errorf("Alpha = %v, want 1", n.Alpha_)
 	}
-	if n.color != RGBA(1, 1, 1, 1) {
-		t.Errorf("Color = %v, want white", n.color)
+	if n.Color_ != RGBA(1, 1, 1, 1) {
+		t.Errorf("Color = %v, want white", n.Color_)
 	}
-	if !n.visible {
+	if !n.Visible_ {
 		t.Error("Visible should be true")
 	}
-	if !n.renderable {
+	if !n.Renderable_ {
 		t.Error("Renderable should be true")
 	}
-	if !n.transformDirty {
+	if !n.TransformDirty {
 		t.Error("transformDirty should be true")
 	}
 }
@@ -465,12 +465,12 @@ func TestDirtyPropagationOnAddChild(t *testing.T) {
 	child.AddChild(grandchild)
 
 	// Clear dirty flags manually
-	child.transformDirty = false
-	grandchild.transformDirty = false
+	child.TransformDirty = false
+	grandchild.TransformDirty = false
 
 	parent.AddChild(child)
 
-	if !child.transformDirty {
+	if !child.TransformDirty {
 		t.Error("child should be dirty after AddChild")
 	}
 	// Grandchild inherits recomputation via parentRecomputed during
@@ -483,10 +483,10 @@ func TestDirtyPropagationOnRemoveChild(t *testing.T) {
 	child := NewContainer("child")
 	parent.AddChild(child)
 
-	child.transformDirty = false
+	child.TransformDirty = false
 	parent.RemoveChild(child)
 
-	if !child.transformDirty {
+	if !child.TransformDirty {
 		t.Error("child should be dirty after RemoveChild")
 	}
 }

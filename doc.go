@@ -29,8 +29,8 @@
 //
 //	type Game struct{ scene *willow.Scene }
 //
-//	func (g *Game) Update() error         { g.scene.Update(); return nil }
-//	func (g *Game) Draw(s *ebiten.Image)  { g.scene.Draw(s) }
+//	func (g *Game) Update() error         { g.Scene_.Update(); return nil }
+//	func (g *Game) Draw(s *ebiten.Image)  { g.Scene_.Draw(s) }
 //	func (g *Game) Layout(w, h int) (int, int) { return w, h }
 //
 // # Scene graph

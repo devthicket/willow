@@ -163,7 +163,7 @@ func (v *TileMapViewport) AddTileLayer(cfg TileLayerConfig) *TileMapLayer {
 	}
 
 	// Set up customEmit on the layer's node.
-	layer.node.customEmit = layer.emitCommands
+	layer.node.CustomEmit = layer.emitCommands
 
 	v.node.AddChild(layer.node)
 	v.layers = append(v.layers, layer)
@@ -233,7 +233,7 @@ func (v *TileMapViewport) update(dt float64) {
 	}
 
 	for _, layer := range v.layers {
-		if !layer.node.visible {
+		if !layer.node.Visible_ {
 			continue
 		}
 
@@ -442,10 +442,10 @@ func (l *TileMapLayer) emitCommands(s *Scene, treeOrder *int) {
 	}
 
 	// Get the accumulated color from the node's parent chain.
-	r := float32(l.node.color.R() * l.node.worldAlpha)
-	g := float32(l.node.color.G() * l.node.worldAlpha)
-	b := float32(l.node.color.B() * l.node.worldAlpha)
-	a := float32(l.node.worldAlpha)
+	r := float32(l.node.Color_.R() * l.node.WorldAlpha)
+	g := float32(l.node.Color_.G() * l.node.WorldAlpha)
+	b := float32(l.node.Color_.B() * l.node.WorldAlpha)
+	a := float32(l.node.WorldAlpha)
 
 	// Premultiply.
 	cr := r * a
@@ -519,10 +519,10 @@ func (l *TileMapLayer) emitCommands(s *Scene, treeOrder *int) {
 		*treeOrder++
 		s.commands = append(s.commands, RenderCommand{
 			Type:         CommandTilemap,
-			RenderLayer:  l.node.renderLayer,
-			GlobalOrder:  l.node.globalOrder,
+			RenderLayer:  l.node.RenderLayer,
+			GlobalOrder:  l.node.GlobalOrder,
 			treeOrder:    *treeOrder,
-			BlendMode:    l.node.blendMode,
+			BlendMode:    l.node.BlendMode_,
 			tilemapVerts: l.vertices[offset*4 : end*4],
 			tilemapInds:  l.indices[:batchTiles*6],
 			tilemapImage: l.atlasImage,
@@ -533,7 +533,7 @@ func (l *TileMapLayer) emitCommands(s *Scene, treeOrder *int) {
 // updateAnimations scans layers for animated tiles and updates their UVs.
 func (v *TileMapViewport) updateAnimations() {
 	for _, layer := range v.layers {
-		if layer.anims == nil || !layer.node.visible {
+		if layer.anims == nil || !layer.node.Visible_ {
 			continue
 		}
 

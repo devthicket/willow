@@ -136,7 +136,7 @@ func NewScene() *Scene {
 		dragDeadZone:  defaultDragDeadZone,
 		ScreenshotDir: "screenshots",
 	}
-	root.scene = s
+	root.Scene_ = s
 	return s
 }
 
@@ -193,10 +193,10 @@ func Run(scene *Scene, cfg RunConfig) error {
 		ebiten.SetWindowTitle(cfg.Title)
 	}
 	scene.AntiAlias = cfg.AntiAlias
-	g := &gameShell{scene: scene, w: w, h: h}
+	g := &gameShell{Scene_: scene, w: w, h: h}
 	if cfg.ShowFPS {
 		g.fpsWid = NewFPSWidget()
-		g.fpsWid.x, g.fpsWid.y = 8, 8
+		g.fpsWid.X_, g.fpsWid.Y_ = 8, 8
 	}
 
 	return ebiten.RunGame(g)
@@ -204,18 +204,18 @@ func Run(scene *Scene, cfg RunConfig) error {
 
 // gameShell implements [ebiten.Game] by delegating to a Scene.
 type gameShell struct {
-	scene  *Scene
+	Scene_ *Scene
 	w, h   int
 	fpsWid *Node // screen-space FPS overlay (not in scene graph)
 }
 
 func (g *gameShell) Update() error {
-	if g.scene.updateFunc != nil {
-		if err := g.scene.updateFunc(); err != nil {
+	if g.Scene_.updateFunc != nil {
+		if err := g.Scene_.updateFunc(); err != nil {
 			return err
 		}
 	}
-	g.scene.Update()
+	g.Scene_.Update()
 	if g.fpsWid != nil && g.fpsWid.OnUpdate != nil {
 		g.fpsWid.OnUpdate(1.0 / float64(ebiten.TPS()))
 	}
@@ -223,18 +223,18 @@ func (g *gameShell) Update() error {
 }
 
 func (g *gameShell) Draw(screen *ebiten.Image) {
-	if g.scene.ClearColor.A() > 0 {
-		screen.Fill(colorToRGBA(g.scene.ClearColor))
+	if g.Scene_.ClearColor.A() > 0 {
+		screen.Fill(colorToRGBA(g.Scene_.ClearColor))
 	}
-	g.scene.Draw(screen)
+	g.Scene_.Draw(screen)
 	// Draw FPS widget in screen space (unaffected by cameras).
 	if g.fpsWid != nil && g.fpsWid.CustomImage() != nil {
 		var op ebiten.DrawImageOptions
-		op.GeoM.Translate(g.fpsWid.x, g.fpsWid.y)
+		op.GeoM.Translate(g.fpsWid.X_, g.fpsWid.Y_)
 		screen.DrawImage(g.fpsWid.CustomImage(), &op)
 	}
-	if g.scene.postDrawFunc != nil {
-		g.scene.postDrawFunc(screen)
+	if g.Scene_.postDrawFunc != nil {
+		g.Scene_.postDrawFunc(screen)
 	}
 }
 
@@ -268,7 +268,7 @@ func (s *Scene) Update() {
 }
 
 func updateNodesAndParticles(n *Node, dt float64) {
-	if !n.visible {
+	if !n.Visible_ {
 		return
 	}
 	if n.OnUpdate != nil {
@@ -276,8 +276,8 @@ func updateNodesAndParticles(n *Node, dt float64) {
 	}
 	if n.Type == NodeTypeParticleEmitter && n.Emitter != nil {
 		if n.Emitter.config.WorldSpace {
-			n.Emitter.worldX = n.worldTransform[4]
-			n.Emitter.worldY = n.worldTransform[5]
+			n.Emitter.worldX = n.WorldTransform[4]
+			n.Emitter.worldY = n.WorldTransform[5]
 		}
 		n.Emitter.update(dt)
 		// Active particles under a CacheAsTree ancestor must invalidate the
@@ -286,7 +286,7 @@ func updateNodesAndParticles(n *Node, dt float64) {
 			invalidateAncestorCache(n)
 		}
 	}
-	for _, child := range n.children {
+	for _, child := range n.Children_ {
 		updateNodesAndParticles(child, dt)
 	}
 }

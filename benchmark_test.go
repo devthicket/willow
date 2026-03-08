@@ -22,8 +22,8 @@ func setupBenchScene(n int) *Scene {
 	}
 	for i := 0; i < n; i++ {
 		sp := NewSprite("sp", region)
-		sp.x = float64(i%100) * 40
-		sp.y = float64(i/100) * 40
+		sp.X_ = float64(i%100) * 40
+		sp.Y_ = float64(i/100) * 40
 		root.AddChild(sp)
 	}
 	return s
@@ -57,8 +57,8 @@ func BenchmarkDraw_10000Sprites_Rotating(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		// Dirty all transforms by rotating every sprite.
 		for _, child := range children {
-			child.rotation += 0.01
-			child.transformDirty = true
+			child.Rotation_ += 0.01
+			child.TransformDirty = true
 		}
 		s.Draw(screen)
 	}
@@ -75,8 +75,8 @@ func BenchmarkDraw_10000Sprites_AlphaVarying(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		for j, child := range children {
-			child.alpha = 0.5 + 0.5*math.Sin(float64(i+j)*0.001)
-			child.transformDirty = true
+			child.Alpha_ = 0.5 + 0.5*math.Sin(float64(i+j)*0.001)
+			child.TransformDirty = true
 		}
 		s.Draw(screen)
 	}
@@ -126,8 +126,8 @@ func BenchmarkDraw_10000Sprites_Rotating_Coalesced(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		for _, child := range children {
-			child.rotation += 0.01
-			child.transformDirty = true
+			child.Rotation_ += 0.01
+			child.TransformDirty = true
 		}
 		s.Draw(screen)
 	}
@@ -145,8 +145,8 @@ func BenchmarkDraw_10000Sprites_AlphaVarying_Coalesced(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		for j, child := range children {
-			child.alpha = 0.5 + 0.5*math.Sin(float64(i+j)*0.001)
-			child.transformDirty = true
+			child.Alpha_ = 0.5 + 0.5*math.Sin(float64(i+j)*0.001)
+			child.TransformDirty = true
 		}
 		s.Draw(screen)
 	}
@@ -194,8 +194,8 @@ func BenchmarkDraw_100000Sprites_Rotating(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		for _, child := range children {
-			child.rotation += 0.01
-			child.transformDirty = true
+			child.Rotation_ += 0.01
+			child.TransformDirty = true
 		}
 		s.Draw(screen)
 	}
@@ -225,8 +225,8 @@ func BenchmarkDraw_100000Sprites_Rotating_Coalesced(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		for _, child := range children {
-			child.rotation += 0.01
-			child.transformDirty = true
+			child.Rotation_ += 0.01
+			child.TransformDirty = true
 		}
 		s.Draw(screen)
 	}
@@ -250,8 +250,8 @@ func setupCacheAsTreeBenchScene(n int, mode CacheTreeMode) *Scene {
 	}
 	for i := 0; i < n; i++ {
 		sp := NewSprite("sp", region)
-		sp.x = float64(i%100) * 40
-		sp.y = float64(i/100) * 40
+		sp.X_ = float64(i%100) * 40
+		sp.Y_ = float64(i/100) * 40
 		container.AddChild(sp)
 	}
 	container.SetCacheAsTree(true, mode)
@@ -326,7 +326,7 @@ func BenchmarkDraw_CacheAsTree_Auto_1PctMoving(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		for _, m := range movers {
-			m.SetPosition(m.x+1, m.y)
+			m.SetPosition(m.X_+1, m.Y_)
 		}
 		s.Draw(screen)
 	}
@@ -353,8 +353,8 @@ func BenchmarkDraw_CacheAsTree_Manual_ContainerMove(b *testing.B) {
 	b.ResetTimer()
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		container.x = float64(i % 100)
-		container.transformDirty = true
+		container.X_ = float64(i % 100)
+		container.TransformDirty = true
 		s.Draw(screen)
 	}
 }
@@ -454,9 +454,9 @@ func BenchmarkTransform_10000AlphaOnly(b *testing.B) {
 		// Mark only alpha dirty on every node.
 		children := s.Root().Children()
 		for _, child := range children {
-			child.alphaDirty = true
+			child.AlphaDirty = true
 		}
-		s.Root().alphaDirty = true
+		s.Root().AlphaDirty = true
 		updateWorldTransform(s.Root(), identityTransform, 1.0, false, false)
 	}
 }
@@ -526,8 +526,8 @@ func BenchmarkHitTest_1000Interactable(b *testing.B) {
 	for i := 0; i < 1000; i++ {
 		n := NewSprite("n", TextureRegion{OriginalW: 10, OriginalH: 10})
 		n.Interactable = true
-		n.x = float64(i%100) * 12
-		n.y = float64(i/100) * 12
+		n.X_ = float64(i%100) * 12
+		n.Y_ = float64(i/100) * 12
 		s.Root().AddChild(n)
 	}
 	updateWorldTransform(s.root, identityTransform, 1.0, true, true)
@@ -633,8 +633,8 @@ func BenchmarkFilter_BlurOutline(b *testing.B) {
 	}
 	for i := 0; i < 100; i++ {
 		sp := NewSprite("sp", region)
-		sp.x = float64(i%10) * 40
-		sp.y = float64(i/10) * 40
+		sp.X_ = float64(i%10) * 40
+		sp.Y_ = float64(i/10) * 40
 		sp.Filters = []Filter{NewBlurFilter(4), NewOutlineFilter(2, ColorWhite)}
 		root.AddChild(sp)
 	}
@@ -700,8 +700,8 @@ func setupMultiPageScene(n int) *Scene {
 			OriginalH: 32,
 		}
 		sp := NewSprite("sp", region)
-		sp.x = float64(i%100) * 40
-		sp.y = float64(i/100) * 40
+		sp.X_ = float64(i%100) * 40
+		sp.Y_ = float64(i/100) * 40
 		root.AddChild(sp)
 	}
 	return s
@@ -737,11 +737,11 @@ func setupMixedScene(nSprites, nEmitters int) *Scene {
 				OriginalH: 32,
 			}
 			sp := NewSprite("sp", region)
-			sp.x = float64(spriteIdx%100) * 40
-			sp.y = float64(spriteIdx/100) * 40
+			sp.X_ = float64(spriteIdx%100) * 40
+			sp.Y_ = float64(spriteIdx/100) * 40
 			// Every 10th sprite uses additive blending.
 			if spriteIdx%10 == 0 {
-				sp.blendMode = BlendAdd
+				sp.BlendMode_ = BlendAdd
 			}
 			root.AddChild(sp)
 			spriteIdx++
@@ -809,8 +809,8 @@ func setupWorstCaseScene(n int) *Scene {
 		sp := NewSprite("sp", region)
 		// Place all sprites at the same depth so page-alternation is preserved
 		// through the sort (stable sort keeps insertion order for equal keys).
-		sp.x = float64(i%100) * 40
-		sp.y = float64(i/100) * 40
+		sp.X_ = float64(i%100) * 40
+		sp.Y_ = float64(i/100) * 40
 		root.AddChild(sp)
 	}
 	return s
@@ -924,8 +924,8 @@ func setupRealWorldAtlasScene(runLen, runs int) *Scene {
 			OriginalH: 64,
 		}
 		sp := NewSprite("tile", region)
-		sp.x = float64(i%100) * 64
-		sp.y = float64(i/100) * 64
+		sp.X_ = float64(i%100) * 64
+		sp.Y_ = float64(i/100) * 64
 		root.AddChild(sp)
 	}
 	return s

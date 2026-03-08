@@ -92,32 +92,32 @@ type meshData struct {
 	Vertices         []ebiten.Vertex
 	Indices          []uint16
 	Image            *ebiten.Image
-	transformedVerts []ebiten.Vertex // preallocated transform buffer
-	aabb             Rect            // cached local-space AABB
-	aabbDirty        bool            // recompute AABB when true
+	TransformedVerts []ebiten.Vertex // preallocated transform buffer
+	Aabb             Rect            // cached local-space AABB
+	AabbDirty        bool            // recompute AABB when true
 }
 
 // nodeCallbacks holds per-node event handler functions. Allocated on
 // first callback setter call. Most nodes never receive callbacks.
 type nodeCallbacks struct {
-	onPointerDown  func(PointerContext)
-	onPointerUp    func(PointerContext)
-	onPointerMove  func(PointerContext)
-	onClick        func(ClickContext)
-	onDragStart    func(DragContext)
-	onDrag         func(DragContext)
-	onDragEnd      func(DragContext)
-	onPinch        func(PinchContext)
-	onPointerEnter func(PointerContext)
-	onPointerLeave func(PointerContext)
+	OnPointerDown  func(PointerContext)
+	OnPointerUp    func(PointerContext)
+	OnPointerMove  func(PointerContext)
+	OnClick        func(ClickContext)
+	OnDragStart    func(DragContext)
+	OnDrag         func(DragContext)
+	OnDragEnd      func(DragContext)
+	OnPinch        func(PinchContext)
+	OnPointerEnter func(PointerContext)
+	OnPointerLeave func(PointerContext)
 }
 
 // ensureCallbacks lazily allocates the callback struct.
-func (n *Node) ensureCallbacks() *nodeCallbacks {
-	if n.callbacks == nil {
-		n.callbacks = &nodeCallbacks{}
+func (n *Node) EnsureCallbacks() *nodeCallbacks {
+	if n.Callbacks == nil {
+		n.Callbacks = &nodeCallbacks{}
 	}
-	return n.callbacks
+	return n.Callbacks
 }
 
 // --- Node ---
@@ -134,54 +134,54 @@ type Node struct {
 	// These 8 single-byte fields pack into the first 8 bytes with zero padding.
 
 	// ---- HOT: traverse flags (cache line 0) ----
-	visible        bool
-	renderable     bool
-	transformDirty bool
-	alphaDirty     bool
-	childrenSorted bool
+	Visible_       bool
+	Renderable_    bool
+	TransformDirty bool
+	AlphaDirty     bool
+	ChildrenSorted bool
 	// Type determines how this node is rendered (container, sprite, mesh, etc.).
 	Type        NodeType
-	renderLayer uint8
-	blendMode   BlendMode
+	RenderLayer    uint8
+	BlendMode_     BlendMode
 
 	// ---- HOT: computed world state (cache lines 0-1) ----
 
-	worldAlpha     float64
-	alpha          float64
-	worldTransform [6]float64
+	WorldAlpha     float64
+	Alpha_         float64
+	WorldTransform [6]float64
 
 	// ---- HOT: children for iteration (cache line 1-2) ----
 
-	children       []*Node
-	sortedChildren []*Node // reused buffer for ZIndex-sorted traversal order
+	Children_      []*Node
+	SortedChildren []*Node // reused buffer for ZIndex-sorted traversal order
 
 	// ---- HOT: render command fields (cache lines 2-3) ----
 
-	customImage *ebiten.Image // user-provided offscreen canvas (RenderTexture)
+	CustomImage_ *ebiten.Image // user-provided offscreen canvas (RenderTexture)
 
 	cacheTree     *cacheTreeData // lazily allocated subtree command cache
-	globalOrder   int
-	textureRegion TextureRegion
-	color         Color
+	GlobalOrder   int
+	TextureRegion_ TextureRegion
+	Color_        Color
 
 	// ---- WARM: local transform (read only when dirty) ----
 
-	x, y         float64
-	scaleX       float64
-	scaleY       float64
-	rotation     float64
-	skewX, skewY float64
-	pivotX       float64
-	pivotY       float64
+	X_, Y_       float64
+	ScaleX_      float64
+	ScaleY_      float64
+	Rotation_    float64
+	SkewX_, SkewY_ float64
+	PivotX_      float64
+	PivotY_      float64
 
 	// ---- COLD: hierarchy, identity, metadata ----
 
 	// Parent points to this node's parent, or nil for the root.
 	Parent *Node
-	scene  *Scene
+	Scene_ *Scene
 	// ID is a unique auto-assigned identifier (never zero for live nodes).
 	ID     uint32
-	zIndex int
+	ZIndex_ int
 	// EntityID links this node to an ECS entity.
 	EntityID uint32
 	// Name is a human-readable label for debugging.
@@ -190,7 +190,7 @@ type Node struct {
 	UserData any
 
 	// ---- COLD: mesh data (NodeTypeMesh, lazily allocated) ----
-	mesh *meshData
+	Mesh *meshData
 
 	// ---- COLD: particle and text ----
 
@@ -208,7 +208,7 @@ type Node struct {
 	// normal command-emit path. Used by TileMapLayer to emit
 	// CommandTilemap commands. The callback receives the scene and a
 	// pointer to the current treeOrder counter.
-	customEmit func(s *Scene, treeOrder *int)
+	CustomEmit func(s *Scene, treeOrder *int)
 
 	// ---- COLD: hit testing ----
 
@@ -225,161 +225,156 @@ type Node struct {
 	// output. Filters are applied in order; each reads from the previous
 	// result and writes to a new buffer.
 	Filters      []Filter
-	cacheEnabled bool
-	cacheTexture *ebiten.Image
-	cacheDirty   bool
-	mask         *Node
+	CacheEnabled bool
+	CacheTexture *ebiten.Image
+	CacheDirty   bool
+	MaskNode     *Node
 
 	// ---- COLD: per-node pointer callbacks (lazily allocated) ----
-	callbacks *nodeCallbacks
+	Callbacks *nodeCallbacks
 
 	// ---- COLD: internal ----
-	disposed bool
+	Disposed bool
 }
 
 // nodeDefaults sets the common default field values shared by all constructors.
 func nodeDefaults(n *Node) {
 	n.ID = nextNodeID()
-	n.scaleX = 1
-	n.scaleY = 1
-	n.alpha = 1
-	n.color = RGBA(1, 1, 1, 1)
-	n.visible = true
-	n.renderable = true
-	n.transformDirty = true
-	n.alphaDirty = true
-	n.childrenSorted = true
+	n.ScaleX_ = 1
+	n.ScaleY_ = 1
+	n.Alpha_ = 1
+	n.Color_ = RGBA(1, 1, 1, 1)
+	n.Visible_ = true
+	n.Renderable_ = true
+	n.TransformDirty = true
+	n.AlphaDirty = true
+	n.ChildrenSorted = true
 }
 
 // --- Getters ---
 
 // X returns the local-space X position in pixels.
-func (n *Node) X() float64 { return n.x }
+func (n *Node) X() float64 { return n.X_ }
 
 // Y returns the local-space Y position in pixels.
-func (n *Node) Y() float64 { return n.y }
+func (n *Node) Y() float64 { return n.Y_ }
 
 // ScaleX returns the local X scale factor.
-func (n *Node) ScaleX() float64 { return n.scaleX }
+func (n *Node) ScaleX() float64 { return n.ScaleX_ }
 
 // ScaleY returns the local Y scale factor.
-func (n *Node) ScaleY() float64 { return n.scaleY }
+func (n *Node) ScaleY() float64 { return n.ScaleY_ }
 
 // Rotation returns the local rotation in radians (clockwise).
-func (n *Node) Rotation() float64 { return n.rotation }
+func (n *Node) Rotation() float64 { return n.Rotation_ }
 
 // SkewX returns the X shear angle in radians.
-func (n *Node) SkewX() float64 { return n.skewX }
+func (n *Node) SkewX() float64 { return n.SkewX_ }
 
 // SkewY returns the Y shear angle in radians.
-func (n *Node) SkewY() float64 { return n.skewY }
+func (n *Node) SkewY() float64 { return n.SkewY_ }
 
 // PivotX returns the X transform origin in local pixels.
-func (n *Node) PivotX() float64 { return n.pivotX }
+func (n *Node) PivotX() float64 { return n.PivotX_ }
 
 // PivotY returns the Y transform origin in local pixels.
-func (n *Node) PivotY() float64 { return n.pivotY }
+func (n *Node) PivotY() float64 { return n.PivotY_ }
 
 // Alpha returns the node's opacity in [0, 1].
-func (n *Node) Alpha() float64 { return n.alpha }
+func (n *Node) Alpha() float64 { return n.Alpha_ }
 
 // Color returns the node's multiplicative tint color.
-func (n *Node) Color() Color { return n.color }
+func (n *Node) Color() Color { return n.Color_ }
 
 // Visible returns whether this node and its subtree are drawn.
-func (n *Node) Visible() bool { return n.visible }
+func (n *Node) Visible() bool { return n.Visible_ }
 
 // Renderable returns whether this node emits render commands.
-func (n *Node) Renderable() bool { return n.renderable }
+func (n *Node) Renderable() bool { return n.Renderable_ }
 
 // BlendMode returns the compositing operation used when drawing this node.
-func (n *Node) BlendMode() BlendMode { return n.blendMode }
+func (n *Node) BlendMode() BlendMode { return n.BlendMode_ }
 
-// RenderLayer returns the primary sort key for render commands.
-func (n *Node) RenderLayer() uint8 { return n.renderLayer }
-
-// GlobalOrder returns the secondary sort key within the same RenderLayer.
-func (n *Node) GlobalOrder() int { return n.globalOrder }
 
 // ZIndex returns the draw order among siblings.
-func (n *Node) ZIndex() int { return n.zIndex }
+func (n *Node) ZIndex() int { return n.ZIndex_ }
 
 // TextureRegion returns the sub-image region within an atlas page.
-func (n *Node) TextureRegion() TextureRegion { return n.textureRegion }
+func (n *Node) TextureRegion() TextureRegion { return n.TextureRegion_ }
 
 // --- Mesh accessors ---
 
 // MeshVertices returns the mesh vertex data, or nil if not a mesh node.
 func (n *Node) MeshVertices() []ebiten.Vertex {
-	if n.mesh == nil {
+	if n.Mesh == nil {
 		return nil
 	}
-	return n.mesh.Vertices
+	return n.Mesh.Vertices
 }
 
 // MeshIndices returns the triangle index list, or nil if not a mesh node.
 func (n *Node) MeshIndices() []uint16 {
-	if n.mesh == nil {
+	if n.Mesh == nil {
 		return nil
 	}
-	return n.mesh.Indices
+	return n.Mesh.Indices
 }
 
 // MeshImage returns the texture sampled by DrawTriangles, or nil if not a mesh node.
 func (n *Node) MeshImage() *ebiten.Image {
-	if n.mesh == nil {
+	if n.Mesh == nil {
 		return nil
 	}
-	return n.mesh.Image
+	return n.Mesh.Image
 }
 
 // SetMeshData replaces the mesh vertex, index, and image data.
 // Marks the AABB as dirty. Only valid for NodeTypeMesh nodes.
 func (n *Node) SetMeshData(vertices []ebiten.Vertex, indices []uint16, img *ebiten.Image) {
-	if n.mesh == nil {
-		n.mesh = &meshData{}
+	if n.Mesh == nil {
+		n.Mesh = &meshData{}
 	}
-	n.mesh.Vertices = vertices
-	n.mesh.Indices = indices
-	n.mesh.Image = img
-	n.mesh.aabbDirty = true
+	n.Mesh.Vertices = vertices
+	n.Mesh.Indices = indices
+	n.Mesh.Image = img
+	n.Mesh.AabbDirty = true
 	invalidateAncestorCache(n)
 }
 
 // SetMeshVertices replaces just the vertex data and marks the AABB dirty.
 func (n *Node) SetMeshVertices(vertices []ebiten.Vertex) {
-	if n.mesh == nil {
-		n.mesh = &meshData{}
+	if n.Mesh == nil {
+		n.Mesh = &meshData{}
 	}
-	n.mesh.Vertices = vertices
-	n.mesh.aabbDirty = true
+	n.Mesh.Vertices = vertices
+	n.Mesh.AabbDirty = true
 	invalidateAncestorCache(n)
 }
 
 // SetMeshIndices replaces just the index data.
 func (n *Node) SetMeshIndices(indices []uint16) {
-	if n.mesh == nil {
-		n.mesh = &meshData{}
+	if n.Mesh == nil {
+		n.Mesh = &meshData{}
 	}
-	n.mesh.Indices = indices
+	n.Mesh.Indices = indices
 	invalidateAncestorCache(n)
 }
 
 // SetMeshImage replaces just the mesh texture.
 func (n *Node) SetMeshImage(img *ebiten.Image) {
-	if n.mesh == nil {
-		n.mesh = &meshData{}
+	if n.Mesh == nil {
+		n.Mesh = &meshData{}
 	}
-	n.mesh.Image = img
+	n.Mesh.Image = img
 	invalidateAncestorCache(n)
 }
 
 // ensureMesh returns the mesh data, allocating if nil.
-func (n *Node) ensureMesh() *meshData {
-	if n.mesh == nil {
-		n.mesh = &meshData{}
+func (n *Node) EnsureMesh() *meshData {
+	if n.Mesh == nil {
+		n.Mesh = &meshData{}
 	}
-	return n.mesh
+	return n.Mesh
 }
 
 // Width returns the effective pixel width of this node.
@@ -389,13 +384,13 @@ func (n *Node) Width() float64 {
 	if n.Type != NodeTypeSprite {
 		return 0
 	}
-	if n.customImage != nil {
-		return n.scaleX * float64(n.customImage.Bounds().Dx())
+	if n.CustomImage_ != nil {
+		return n.ScaleX_ * float64(n.CustomImage_.Bounds().Dx())
 	}
-	if n.textureRegion == (TextureRegion{}) {
-		return n.scaleX // WhitePixel: 1x1, scale IS the size
+	if n.TextureRegion_ == (TextureRegion{}) {
+		return n.ScaleX_ // WhitePixel: 1x1, scale IS the size
 	}
-	return n.scaleX * float64(n.textureRegion.OriginalW)
+	return n.ScaleX_ * float64(n.TextureRegion_.OriginalW)
 }
 
 // Height returns the effective pixel height of this node.
@@ -405,35 +400,35 @@ func (n *Node) Height() float64 {
 	if n.Type != NodeTypeSprite {
 		return 0
 	}
-	if n.customImage != nil {
-		return n.scaleY * float64(n.customImage.Bounds().Dy())
+	if n.CustomImage_ != nil {
+		return n.ScaleY_ * float64(n.CustomImage_.Bounds().Dy())
 	}
-	if n.textureRegion == (TextureRegion{}) {
-		return n.scaleY // WhitePixel: 1x1, scale IS the size
+	if n.TextureRegion_ == (TextureRegion{}) {
+		return n.ScaleY_ // WhitePixel: 1x1, scale IS the size
 	}
-	return n.scaleY * float64(n.textureRegion.OriginalH)
+	return n.ScaleY_ * float64(n.TextureRegion_.OriginalH)
 }
 
 // SetSize sets the node's visual size in pixels. For WhitePixel sprites,
 // this sets ScaleX/ScaleY directly. For textured sprites, it computes
 // the appropriate scale to achieve the given pixel dimensions.
 func (n *Node) SetSize(w, h float64) {
-	if n.customImage == WhitePixel || n.textureRegion == (TextureRegion{}) {
-		n.scaleX = w
-		n.scaleY = h
-	} else if n.customImage != nil {
-		b := n.customImage.Bounds()
+	if n.CustomImage_ == WhitePixel || n.TextureRegion_ == (TextureRegion{}) {
+		n.ScaleX_ = w
+		n.ScaleY_ = h
+	} else if n.CustomImage_ != nil {
+		b := n.CustomImage_.Bounds()
 		if b.Dx() > 0 {
-			n.scaleX = w / float64(b.Dx())
+			n.ScaleX_ = w / float64(b.Dx())
 		}
 		if b.Dy() > 0 {
-			n.scaleY = h / float64(b.Dy())
+			n.ScaleY_ = h / float64(b.Dy())
 		}
-	} else if n.textureRegion.OriginalW > 0 && n.textureRegion.OriginalH > 0 {
-		n.scaleX = w / float64(n.textureRegion.OriginalW)
-		n.scaleY = h / float64(n.textureRegion.OriginalH)
+	} else if n.TextureRegion_.OriginalW > 0 && n.TextureRegion_.OriginalH > 0 {
+		n.ScaleX_ = w / float64(n.TextureRegion_.OriginalW)
+		n.ScaleY_ = h / float64(n.TextureRegion_.OriginalH)
 	}
-	n.transformDirty = true
+	n.TransformDirty = true
 	invalidateAncestorCache(n)
 }
 
@@ -446,11 +441,11 @@ func NewContainer(name string) *Node {
 
 // NewSprite creates a sprite node that renders a texture region.
 func NewSprite(name string, region TextureRegion) *Node {
-	n := &Node{Name: name, Type: NodeTypeSprite, textureRegion: region}
+	n := &Node{Name: name, Type: NodeTypeSprite, TextureRegion_: region}
 	nodeDefaults(n)
 	// If no region is specified (zero value), default to WhitePixel
 	if region == (TextureRegion{}) {
-		n.customImage = WhitePixel
+		n.CustomImage_ = WhitePixel
 	}
 	return n
 }
@@ -460,7 +455,7 @@ func NewSprite(name string, region TextureRegion) *Node {
 func NewRect(name string, w, h float64, c Color) *Node {
 	n := NewSprite(name, TextureRegion{})
 	n.SetSize(w, h)
-	n.color = c
+	n.Color_ = c
 	return n
 }
 
@@ -469,11 +464,11 @@ func NewMesh(name string, img *ebiten.Image, vertices []ebiten.Vertex, indices [
 	n := &Node{
 		Name: name,
 		Type: NodeTypeMesh,
-		mesh: &meshData{
+		Mesh: &meshData{
 			Vertices:  vertices,
 			Indices:   indices,
 			Image:     img,
-			aabbDirty: true,
+			AabbDirty: true,
 		},
 	}
 	nodeDefaults(n)
@@ -486,15 +481,15 @@ func NewParticleEmitter(name string, cfg EmitterConfig) *Node {
 	n := &Node{
 		Name:          name,
 		Type:          NodeTypeParticleEmitter,
-		textureRegion: cfg.Region,
-		blendMode:     cfg.BlendMode,
+		TextureRegion_: cfg.Region,
+		BlendMode_:     cfg.BlendMode,
 		Emitter:       emitter,
 	}
 	nodeDefaults(n)
 	// If no region is specified (zero value), default to WhitePixel so particles
 	// render as solid-color quads without needing an atlas.
 	if cfg.Region == (TextureRegion{}) {
-		n.customImage = WhitePixel
+		n.CustomImage_ = WhitePixel
 	}
 	return n
 }
@@ -523,13 +518,13 @@ func NewText(name string, content string, font Font) *Node {
 // SetCustomImage sets a user-provided *ebiten.Image to display instead of TextureRegion.
 // Used by RenderTexture to attach a persistent offscreen canvas to a sprite node.
 func (n *Node) SetCustomImage(img *ebiten.Image) {
-	n.customImage = img
+	n.CustomImage_ = img
 	invalidateAncestorCache(n)
 }
 
 // CustomImage returns the user-provided image, or nil if not set.
 func (n *Node) CustomImage() *ebiten.Image {
-	return n.customImage
+	return n.CustomImage_
 }
 
 // --- Visual property setters ---
@@ -538,19 +533,19 @@ func (n *Node) CustomImage() *ebiten.Image {
 
 // SetColor sets the node's tint color and invalidates ancestor static caches.
 func (n *Node) SetColor(c Color) {
-	n.color = c
+	n.Color_ = c
 	invalidateAncestorCache(n)
 }
 
 // SetBlendMode sets the node's blend mode and invalidates ancestor static caches.
 func (n *Node) SetBlendMode(b BlendMode) {
-	n.blendMode = b
+	n.BlendMode_ = b
 	invalidateAncestorCache(n)
 }
 
 // SetVisible sets the node's visibility and invalidates ancestor caches.
 func (n *Node) SetVisible(v bool) {
-	n.visible = v
+	n.Visible_ = v
 	if n.cacheTree != nil {
 		n.cacheTree.dirty = true
 	}
@@ -559,7 +554,7 @@ func (n *Node) SetVisible(v bool) {
 
 // SetRenderable sets whether the node emits render commands and invalidates ancestor static caches.
 func (n *Node) SetRenderable(r bool) {
-	n.renderable = r
+	n.Renderable_ = r
 	invalidateAncestorCache(n)
 }
 
@@ -568,8 +563,8 @@ func (n *Node) SetRenderable(r bool) {
 // cache is NOT invalidated  -  instead the node is registered as animated so replay
 // reads the live TextureRegion. Page changes always invalidate.
 func (n *Node) SetTextureRegion(r TextureRegion) {
-	pageChanged := n.textureRegion.Page != r.Page
-	n.textureRegion = r
+	pageChanged := n.TextureRegion_.Page != r.Page
+	n.TextureRegion_ = r
 	if pageChanged {
 		invalidateAncestorCache(n)
 		return
@@ -581,7 +576,7 @@ func (n *Node) SetTextureRegion(r TextureRegion) {
 
 // SetRenderLayer sets the node's render layer and invalidates ancestor static caches.
 func (n *Node) SetRenderLayer(l uint8) {
-	n.renderLayer = l
+	n.RenderLayer = l
 	invalidateAncestorCache(n)
 }
 
@@ -649,7 +644,7 @@ func (n *Node) SetTextEffects(e *TextEffects) {
 
 // SetGlobalOrder sets the node's global order and invalidates ancestor static caches.
 func (n *Node) SetGlobalOrder(o int) {
-	n.globalOrder = o
+	n.GlobalOrder = o
 	invalidateAncestorCache(n)
 }
 
@@ -660,7 +655,7 @@ func (n *Node) SetGlobalOrder(o int) {
 
 // OnPointerDown sets the callback for pointer-down events on this node.
 func (n *Node) OnPointerDown(fn func(PointerContext)) {
-	n.ensureCallbacks().onPointerDown = fn
+	n.EnsureCallbacks().OnPointerDown = fn
 	if fn != nil {
 		n.Interactable = true
 	}
@@ -668,7 +663,7 @@ func (n *Node) OnPointerDown(fn func(PointerContext)) {
 
 // OnPointerUp sets the callback for pointer-up events on this node.
 func (n *Node) OnPointerUp(fn func(PointerContext)) {
-	n.ensureCallbacks().onPointerUp = fn
+	n.EnsureCallbacks().OnPointerUp = fn
 	if fn != nil {
 		n.Interactable = true
 	}
@@ -676,7 +671,7 @@ func (n *Node) OnPointerUp(fn func(PointerContext)) {
 
 // OnPointerMove sets the callback for pointer-move (hover) events on this node.
 func (n *Node) OnPointerMove(fn func(PointerContext)) {
-	n.ensureCallbacks().onPointerMove = fn
+	n.EnsureCallbacks().OnPointerMove = fn
 	if fn != nil {
 		n.Interactable = true
 	}
@@ -684,7 +679,7 @@ func (n *Node) OnPointerMove(fn func(PointerContext)) {
 
 // OnClick sets the callback for click events on this node.
 func (n *Node) OnClick(fn func(ClickContext)) {
-	n.ensureCallbacks().onClick = fn
+	n.EnsureCallbacks().OnClick = fn
 	if fn != nil {
 		n.Interactable = true
 	}
@@ -692,7 +687,7 @@ func (n *Node) OnClick(fn func(ClickContext)) {
 
 // OnDragStart sets the callback for drag-start events on this node.
 func (n *Node) OnDragStart(fn func(DragContext)) {
-	n.ensureCallbacks().onDragStart = fn
+	n.EnsureCallbacks().OnDragStart = fn
 	if fn != nil {
 		n.Interactable = true
 	}
@@ -700,7 +695,7 @@ func (n *Node) OnDragStart(fn func(DragContext)) {
 
 // OnDrag sets the callback for drag events on this node.
 func (n *Node) OnDrag(fn func(DragContext)) {
-	n.ensureCallbacks().onDrag = fn
+	n.EnsureCallbacks().OnDrag = fn
 	if fn != nil {
 		n.Interactable = true
 	}
@@ -708,7 +703,7 @@ func (n *Node) OnDrag(fn func(DragContext)) {
 
 // OnDragEnd sets the callback for drag-end events on this node.
 func (n *Node) OnDragEnd(fn func(DragContext)) {
-	n.ensureCallbacks().onDragEnd = fn
+	n.EnsureCallbacks().OnDragEnd = fn
 	if fn != nil {
 		n.Interactable = true
 	}
@@ -716,7 +711,7 @@ func (n *Node) OnDragEnd(fn func(DragContext)) {
 
 // OnPinch sets the callback for pinch gesture events on this node.
 func (n *Node) OnPinch(fn func(PinchContext)) {
-	n.ensureCallbacks().onPinch = fn
+	n.EnsureCallbacks().OnPinch = fn
 	if fn != nil {
 		n.Interactable = true
 	}
@@ -724,7 +719,7 @@ func (n *Node) OnPinch(fn func(PinchContext)) {
 
 // OnPointerEnter sets the callback for pointer-enter events on this node.
 func (n *Node) OnPointerEnter(fn func(PointerContext)) {
-	n.ensureCallbacks().onPointerEnter = fn
+	n.EnsureCallbacks().OnPointerEnter = fn
 	if fn != nil {
 		n.Interactable = true
 	}
@@ -732,7 +727,7 @@ func (n *Node) OnPointerEnter(fn func(PointerContext)) {
 
 // OnPointerLeave sets the callback for pointer-leave events on this node.
 func (n *Node) OnPointerLeave(fn func(PointerContext)) {
-	n.ensureCallbacks().onPointerLeave = fn
+	n.EnsureCallbacks().OnPointerLeave = fn
 	if fn != nil {
 		n.Interactable = true
 	}
@@ -740,90 +735,90 @@ func (n *Node) OnPointerLeave(fn func(PointerContext)) {
 
 // --- Callback getters ---
 
-func (n *Node) HasOnPointerDown() bool { return n.callbacks != nil && n.callbacks.onPointerDown != nil }
+func (n *Node) HasOnPointerDown() bool { return n.Callbacks != nil && n.Callbacks.OnPointerDown != nil }
 func (n *Node) GetOnPointerDown() func(PointerContext) {
-	if n.callbacks == nil {
+	if n.Callbacks == nil {
 		return nil
 	}
-	return n.callbacks.onPointerDown
+	return n.Callbacks.OnPointerDown
 }
 
-func (n *Node) HasOnPointerUp() bool { return n.callbacks != nil && n.callbacks.onPointerUp != nil }
+func (n *Node) HasOnPointerUp() bool { return n.Callbacks != nil && n.Callbacks.OnPointerUp != nil }
 func (n *Node) GetOnPointerUp() func(PointerContext) {
-	if n.callbacks == nil {
+	if n.Callbacks == nil {
 		return nil
 	}
-	return n.callbacks.onPointerUp
+	return n.Callbacks.OnPointerUp
 }
 
 func (n *Node) HasOnPointerMove() bool {
-	return n.callbacks != nil && n.callbacks.onPointerMove != nil
+	return n.Callbacks != nil && n.Callbacks.OnPointerMove != nil
 }
 func (n *Node) GetOnPointerMove() func(PointerContext) {
-	if n.callbacks == nil {
+	if n.Callbacks == nil {
 		return nil
 	}
-	return n.callbacks.onPointerMove
+	return n.Callbacks.OnPointerMove
 }
 
-func (n *Node) HasOnClick() bool { return n.callbacks != nil && n.callbacks.onClick != nil }
+func (n *Node) HasOnClick() bool { return n.Callbacks != nil && n.Callbacks.OnClick != nil }
 func (n *Node) GetOnClick() func(ClickContext) {
-	if n.callbacks == nil {
+	if n.Callbacks == nil {
 		return nil
 	}
-	return n.callbacks.onClick
+	return n.Callbacks.OnClick
 }
 
-func (n *Node) HasOnDragStart() bool { return n.callbacks != nil && n.callbacks.onDragStart != nil }
+func (n *Node) HasOnDragStart() bool { return n.Callbacks != nil && n.Callbacks.OnDragStart != nil }
 func (n *Node) GetOnDragStart() func(DragContext) {
-	if n.callbacks == nil {
+	if n.Callbacks == nil {
 		return nil
 	}
-	return n.callbacks.onDragStart
+	return n.Callbacks.OnDragStart
 }
 
-func (n *Node) HasOnDrag() bool { return n.callbacks != nil && n.callbacks.onDrag != nil }
+func (n *Node) HasOnDrag() bool { return n.Callbacks != nil && n.Callbacks.OnDrag != nil }
 func (n *Node) GetOnDrag() func(DragContext) {
-	if n.callbacks == nil {
+	if n.Callbacks == nil {
 		return nil
 	}
-	return n.callbacks.onDrag
+	return n.Callbacks.OnDrag
 }
 
-func (n *Node) HasOnDragEnd() bool { return n.callbacks != nil && n.callbacks.onDragEnd != nil }
+func (n *Node) HasOnDragEnd() bool { return n.Callbacks != nil && n.Callbacks.OnDragEnd != nil }
 func (n *Node) GetOnDragEnd() func(DragContext) {
-	if n.callbacks == nil {
+	if n.Callbacks == nil {
 		return nil
 	}
-	return n.callbacks.onDragEnd
+	return n.Callbacks.OnDragEnd
 }
 
-func (n *Node) HasOnPinch() bool { return n.callbacks != nil && n.callbacks.onPinch != nil }
+func (n *Node) HasOnPinch() bool { return n.Callbacks != nil && n.Callbacks.OnPinch != nil }
 func (n *Node) GetOnPinch() func(PinchContext) {
-	if n.callbacks == nil {
+	if n.Callbacks == nil {
 		return nil
 	}
-	return n.callbacks.onPinch
+	return n.Callbacks.OnPinch
 }
 
 func (n *Node) HasOnPointerEnter() bool {
-	return n.callbacks != nil && n.callbacks.onPointerEnter != nil
+	return n.Callbacks != nil && n.Callbacks.OnPointerEnter != nil
 }
 func (n *Node) GetOnPointerEnter() func(PointerContext) {
-	if n.callbacks == nil {
+	if n.Callbacks == nil {
 		return nil
 	}
-	return n.callbacks.onPointerEnter
+	return n.Callbacks.OnPointerEnter
 }
 
 func (n *Node) HasOnPointerLeave() bool {
-	return n.callbacks != nil && n.callbacks.onPointerLeave != nil
+	return n.Callbacks != nil && n.Callbacks.OnPointerLeave != nil
 }
 func (n *Node) GetOnPointerLeave() func(PointerContext) {
-	if n.callbacks == nil {
+	if n.Callbacks == nil {
 		return nil
 	}
-	return n.callbacks.onPointerLeave
+	return n.Callbacks.OnPointerLeave
 }
 
 // --- Tree manipulation ---
@@ -846,9 +841,9 @@ func (n *Node) AddChild(child *Node) {
 		child.Parent.removeChildByPtr(child)
 	}
 	child.Parent = n
-	n.children = append(n.children, child)
-	n.childrenSorted = false
-	propagateScene(child, n.scene)
+	n.Children_ = append(n.Children_, child)
+	n.ChildrenSorted = false
+	propagateScene(child, n.Scene_)
 	markSubtreeDirty(child)
 	if n.cacheTree != nil {
 		n.cacheTree.dirty = true
@@ -873,18 +868,18 @@ func (n *Node) AddChildAt(child *Node, index int) {
 	if isAncestor(child, n) {
 		panic("willow: adding child would create a cycle")
 	}
-	if index < 0 || index > len(n.children) {
+	if index < 0 || index > len(n.Children_) {
 		panic("willow: child index out of range")
 	}
 	if child.Parent != nil {
 		child.Parent.removeChildByPtr(child)
 	}
 	child.Parent = n
-	n.children = append(n.children, nil)
-	copy(n.children[index+1:], n.children[index:])
-	n.children[index] = child
-	n.childrenSorted = false
-	propagateScene(child, n.scene)
+	n.Children_ = append(n.Children_, nil)
+	copy(n.Children_[index+1:], n.Children_[index:])
+	n.Children_[index] = child
+	n.ChildrenSorted = false
+	propagateScene(child, n.Scene_)
 	markSubtreeDirty(child)
 	if n.cacheTree != nil {
 		n.cacheTree.dirty = true
@@ -909,7 +904,7 @@ func (n *Node) RemoveChild(child *Node) {
 	n.removeChildByPtr(child)
 	child.Parent = nil
 	propagateScene(child, nil)
-	n.childrenSorted = false
+	n.ChildrenSorted = false
 	markSubtreeDirty(child)
 	if n.cacheTree != nil {
 		n.cacheTree.dirty = true
@@ -923,16 +918,16 @@ func (n *Node) RemoveChildAt(index int) *Node {
 	if globalDebug {
 		debugCheckDisposed(n, "RemoveChildAt")
 	}
-	if index < 0 || index >= len(n.children) {
+	if index < 0 || index >= len(n.Children_) {
 		panic("willow: child index out of range")
 	}
-	child := n.children[index]
-	copy(n.children[index:], n.children[index+1:])
-	n.children[len(n.children)-1] = nil
-	n.children = n.children[:len(n.children)-1]
+	child := n.Children_[index]
+	copy(n.Children_[index:], n.Children_[index+1:])
+	n.Children_[len(n.Children_)-1] = nil
+	n.Children_ = n.Children_[:len(n.Children_)-1]
 	child.Parent = nil
 	propagateScene(child, nil)
-	n.childrenSorted = false
+	n.ChildrenSorted = false
 	markSubtreeDirty(child)
 	if n.cacheTree != nil {
 		n.cacheTree.dirty = true
@@ -953,14 +948,14 @@ func (n *Node) RemoveFromParent() {
 // RemoveChildren detaches all children from this node.
 // Children are NOT disposed.
 func (n *Node) RemoveChildren() {
-	for i, child := range n.children {
+	for i, child := range n.Children_ {
 		child.Parent = nil
 		propagateScene(child, nil)
 		markSubtreeDirty(child)
-		n.children[i] = nil // allow GC of removed children
+		n.Children_[i] = nil // allow GC of removed children
 	}
-	n.children = n.children[:0]
-	n.childrenSorted = true
+	n.Children_ = n.Children_[:0]
+	n.ChildrenSorted = true
 	if n.cacheTree != nil {
 		n.cacheTree.dirty = true
 	}
@@ -969,18 +964,18 @@ func (n *Node) RemoveChildren() {
 
 // Children returns the child list. The returned slice MUST NOT be mutated by the caller.
 func (n *Node) Children() []*Node {
-	return n.children
+	return n.Children_
 }
 
 // NumChildren returns the number of children.
 func (n *Node) NumChildren() int {
-	return len(n.children)
+	return len(n.Children_)
 }
 
 // ChildAt returns the child at the given index.
 // Panics if the index is out of range.
 func (n *Node) ChildAt(index int) *Node {
-	return n.children[index]
+	return n.Children_[index]
 }
 
 // FindChild returns the first direct child matching the name pattern, or nil.
@@ -988,7 +983,7 @@ func (n *Node) ChildAt(index int) *Node {
 // "%boss" (ends with), "%ene%" (contains).
 func (n *Node) FindChild(pattern string) *Node {
 	inner, mode := parsePattern(pattern)
-	for _, c := range n.children {
+	for _, c := range n.Children_ {
 		if matchPattern(c.Name, inner, mode) {
 			return c
 		}
@@ -1004,7 +999,7 @@ func (n *Node) FindDescendant(pattern string) *Node {
 }
 
 func (n *Node) findDescendant(inner string, mode wildMode) *Node {
-	for _, c := range n.children {
+	for _, c := range n.Children_ {
 		if matchPattern(c.Name, inner, mode) {
 			return c
 		}
@@ -1021,12 +1016,12 @@ func (n *Node) SetChildIndex(child *Node, index int) {
 	if child.Parent != n {
 		panic("willow: child's parent is not this node")
 	}
-	nc := len(n.children)
+	nc := len(n.Children_)
 	if index < 0 || index >= nc {
 		panic("willow: child index out of range")
 	}
 	oldIndex := -1
-	for i, c := range n.children {
+	for i, c := range n.Children_ {
 		if c == child {
 			oldIndex = i
 			break
@@ -1037,23 +1032,23 @@ func (n *Node) SetChildIndex(child *Node, index int) {
 	}
 	// Shift elements to fill the gap and open the target slot.
 	if oldIndex < index {
-		copy(n.children[oldIndex:], n.children[oldIndex+1:index+1])
+		copy(n.Children_[oldIndex:], n.Children_[oldIndex+1:index+1])
 	} else {
-		copy(n.children[index+1:], n.children[index:oldIndex])
+		copy(n.Children_[index+1:], n.Children_[index:oldIndex])
 	}
-	n.children[index] = child
-	n.childrenSorted = false
+	n.Children_[index] = child
+	n.ChildrenSorted = false
 }
 
 // SetZIndex sets the node's ZIndex and marks the parent's children as unsorted,
 // so the next traversal will re-sort siblings by ZIndex.
 func (n *Node) SetZIndex(z int) {
-	if n.zIndex == z {
+	if n.ZIndex_ == z {
 		return
 	}
-	n.zIndex = z
+	n.ZIndex_ = z
 	if n.Parent != nil {
-		n.Parent.childrenSorted = false
+		n.Parent.ChildrenSorted = false
 	}
 	invalidateAncestorCache(n)
 }
@@ -1143,7 +1138,7 @@ func invalidateAncestorCache(n *Node) {
 // Dispose removes this node from its parent, marks it as disposed,
 // and recursively disposes all descendants.
 func (n *Node) Dispose() {
-	if n.disposed {
+	if n.Disposed {
 		return
 	}
 	n.RemoveFromParent()
@@ -1151,53 +1146,53 @@ func (n *Node) Dispose() {
 }
 
 func (n *Node) dispose() {
-	n.disposed = true
-	n.scene = nil
+	n.Disposed = true
+	n.Scene_ = nil
 	n.ID = 0
-	for _, child := range n.children {
+	for _, child := range n.Children_ {
 		child.Parent = nil
 		child.dispose()
 	}
-	n.children = nil
-	n.sortedChildren = nil
+	n.Children_ = nil
+	n.SortedChildren = nil
 	n.Parent = nil
 	n.HitShape = nil
 	n.Filters = nil
-	n.cacheEnabled = false
-	if n.cacheTexture != nil {
-		n.cacheTexture.Deallocate()
-		n.cacheTexture = nil
+	n.CacheEnabled = false
+	if n.CacheTexture != nil {
+		n.CacheTexture.Deallocate()
+		n.CacheTexture = nil
 	}
-	n.cacheDirty = false
-	n.mask = nil
+	n.CacheDirty = false
+	n.MaskNode = nil
 	n.cacheTree = nil
-	n.customImage = nil
-	n.customEmit = nil
-	n.mesh = nil
+	n.CustomImage_ = nil
+	n.CustomEmit = nil
+	n.Mesh = nil
 	n.Emitter = nil
 	n.TextBlock = nil
 	n.UserData = nil
-	n.callbacks = nil
+	n.Callbacks = nil
 }
 
 // IsDisposed returns true if this node has been disposed.
 func (n *Node) IsDisposed() bool {
-	return n.disposed
+	return n.Disposed
 }
 
 // Scene returns the Scene this node belongs to, or nil if not in a scene graph.
 func (n *Node) Scene() *Scene {
-	return n.scene
+	return n.Scene_
 }
 
 // propagateScene recursively sets the scene back-pointer on n and all descendants.
 // Early-outs if the scene is already the target value.
 func propagateScene(n *Node, s *Scene) {
-	if n.scene == s {
+	if n.Scene_ == s {
 		return
 	}
-	n.scene = s
-	for _, child := range n.children {
+	n.Scene_ = s
+	for _, child := range n.Children_ {
 		propagateScene(child, s)
 	}
 }
@@ -1214,14 +1209,14 @@ func isAncestor(candidate, node *Node) bool {
 	return false
 }
 
-// removeChildByPtr removes child from n.children without clearing child.Parent.
+// removeChildByPtr removes child from n.Children_ without clearing child.Parent.
 // Uses copy+nil to avoid retaining a dangling pointer in the backing array.
 func (n *Node) removeChildByPtr(child *Node) {
-	for i, c := range n.children {
+	for i, c := range n.Children_ {
 		if c == child {
-			copy(n.children[i:], n.children[i+1:])
-			n.children[len(n.children)-1] = nil
-			n.children = n.children[:len(n.children)-1]
+			copy(n.Children_[i:], n.Children_[i+1:])
+			n.Children_[len(n.Children_)-1] = nil
+			n.Children_ = n.Children_[:len(n.Children_)-1]
 			return
 		}
 	}
@@ -1233,6 +1228,6 @@ func (n *Node) removeChildByPtr(child *Node) {
 // the flag set (upward-only dirty model, matching Pixi v8 and Starling).
 func markSubtreeDirty(node *Node) {
 	invalidateAncestorCache(node)
-	node.transformDirty = true
-	node.alphaDirty = true
+	node.TransformDirty = true
+	node.AlphaDirty = true
 }

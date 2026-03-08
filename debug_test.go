@@ -386,8 +386,8 @@ func TestInjectWithCamera(t *testing.T) {
 
 	sprite := NewSprite("s", TextureRegion{OriginalW: 50, OriginalH: 50})
 	sprite.Interactable = true
-	sprite.x = 295
-	sprite.y = 215
+	sprite.X_ = 295
+	sprite.Y_ = 215
 	s.Root().AddChild(sprite)
 	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
 

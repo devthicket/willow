@@ -73,18 +73,18 @@ func nextPowerOfTwo(n int) int {
 // single texture. When enabled, the subtree is rendered to an offscreen image
 // and reused across frames until InvalidateCache is called.
 func (n *Node) SetCacheAsTexture(enabled bool) {
-	if n.cacheEnabled == enabled {
+	if n.CacheEnabled == enabled {
 		return
 	}
-	n.cacheEnabled = enabled
+	n.CacheEnabled = enabled
 	if !enabled {
-		if n.cacheTexture != nil {
-			n.cacheTexture.Deallocate()
-			n.cacheTexture = nil
+		if n.CacheTexture != nil {
+			n.CacheTexture.Deallocate()
+			n.CacheTexture = nil
 		}
-		n.cacheDirty = false
+		n.CacheDirty = false
 	} else {
-		n.cacheDirty = true
+		n.CacheDirty = true
 	}
 	invalidateAncestorCache(n)
 }
@@ -92,14 +92,14 @@ func (n *Node) SetCacheAsTexture(enabled bool) {
 // InvalidateCache marks the cached texture as dirty so it will be re-rendered
 // on the next frame. No-op if caching is not enabled.
 func (n *Node) InvalidateCache() {
-	if n.cacheEnabled {
-		n.cacheDirty = true
+	if n.CacheEnabled {
+		n.CacheDirty = true
 	}
 }
 
 // IsCacheEnabled reports whether subtree caching is enabled for this node.
 func (n *Node) IsCacheEnabled() bool {
-	return n.cacheEnabled
+	return n.CacheEnabled
 }
 
 // ToTexture renders this node's subtree to a new offscreen image and returns it.
@@ -168,7 +168,7 @@ func subtreeBoundsWalk(n *Node, localTransform [6]float64, bounds *Rect, first *
 		}
 	}
 
-	for _, child := range n.children {
+	for _, child := range n.Children_ {
 		childLocal := computeLocalTransform(child)
 		childTransform := multiplyAffine(localTransform, childLocal)
 		subtreeBoundsWalk(child, childTransform, bounds, first)
@@ -225,12 +225,12 @@ func renderSubtree(s *Scene, n *Node, target *ebiten.Image, bounds Rect) {
 	emitNodeCommand(s, n, offsetTransform, 1.0, &treeOrder)
 
 	// Traverse children using ZIndex-sorted order when available.
-	children := n.children
-	if !n.childrenSorted {
+	children := n.Children_
+	if !n.ChildrenSorted {
 		s.rebuildSortedChildren(n)
 	}
-	if n.sortedChildren != nil {
-		children = n.sortedChildren
+	if n.SortedChildren != nil {
+		children = n.SortedChildren
 	}
 	for _, child := range children {
 		renderSubtreeWalk(s, child, offsetTransform, 1.0, &treeOrder)
@@ -249,17 +249,17 @@ func renderSubtree(s *Scene, n *Node, target *ebiten.Image, bounds Rect) {
 // current s.commands buffer. Similar to traverse() but uses explicit
 // transforms rather than world transforms.
 func renderSubtreeWalk(s *Scene, n *Node, parentTransform [6]float64, parentAlpha float64, treeOrder *int) {
-	if !n.visible {
+	if !n.Visible_ {
 		return
 	}
 
 	local := computeLocalTransform(n)
 	transform := multiplyAffine(parentTransform, local)
-	alpha := parentAlpha * n.alpha
+	alpha := parentAlpha * n.Alpha_
 
 	// Nested special node (mask, cache, or filter): render it to its own RT
 	// and emit a command using the computed local transform.
-	if n.mask != nil || n.cacheEnabled || len(n.Filters) > 0 {
+	if n.MaskNode != nil || n.CacheEnabled || len(n.Filters) > 0 {
 		renderSpecialSubtreeNode(s, n, transform, alpha, treeOrder)
 		return
 	}
@@ -267,12 +267,12 @@ func renderSubtreeWalk(s *Scene, n *Node, parentTransform [6]float64, parentAlph
 	emitNodeCommand(s, n, transform, alpha, treeOrder)
 
 	// Use ZIndex-sorted children order, consistent with main traverse.
-	children := n.children
-	if !n.childrenSorted {
+	children := n.Children_
+	if !n.ChildrenSorted {
 		s.rebuildSortedChildren(n)
 	}
-	if n.sortedChildren != nil {
-		children = n.sortedChildren
+	if n.SortedChildren != nil {
+		children = n.SortedChildren
 	}
 	for _, child := range children {
 		renderSubtreeWalk(s, child, transform, alpha, treeOrder)
@@ -281,7 +281,7 @@ func renderSubtreeWalk(s *Scene, n *Node, parentTransform [6]float64, parentAlph
 
 // renderSpecialSubtreeNode handles a masked/cached/filtered node encountered
 // inside a subtree rendering pass. It mirrors renderSpecialNode but uses an
-// explicit local transform instead of n.worldTransform.
+// explicit local transform instead of n.WorldTransform.
 func renderSpecialSubtreeNode(s *Scene, n *Node, localTransform [6]float64, alpha float64, treeOrder *int) {
 	bounds := subtreeBounds(n)
 	padding := filterChainPadding(n.Filters)
@@ -306,9 +306,9 @@ func renderSpecialSubtreeNode(s *Scene, n *Node, localTransform [6]float64, alph
 	renderSubtree(s, n, rt, bounds)
 	result := rt
 
-	if n.mask != nil {
+	if n.MaskNode != nil {
 		maskRT := s.rtPool.Acquire(w, h)
-		renderSubtree(s, n.mask, maskRT, bounds)
+		renderSubtree(s, n.MaskNode, maskRT, bounds)
 		var op ebiten.DrawImageOptions
 		op.Blend = BlendMask.EbitenBlend()
 		result.DrawImage(maskRT, &op)
@@ -329,9 +329,9 @@ func renderSpecialSubtreeNode(s *Scene, n *Node, localTransform [6]float64, alph
 		Type:        CommandSprite,
 		Transform:   affine32(adjustedTransform),
 		Color:       color32{1, 1, 1, float32(alpha)},
-		BlendMode:   n.blendMode,
-		RenderLayer: n.renderLayer,
-		GlobalOrder: n.globalOrder,
+		BlendMode:   n.BlendMode_,
+		RenderLayer: n.RenderLayer,
+		GlobalOrder: n.GlobalOrder,
 		treeOrder:   *treeOrder,
 		directImage: result,
 	})
@@ -339,7 +339,7 @@ func renderSpecialSubtreeNode(s *Scene, n *Node, localTransform [6]float64, alph
 
 // emitNodeCommand emits a render command for a single node at the given transform.
 func emitNodeCommand(s *Scene, n *Node, transform [6]float64, alpha float64, treeOrder *int) {
-	if !n.renderable {
+	if !n.Renderable_ {
 		return
 	}
 	t32 := affine32(transform)
@@ -349,36 +349,36 @@ func emitNodeCommand(s *Scene, n *Node, transform [6]float64, alpha float64, tre
 		cmd := RenderCommand{
 			Type:        CommandSprite,
 			Transform:   t32,
-			Color:       color32{float32(n.color.R()), float32(n.color.G()), float32(n.color.B()), float32(n.color.A() * alpha)},
-			BlendMode:   n.blendMode,
-			RenderLayer: n.renderLayer,
-			GlobalOrder: n.globalOrder,
+			Color:       color32{float32(n.Color_.R()), float32(n.Color_.G()), float32(n.Color_.B()), float32(n.Color_.A() * alpha)},
+			BlendMode:   n.BlendMode_,
+			RenderLayer: n.RenderLayer,
+			GlobalOrder: n.GlobalOrder,
 			treeOrder:   *treeOrder,
 		}
-		if n.customImage != nil {
-			cmd.directImage = n.customImage
+		if n.CustomImage_ != nil {
+			cmd.directImage = n.CustomImage_
 		} else {
-			cmd.TextureRegion = n.textureRegion
+			cmd.TextureRegion = n.TextureRegion_
 		}
 		s.commands = append(s.commands, cmd)
 	case NodeTypeMesh:
-		if len(n.mesh.Vertices) == 0 || len(n.mesh.Indices) == 0 {
+		if len(n.Mesh.Vertices) == 0 || len(n.Mesh.Indices) == 0 {
 			return
 		}
-		tintColor := RGBA(n.color.R(), n.color.G(), n.color.B(), n.color.A()*alpha)
+		tintColor := RGBA(n.Color_.R(), n.Color_.G(), n.Color_.B(), n.Color_.A()*alpha)
 		dst := ensureTransformedVerts(n)
-		transformVertices(n.mesh.Vertices, dst, transform, tintColor)
+		transformVertices(n.Mesh.Vertices, dst, transform, tintColor)
 		*treeOrder++
 		s.commands = append(s.commands, RenderCommand{
 			Type:        CommandMesh,
 			Transform:   t32,
-			BlendMode:   n.blendMode,
-			RenderLayer: n.renderLayer,
-			GlobalOrder: n.globalOrder,
+			BlendMode:   n.BlendMode_,
+			RenderLayer: n.RenderLayer,
+			GlobalOrder: n.GlobalOrder,
 			treeOrder:   *treeOrder,
 			meshVerts:   dst,
-			meshInds:    n.mesh.Indices,
-			meshImage:   n.mesh.Image,
+			meshInds:    n.Mesh.Indices,
+			meshImage:   n.Mesh.Image,
 		})
 	case NodeTypeParticleEmitter:
 		if n.Emitter != nil && n.Emitter.alive > 0 {
@@ -391,12 +391,12 @@ func emitNodeCommand(s *Scene, n *Node, transform [6]float64, alpha float64, tre
 			s.commands = append(s.commands, RenderCommand{
 				Type:               CommandParticle,
 				Transform:          affine32(particleTransform),
-				TextureRegion:      n.textureRegion,
-				directImage:        n.customImage,
-				Color:              color32{float32(n.color.R()), float32(n.color.G()), float32(n.color.B()), float32(n.color.A() * alpha)},
-				BlendMode:          n.blendMode,
-				RenderLayer:        n.renderLayer,
-				GlobalOrder:        n.globalOrder,
+				TextureRegion:      n.TextureRegion_,
+				directImage:        n.CustomImage_,
+				Color:              color32{float32(n.Color_.R()), float32(n.Color_.G()), float32(n.Color_.B()), float32(n.Color_.A() * alpha)},
+				BlendMode:          n.BlendMode_,
+				RenderLayer:        n.RenderLayer,
+				GlobalOrder:        n.GlobalOrder,
 				treeOrder:          *treeOrder,
 				emitter:            n.Emitter,
 				worldSpaceParticle: ws,

@@ -10,7 +10,7 @@ func TestSetMask(t *testing.T) {
 	n := NewSprite("target", TextureRegion{Width: 32, Height: 32})
 	m := NewSprite("mask", TextureRegion{Width: 32, Height: 32})
 	n.SetMask(m)
-	if n.mask != m {
+	if n.MaskNode != m {
 		t.Error("mask should be set")
 	}
 }
@@ -20,7 +20,7 @@ func TestClearMask(t *testing.T) {
 	m := NewSprite("mask", TextureRegion{Width: 32, Height: 32})
 	n.SetMask(m)
 	n.ClearMask()
-	if n.mask != nil {
+	if n.MaskNode != nil {
 		t.Error("mask should be nil after ClearMask")
 	}
 }
@@ -55,7 +55,7 @@ func TestDisposeCleansMask(t *testing.T) {
 	m := NewSprite("mask", TextureRegion{Width: 32, Height: 32})
 	n.SetMask(m)
 	n.Dispose()
-	if n.mask != nil {
+	if n.MaskNode != nil {
 		t.Error("mask should be nil after dispose")
 	}
 }
@@ -64,10 +64,10 @@ func TestDisposeCleansCache(t *testing.T) {
 	n := NewSprite("s", TextureRegion{Width: 32, Height: 32})
 	n.SetCacheAsTexture(true)
 	n.Dispose()
-	if n.cacheEnabled {
+	if n.CacheEnabled {
 		t.Error("cacheEnabled should be false after dispose")
 	}
-	if n.cacheTexture != nil {
+	if n.CacheTexture != nil {
 		t.Error("cacheTexture should be nil after dispose")
 	}
 }

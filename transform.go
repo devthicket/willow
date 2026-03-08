@@ -12,28 +12,28 @@ var identityTransform = [6]float64{1, 0, 0, 1, 0, 0}
 //
 //	Translate(-PivotX, -PivotY) -> Scale -> Skew -> Rotate -> Translate(X, Y)
 func computeLocalTransform(n *Node) [6]float64 {
-	sx := n.scaleX
-	sy := n.scaleY
+	sx := n.ScaleX_
+	sy := n.ScaleY_
 
 	// Fast path: no rotation and no skew (the common case for static sprites).
 	// Avoids Sincos and Tan entirely  -  just scale + pivot + translate.
-	if n.rotation == 0 && n.skewX == 0 && n.skewY == 0 {
-		return [6]float64{sx, 0, 0, sy, -n.pivotX*sx + n.x, -n.pivotY*sy + n.y}
+	if n.Rotation_ == 0 && n.SkewX_ == 0 && n.SkewY_ == 0 {
+		return [6]float64{sx, 0, 0, sy, -n.PivotX_*sx + n.X_, -n.PivotY_*sy + n.Y_}
 	}
 
 	var sin, cos float64
-	if n.rotation != 0 {
-		sin, cos = math.Sincos(n.rotation)
+	if n.Rotation_ != 0 {
+		sin, cos = math.Sincos(n.Rotation_)
 	} else {
 		cos = 1
 	}
 
 	var tanSkewX, tanSkewY float64
-	if n.skewX != 0 {
-		tanSkewX = math.Tan(n.skewX)
+	if n.SkewX_ != 0 {
+		tanSkewX = math.Tan(n.SkewX_)
 	}
-	if n.skewY != 0 {
-		tanSkewY = math.Tan(n.skewY)
+	if n.SkewY_ != 0 {
+		tanSkewY = math.Tan(n.SkewY_)
 	}
 
 	// After Scale * Translate(-pivot):
@@ -45,8 +45,8 @@ func computeLocalTransform(n *Node) [6]float64 {
 	c := tanSkewX * sy
 	d := sy
 
-	px := n.pivotX
-	py := n.pivotY
+	px := n.PivotX_
+	py := n.PivotY_
 	preTx := -px*sx - tanSkewX*py*sy
 	preTy := -tanSkewY*px*sx - py*sy
 
@@ -59,7 +59,7 @@ func computeLocalTransform(n *Node) [6]float64 {
 	rty := sin*preTx + cos*preTy
 
 	// After Translate(X, Y):
-	return [6]float64{ra, rb, rc, rd, rtx + n.x, rty + n.y}
+	return [6]float64{ra, rb, rc, rd, rtx + n.X_, rty + n.Y_}
 }
 
 // multiplyAffine multiplies two 2D affine matrices: result = parent * child.
@@ -107,24 +107,24 @@ func transformPoint(m [6]float64, x, y float64) (float64, float64) {
 // parentRecomputed indicates whether the parent's transform was recomputed this frame.
 // parentAlphaChanged indicates whether the parent's alpha changed (without a full transform recompute).
 func updateWorldTransform(n *Node, parentTransform [6]float64, parentAlpha float64, parentRecomputed bool, parentAlphaChanged bool) {
-	if !n.visible {
+	if !n.Visible_ {
 		return
 	}
-	recompute := n.transformDirty || parentRecomputed
-	alphaChanged := n.alphaDirty || parentAlphaChanged
+	recompute := n.TransformDirty || parentRecomputed
+	alphaChanged := n.AlphaDirty || parentAlphaChanged
 	if recompute {
 		local := computeLocalTransform(n)
-		n.worldTransform = multiplyAffine(parentTransform, local)
-		n.worldAlpha = parentAlpha * n.alpha
-		n.transformDirty = false
-		n.alphaDirty = false
+		n.WorldTransform = multiplyAffine(parentTransform, local)
+		n.WorldAlpha = parentAlpha * n.Alpha_
+		n.TransformDirty = false
+		n.AlphaDirty = false
 	} else if alphaChanged {
-		n.worldAlpha = parentAlpha * n.alpha
-		n.alphaDirty = false
+		n.WorldAlpha = parentAlpha * n.Alpha_
+		n.AlphaDirty = false
 	}
 
-	for _, child := range n.children {
-		updateWorldTransform(child, n.worldTransform, n.worldAlpha, recompute, recompute || alphaChanged)
+	for _, child := range n.Children_ {
+		updateWorldTransform(child, n.WorldTransform, n.WorldAlpha, recompute, recompute || alphaChanged)
 	}
 }
 
@@ -132,54 +132,54 @@ func updateWorldTransform(n *Node, parentTransform [6]float64, parentAlpha float
 
 // SetPosition sets the node's local X and Y and marks it dirty.
 func (n *Node) SetPosition(x, y float64) {
-	n.x = x
-	n.y = y
-	n.transformDirty = true
+	n.X_ = x
+	n.Y_ = y
+	n.TransformDirty = true
 	invalidateAncestorCache(n)
 }
 
 // SetX sets the node's local X and marks it dirty.
 func (n *Node) SetX(x float64) {
-	n.x = x
-	n.transformDirty = true
+	n.X_ = x
+	n.TransformDirty = true
 	invalidateAncestorCache(n)
 }
 
 // SetY sets the node's local Y and marks it dirty.
 func (n *Node) SetY(y float64) {
-	n.y = y
-	n.transformDirty = true
+	n.Y_ = y
+	n.TransformDirty = true
 	invalidateAncestorCache(n)
 }
 
 // SetScale sets the node's ScaleX and ScaleY and marks it dirty.
 func (n *Node) SetScale(sx, sy float64) {
-	n.scaleX = sx
-	n.scaleY = sy
-	n.transformDirty = true
+	n.ScaleX_ = sx
+	n.ScaleY_ = sy
+	n.TransformDirty = true
 	invalidateAncestorCache(n)
 }
 
 // SetRotation sets the node's rotation (in radians) and marks it dirty.
 func (n *Node) SetRotation(r float64) {
-	n.rotation = r
-	n.transformDirty = true
+	n.Rotation_ = r
+	n.TransformDirty = true
 	invalidateAncestorCache(n)
 }
 
 // SetSkew sets the node's SkewX and SkewY (in radians) and marks it dirty.
 func (n *Node) SetSkew(sx, sy float64) {
-	n.skewX = sx
-	n.skewY = sy
-	n.transformDirty = true
+	n.SkewX_ = sx
+	n.SkewY_ = sy
+	n.TransformDirty = true
 	invalidateAncestorCache(n)
 }
 
 // SetPivot sets the node's PivotX and PivotY and marks it dirty.
 func (n *Node) SetPivot(px, py float64) {
-	n.pivotX = px
-	n.pivotY = py
-	n.transformDirty = true
+	n.PivotX_ = px
+	n.PivotY_ = py
+	n.TransformDirty = true
 	invalidateAncestorCache(n)
 }
 
@@ -187,8 +187,8 @@ func (n *Node) SetPivot(px, py float64) {
 // Unlike other transform setters, this only triggers a worldAlpha recomputation
 // (a single multiply), skipping the full matrix recompute.
 func (n *Node) SetAlpha(a float64) {
-	n.alpha = a
-	n.alphaDirty = true
+	n.Alpha_ = a
+	n.AlphaDirty = true
 	invalidateAncestorCache(n)
 }
 
@@ -196,8 +196,8 @@ func (n *Node) SetAlpha(a float64) {
 // on the next frame. Also invalidates the TextBlock layout and SDF cache if present.
 // Useful after bulk-setting fields directly.
 func (n *Node) Invalidate() {
-	n.transformDirty = true
-	n.alphaDirty = true
+	n.TransformDirty = true
+	n.AlphaDirty = true
 	if n.TextBlock != nil {
 		n.TextBlock.layoutDirty = true
 		n.TextBlock.uniformsDirty = true
@@ -209,11 +209,11 @@ func (n *Node) Invalidate() {
 
 // WorldToLocal converts a world-space point to this node's local coordinate space.
 func (n *Node) WorldToLocal(wx, wy float64) (lx, ly float64) {
-	inv := invertAffine(n.worldTransform)
+	inv := invertAffine(n.WorldTransform)
 	return transformPoint(inv, wx, wy)
 }
 
 // LocalToWorld converts a local-space point to world-space.
 func (n *Node) LocalToWorld(lx, ly float64) (wx, wy float64) {
-	return transformPoint(n.worldTransform, lx, ly)
+	return transformPoint(n.WorldTransform, lx, ly)
 }

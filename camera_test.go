@@ -127,10 +127,10 @@ func TestCameraFollow(t *testing.T) {
 	cam := scene.NewCamera(Rect{X: 0, Y: 0, Width: 800, Height: 600})
 
 	target := NewSprite("target", TextureRegion{})
-	target.x = 200
-	target.y = 150
-	target.transformDirty = false
-	target.worldTransform = [6]float64{1, 0, 0, 1, 200, 150}
+	target.X_ = 200
+	target.Y_ = 150
+	target.TransformDirty = false
+	target.WorldTransform = [6]float64{1, 0, 0, 1, 200, 150}
 	scene.Root().AddChild(target)
 
 	cam.Follow(target, 0, 0, 1.0) // lerp=1 snaps immediately
@@ -144,7 +144,7 @@ func TestCameraFollow(t *testing.T) {
 func TestCameraFollowLerp(t *testing.T) {
 	cam := newCamera(Rect{X: 0, Y: 0, Width: 800, Height: 600})
 	target := NewSprite("target", TextureRegion{})
-	target.worldTransform = [6]float64{1, 0, 0, 1, 100, 0}
+	target.WorldTransform = [6]float64{1, 0, 0, 1, 100, 0}
 
 	cam.Follow(target, 0, 0, 0.5)
 	cam.update(1.0 / 60.0)
@@ -157,7 +157,7 @@ func TestCameraFollowLerp(t *testing.T) {
 func TestCameraFollowWithOffset(t *testing.T) {
 	cam := newCamera(Rect{X: 0, Y: 0, Width: 800, Height: 600})
 	target := NewSprite("target", TextureRegion{})
-	target.worldTransform = [6]float64{1, 0, 0, 1, 100, 100}
+	target.WorldTransform = [6]float64{1, 0, 0, 1, 100, 100}
 
 	cam.Follow(target, 10, -20, 1.0)
 	cam.update(1.0 / 60.0)
@@ -169,14 +169,14 @@ func TestCameraFollowWithOffset(t *testing.T) {
 func TestCameraUnfollow(t *testing.T) {
 	cam := newCamera(Rect{X: 0, Y: 0, Width: 800, Height: 600})
 	target := NewSprite("target", TextureRegion{})
-	target.worldTransform = [6]float64{1, 0, 0, 1, 100, 100}
+	target.WorldTransform = [6]float64{1, 0, 0, 1, 100, 100}
 
 	cam.Follow(target, 0, 0, 1.0)
 	cam.update(1.0 / 60.0)
 	cam.Unfollow()
 
 	// Move target, camera should not follow
-	target.worldTransform[4] = 500
+	target.WorldTransform[4] = 500
 	cam.update(1.0 / 60.0)
 	if !approxEqual(cam.X, 100, epsilon) {
 		t.Errorf("after unfollow: cam.X = %f, want 100", cam.X)
@@ -300,36 +300,36 @@ func TestWorldAABB_Rotated(t *testing.T) {
 
 func TestCulling_InsideViewport(t *testing.T) {
 	n := NewSprite("visible", TextureRegion{Width: 64, Height: 64, OriginalW: 64, OriginalH: 64})
-	n.worldTransform = [6]float64{1, 0, 0, 1, 100, 100}
+	n.WorldTransform = [6]float64{1, 0, 0, 1, 100, 100}
 	viewport := Rect{X: 0, Y: 0, Width: 800, Height: 600}
-	if shouldCull(n, n.worldTransform, viewport) {
+	if shouldCull(n, n.WorldTransform, viewport) {
 		t.Error("node inside viewport was culled")
 	}
 }
 
 func TestCulling_OutsideViewport(t *testing.T) {
 	n := NewSprite("outside", TextureRegion{Width: 64, Height: 64, OriginalW: 64, OriginalH: 64})
-	n.worldTransform = [6]float64{1, 0, 0, 1, -200, -200}
+	n.WorldTransform = [6]float64{1, 0, 0, 1, -200, -200}
 	viewport := Rect{X: 0, Y: 0, Width: 800, Height: 600}
-	if !shouldCull(n, n.worldTransform, viewport) {
+	if !shouldCull(n, n.WorldTransform, viewport) {
 		t.Error("node outside viewport was not culled")
 	}
 }
 
 func TestCulling_ContainerNeverCulled(t *testing.T) {
 	n := NewContainer("container")
-	n.worldTransform = [6]float64{1, 0, 0, 1, -9999, -9999}
+	n.WorldTransform = [6]float64{1, 0, 0, 1, -9999, -9999}
 	viewport := Rect{X: 0, Y: 0, Width: 800, Height: 600}
-	if shouldCull(n, n.worldTransform, viewport) {
+	if shouldCull(n, n.WorldTransform, viewport) {
 		t.Error("container was culled")
 	}
 }
 
 func TestCulling_TextNeverCulled(t *testing.T) {
 	n := NewText("text", "hello", nil)
-	n.worldTransform = [6]float64{1, 0, 0, 1, -9999, -9999}
+	n.WorldTransform = [6]float64{1, 0, 0, 1, -9999, -9999}
 	viewport := Rect{X: 0, Y: 0, Width: 800, Height: 600}
-	if shouldCull(n, n.worldTransform, viewport) {
+	if shouldCull(n, n.WorldTransform, viewport) {
 		t.Error("text node was culled")
 	}
 }
@@ -343,14 +343,14 @@ func TestCulling_IntegrationWithScene(t *testing.T) {
 
 	// Sprite inside viewport
 	visible := NewSprite("visible", TextureRegion{Width: 64, Height: 64, OriginalW: 64, OriginalH: 64, Page: 0})
-	visible.x = 400
-	visible.y = 300
+	visible.X_ = 400
+	visible.Y_ = 300
 	scene.Root().AddChild(visible)
 
 	// Sprite far outside viewport
 	hidden := NewSprite("hidden", TextureRegion{Width: 64, Height: 64, OriginalW: 64, OriginalH: 64, Page: 0})
-	hidden.x = 5000
-	hidden.y = 5000
+	hidden.X_ = 5000
+	hidden.Y_ = 5000
 	scene.Root().AddChild(hidden)
 
 	// Register a dummy page so commands can be emitted
@@ -376,13 +376,13 @@ func TestCulling_DisabledShowsAll(t *testing.T) {
 	cam.dirty = true
 
 	visible := NewSprite("s1", TextureRegion{Width: 64, Height: 64, OriginalW: 64, OriginalH: 64})
-	visible.x = 400
-	visible.y = 300
+	visible.X_ = 400
+	visible.Y_ = 300
 	scene.Root().AddChild(visible)
 
 	hidden := NewSprite("s2", TextureRegion{Width: 64, Height: 64, OriginalW: 64, OriginalH: 64})
-	hidden.x = 5000
-	hidden.y = 5000
+	hidden.X_ = 5000
+	hidden.Y_ = 5000
 	scene.Root().AddChild(hidden)
 
 	screen := ebiten.NewImage(800, 600)
@@ -496,12 +496,12 @@ func BenchmarkCulling_10000Nodes(b *testing.B) {
 		s := NewSprite("s", TextureRegion{Width: 32, Height: 32, OriginalW: 32, OriginalH: 32, Page: 0})
 		if i%2 == 0 {
 			// Inside viewport
-			s.x = float64(i%40) * 20
-			s.y = float64(i/40) * 20
+			s.X_ = float64(i%40) * 20
+			s.Y_ = float64(i/40) * 20
 		} else {
 			// Outside viewport
-			s.x = 5000
-			s.y = 5000
+			s.X_ = 5000
+			s.Y_ = 5000
 		}
 		scene.Root().AddChild(s)
 	}

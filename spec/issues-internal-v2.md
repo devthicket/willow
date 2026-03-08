@@ -150,11 +150,26 @@ refactoring. Stays in root.
 These use exported field names (`MaskNode`, `CacheEnabled`, `CacheTexture`,
 `CacheDirty`, `Mesh.AabbDirty`).
 
+### [done] Color alias
+`type Color = types.Color` in root. All `c.r` → `c.R()` conversions done.
+`types.ColorFieldPtrs(&c)` added for TweenColor field pointer access.
+`toRGBA()` method converted to `colorToRGBA()` free function.
+
+### [done] Foundation type aliases
+Vec2, Rect, Range, BlendMode, NodeType, EventType, MouseButton,
+KeyModifiers, TextAlign, TextureRegion, CacheTreeMode, HitShape aliased
+from internal/types. Constants re-exported.
+
 ### Root facade — remaining work
-- Create type aliases in root (`type Node = node.Node`, `type Color = types.Color`, etc.)
+- Alias Node (`type Node = node.Node`) — requires updating ~381 field
+  references from unexported to exported names across root .go files
 - Remove duplicate method implementations from root .go files
+- Delete root files fully replaced by internal/ (render.go, batch.go,
+  transform.go, mask.go, camera.go, input.go, text.go, particle.go,
+  filter.go, lightlayer.go, tilemap.go, atlas.go, etc.)
 - Wire all ~20 function pointers in root init or constructors
-- Handle `TileMapLayer.emitCommands` which casts `any` to `*Scene` (must become `*render.Pipeline`)
+- Handle `TileMapLayer.emitCommands` which casts `any` to `*Scene`
+  (must become `*render.Pipeline`)
 - Integration tests
 - Resolve `Scene()` method ownership (see above)
 

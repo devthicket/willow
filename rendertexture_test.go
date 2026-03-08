@@ -26,7 +26,7 @@ func TestNewSpriteNodeSetsCustomImage(t *testing.T) {
 	defer rt.Dispose()
 
 	node := rt.NewSpriteNode("test")
-	if node.customImage != rt.Image() {
+	if node.CustomImage_ != rt.Image() {
 		t.Error("NewSpriteNode should set customImage to rt.Image()")
 	}
 	if node.Type != NodeTypeSprite {
@@ -61,7 +61,7 @@ func TestDisposeNilsCustomImage(t *testing.T) {
 
 	n.Dispose()
 
-	if n.customImage != nil {
+	if n.CustomImage_ != nil {
 		t.Error("customImage should be nil after Dispose")
 	}
 }

@@ -44,7 +44,7 @@ func (s *Scene) debugLog(stats debugStats) {
 // used in a tree operation. Only called when Scene.debug or the node's scene is
 // in debug mode. In release mode callers skip this entirely.
 func debugCheckDisposed(n *Node, op string) {
-	if n.disposed {
+	if n.Disposed {
 		panic(fmt.Sprintf("willow debug: %s on disposed node %q (ID was %d)", op, n.Name, n.ID))
 	}
 }
@@ -67,9 +67,9 @@ func debugCheckTreeDepth(n *Node) {
 const debugMaxChildCount = 1000
 
 func debugCheckChildCount(n *Node) {
-	if len(n.children) > debugMaxChildCount {
+	if len(n.Children_) > debugMaxChildCount {
 		_, _ = fmt.Fprintf(os.Stderr, "[willow] warning: node %q has %d children (threshold %d)\n",
-			n.Name, len(n.children), debugMaxChildCount)
+			n.Name, len(n.Children_), debugMaxChildCount)
 	}
 }
 

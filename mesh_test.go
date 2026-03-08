@@ -163,20 +163,20 @@ func TestEnsureTransformedVertsGrowsToHighWater(t *testing.T) {
 	if len(buf) != 10 {
 		t.Errorf("len = %d, want 10", len(buf))
 	}
-	cap1 := cap(n.mesh.transformedVerts)
+	cap1 := cap(n.Mesh.TransformedVerts)
 
 	// Shrink vertices  -  buffer should not shrink.
-	n.mesh.Vertices = n.mesh.Vertices[:5]
+	n.Mesh.Vertices = n.Mesh.Vertices[:5]
 	buf = ensureTransformedVerts(n)
 	if len(buf) != 5 {
 		t.Errorf("len = %d, want 5", len(buf))
 	}
-	if cap(n.mesh.transformedVerts) != cap1 {
-		t.Errorf("cap changed from %d to %d (should keep high-water)", cap1, cap(n.mesh.transformedVerts))
+	if cap(n.Mesh.TransformedVerts) != cap1 {
+		t.Errorf("cap changed from %d to %d (should keep high-water)", cap1, cap(n.Mesh.TransformedVerts))
 	}
 
 	// Grow past high-water.
-	n.mesh.Vertices = make([]ebiten.Vertex, 20)
+	n.Mesh.Vertices = make([]ebiten.Vertex, 20)
 	buf = ensureTransformedVerts(n)
 	if len(buf) != 20 {
 		t.Errorf("len = %d, want 20", len(buf))
@@ -187,20 +187,20 @@ func TestEnsureTransformedVertsGrowsToHighWater(t *testing.T) {
 
 func TestMeshAABBDirtyOnNew(t *testing.T) {
 	n := NewMesh("test", nil, []ebiten.Vertex{{DstX: 5, DstY: 10}}, nil)
-	if !n.mesh.aabbDirty {
+	if !n.Mesh.AabbDirty {
 		t.Error("meshAABBDirty should be true after NewMesh")
 	}
 
 	n.recomputeMeshAABB()
-	if n.mesh.aabbDirty {
+	if n.Mesh.AabbDirty {
 		t.Error("meshAABBDirty should be false after recompute")
 	}
-	if !approxEqual(n.mesh.aabb.X, 5, epsilon) || !approxEqual(n.mesh.aabb.Y, 10, epsilon) {
-		t.Errorf("AABB = %v, want origin (5,10)", n.mesh.aabb)
+	if !approxEqual(n.Mesh.Aabb.X, 5, epsilon) || !approxEqual(n.Mesh.Aabb.Y, 10, epsilon) {
+		t.Errorf("AABB = %v, want origin (5,10)", n.Mesh.Aabb)
 	}
 
 	n.InvalidateMeshAABB()
-	if !n.mesh.aabbDirty {
+	if !n.Mesh.AabbDirty {
 		t.Error("meshAABBDirty should be true after Invalidate")
 	}
 }
@@ -218,17 +218,17 @@ func TestMeshCullingWithOffset(t *testing.T) {
 	inds := []uint16{0, 1, 2, 0, 2, 3}
 	n := NewMesh("m", nil, verts, inds)
 	// Set identity world transform.
-	n.worldTransform = identityTransform
+	n.WorldTransform = identityTransform
 
 	// Cull bounds that DON'T overlap (500 area).
 	cullBounds := Rect{X: 0, Y: 0, Width: 100, Height: 100}
-	if !shouldCull(n, n.worldTransform, cullBounds) {
+	if !shouldCull(n, n.WorldTransform, cullBounds) {
 		t.Error("mesh at (490-510) should be culled by bounds (0-100)")
 	}
 
 	// Cull bounds that DO overlap.
 	cullBounds = Rect{X: 480, Y: 480, Width: 40, Height: 40}
-	if shouldCull(n, n.worldTransform, cullBounds) {
+	if shouldCull(n, n.WorldTransform, cullBounds) {
 		t.Error("mesh at (490-510) should NOT be culled by bounds (480-520)")
 	}
 }
@@ -244,8 +244,8 @@ func TestMeshTraverseEmitsTransformedVerts(t *testing.T) {
 	}
 	inds := []uint16{0, 1, 2}
 	n := NewMesh("m", nil, verts, inds)
-	n.x = 50
-	n.y = 100
+	n.X_ = 50
+	n.Y_ = 100
 	s.Root().AddChild(n)
 
 	traverseScene(s)
@@ -288,8 +288,8 @@ func TestMeshTraverseColorTint(t *testing.T) {
 	}
 	inds := []uint16{0}
 	n := NewMesh("m", nil, verts, inds)
-	n.color = RGBA(0.5, 0.8, 1.0, 1.0)
-	n.alpha = 0.5
+	n.Color_ = RGBA(0.5, 0.8, 1.0, 1.0)
+	n.Alpha_ = 0.5
 	s.Root().AddChild(n)
 
 	traverseScene(s)
@@ -327,9 +327,9 @@ func TestMeshWorldAABBOffset(t *testing.T) {
 		{DstX: 100, DstY: 250},
 	}
 	n := NewMesh("m", nil, verts, nil)
-	n.worldTransform = identityTransform
+	n.WorldTransform = identityTransform
 
-	aabb := meshWorldAABBOffset(n, n.worldTransform)
+	aabb := meshWorldAABBOffset(n, n.WorldTransform)
 	if !approxEqual(aabb.X, 100, epsilon) || !approxEqual(aabb.Y, 200, epsilon) {
 		t.Errorf("AABB origin = (%f,%f), want (100,200)", aabb.X, aabb.Y)
 	}
@@ -346,9 +346,9 @@ func TestMeshWorldAABBWithScale(t *testing.T) {
 	}
 	n := NewMesh("m", nil, verts, nil)
 	// Scale by 2.
-	n.worldTransform = [6]float64{2, 0, 0, 2, 0, 0}
+	n.WorldTransform = [6]float64{2, 0, 0, 2, 0, 0}
 
-	aabb := meshWorldAABBOffset(n, n.worldTransform)
+	aabb := meshWorldAABBOffset(n, n.WorldTransform)
 	if !approxEqual(aabb.Width, 20, epsilon) || !approxEqual(aabb.Height, 20, epsilon) {
 		t.Errorf("scaled AABB size = (%f,%f), want (20,20)", aabb.Width, aabb.Height)
 	}
@@ -392,11 +392,11 @@ func TestMeshDisposeNilsTransformedVerts(t *testing.T) {
 	verts := []ebiten.Vertex{{DstX: 0, DstY: 0}}
 	n := NewMesh("m", nil, verts, []uint16{0})
 	_ = ensureTransformedVerts(n) // allocate buffer
-	if n.mesh.transformedVerts == nil {
+	if n.Mesh.TransformedVerts == nil {
 		t.Fatal("transformedVerts should be allocated")
 	}
 	n.Dispose()
-	if n.mesh != nil {
+	if n.Mesh != nil {
 		t.Error("mesh data should be nil after Dispose")
 	}
 }

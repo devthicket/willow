@@ -48,8 +48,8 @@ func TestNewText_DefaultFontSize(t *testing.T) {
 	if n.TextBlock.FontSize != 16 {
 		t.Errorf("FontSize = %f, want 16", n.TextBlock.FontSize)
 	}
-	if n.scaleX != 1 || n.scaleY != 1 {
-		t.Errorf("Scale = (%f, %f), want (1, 1)", n.scaleX, n.scaleY)
+	if n.ScaleX_ != 1 || n.ScaleY_ != 1 {
+		t.Errorf("Scale = (%f, %f), want (1, 1)", n.ScaleX_, n.ScaleY_)
 	}
 }
 

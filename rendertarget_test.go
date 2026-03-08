@@ -78,10 +78,10 @@ func TestPoolReleaseNilNoPanic(t *testing.T) {
 func TestSetCacheAsTextureEnabled(t *testing.T) {
 	n := NewSprite("s", TextureRegion{Width: 32, Height: 32})
 	n.SetCacheAsTexture(true)
-	if !n.cacheEnabled {
+	if !n.CacheEnabled {
 		t.Error("cacheEnabled should be true")
 	}
-	if !n.cacheDirty {
+	if !n.CacheDirty {
 		t.Error("cacheDirty should be true after enabling")
 	}
 }
@@ -90,13 +90,13 @@ func TestSetCacheAsTextureDisabled(t *testing.T) {
 	n := NewSprite("s", TextureRegion{Width: 32, Height: 32})
 	n.SetCacheAsTexture(true)
 	n.SetCacheAsTexture(false)
-	if n.cacheEnabled {
+	if n.CacheEnabled {
 		t.Error("cacheEnabled should be false after disabling")
 	}
-	if n.cacheDirty {
+	if n.CacheDirty {
 		t.Error("cacheDirty should be false after disabling")
 	}
-	if n.cacheTexture != nil {
+	if n.CacheTexture != nil {
 		t.Error("cacheTexture should be nil after disabling")
 	}
 }
@@ -104,9 +104,9 @@ func TestSetCacheAsTextureDisabled(t *testing.T) {
 func TestSetCacheAsTextureIdempotent(t *testing.T) {
 	n := NewSprite("s", TextureRegion{Width: 32, Height: 32})
 	n.SetCacheAsTexture(true)
-	n.cacheDirty = false
+	n.CacheDirty = false
 	n.SetCacheAsTexture(true) // should be no-op
-	if n.cacheDirty {
+	if n.CacheDirty {
 		t.Error("setting cache to same value should not reset dirty flag")
 	}
 }
@@ -114,9 +114,9 @@ func TestSetCacheAsTextureIdempotent(t *testing.T) {
 func TestInvalidateCache(t *testing.T) {
 	n := NewSprite("s", TextureRegion{Width: 32, Height: 32})
 	n.SetCacheAsTexture(true)
-	n.cacheDirty = false
+	n.CacheDirty = false
 	n.InvalidateCache()
-	if !n.cacheDirty {
+	if !n.CacheDirty {
 		t.Error("cacheDirty should be true after InvalidateCache")
 	}
 }
@@ -124,7 +124,7 @@ func TestInvalidateCache(t *testing.T) {
 func TestInvalidateCacheNoCacheNoOp(t *testing.T) {
 	n := NewSprite("s", TextureRegion{Width: 32, Height: 32})
 	n.InvalidateCache() // cache not enabled  -  should be no-op
-	if n.cacheDirty {
+	if n.CacheDirty {
 		t.Error("InvalidateCache on non-cached node should not set dirty")
 	}
 }
@@ -153,8 +153,8 @@ func TestSubtreeBoundsSingleSprite(t *testing.T) {
 func TestSubtreeBoundsWithChildren(t *testing.T) {
 	parent := NewContainer("parent")
 	child := NewSprite("child", TextureRegion{Width: 20, Height: 20, OriginalW: 20, OriginalH: 20})
-	child.x = 50
-	child.y = 50
+	child.X_ = 50
+	child.Y_ = 50
 	parent.AddChild(child)
 
 	b := subtreeBounds(parent)
@@ -168,8 +168,8 @@ func TestSubtreeBoundsMultipleChildren(t *testing.T) {
 	parent := NewContainer("parent")
 	a := NewSprite("a", TextureRegion{Width: 10, Height: 10, OriginalW: 10, OriginalH: 10})
 	b := NewSprite("b", TextureRegion{Width: 10, Height: 10, OriginalW: 10, OriginalH: 10})
-	b.x = 100
-	b.y = 100
+	b.X_ = 100
+	b.Y_ = 100
 	parent.AddChild(a)
 	parent.AddChild(b)
 

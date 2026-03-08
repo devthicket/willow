@@ -117,8 +117,8 @@ func (c *Camera) update(dt float32) {
 
 	// Follow target
 	if c.followTarget != nil && !c.followTarget.IsDisposed() {
-		targetX := c.followTarget.worldTransform[4] + c.followOffsetX
-		targetY := c.followTarget.worldTransform[5] + c.followOffsetY
+		targetX := c.followTarget.WorldTransform[4] + c.followOffsetX
+		targetY := c.followTarget.WorldTransform[5] + c.followOffsetY
 		c.X += (targetX - c.X) * c.followLerp
 		c.Y += (targetY - c.Y) * c.followLerp
 	}
@@ -274,14 +274,14 @@ func worldAABB(transform [6]float64, w, h float64) Rect {
 func nodeDimensions(n *Node) (w, h float64) {
 	switch n.Type {
 	case NodeTypeSprite:
-		if n.customImage != nil {
-			b := n.customImage.Bounds()
+		if n.CustomImage_ != nil {
+			b := n.CustomImage_.Bounds()
 			return float64(b.Dx()), float64(b.Dy())
 		}
-		return float64(n.textureRegion.OriginalW), float64(n.textureRegion.OriginalH)
+		return float64(n.TextureRegion_.OriginalW), float64(n.TextureRegion_.OriginalH)
 	case NodeTypeMesh:
 		n.recomputeMeshAABB()
-		return n.mesh.aabb.Width, n.mesh.aabb.Height
+		return n.Mesh.Aabb.Width, n.Mesh.Aabb.Height
 	case NodeTypeParticleEmitter:
 		if n.Emitter != nil {
 			r := &n.Emitter.config.Region

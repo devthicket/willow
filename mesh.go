@@ -69,30 +69,30 @@ func computeMeshAABB(verts []ebiten.Vertex) Rect {
 }
 
 // ensureTransformedVerts grows the node's transformedVerts buffer to fit
-// len(n.mesh.Vertices), using a high-water-mark strategy (never shrinks).
+// len(n.Mesh.Vertices), using a high-water-mark strategy (never shrinks).
 // Returns the resliced buffer.
 func ensureTransformedVerts(n *Node) []ebiten.Vertex {
-	need := len(n.mesh.Vertices)
-	if cap(n.mesh.transformedVerts) < need {
-		n.mesh.transformedVerts = make([]ebiten.Vertex, need)
+	need := len(n.Mesh.Vertices)
+	if cap(n.Mesh.TransformedVerts) < need {
+		n.Mesh.TransformedVerts = make([]ebiten.Vertex, need)
 	}
-	n.mesh.transformedVerts = n.mesh.transformedVerts[:need]
-	return n.mesh.transformedVerts
+	n.Mesh.TransformedVerts = n.Mesh.TransformedVerts[:need]
+	return n.Mesh.TransformedVerts
 }
 
 // InvalidateMeshAABB marks the mesh's cached AABB as needing recomputation.
 // Call this after modifying Vertices.
 func (n *Node) InvalidateMeshAABB() {
-	n.mesh.aabbDirty = true
+	n.Mesh.AabbDirty = true
 }
 
 // recomputeMeshAABB recomputes the cached local-space AABB if dirty.
 func (n *Node) recomputeMeshAABB() {
-	if !n.mesh.aabbDirty {
+	if !n.Mesh.AabbDirty {
 		return
 	}
-	n.mesh.aabb = computeMeshAABB(n.mesh.Vertices)
-	n.mesh.aabbDirty = false
+	n.Mesh.Aabb = computeMeshAABB(n.Mesh.Vertices)
+	n.Mesh.AabbDirty = false
 }
 
 // --- White pixel singleton (no sync.Once  -  willow is single-threaded) ---
@@ -114,7 +114,7 @@ func ensureWhitePixel() *ebiten.Image {
 // transform by the AABB origin before computing worldAABB.
 func meshWorldAABB(n *Node, transform [6]float64) Rect {
 	n.recomputeMeshAABB()
-	aabb := n.mesh.aabb
+	aabb := n.Mesh.Aabb
 	if aabb.Width == 0 && aabb.Height == 0 {
 		return Rect{}
 	}
@@ -131,7 +131,7 @@ func meshWorldAABB(n *Node, transform [6]float64) Rect {
 // transform to use (e.g. view*world for culling in screen space).
 func meshWorldAABBOffset(n *Node, transform [6]float64) Rect {
 	n.recomputeMeshAABB()
-	aabb := n.mesh.aabb
+	aabb := n.Mesh.Aabb
 	if aabb.Width == 0 && aabb.Height == 0 {
 		return Rect{}
 	}

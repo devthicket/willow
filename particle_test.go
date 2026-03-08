@@ -298,10 +298,10 @@ func TestParticleEmitterNodeFields(t *testing.T) {
 	if n.Emitter == nil {
 		t.Fatal("Emitter should not be nil")
 	}
-	if n.textureRegion.Width != 32 {
+	if n.TextureRegion_.Width != 32 {
 		t.Error("TextureRegion should match config")
 	}
-	if n.blendMode != BlendAdd {
+	if n.BlendMode_ != BlendAdd {
 		t.Error("BlendMode should match config")
 	}
 }

@@ -13,10 +13,10 @@ func TestNewLightLayerCreatesNode(t *testing.T) {
 	if node.Type != NodeTypeSprite {
 		t.Errorf("node Type = %d, want NodeTypeSprite", node.Type)
 	}
-	if node.blendMode != BlendMultiply {
-		t.Errorf("BlendMode = %d, want BlendMultiply", node.blendMode)
+	if node.BlendMode_ != BlendMultiply {
+		t.Errorf("BlendMode = %d, want BlendMultiply", node.BlendMode_)
 	}
-	if node.customImage == nil {
+	if node.CustomImage_ == nil {
 		t.Error("node should have customImage set")
 	}
 }

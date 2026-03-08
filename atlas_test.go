@@ -211,8 +211,8 @@ func TestLoadAtlas_ManualTextureRegion(t *testing.T) {
 		OriginalW: 64, OriginalH: 64,
 	}
 	sprite := NewSprite("manual", region)
-	if sprite.textureRegion.Width != 64 || sprite.textureRegion.Height != 64 {
-		t.Errorf("manual region size = %dx%d, want 64x64", sprite.textureRegion.Width, sprite.textureRegion.Height)
+	if sprite.TextureRegion_.Width != 64 || sprite.TextureRegion_.Height != 64 {
+		t.Errorf("manual region size = %dx%d, want 64x64", sprite.TextureRegion_.Width, sprite.TextureRegion_.Height)
 	}
 }
 
