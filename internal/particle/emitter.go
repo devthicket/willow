@@ -80,6 +80,13 @@ func (e *Emitter) AliveCount() int {
 	return e.Alive
 }
 
+// ParticleRenderData returns position, scale, and color for particle at index i.
+// Used by the render pipeline's batch submitter to build per-particle vertices.
+func (e *Emitter) ParticleRenderData(i int) (x, y float64, scale, alpha, colorR, colorG, colorB float32) {
+	p := &e.Particles[i]
+	return p.x, p.y, p.scale, p.alpha, p.colorR, p.colorG, p.colorB
+}
+
 // Bounds returns the axis-aligned bounding box of all alive particles in the
 // emitter's coordinate space (local for local-space, world for world-space).
 // The returned rect includes particle scale so the full rendered extent is
