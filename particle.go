@@ -243,12 +243,12 @@ func (e *ParticleEmitter) spawnParticle() {
 	p.endAlpha = float32(e.config.EndAlpha.Random())
 	p.alpha = p.startAlpha
 
-	p.startR = float32(e.config.StartColor.r)
-	p.startG = float32(e.config.StartColor.g)
-	p.startB = float32(e.config.StartColor.b)
-	p.endR = float32(e.config.EndColor.r)
-	p.endG = float32(e.config.EndColor.g)
-	p.endB = float32(e.config.EndColor.b)
+	p.startR = float32(e.config.StartColor.R())
+	p.startG = float32(e.config.StartColor.G())
+	p.startB = float32(e.config.StartColor.B())
+	p.endR = float32(e.config.EndColor.R())
+	p.endG = float32(e.config.EndColor.G())
+	p.endB = float32(e.config.EndColor.B())
 	p.colorR = p.startR
 	p.colorG = p.startG
 	p.colorB = p.startB

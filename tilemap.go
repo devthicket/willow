@@ -442,9 +442,9 @@ func (l *TileMapLayer) emitCommands(s *Scene, treeOrder *int) {
 	}
 
 	// Get the accumulated color from the node's parent chain.
-	r := float32(l.node.color.r * l.node.worldAlpha)
-	g := float32(l.node.color.g * l.node.worldAlpha)
-	b := float32(l.node.color.b * l.node.worldAlpha)
+	r := float32(l.node.color.R() * l.node.worldAlpha)
+	g := float32(l.node.color.G() * l.node.worldAlpha)
+	b := float32(l.node.color.B() * l.node.worldAlpha)
 	a := float32(l.node.worldAlpha)
 
 	// Premultiply.

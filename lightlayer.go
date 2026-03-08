@@ -236,9 +236,9 @@ func (ll *LightLayer) Redraw() {
 		op.ColorScale.Reset()
 		tintAlpha := info.intensity * 0.3
 		op.ColorScale.Scale(
-			float32(c.r)*tintAlpha,
-			float32(c.g)*tintAlpha,
-			float32(c.b)*tintAlpha,
+			float32(c.R())*tintAlpha,
+			float32(c.G())*tintAlpha,
+			float32(c.B())*tintAlpha,
 			tintAlpha,
 		)
 		op.Blend = ll.addBlend

@@ -217,7 +217,7 @@ func TestLightColorTinting(t *testing.T) {
 	ll.Redraw() // should not panic
 
 	// Colored light: triggers additive tint pass.
-	l2 := &Light{X: 80, Y: 80, Radius: 25, Intensity: 0.8, Enabled: true, Color: Color{1, 0, 0, 1}}
+	l2 := &Light{X: 80, Y: 80, Radius: 25, Intensity: 0.8, Enabled: true, Color: RGBA(1, 0, 0, 1)}
 	ll.AddLight(l2)
 	ll.Redraw() // should not panic
 

@@ -15,7 +15,7 @@ func TestTransformVerticesIdentity(t *testing.T) {
 		{DstX: 30, DstY: 40, SrcX: 1, SrcY: 1, ColorR: 1, ColorG: 1, ColorB: 1, ColorA: 1},
 	}
 	dst := make([]ebiten.Vertex, 2)
-	transformVertices(src, dst, identityTransform, Color{1, 1, 1, 1})
+	transformVertices(src, dst, identityTransform, RGBA(1, 1, 1, 1))
 
 	if !approxEqual(float64(dst[0].DstX), 10, epsilon) || !approxEqual(float64(dst[0].DstY), 20, epsilon) {
 		t.Errorf("identity: dst[0] = (%f,%f), want (10,20)", dst[0].DstX, dst[0].DstY)
@@ -32,7 +32,7 @@ func TestTransformVerticesTranslation(t *testing.T) {
 	dst := make([]ebiten.Vertex, 1)
 	// [a=1, b=0, c=0, d=1, tx=100, ty=200]
 	transform := [6]float64{1, 0, 0, 1, 100, 200}
-	transformVertices(src, dst, transform, Color{1, 1, 1, 1})
+	transformVertices(src, dst, transform, RGBA(1, 1, 1, 1))
 
 	if !approxEqual(float64(dst[0].DstX), 100, epsilon) || !approxEqual(float64(dst[0].DstY), 200, epsilon) {
 		t.Errorf("translation: dst[0] = (%f,%f), want (100,200)", dst[0].DstX, dst[0].DstY)
@@ -49,7 +49,7 @@ func TestTransformVerticesRotation90(t *testing.T) {
 	// newX = a*x + c*y + tx, newY = b*x + d*y + ty
 	// Rotate 90° CCW: a=0, b=1, c=-1, d=0
 	transform := [6]float64{0, 1, -1, 0, 0, 0}
-	transformVertices(src, dst, transform, Color{1, 1, 1, 1})
+	transformVertices(src, dst, transform, RGBA(1, 1, 1, 1))
 
 	// (1,0) rotated 90° CCW → (0,1)
 	if !approxEqual(float64(dst[0].DstX), 0, 0.001) || !approxEqual(float64(dst[0].DstY), 1, 0.001) {
@@ -63,7 +63,7 @@ func TestTransformVerticesColorTint(t *testing.T) {
 	}
 	dst := make([]ebiten.Vertex, 1)
 	// Tint with color {R:0.5, G:1.0, B:0.8, A:0.6}  -  alpha baked in
-	tint := Color{0.5, 1.0, 0.8, 0.6}
+	tint := RGBA(0.5, 1.0, 0.8, 0.6)
 	transformVertices(src, dst, identityTransform, tint)
 
 	// ColorR = src.ColorR * tint.R * tint.A = 1.0 * 0.5 * 0.6 = 0.3
@@ -90,7 +90,7 @@ func TestTransformVerticesPreservesUV(t *testing.T) {
 	}
 	dst := make([]ebiten.Vertex, 1)
 	transform := [6]float64{2, 0, 0, 2, 50, 50}
-	transformVertices(src, dst, transform, Color{1, 1, 1, 1})
+	transformVertices(src, dst, transform, RGBA(1, 1, 1, 1))
 
 	if dst[0].SrcX != 0.25 || dst[0].SrcY != 0.75 {
 		t.Errorf("UV changed: got (%f,%f), want (0.25, 0.75)", dst[0].SrcX, dst[0].SrcY)
@@ -104,7 +104,7 @@ func TestTransformVerticesNoDoubleAlpha(t *testing.T) {
 		{DstX: 0, DstY: 0, SrcX: 0, SrcY: 0, ColorR: 1, ColorG: 1, ColorB: 1, ColorA: 0.5},
 	}
 	dst := make([]ebiten.Vertex, 1)
-	tint := Color{1, 1, 1, 0.8} // worldAlpha already in A
+	tint := RGBA(1, 1, 1, 0.8) // worldAlpha already in A
 	transformVertices(src, dst, identityTransform, tint)
 
 	// ColorA = src.ColorA * tint.A = 0.5 * 0.8 = 0.4
@@ -288,7 +288,7 @@ func TestMeshTraverseColorTint(t *testing.T) {
 	}
 	inds := []uint16{0}
 	n := NewMesh("m", nil, verts, inds)
-	n.color = Color{0.5, 0.8, 1.0, 1.0}
+	n.color = RGBA(0.5, 0.8, 1.0, 1.0)
 	n.alpha = 0.5
 	s.Root().AddChild(n)
 
@@ -416,7 +416,7 @@ func BenchmarkTransformVertices1000(b *testing.B) {
 	transform := [6]float64{
 		math.Cos(0.5), math.Sin(0.5), -math.Sin(0.5), math.Cos(0.5), 100, 200,
 	}
-	tint := Color{0.8, 0.9, 1.0, 0.7}
+	tint := RGBA(0.8, 0.9, 1.0, 0.7)
 
 	b.ReportAllocs()
 	b.ResetTimer()

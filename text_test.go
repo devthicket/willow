@@ -10,12 +10,12 @@ import (
 func TestTextBlock_ColorTint(t *testing.T) {
 	tb := &TextBlock{
 		Content:     "A",
-		Color:       Color{0.5, 0.8, 1.0, 0.9},
+		Color:       RGBA(0.5, 0.8, 1.0, 0.9),
 		layoutDirty: true,
 	}
 
 	// Verify the color is preserved on the TextBlock
-	if tb.Color.r != 0.5 || tb.Color.g != 0.8 || tb.Color.b != 1.0 || tb.Color.a != 0.9 {
+	if tb.Color.R() != 0.5 || tb.Color.G() != 0.8 || tb.Color.B() != 1.0 || tb.Color.A() != 0.9 {
 		t.Errorf("TextBlock color = %+v, want {0.5 0.8 1.0 0.9}", tb.Color)
 	}
 }
@@ -35,7 +35,7 @@ func TestNewText_SetsTextBlock(t *testing.T) {
 	if n.TextBlock.Content != "Hello" {
 		t.Errorf("Content = %q, want \"Hello\"", n.TextBlock.Content)
 	}
-	if n.TextBlock.Color != (Color{1, 1, 1, 1}) {
+	if n.TextBlock.Color != RGBA(1, 1, 1, 1) {
 		t.Errorf("TextBlock.Color = %+v, want white", n.TextBlock.Color)
 	}
 	if !n.TextBlock.layoutDirty {

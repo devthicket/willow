@@ -50,8 +50,8 @@ func TestTweenScaleReachesTarget(t *testing.T) {
 
 func TestTweenColorAllComponents(t *testing.T) {
 	node := NewContainer("color")
-	node.color = Color{r: 1, g: 0, b: 0, a: 1}
-	target := Color{r: 0, g: 1, b: 0.5, a: 0.5}
+	node.color = RGBA(1, 0, 0, 1)
+	target := RGBA(0, 1, 0.5, 0.5)
 
 	g := TweenColor(node, target, TweenConfig{Duration: 1.0, Ease: ease.Linear})
 
@@ -61,17 +61,17 @@ func TestTweenColorAllComponents(t *testing.T) {
 	if !g.Done {
 		t.Fatal("expected Done after full duration")
 	}
-	if math.Abs(node.color.r-target.r) > 0.01 {
-		t.Errorf("R = %f, want %f", node.color.r, target.r)
+	if math.Abs(node.color.R()-target.R()) > 0.01 {
+		t.Errorf("R = %f, want %f", node.color.R(), target.R())
 	}
-	if math.Abs(node.color.g-target.g) > 0.01 {
-		t.Errorf("G = %f, want %f", node.color.g, target.g)
+	if math.Abs(node.color.G()-target.G()) > 0.01 {
+		t.Errorf("G = %f, want %f", node.color.G(), target.G())
 	}
-	if math.Abs(node.color.b-target.b) > 0.01 {
-		t.Errorf("B = %f, want %f", node.color.b, target.b)
+	if math.Abs(node.color.B()-target.B()) > 0.01 {
+		t.Errorf("B = %f, want %f", node.color.B(), target.B())
 	}
-	if math.Abs(node.color.a-target.a) > 0.01 {
-		t.Errorf("A = %f, want %f", node.color.a, target.a)
+	if math.Abs(node.color.A()-target.A()) > 0.01 {
+		t.Errorf("A = %f, want %f", node.color.A(), target.A())
 	}
 }
 

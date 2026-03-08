@@ -17,8 +17,8 @@ func defaultTestConfig(max int) EmitterConfig {
 		StartAlpha:   Range{Min: 1, Max: 1},
 		EndAlpha:     Range{Min: 0, Max: 0},
 		Gravity:      Vec2{X: 0, Y: 0},
-		StartColor:   Color{1, 1, 1, 1},
-		EndColor:     Color{0, 0, 0, 1},
+		StartColor:   RGBA(1, 1, 1, 1),
+		EndColor:     RGBA(0, 0, 0, 1),
 		Region:       TextureRegion{Width: 16, Height: 16, OriginalW: 16, OriginalH: 16},
 	}
 }
@@ -150,8 +150,8 @@ func TestLifetimeInterpolation(t *testing.T) {
 	cfg.EndScale = Range{Min: 0, Max: 0}
 	cfg.StartAlpha = Range{Min: 1, Max: 1}
 	cfg.EndAlpha = Range{Min: 0, Max: 0}
-	cfg.StartColor = Color{1, 0, 0, 1}
-	cfg.EndColor = Color{0, 1, 0, 1}
+	cfg.StartColor = RGBA(1, 0, 0, 1)
+	cfg.EndColor = RGBA(0, 1, 0, 1)
 	e := newParticleEmitter(cfg)
 	e.Start()
 

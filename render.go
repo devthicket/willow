@@ -159,7 +159,7 @@ func (s *Scene) traverse(n *Node, treeOrder *int) {
 			cmd := RenderCommand{
 				Type:        CommandSprite,
 				Transform:   affine32(viewWorld),
-				Color:       color32{float32(n.color.r), float32(n.color.g), float32(n.color.b), float32(n.color.a * n.worldAlpha)},
+				Color:       color32{float32(n.color.R()), float32(n.color.G()), float32(n.color.B()), float32(n.color.A() * n.worldAlpha)},
 				BlendMode:   n.blendMode,
 				RenderLayer: n.renderLayer,
 				GlobalOrder: n.globalOrder,
@@ -178,7 +178,7 @@ func (s *Scene) traverse(n *Node, treeOrder *int) {
 			if len(n.mesh.Vertices) == 0 || len(n.mesh.Indices) == 0 {
 				break
 			}
-			tintColor := Color{n.color.r, n.color.g, n.color.b, n.color.a * n.worldAlpha}
+			tintColor := RGBA(n.color.R(), n.color.G(), n.color.B(), n.color.A()*n.worldAlpha)
 			dst := ensureTransformedVerts(n)
 			transformVertices(n.mesh.Vertices, dst, viewWorld, tintColor)
 			*treeOrder++
@@ -206,7 +206,7 @@ func (s *Scene) traverse(n *Node, treeOrder *int) {
 					Transform:          affine32(particleTransform),
 					TextureRegion:      n.textureRegion,
 					directImage:        n.customImage,
-					Color:              color32{float32(n.color.r), float32(n.color.g), float32(n.color.b), float32(n.color.a * n.worldAlpha)},
+					Color:              color32{float32(n.color.R()), float32(n.color.G()), float32(n.color.B()), float32(n.color.A() * n.worldAlpha)},
 					BlendMode:          n.blendMode,
 					RenderLayer:        n.renderLayer,
 					GlobalOrder:        n.globalOrder,
@@ -658,7 +658,7 @@ func (s *Scene) emitNodeCommandInline(n *Node, treeOrder *int) {
 		cmd := RenderCommand{
 			Type:        CommandSprite,
 			Transform:   affine32(viewWorld),
-			Color:       color32{float32(n.color.r), float32(n.color.g), float32(n.color.b), float32(n.color.a * n.worldAlpha)},
+			Color:       color32{float32(n.color.R()), float32(n.color.G()), float32(n.color.B()), float32(n.color.A() * n.worldAlpha)},
 			BlendMode:   n.blendMode,
 			RenderLayer: n.renderLayer,
 			GlobalOrder: n.globalOrder,

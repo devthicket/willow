@@ -223,8 +223,8 @@ func (g *gameShell) Update() error {
 }
 
 func (g *gameShell) Draw(screen *ebiten.Image) {
-	if g.scene.ClearColor.a > 0 {
-		screen.Fill(g.scene.ClearColor.toRGBA())
+	if g.scene.ClearColor.A() > 0 {
+		screen.Fill(colorToRGBA(g.scene.ClearColor))
 	}
 	g.scene.Draw(screen)
 	// Draw FPS widget in screen space (unaffected by cameras).

@@ -243,7 +243,7 @@ func nodeDefaults(n *Node) {
 	n.scaleX = 1
 	n.scaleY = 1
 	n.alpha = 1
-	n.color = Color{1, 1, 1, 1}
+	n.color = RGBA(1, 1, 1, 1)
 	n.visible = true
 	n.renderable = true
 	n.transformDirty = true
@@ -511,7 +511,7 @@ func NewText(name string, content string, font Font) *Node {
 			Content:       content,
 			Font:          font,
 			FontSize:      16,
-			Color:         Color{1, 1, 1, 1},
+			Color:         RGBA(1, 1, 1, 1),
 			layoutDirty:   true,
 			uniformsDirty: true,
 		},

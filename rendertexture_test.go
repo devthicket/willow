@@ -147,7 +147,7 @@ func TestRenderTextureClearAndFill(t *testing.T) {
 
 	// Should not panic.
 	rt.Clear()
-	rt.Fill(Color{1, 0, 0, 1})
+	rt.Fill(RGBA(1, 0, 0, 1))
 }
 
 func TestRenderTextureDrawImageAt(t *testing.T) {
@@ -205,7 +205,7 @@ func TestRenderTextureDrawSpriteColored(t *testing.T) {
 	opts := RenderTextureDrawOpts{
 		X: 5, Y: 5,
 		ScaleX: 2, ScaleY: 2,
-		Color: Color{1, 0, 0, 1},
+		Color: RGBA(1, 0, 0, 1),
 		Alpha: 0.5,
 	}
 	// Should not panic.

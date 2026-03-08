@@ -1,6 +1,7 @@
 package willow
 
 import (
+	"github.com/phanxgames/willow/internal/types"
 	"github.com/tanema/gween"
 	"github.com/tanema/gween/ease"
 )
@@ -123,14 +124,15 @@ func TweenScale(node *Node, toSX, toSY float64, cfg TweenConfig) *TweenGroup {
 func TweenColor(node *Node, to Color, cfg TweenConfig) *TweenGroup {
 	fn := tweenEase(cfg)
 	g := &TweenGroup{count: 4, target: node}
-	g.tweens[0] = gween.New(float32(node.color.r), float32(to.r), cfg.Duration, fn)
-	g.tweens[1] = gween.New(float32(node.color.g), float32(to.g), cfg.Duration, fn)
-	g.tweens[2] = gween.New(float32(node.color.b), float32(to.b), cfg.Duration, fn)
-	g.tweens[3] = gween.New(float32(node.color.a), float32(to.a), cfg.Duration, fn)
-	g.fields[0] = &node.color.r
-	g.fields[1] = &node.color.g
-	g.fields[2] = &node.color.b
-	g.fields[3] = &node.color.a
+	g.tweens[0] = gween.New(float32(node.color.R()), float32(to.R()), cfg.Duration, fn)
+	g.tweens[1] = gween.New(float32(node.color.G()), float32(to.G()), cfg.Duration, fn)
+	g.tweens[2] = gween.New(float32(node.color.B()), float32(to.B()), cfg.Duration, fn)
+	g.tweens[3] = gween.New(float32(node.color.A()), float32(to.A()), cfg.Duration, fn)
+	rp, gp, bp, ap := types.ColorFieldPtrs(&node.color)
+	g.fields[0] = rp
+	g.fields[1] = gp
+	g.fields[2] = bp
+	g.fields[3] = ap
 	g.autoRegister(node)
 	return g
 }

@@ -59,7 +59,7 @@ func assertNodeDefaults(t *testing.T, n *Node, name string, typ NodeType) {
 	if n.alpha != 1 {
 		t.Errorf("Alpha = %v, want 1", n.alpha)
 	}
-	if n.color != (Color{1, 1, 1, 1}) {
+	if n.color != RGBA(1, 1, 1, 1) {
 		t.Errorf("Color = %v, want white", n.color)
 	}
 	if !n.visible {

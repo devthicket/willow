@@ -96,6 +96,12 @@ var ColorBlack = Color{0, 0, 0, 1}
 // ColorTransparent is fully transparent black.
 var ColorTransparent = Color{0, 0, 0, 0}
 
+// ColorFieldPtrs returns pointers to the individual color component fields.
+// Used by tween code that needs to mutate color fields via pointer.
+func ColorFieldPtrs(c *Color) (r, g, b, a *float64) {
+	return &c.r, &c.g, &c.b, &c.a
+}
+
 // Clamp01 clamps a value to [0, 1].
 func Clamp01(v float64) float64 {
 	if v < 0 {

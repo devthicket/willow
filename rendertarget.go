@@ -349,7 +349,7 @@ func emitNodeCommand(s *Scene, n *Node, transform [6]float64, alpha float64, tre
 		cmd := RenderCommand{
 			Type:        CommandSprite,
 			Transform:   t32,
-			Color:       color32{float32(n.color.r), float32(n.color.g), float32(n.color.b), float32(n.color.a * alpha)},
+			Color:       color32{float32(n.color.R()), float32(n.color.G()), float32(n.color.B()), float32(n.color.A() * alpha)},
 			BlendMode:   n.blendMode,
 			RenderLayer: n.renderLayer,
 			GlobalOrder: n.globalOrder,
@@ -365,7 +365,7 @@ func emitNodeCommand(s *Scene, n *Node, transform [6]float64, alpha float64, tre
 		if len(n.mesh.Vertices) == 0 || len(n.mesh.Indices) == 0 {
 			return
 		}
-		tintColor := Color{n.color.r, n.color.g, n.color.b, n.color.a * alpha}
+		tintColor := RGBA(n.color.R(), n.color.G(), n.color.B(), n.color.A()*alpha)
 		dst := ensureTransformedVerts(n)
 		transformVertices(n.mesh.Vertices, dst, transform, tintColor)
 		*treeOrder++
@@ -393,7 +393,7 @@ func emitNodeCommand(s *Scene, n *Node, transform [6]float64, alpha float64, tre
 				Transform:          affine32(particleTransform),
 				TextureRegion:      n.textureRegion,
 				directImage:        n.customImage,
-				Color:              color32{float32(n.color.r), float32(n.color.g), float32(n.color.b), float32(n.color.a * alpha)},
+				Color:              color32{float32(n.color.R()), float32(n.color.G()), float32(n.color.B()), float32(n.color.A() * alpha)},
 				BlendMode:          n.blendMode,
 				RenderLayer:        n.renderLayer,
 				GlobalOrder:        n.globalOrder,

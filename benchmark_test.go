@@ -374,8 +374,8 @@ func setupParticleDrawScene(mode BatchMode) *Scene {
 		EndScale:     Range{Min: 0.1, Max: 0.1},
 		StartAlpha:   Range{Min: 1, Max: 1},
 		EndAlpha:     Range{Min: 0, Max: 0},
-		StartColor:   Color{1, 1, 1, 1},
-		EndColor:     Color{1, 0, 0, 1},
+		StartColor:   RGBA(1, 1, 1, 1),
+		EndColor:     RGBA(1, 0, 0, 1),
 		Region: TextureRegion{
 			Page:      magentaPlaceholderPage,
 			Width:     8,
@@ -553,8 +553,8 @@ func BenchmarkParticle_10000Particles(b *testing.B) {
 		StartAlpha:   Range{Min: 1, Max: 1},
 		EndAlpha:     Range{Min: 0, Max: 0},
 		Gravity:      Vec2{X: 0, Y: 100},
-		StartColor:   Color{1, 1, 1, 1},
-		EndColor:     Color{1, 0, 0, 1},
+		StartColor:   RGBA(1, 1, 1, 1),
+		EndColor:     RGBA(1, 0, 0, 1),
 		Region: TextureRegion{
 			Page:      magentaPlaceholderPage,
 			Width:     8,
@@ -592,8 +592,8 @@ func BenchmarkParticle_MaxEmitters(b *testing.B) {
 		StartAlpha:   Range{Min: 1, Max: 1},
 		EndAlpha:     Range{Min: 0, Max: 0},
 		Gravity:      Vec2{X: 0, Y: 100},
-		StartColor:   Color{1, 1, 1, 1},
-		EndColor:     Color{1, 0, 0, 1},
+		StartColor:   RGBA(1, 1, 1, 1),
+		EndColor:     RGBA(1, 0, 0, 1),
 		Region: TextureRegion{
 			Page:      magentaPlaceholderPage,
 			Width:     8,
@@ -760,8 +760,8 @@ func setupMixedScene(nSprites, nEmitters int) *Scene {
 			EndScale:     Range{Min: 0.1, Max: 0.1},
 			StartAlpha:   Range{Min: 1, Max: 1},
 			EndAlpha:     Range{Min: 0, Max: 0},
-			StartColor:   Color{1, 1, 1, 1},
-			EndColor:     Color{1, 0, 0, 1},
+			StartColor:   RGBA(1, 1, 1, 1),
+			EndColor:     RGBA(1, 0, 0, 1),
 			Region: TextureRegion{
 				Page:      uint16(e % 2),
 				Width:     8,
