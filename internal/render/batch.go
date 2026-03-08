@@ -18,7 +18,7 @@ func (p *Pipeline) SubmitBatches(target *ebiten.Image) {
 	}
 
 	if p.BatchMode == BatchModeCoalesced {
-		p.submitBatchesCoalesced(target)
+		p.SubmitBatchesCoalesced(target)
 		return
 	}
 
@@ -177,7 +177,7 @@ func (p *Pipeline) submitMesh(target *ebiten.Image, cmd *RenderCommand) {
 
 // --- Coalesced batching ---
 
-func (p *Pipeline) submitBatchesCoalesced(target *ebiten.Image) {
+func (p *Pipeline) SubmitBatchesCoalesced(target *ebiten.Image) {
 	p.BatchVerts = p.BatchVerts[:0]
 	p.BatchInds = p.BatchInds[:0]
 

@@ -1,6 +1,6 @@
 # Issues — internal architecture v2 migration
 
-Tracked issues discovered during Phases 1–7. Items marked `[fixed]` were
+Tracked issues discovered during Phases 1–8. Items marked `[fixed]` were
 resolved during migration; unmarked items need attention in later phases.
 
 ---
@@ -79,6 +79,35 @@ Root's `emitInteractionEvent` checks `s.store` (EntityStore) and builds an
 `InteractionEvent`. Internal input/ uses `EmitInteractionEventFn` which the
 root wires to call `store.EmitEvent`. The `InteractionEvent` struct stays in
 root since it references the ECS store.
+
+---
+
+## Phase 8 — core/
+
+### TweenGroup convenience constructors stay in root
+`TweenPosition`, `TweenScale`, `TweenColor`, `TweenAlpha`, `TweenRotation`
+access node fields directly (`&node.x`, `&node.color.r`, etc.). These are
+unexported from the node's perspective in different packages. The `TweenGroup`
+struct and its `Tick`/`Update`/`Cancel` methods moved to core/, but the
+constructors remain in root because they need to take pointers to unexported
+`types.Color` fields (`r`, `g`, `b`, `a`). Root facade (Phase 9) will keep
+these constructors and call `core.Scene.RegisterTween`.
+
+### `autoRegister` pattern needs function pointer
+Root's `autoRegister` calls `node.scene.registerTween(g)`. In internal,
+`node.Scene_` is `any`. Core/ can't wire this directly without a function
+pointer since node/ can't import core/. Phase 9 must wire a
+`node.RegisterTweenFn` or have root constructors call `core.RegisterTween`
+explicitly after creating the TweenGroup.
+
+### `countBatches` / `countDrawCalls` use `commandBatchKey`
+Root's `countBatches` calls `commandBatchKey(&cmd)` (unexported).
+Internal `core.CountBatches` calls `render.CommandBatchKey(&cmd)` (exported).
+Required exporting `CommandBatchKey` from render/ (already was exported).
+
+### `submitBatchesCoalesced` exported
+Root called `s.submitBatchesCoalesced(target)` (unexported). Core calls
+`p.SubmitBatchesCoalesced(target)`. Required renaming to exported in render/.
 
 ---
 
