@@ -1,6 +1,6 @@
 # Issues — internal architecture v2 migration
 
-Tracked issues discovered during Phases 1–6. Items marked `[fixed]` were
+Tracked issues discovered during Phases 1–7. Items marked `[fixed]` were
 resolved during migration; unmarked items need attention in later phases.
 
 ---
@@ -59,6 +59,29 @@ overhead (single method call per particle per frame, inlined by compiler).
 
 ---
 
+## Phase 7 — input/
+
+### `HitRect`, `HitCircle`, `HitPolygon` still defined in root
+Root `input.go` defines `HitRect`, `HitCircle`, and `HitPolygon` as exported
+types implementing `HitShape`. These are user-facing API types that belong in
+the root package (or types/). The internal `input/` package relies on
+`types.HitShape` interface only and does not redefine these. No migration
+needed — they stay in root.
+
+### `NodeDimensions` needed by hit testing
+`nodeContainsLocal` in input/ needs node dimensions for AABB fallback when
+no HitShape is set. Uses `NodeDimensionsFn` function pointer (same pattern
+as render/ and camera/). This is a third copy of the dimension logic,
+but input/ can't import camera/ or render/.
+
+### `emitInteractionEvent` bridged via function pointer
+Root's `emitInteractionEvent` checks `s.store` (EntityStore) and builds an
+`InteractionEvent`. Internal input/ uses `EmitInteractionEventFn` which the
+root wires to call `store.EmitEvent`. The `InteractionEvent` struct stays in
+root since it references the ECS store.
+
+---
+
 ## Cross-phase — integration concerns
 
 ### Root facade must wire all function pointers
@@ -78,6 +101,10 @@ The following function pointers must be wired during root init:
 - `node.InvalidateCacheTreeFn`
 - `node.IsCacheAsTreeEnabledFn`
 - `node.PropagateSceneFn`
+- `input.ScreenToWorldFn` — camera screen-to-world conversion
+- `input.NodeDimensionsFn` — node dimensions for hit testing
+- `input.EmitInteractionEventFn` — ECS interaction bridge
+- `input.RebuildSortedChildrenFn` — ZIndex sort for hit collection
 
 ### Duplicate page resolution paths
 `render/rendertexture.go` has its own `PageFn` / `MagentaImageFn` function
