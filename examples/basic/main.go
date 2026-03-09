@@ -41,7 +41,7 @@ func main() {
 
 	sprite := willow.NewRect("box", spriteW, spriteH, willow.RGB(80.0/255.0, 180.0/255.0, 1))
 	sprite.SetPosition(100, 100)
-	scene.Root().AddChild(sprite)
+	scene.Root.AddChild(sprite)
 
 	b := &bouncer{node: sprite, dx: 2, dy: 1.5}
 	scene.SetUpdateFunc(b.update)

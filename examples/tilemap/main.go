@@ -47,7 +47,7 @@ func main() {
 	// Manual mode is used because tiles never change after setup.
 	mapContainer := willow.NewContainer("tilemap")
 	mapContainer.SetCacheAsTree(true, willow.CacheTreeManual)
-	scene.Root().AddChild(mapContainer)
+	scene.Root.AddChild(mapContainer)
 
 	// Populate the tilemap with random tiles.
 	tilesetW := img.Bounds().Dx()
@@ -70,8 +70,8 @@ func main() {
 
 	// Camera panning via OnDrag with screen-space deltas.
 	scene.SetDragDeadZone(0)
-	scene.Root().HitShape = willow.HitRect{X: -1e6, Y: -1e6, Width: 2e6, Height: 2e6}
-	scene.Root().OnDrag(func(ctx willow.DragContext) {
+	scene.Root.HitShape = willow.HitRect{X: -1e6, Y: -1e6, Width: 2e6, Height: 2e6}
+	scene.Root.OnDrag(func(ctx willow.DragContext) {
 		cam.X -= ctx.ScreenDeltaX / cam.Zoom
 		cam.Y -= ctx.ScreenDeltaY / cam.Zoom
 		cam.Invalidate()

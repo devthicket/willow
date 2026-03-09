@@ -95,24 +95,24 @@ func main() {
 		End:       &end,
 		Controls:  [2]*willow.Vec2{&ctrl},
 	})
-	scene.Root().AddChild(rope.Node())
+	scene.Root.AddChild(rope.Node())
 
 	// Draggable handle A (red).
 	handleA := makeHandle("handleA", willow.RGB(0.9, 0.3, 0.3))
 	handleA.SetPosition(start.X, start.Y)
-	scene.Root().AddChild(handleA)
+	scene.Root.AddChild(handleA)
 
 	// Draggable handle B (blue).
 	handleB := makeHandle("handleB", willow.RGB(0.3, 0.5, 0.9))
 	handleB.SetPosition(end.X, end.Y)
-	scene.Root().AddChild(handleB)
+	scene.Root.AddChild(handleB)
 
 	// Orbiting anchor (green, not draggable).
 	orbiter := willow.NewSprite("orbiter", willow.TextureRegion{})
 	orbiter.SetScale(12, 12)
 	orbiter.SetPivot(0.5, 0.5)
 	orbiter.SetColor(willow.RGB(0.3, 0.9, 0.4))
-	scene.Root().AddChild(orbiter)
+	scene.Root.AddChild(orbiter)
 
 	d := &demo{
 		scene:   scene,

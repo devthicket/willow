@@ -116,7 +116,7 @@ func main() {
 	clip0Rect.SetColor(willow.RGB(1, 1, 1))
 	clip0.SetMask(clip0Rect)
 	clip0.AddChild(p0)
-	scene.Root().AddChild(clip0)
+	scene.Root.AddChild(clip0)
 	d.starShape = starShape
 
 	// ---- Panel 1: whelp-alpha mask over bold stripes, follows cursor ----------------------
@@ -164,7 +164,7 @@ func main() {
 	clip1Rect.SetColor(willow.RGB(1, 1, 1))
 	clip1.SetMask(clip1Rect)
 	clip1.AddChild(p1)
-	scene.Root().AddChild(clip1)
+	scene.Root.AddChild(clip1)
 	d.whelpChild = whelpChild
 
 	// ---- Panel 2: scrolling bars with a static whelp shape erased from them --------
@@ -229,7 +229,7 @@ func main() {
 	clip2Rect.SetColor(willow.RGB(1, 1, 1))
 	clip2.SetMask(clip2Rect)
 	clip2.AddChild(p2)
-	scene.Root().AddChild(clip2)
+	scene.Root.AddChild(clip2)
 	d.scrollContent = scrollContent
 
 	// ---- Dividers ----------------------------------------------------------------------------------------------------------------------------
@@ -240,7 +240,7 @@ func main() {
 		div.SetX(divX - 1)
 		div.SetColor(willow.RGBA(1, 1, 1, 0.25))
 		div.SetZIndex(10)
-		scene.Root().AddChild(div)
+		scene.Root.AddChild(div)
 	}
 
 	// ---- Labels --------------------------------------------------------------------------------------------------------------------------------
@@ -250,14 +250,14 @@ func main() {
 		n := makeLabel(lbl)
 		n.SetPosition(x, 8)
 		n.SetZIndex(10)
-		scene.Root().AddChild(n)
+		scene.Root.AddChild(n)
 	}
 
 	const hintText = "move cursor over centre panel  |  whelp erased from right panel"
 	hint := makeLabel(hintText)
 	hint.SetPosition(float64(screenW)/2-float64(len(hintText)*6)/2, float64(screenH)-18)
 	hint.SetZIndex(10)
-	scene.Root().AddChild(hint)
+	scene.Root.AddChild(hint)
 
 	scene.SetUpdateFunc(d.update)
 

@@ -137,7 +137,7 @@ func (g *game) spawnFlash(x, y float64) {
 	sp.SetPosition(x, y)
 	sp.SetColor(color)
 	// Insert before the light layer node (second to last child).
-	g.scene.Root().AddChild(sp)
+	g.scene.Root.AddChild(sp)
 
 	g.flashes = append(g.flashes, &flash{
 		light:     light,
@@ -171,7 +171,7 @@ func main() {
 			tile.SetPosition(float64(col)*tileW, float64(row)*tileH)
 			tile.SetScale(tileW-1, tileH-1)
 			tile.SetColor(stoneColors[(row*cols+col+row)%len(stoneColors)])
-			scene.Root().AddChild(tile)
+			scene.Root.AddChild(tile)
 		}
 	}
 
@@ -189,7 +189,7 @@ func main() {
 		wall.SetPosition(w[0], w[1])
 		wall.SetScale(w[2], w[3])
 		wall.SetColor(wallColor)
-		scene.Root().AddChild(wall)
+		scene.Root.AddChild(wall)
 	}
 
 	// ---- Pillars ------------------------------------------------------------
@@ -208,7 +208,7 @@ func main() {
 		p.SetPosition(pd.x-pillarW/2, pd.y-pillarH/2)
 		p.SetScale(pillarW, pillarH)
 		p.SetColor(pillarColor)
-		scene.Root().AddChild(p)
+		scene.Root.AddChild(p)
 	}
 
 	// ---- Treasure and crates ------------------------------------------------
@@ -223,7 +223,7 @@ func main() {
 		crate.SetPosition(pos[0], pos[1])
 		crate.SetScale(22, 22)
 		crate.SetColor(crateColor)
-		scene.Root().AddChild(crate)
+		scene.Root.AddChild(crate)
 	}
 
 	// Gem clusters near center.
@@ -238,7 +238,7 @@ func main() {
 		gem.SetPosition(pos[0], pos[1])
 		gem.SetScale(10, 10)
 		gem.SetColor(gemColors[i%len(gemColors)])
-		scene.Root().AddChild(gem)
+		scene.Root.AddChild(gem)
 	}
 
 	// ---- Light layer (heavy darkness) ---------------------------------------
@@ -287,7 +287,7 @@ func main() {
 		flame.SetPivot(0.5, 0.5)
 		flame.SetScale(14, 14)
 		flame.SetColor(td.spriteColor)
-		scene.Root().AddChild(flame)
+		scene.Root.AddChild(flame)
 
 		idx := len(torches)
 		torches = append(torches, torchEntry{
@@ -326,7 +326,7 @@ func main() {
 		node.SetPivot(0.5, 0.5)
 		node.SetScale(8, 8)
 		node.SetColor(wispColors[i])
-		scene.Root().AddChild(node)
+		scene.Root.AddChild(node)
 
 		light := &willow.Light{
 			Radius:    50,
@@ -348,7 +348,7 @@ func main() {
 	// ---- Cursor lantern -----------------------------------------------------
 	cursor := willow.NewContainer("cursor")
 	cursor.SetPosition(screenW/2, screenH/2)
-	scene.Root().AddChild(cursor)
+	scene.Root.AddChild(cursor)
 
 	lantern := &willow.Light{
 		Radius:    160,
@@ -360,13 +360,13 @@ func main() {
 	lightLayer.AddLight(lantern)
 
 	// Light layer must be added last  -  composites darkness over everything.
-	scene.Root().AddChild(lightLayer.Node())
+	scene.Root.AddChild(lightLayer.Node())
 
 	// ---- HUD labels (added after light layer so they're always visible) -----
 	hintText := "Move mouse to explore. Click torches to toggle. Click empty space for a flash."
 	hint := makeLabel(hintText)
 	hint.SetPosition(screenW/2-float64(len(hintText)*6)/2, screenH-20)
-	scene.Root().AddChild(hint)
+	scene.Root.AddChild(hint)
 
 	// ---- Click handler for flash spawning -----------------------------------
 	g := &game{

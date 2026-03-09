@@ -113,7 +113,7 @@ func main() {
 
 	// LoadAtlas parses the JSON, registers atlas pages with the scene, and
 	// returns an Atlas for named region lookups.
-	atlas, err := scene.LoadAtlas(jsonData, []*ebiten.Image{atlasPage})
+	atlas, err := willow.LoadSceneAtlas(scene, jsonData, []*ebiten.Image{atlasPage})
 	if err != nil {
 		log.Fatalf("LoadAtlas: %v", err)
 	}
@@ -138,7 +138,7 @@ func main() {
 				ctx.Node.SetAlpha(1)
 			}
 		})
-		scene.Root().AddChild(sp)
+		scene.Root.AddChild(sp)
 	}
 
 	// "dragon" is not in the atlas. atlas.Region logs a warning (debug mode) and
@@ -170,7 +170,7 @@ func main() {
 
 		ctx.Node.OnClick(nil) // one-shot
 	})
-	scene.Root().AddChild(missing)
+	scene.Root.AddChild(missing)
 
 	// Atlas page preview: raw 128×64 source shown at 2× alongside the placeholder.
 	const previewScale = 2.0
@@ -178,7 +178,7 @@ func main() {
 	preview.SetCustomImage(atlasPage)
 	preview.SetPosition(startX+displaySize+gridPad, startY+2*(displaySize+gridPad))
 	preview.SetScale(previewScale, previewScale)
-	scene.Root().AddChild(preview)
+	scene.Root.AddChild(preview)
 
 	if err := willow.Run(scene, willow.RunConfig{
 		Title:   windowTitle,

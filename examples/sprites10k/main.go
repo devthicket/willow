@@ -54,7 +54,7 @@ func main() {
 	}
 
 	sprites := make([]sprite, count)
-	root := scene.Root()
+	root := scene.Root
 
 	for i := range sprites {
 		sp := willow.NewSprite("whelp", region)

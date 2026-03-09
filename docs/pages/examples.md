@@ -99,7 +99,7 @@ Draggable, clickable rectangles showcasing hit testing and gesture handling. Dem
 
 <table>
 <tr>
-<td><a id="spritefont"></a>
+<td><a id="distancefieldfont"></a>
 <strong>DistanceFieldFont</strong><br>
 <code>go run ./examples/text</code><br><br>
 DistanceFieldFont (SDF) text with alignment and wrapping options, plus effects (outline, glow, shadow). Generates an SDF atlas PNG at startup and saves it to the example directory.
@@ -107,7 +107,7 @@ DistanceFieldFont (SDF) text with alignment and wrapping options, plus effects (
 <td width="260"></td>
 </tr>
 <tr>
-<td><a id="spritefont-ttf"></a>
+<td><a id="distancefieldfont-ttf"></a>
 <strong>DistanceFieldFont (TTF)</strong><br>
 <code>go run ./examples/texttf</code><br><br>
 Runtime DistanceFieldFont generation from TTF data with outline support. Shows SDF effects (outline, glow, shadow) alongside TTF text. Saves the generated SDF atlas PNG.

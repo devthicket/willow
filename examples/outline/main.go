@@ -52,12 +52,12 @@ func main() {
 
 	type column struct {
 		label   string
-		filters []willow.Filter
+		filters []any
 	}
 	cols := []column{
-		{"Outline", []willow.Filter{outline}},
+		{"Outline", []any{outline}},
 		{"Original", nil},
-		{"Inline", []willow.Filter{inline}},
+		{"Inline", []any{inline}},
 	}
 
 	whelpW := float64(whelpImg.Bounds().Dx())
@@ -74,14 +74,14 @@ func main() {
 		sp.Filters = col.filters
 		sp.SetPosition(x, cy)
 		sp.SetPivot(whelpW/2, whelpH/2)
-		scene.Root().AddChild(sp)
+		scene.Root.AddChild(sp)
 		if col.filters != nil {
 			filteredNodes = append(filteredNodes, sp)
 		}
 
 		label := makeLabel(col.label)
 		label.SetPosition(x-float64(len(col.label)*6)/2, cy+whelpH/2+8)
-		scene.Root().AddChild(label)
+		scene.Root.AddChild(label)
 	}
 
 	// Click to cycle outline/inline color.

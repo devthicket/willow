@@ -50,7 +50,7 @@ func main() {
 		log.Fatalf("SDF font: %v", err)
 	}
 
-	root := scene.Root()
+	root := scene.Root
 
 	// ---- Title ----------------------------------------------------------------------------------------------------------------------------------
 	title := willow.NewText("title", "Willow  -  Text", font)

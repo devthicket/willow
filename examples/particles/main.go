@@ -48,7 +48,7 @@ func main() {
 	})
 	fountain.SetPosition(160, 500)
 	fountain.Emitter.Start()
-	scene.Root().AddChild(fountain)
+	scene.Root.AddChild(fountain)
 
 	// Decorative base plate under the fountain.
 	addBase(scene, 160, 505, willow.RGB(0.2, 0.35, 0.5))
@@ -72,7 +72,7 @@ func main() {
 	})
 	fire.SetPosition(400, 500)
 	fire.Emitter.Start()
-	scene.Root().AddChild(fire)
+	scene.Root.AddChild(fire)
 
 	// Smoke rises above the fire base; alpha is low so it feels wispy.
 	smoke := willow.NewParticleEmitter("smoke", willow.EmitterConfig{
@@ -92,7 +92,7 @@ func main() {
 	})
 	smoke.SetPosition(400, 490)
 	smoke.Emitter.Start()
-	scene.Root().AddChild(smoke)
+	scene.Root.AddChild(smoke)
 
 	addBase(scene, 400, 505, willow.RGB(0.45, 0.3, 0.1))
 
@@ -116,7 +116,7 @@ func main() {
 	})
 	sparkler.SetPosition(640, 500)
 	sparkler.Emitter.Start()
-	scene.Root().AddChild(sparkler)
+	scene.Root.AddChild(sparkler)
 
 	addBase(scene, 640, 505, willow.RGB(0.4, 0.2, 0.5))
 
@@ -139,7 +139,7 @@ func main() {
 		BlendMode:    willow.BlendAdd,
 		WorldSpace:   true,
 	})
-	scene.Root().AddChild(burst)
+	scene.Root.AddChild(burst)
 
 	d := &demo{burst: burst}
 
@@ -177,5 +177,5 @@ func (d *demo) update() error {
 func addBase(scene *willow.Scene, cx, y float64, c willow.Color) {
 	bar := willow.NewRect("base", 60, 5, c)
 	bar.SetPosition(cx-30, y)
-	scene.Root().AddChild(bar)
+	scene.Root.AddChild(bar)
 }

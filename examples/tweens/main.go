@@ -70,7 +70,7 @@ func main() {
 		n.SetPosition(x, y)
 		n.SetScale(2, 2)
 		n.SetPivot(0.5, 0.5)
-		scene.Root().AddChild(n)
+		scene.Root.AddChild(n)
 		return n
 	}
 
@@ -166,7 +166,7 @@ func (d *demo) update() error {
 func addLabel(scene *willow.Scene, x, y float64, c willow.Color) {
 	dot := willow.NewRect("label", 8, 4, c)
 	dot.SetPosition(x-4, y) // center the 8px-wide dot under the tile
-	scene.Root().AddChild(dot)
+	scene.Root.AddChild(dot)
 }
 
 func randomBrightColor() willow.Color {

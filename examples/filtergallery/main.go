@@ -63,12 +63,12 @@ func main() {
 	whelp.SetPivot(64, 64) // half of 128px
 	whelp.SetPosition(screenW/2, 180)
 	whelp.Invalidate()
-	scene.Root().AddChild(whelp)
+	scene.Root.AddChild(whelp)
 
 	// Status label showing active filters.
 	statusLabel := makeLabel("No filters active")
 	statusLabel.SetPosition(screenW/2-float64(len("No filters active")*6)/2, 320)
-	scene.Root().AddChild(statusLabel)
+	scene.Root.AddChild(statusLabel)
 
 	// Create filter instances.
 	blur := willow.NewBlurFilter(6)
@@ -162,7 +162,7 @@ func main() {
 
 	// rebuildFilters collects all active filters and updates the whelp and status.
 	rebuildFilters := func() {
-		var active []willow.Filter
+		var active []any
 		var names []string
 		for _, e := range entries {
 			if e.active {
@@ -181,7 +181,7 @@ func main() {
 		}
 		statusLabel = makeLabel(text)
 		statusLabel.SetPosition(screenW/2-float64(len(text)*6)/2, 320)
-		scene.Root().AddChild(statusLabel)
+		scene.Root.AddChild(statusLabel)
 	}
 
 	for i, entry := range entries {
@@ -194,7 +194,7 @@ func main() {
 		// Background button.
 		bg := willow.NewRect("btn-bg-"+entry.label, btnW, btnH, willow.RGB(0.2, 0.2, 0.25))
 		bg.SetPosition(bx, by)
-		scene.Root().AddChild(bg)
+		scene.Root.AddChild(bg)
 		entry.bg = bg
 
 		// Checkbox indicator.
@@ -202,7 +202,7 @@ func main() {
 		checkSp.SetCustomImage(uncheckedImg)
 		checkSp.SetPosition(bx+6, by+8)
 		checkSp.Invalidate()
-		scene.Root().AddChild(checkSp)
+		scene.Root.AddChild(checkSp)
 		entry.checkSp = checkSp
 		entry.checkImg[0] = uncheckedImg
 		entry.checkImg[1] = checkedImg
@@ -210,7 +210,7 @@ func main() {
 		// Label text.
 		label := makeLabel(entry.label)
 		label.SetPosition(bx+24, by+7)
-		scene.Root().AddChild(label)
+		scene.Root.AddChild(label)
 
 		// Click handler.
 		e := entry // capture loop variable

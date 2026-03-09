@@ -43,7 +43,7 @@ func main() {
 	scene := willow.NewScene()
 	scene.ClearColor = willow.RGB(0.06, 0.06, 0.09)
 
-	root := scene.Root()
+	root := scene.Root
 	bodies := make([]body, shapeCount)
 
 	for i := range bodies {

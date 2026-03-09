@@ -39,7 +39,7 @@ func main() {
 	container := willow.NewContainer("group")
 	container.SetPosition(screenW/2, screenH/2)
 	container.Interactable = true
-	scene.Root().AddChild(container)
+	scene.Root.AddChild(container)
 
 	// Initial spawn.
 	spawnShapes(container)

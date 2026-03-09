@@ -92,7 +92,7 @@ func main() {
 	grid.Node().SetPosition(float64(-bufTiles*tileSize), float64(-bufTiles*tileSize))
 	// Subtle blue tint to reinforce the water feel.
 	grid.Node().SetColor(willow.RGB(0.75, 0.92, 1.0))
-	scene.Root().AddChild(grid.Node())
+	scene.Root.AddChild(grid.Node())
 
 	g := &game{grid: grid}
 	scene.SetUpdateFunc(g.update)

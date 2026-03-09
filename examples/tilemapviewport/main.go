@@ -74,7 +74,7 @@ func main() {
 	// Create the TileMapViewport.
 	viewport := willow.NewTileMapViewport("world", tileSize, tileSize)
 	viewport.SetCamera(cam)
-	scene.Root().AddChild(viewport.Node())
+	scene.Root.AddChild(viewport.Node())
 
 	// Ground tile layer (RenderLayer 0).
 	ground := viewport.AddTileLayer(willow.TileLayerConfig{
@@ -122,8 +122,8 @@ func main() {
 
 	// Camera panning via drag.
 	scene.SetDragDeadZone(0)
-	scene.Root().HitShape = willow.HitRect{X: -1e6, Y: -1e6, Width: 2e6, Height: 2e6}
-	scene.Root().OnDrag(func(ctx willow.DragContext) {
+	scene.Root.HitShape = willow.HitRect{X: -1e6, Y: -1e6, Width: 2e6, Height: 2e6}
+	scene.Root.OnDrag(func(ctx willow.DragContext) {
 		cam.X -= ctx.ScreenDeltaX / cam.Zoom
 		cam.Y -= ctx.ScreenDeltaY / cam.Zoom
 		cam.ClampToBounds()

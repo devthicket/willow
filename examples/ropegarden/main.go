@@ -152,7 +152,7 @@ func (p *puzzle) addSocketSprite(pos willow.Vec2, col willow.Color) {
 	ring.SetPosition(pos.X, pos.Y)
 	ring.SetColor(col)
 	ring.SetAlpha(0.35)
-	p.scene.Root().AddChild(ring)
+	p.scene.Root.AddChild(ring)
 
 	// Inner dot.
 	dot := willow.NewSprite("socket", willow.TextureRegion{})
@@ -160,7 +160,7 @@ func (p *puzzle) addSocketSprite(pos willow.Vec2, col willow.Color) {
 	dot.SetPivot(0.5, 0.5)
 	dot.SetPosition(pos.X, pos.Y)
 	dot.SetColor(willow.RGB(0.18, 0.18, 0.22))
-	p.scene.Root().AddChild(dot)
+	p.scene.Root.AddChild(dot)
 }
 
 // createCables builds the ropes. Added before pegs so pegs render on top.
@@ -190,7 +190,7 @@ func (p *puzzle) createCables() {
 		})
 		c.rope = r
 		c.node = r.Node()
-		p.scene.Root().AddChild(r.Node())
+		p.scene.Root.AddChild(r.Node())
 
 		p.cables[i] = c
 	}
@@ -269,7 +269,7 @@ func (p *puzzle) makePeg(cableIdx, startIdx int, sockets []willow.Vec2) peg {
 		p.checkSolved()
 	})
 
-	p.scene.Root().AddChild(sp)
+	p.scene.Root.AddChild(sp)
 	return pg
 }
 
