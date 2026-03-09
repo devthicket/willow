@@ -344,7 +344,7 @@ func main() {
 	underwaterContainer.AddChild(nearGrid.Node())
 	d.nearGrid = nearGrid
 
-	scene.Root().AddChild(underwaterContainer)
+	scene.Root.AddChild(underwaterContainer)
 
 	// --- Burst emitter (ZIndex 55, click-triggered, on root so not clipped) ---
 	burst := willow.NewParticleEmitter("burst", willow.EmitterConfig{
@@ -364,7 +364,7 @@ func main() {
 		WorldSpace:   true,
 	})
 	burst.SetZIndex(55)
-	scene.Root().AddChild(burst)
+	scene.Root.AddChild(burst)
 	d.burst = burst
 
 	// Dummy ring container (kept so update code doesn't need changes).
@@ -397,7 +397,7 @@ func main() {
 	surf1Container.AddChild(overlay1Grid.Node())
 	mask1, hole1 := makeInvertedMask()
 	surf1Container.SetMask(mask1)
-	scene.Root().AddChild(surf1Container)
+	scene.Root.AddChild(surf1Container)
 	d.overlayGrid1 = overlay1Grid
 
 	surf2Container := willow.NewContainer("surf2")
@@ -409,7 +409,7 @@ func main() {
 	surf2Container.AddChild(overlay2Grid.Node())
 	mask2, hole2 := makeInvertedMask()
 	surf2Container.SetMask(mask2)
-	scene.Root().AddChild(surf2Container)
+	scene.Root.AddChild(surf2Container)
 	d.overlayGrid2 = overlay2Grid
 
 	d.surfaceEraseChild = hole1
@@ -420,7 +420,7 @@ func main() {
 	hint := makeLabel(hintText)
 	hint.SetPosition(float64(screenW)/2-float64(len(hintText)*6)/2, float64(screenH)-20)
 	hint.SetZIndex(70)
-	scene.Root().AddChild(hint)
+	scene.Root.AddChild(hint)
 
 	scene.SetUpdateFunc(d.update)
 

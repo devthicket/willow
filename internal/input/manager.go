@@ -48,7 +48,7 @@ type pointerState struct {
 	screenY     float64
 	lastScreenX float64
 	lastScreenY float64
-	hitNode     *node.Node
+	HitNode     *node.Node // exported for testing
 	hoverNode   *node.Node
 	dragging    bool
 	button      types.MouseButton
@@ -57,9 +57,9 @@ type pointerState struct {
 // --- Pinch state ---
 
 type pinchState struct {
-	active       bool
-	pointer0     int
-	pointer1     int
+	Active       bool // exported for testing
+	Pointer0     int  // exported for testing
+	Pointer1     int
 	initialDist  float64
 	initialAngle float64
 	prevDist     float64
@@ -418,6 +418,11 @@ func (m *Manager) touchSlot(tid ebiten.TouchID) int {
 	return -1
 }
 
+// ProcessPointer is the exported version of processPointer (for testing and bridging).
+func (m *Manager) ProcessPointer(root *node.Node, pointerID int, wx, wy, sx, sy float64, pressed bool, button types.MouseButton, mods types.KeyModifiers) {
+	m.processPointer(root, pointerID, wx, wy, sx, sy, pressed, button, mods)
+}
+
 // processPointer runs the pointer state machine for a single pointer.
 func (m *Manager) processPointer(root *node.Node, pointerID int, wx, wy, sx, sy float64, pressed bool, button types.MouseButton, mods types.KeyModifiers) {
 	ps := &m.Pointers[pointerID]
@@ -454,7 +459,7 @@ func (m *Manager) processPointer(root *node.Node, pointerID int, wx, wy, sx, sy 
 		ps.screenY = sy
 		ps.lastScreenX = sx
 		ps.lastScreenY = sy
-		ps.hitNode = target
+		ps.HitNode = target
 		ps.dragging = false
 
 		m.firePointerDown(target, pointerID, wx, wy, ps.button, mods)
@@ -462,11 +467,11 @@ func (m *Manager) processPointer(root *node.Node, pointerID int, wx, wy, sx, sy 
 		sdx := sx - ps.lastScreenX
 		sdy := sy - ps.lastScreenY
 		if ps.dragging {
-			m.fireDragEnd(ps.hitNode, pointerID, wx, wy, ps.startX, ps.startY,
+			m.fireDragEnd(ps.HitNode, pointerID, wx, wy, ps.startX, ps.startY,
 				wx-ps.lastX, wy-ps.lastY, sdx, sdy, ps.button, mods)
-		} else if ps.hitNode != nil && ps.hitNode == target {
+		} else if ps.HitNode != nil && ps.HitNode == target {
 			m.fireClick(target, pointerID, wx, wy, ps.button, mods)
-		} else if ps.hitNode == nil && target == nil {
+		} else if ps.HitNode == nil && target == nil {
 			m.fireBackgroundClick(pointerID, wx, wy, ps.button, mods)
 		}
 
@@ -474,7 +479,7 @@ func (m *Manager) processPointer(root *node.Node, pointerID int, wx, wy, sx, sy 
 
 		m.Captured[pointerID] = nil
 		ps.down = false
-		ps.hitNode = nil
+		ps.HitNode = nil
 		ps.dragging = false
 	} else if pressed && ps.down {
 		if wx != ps.lastX || wy != ps.lastY || sx != ps.lastScreenX || sy != ps.lastScreenY {
@@ -485,12 +490,12 @@ func (m *Manager) processPointer(root *node.Node, pointerID int, wx, wy, sx, sy 
 				dy := wy - ps.startY
 				if math.Sqrt(dx*dx+dy*dy) > m.DragDeadZone {
 					ps.dragging = true
-					m.fireDragStart(ps.hitNode, pointerID, wx, wy, ps.startX, ps.startY,
+					m.fireDragStart(ps.HitNode, pointerID, wx, wy, ps.startX, ps.startY,
 						wx-ps.startX, wy-ps.startY, sx-ps.screenX, sy-ps.screenY, ps.button, mods)
 				}
 			}
 			if ps.dragging {
-				m.fireDrag(ps.hitNode, pointerID, wx, wy, ps.startX, ps.startY,
+				m.fireDrag(ps.HitNode, pointerID, wx, wy, ps.startX, ps.startY,
 					wx-ps.lastX, wy-ps.lastY, sdx, sdy, ps.button, mods)
 			}
 		}
@@ -546,10 +551,10 @@ func (m *Manager) detectPinch(mods types.KeyModifiers) {
 		dist := math.Sqrt(dx*dx + dy*dy)
 		angle := math.Atan2(dy, dx)
 
-		if !m.Pinch.active {
-			m.Pinch.active = true
-			m.Pinch.pointer0 = p0
-			m.Pinch.pointer1 = p1
+		if !m.Pinch.Active {
+			m.Pinch.Active = true
+			m.Pinch.Pointer0 = p0
+			m.Pinch.Pointer1 = p1
 			m.Pinch.initialDist = dist
 			m.Pinch.initialAngle = angle
 			m.Pinch.prevDist = dist
@@ -585,7 +590,7 @@ func (m *Manager) detectPinch(mods types.KeyModifiers) {
 
 		ps0.dragging = false
 		ps1.dragging = false
-	} else if m.Pinch.active {
-		m.Pinch.active = false
+	} else if m.Pinch.Active {
+		m.Pinch.Active = false
 	}
 }

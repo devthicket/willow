@@ -74,14 +74,14 @@ func TestCustomImageSpriteEmitsDirectImage(t *testing.T) {
 
 	sprite := NewSprite("s", TextureRegion{Width: 10, Height: 10})
 	sprite.SetCustomImage(img)
-	s.Root().AddChild(sprite)
+	s.Root.AddChild(sprite)
 
 	traverseScene(s)
 
-	if len(s.pipeline.Commands) != 1 {
-		t.Fatalf("commands = %d, want 1", len(s.pipeline.Commands))
+	if len(s.Pipeline.Commands) != 1 {
+		t.Fatalf("commands = %d, want 1", len(s.Pipeline.Commands))
 	}
-	cmd := s.pipeline.Commands[0]
+	cmd := s.Pipeline.Commands[0]
 	if cmd.DirectImage != img {
 		t.Error("directImage should be the custom image")
 	}
@@ -107,14 +107,14 @@ func TestRegularSpriteNoDirectImage(t *testing.T) {
 	s := NewScene()
 	region := TextureRegion{Width: 32, Height: 32, OriginalW: 32, OriginalH: 32}
 	sprite := NewSprite("s", region)
-	s.Root().AddChild(sprite)
+	s.Root.AddChild(sprite)
 
 	traverseScene(s)
 
-	if len(s.pipeline.Commands) != 1 {
-		t.Fatalf("commands = %d, want 1", len(s.pipeline.Commands))
+	if len(s.Pipeline.Commands) != 1 {
+		t.Fatalf("commands = %d, want 1", len(s.Pipeline.Commands))
 	}
-	cmd := s.pipeline.Commands[0]
+	cmd := s.Pipeline.Commands[0]
 	if cmd.DirectImage != nil {
 		t.Error("directImage should be nil for regular sprites")
 	}
@@ -132,12 +132,12 @@ func TestCustomImageInEmitNodeCommand(t *testing.T) {
 	n.SetCustomImage(img)
 
 	treeOrder := 0
-	render.EmitNodeCommand(&s.pipeline, n, identityTransform, 1.0, &treeOrder)
+	render.EmitNodeCommand(&s.Pipeline, n, identityTransform, 1.0, &treeOrder)
 
-	if len(s.pipeline.Commands) != 1 {
-		t.Fatalf("commands = %d, want 1", len(s.pipeline.Commands))
+	if len(s.Pipeline.Commands) != 1 {
+		t.Fatalf("commands = %d, want 1", len(s.Pipeline.Commands))
 	}
-	if s.pipeline.Commands[0].DirectImage != img {
+	if s.Pipeline.Commands[0].DirectImage != img {
 		t.Error("emitNodeCommand should set directImage for customImage nodes")
 	}
 }

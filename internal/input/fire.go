@@ -251,14 +251,44 @@ func (m *Manager) fireBackgroundClick(pointerID int, wx, wy float64, button type
 	}
 }
 
+// FirePointerDown is the exported version of firePointerDown (for testing and bridging).
+func (m *Manager) FirePointerDown(n *node.Node, pointerID int, wx, wy float64, button types.MouseButton, mods types.KeyModifiers) {
+	m.firePointerDown(n, pointerID, wx, wy, button, mods)
+}
+
+// FireClick is the exported version of fireClick.
+func (m *Manager) FireClick(n *node.Node, pointerID int, wx, wy float64, button types.MouseButton, mods types.KeyModifiers) {
+	m.fireClick(n, pointerID, wx, wy, button, mods)
+}
+
+// FireDragStart is the exported version of fireDragStart.
+func (m *Manager) FireDragStart(n *node.Node, pointerID int, wx, wy, startX, startY, deltaX, deltaY, screenDX, screenDY float64, button types.MouseButton, mods types.KeyModifiers) {
+	m.fireDragStart(n, pointerID, wx, wy, startX, startY, deltaX, deltaY, screenDX, screenDY, button, mods)
+}
+
+// FireDrag is the exported version of fireDrag.
+func (m *Manager) FireDrag(n *node.Node, pointerID int, wx, wy, startX, startY, deltaX, deltaY, screenDX, screenDY float64, button types.MouseButton, mods types.KeyModifiers) {
+	m.fireDrag(n, pointerID, wx, wy, startX, startY, deltaX, deltaY, screenDX, screenDY, button, mods)
+}
+
+// FireDragEnd is the exported version of fireDragEnd.
+func (m *Manager) FireDragEnd(n *node.Node, pointerID int, wx, wy, startX, startY, deltaX, deltaY, screenDX, screenDY float64, button types.MouseButton, mods types.KeyModifiers) {
+	m.fireDragEnd(n, pointerID, wx, wy, startX, startY, deltaX, deltaY, screenDX, screenDY, button, mods)
+}
+
+// FirePinch is the exported version of firePinch.
+func (m *Manager) FirePinch(ctx node.PinchContext, mods types.KeyModifiers) {
+	m.firePinch(ctx, mods)
+}
+
 func (m *Manager) firePinch(ctx node.PinchContext, mods types.KeyModifiers) {
 	for _, h := range m.Handlers.pinch {
 		h.fn(ctx)
 	}
 
 	var pinchNode *node.Node
-	if m.Pinch.pointer0 > 0 && m.Pinch.pointer0 < MaxPointers {
-		pinchNode = m.Pointers[m.Pinch.pointer0].hitNode
+	if m.Pinch.Pointer0 > 0 && m.Pinch.Pointer0 < MaxPointers {
+		pinchNode = m.Pointers[m.Pinch.Pointer0].HitNode
 		if pinchNode != nil && pinchNode.Callbacks != nil && pinchNode.Callbacks.OnPinch != nil {
 			pinchNode.Callbacks.OnPinch(ctx)
 		}

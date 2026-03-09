@@ -183,7 +183,7 @@ func main() {
 		x := startX + float64(col*(pw+gridGap))
 		y := startY + float64(row*(ph+gridGap))
 		sprite.SetPosition(x, y)
-		scene.Root().AddChild(sprite)
+		scene.Root.AddChild(sprite)
 
 		panels[i] = &shaderPanel{
 			node:   sprite,
@@ -193,7 +193,7 @@ func main() {
 		// Pre-render the label text into a sprite and overlay it on the panel.
 		label := makeLabel(def.name)
 		label.SetPosition(x+4, y+2)
-		scene.Root().AddChild(label)
+		scene.Root.AddChild(label)
 	}
 
 	a := &animator{panels: panels}

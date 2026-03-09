@@ -167,13 +167,13 @@ func TestHitTest_TopmostNode(t *testing.T) {
 	b := NewSprite("b", TextureRegion{OriginalW: 100, OriginalH: 100})
 	b.Interactable = true
 
-	s.Root().AddChild(a)
-	s.Root().AddChild(b)
+	s.Root.AddChild(a)
+	s.Root.AddChild(b)
 
 	// Refresh transforms.
-	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
+	updateWorldTransform(s.Root, identityTransform, 1.0, false, false)
 
-	hit := s.hitTest(50, 50)
+	hit := s.Input.HitTest(s.Root, 50, 50)
 	if hit != b {
 		t.Errorf("expected topmost node b, got %v", hit)
 	}
@@ -187,11 +187,11 @@ func TestHitTest_SkipsInvisible(t *testing.T) {
 	b.Interactable = true
 	b.Visible_ = false
 
-	s.Root().AddChild(a)
-	s.Root().AddChild(b)
-	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
+	s.Root.AddChild(a)
+	s.Root.AddChild(b)
+	updateWorldTransform(s.Root, identityTransform, 1.0, false, false)
 
-	hit := s.hitTest(50, 50)
+	hit := s.Input.HitTest(s.Root, 50, 50)
 	if hit != a {
 		t.Errorf("expected node a (b is invisible), got %v", hit)
 	}
@@ -204,11 +204,11 @@ func TestHitTest_SkipsNonInteractable(t *testing.T) {
 	b := NewSprite("b", TextureRegion{OriginalW: 100, OriginalH: 100})
 	// b.Interactable is false by default
 
-	s.Root().AddChild(a)
-	s.Root().AddChild(b)
-	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
+	s.Root.AddChild(a)
+	s.Root.AddChild(b)
+	updateWorldTransform(s.Root, identityTransform, 1.0, false, false)
 
-	hit := s.hitTest(50, 50)
+	hit := s.Input.HitTest(s.Root, 50, 50)
 	if hit != a {
 		t.Errorf("expected node a (b is not interactable), got %v", hit)
 	}
@@ -224,11 +224,11 @@ func TestHitTest_RespectsZIndex(t *testing.T) {
 	b.Interactable = true
 	b.SetZIndex(0)
 
-	s.Root().AddChild(a)
-	s.Root().AddChild(b)
-	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
+	s.Root.AddChild(a)
+	s.Root.AddChild(b)
+	updateWorldTransform(s.Root, identityTransform, 1.0, false, false)
 
-	hit := s.hitTest(50, 50)
+	hit := s.Input.HitTest(s.Root, 50, 50)
 	if hit != a {
 		t.Errorf("expected node a (higher ZIndex), got %v", hit)
 	}
@@ -239,10 +239,10 @@ func TestHitTest_Miss(t *testing.T) {
 	a := NewSprite("a", TextureRegion{OriginalW: 100, OriginalH: 100})
 	a.Interactable = true
 
-	s.Root().AddChild(a)
-	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
+	s.Root.AddChild(a)
+	updateWorldTransform(s.Root, identityTransform, 1.0, false, false)
 
-	hit := s.hitTest(200, 200)
+	hit := s.Input.HitTest(s.Root, 200, 200)
 	if hit != nil {
 		t.Errorf("expected nil, got %v", hit)
 	}
@@ -255,15 +255,15 @@ func TestHitTest_TransformedNode(t *testing.T) {
 	a.X_ = 200
 	a.Y_ = 200
 
-	s.Root().AddChild(a)
-	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
+	s.Root.AddChild(a)
+	updateWorldTransform(s.Root, identityTransform, 1.0, false, false)
 
 	// Point at origin should miss.
-	if s.hitTest(50, 50) != nil {
+	if s.Input.HitTest(s.Root, 50, 50) != nil {
 		t.Error("expected miss at origin")
 	}
 	// Point at (250, 250) should hit.
-	if s.hitTest(250, 250) != a {
+	if s.Input.HitTest(s.Root, 250, 250) != a {
 		t.Error("expected hit at (250, 250)")
 	}
 }
@@ -278,11 +278,11 @@ func TestHitTest_RotatedNode(t *testing.T) {
 	a.Y_ = 50
 	a.Rotation_ = math.Pi / 4 // 45 degrees
 
-	s.Root().AddChild(a)
-	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
+	s.Root.AddChild(a)
+	updateWorldTransform(s.Root, identityTransform, 1.0, false, false)
 
 	// Center should still hit.
-	if s.hitTest(50, 50) != a {
+	if s.Input.HitTest(s.Root, 50, 50) != a {
 		t.Error("center of rotated node should hit")
 	}
 }
@@ -293,8 +293,8 @@ func TestSceneLevelCallback_PointerDown(t *testing.T) {
 	s := NewScene()
 	sprite := NewSprite("s", TextureRegion{OriginalW: 100, OriginalH: 100})
 	sprite.Interactable = true
-	s.Root().AddChild(sprite)
-	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
+	s.Root.AddChild(sprite)
+	updateWorldTransform(s.Root, identityTransform, 1.0, false, false)
 
 	var called bool
 	s.OnPointerDown(func(ctx PointerContext) {
@@ -304,7 +304,7 @@ func TestSceneLevelCallback_PointerDown(t *testing.T) {
 		}
 	})
 
-	s.firePointerDown(sprite, 0, 50, 50, MouseButtonLeft, 0)
+	s.Input.FirePointerDown(sprite, 0, 50, 50, MouseButtonLeft, 0)
 	if !called {
 		t.Error("scene-level pointer down callback not fired")
 	}
@@ -314,15 +314,15 @@ func TestPerNodeCallback_PointerDown(t *testing.T) {
 	s := NewScene()
 	sprite := NewSprite("s", TextureRegion{OriginalW: 100, OriginalH: 100})
 	sprite.Interactable = true
-	s.Root().AddChild(sprite)
-	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
+	s.Root.AddChild(sprite)
+	updateWorldTransform(s.Root, identityTransform, 1.0, false, false)
 
 	var nodeCalled bool
 	sprite.OnPointerDown(func(ctx PointerContext) {
 		nodeCalled = true
 	})
 
-	s.firePointerDown(sprite, 0, 50, 50, MouseButtonLeft, 0)
+	s.Input.FirePointerDown(sprite, 0, 50, 50, MouseButtonLeft, 0)
 	if !nodeCalled {
 		t.Error("per-node pointer down callback not fired")
 	}
@@ -332,8 +332,8 @@ func TestCallbackOrder_SceneThenNode(t *testing.T) {
 	s := NewScene()
 	sprite := NewSprite("s", TextureRegion{OriginalW: 100, OriginalH: 100})
 	sprite.Interactable = true
-	s.Root().AddChild(sprite)
-	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
+	s.Root.AddChild(sprite)
+	updateWorldTransform(s.Root, identityTransform, 1.0, false, false)
 
 	var order []string
 	s.OnPointerDown(func(ctx PointerContext) {
@@ -343,7 +343,7 @@ func TestCallbackOrder_SceneThenNode(t *testing.T) {
 		order = append(order, "node")
 	})
 
-	s.firePointerDown(sprite, 0, 50, 50, MouseButtonLeft, 0)
+	s.Input.FirePointerDown(sprite, 0, 50, 50, MouseButtonLeft, 0)
 	if len(order) != 2 || order[0] != "scene" || order[1] != "node" {
 		t.Errorf("expected [scene node], got %v", order)
 	}
@@ -357,13 +357,13 @@ func TestCallbackHandle_Remove(t *testing.T) {
 		count++
 	})
 
-	s.firePointerDown(nil, 0, 0, 0, MouseButtonLeft, 0)
+	s.Input.FirePointerDown(nil, 0, 0, 0, MouseButtonLeft, 0)
 	if count != 1 {
 		t.Fatalf("expected count 1, got %d", count)
 	}
 
 	handle.Remove()
-	s.firePointerDown(nil, 0, 0, 0, MouseButtonLeft, 0)
+	s.Input.FirePointerDown(nil, 0, 0, 0, MouseButtonLeft, 0)
 	if count != 1 {
 		t.Fatalf("expected count still 1 after Remove, got %d", count)
 	}
@@ -380,19 +380,19 @@ func TestPointerCapture(t *testing.T) {
 	b.Interactable = true
 	b.X_ = 200
 
-	s.Root().AddChild(a)
-	s.Root().AddChild(b)
-	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
+	s.Root.AddChild(a)
+	s.Root.AddChild(b)
+	updateWorldTransform(s.Root, identityTransform, 1.0, false, false)
 
 	// Capture pointer to b.
 	s.CapturePointer(0, b)
 
 	// Hit test at a's location should still return a, but captured should be b.
-	target := s.hitTest(50, 50)
+	target := s.Input.HitTest(s.Root, 50, 50)
 	if target != a {
 		t.Error("hitTest should return a")
 	}
-	if s.captured[0] != b {
+	if s.Input.Captured[0] != b {
 		t.Error("captured should be b")
 	}
 
@@ -401,14 +401,14 @@ func TestPointerCapture(t *testing.T) {
 	s.OnPointerDown(func(ctx PointerContext) {
 		receivedNode = ctx.Node
 	})
-	s.processPointer(0, 50, 50, 50, 50, true, MouseButtonLeft, 0)
+	s.Input.ProcessPointer(s.Root, 0, 50, 50, 50, 50, true, MouseButtonLeft, 0)
 	if receivedNode != b {
 		t.Errorf("expected captured node b, got %v", receivedNode)
 	}
 
 	// Release capture.
 	s.ReleasePointer(0)
-	if s.captured[0] != nil {
+	if s.Input.Captured[0] != nil {
 		t.Error("captured should be nil after release")
 	}
 }
@@ -419,8 +419,8 @@ func TestDragDetection(t *testing.T) {
 	s := NewScene()
 	sprite := NewSprite("s", TextureRegion{OriginalW: 100, OriginalH: 100})
 	sprite.Interactable = true
-	s.Root().AddChild(sprite)
-	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
+	s.Root.AddChild(sprite)
+	updateWorldTransform(s.Root, identityTransform, 1.0, false, false)
 
 	var events []string
 	s.OnDragStart(func(ctx DragContext) { events = append(events, "dragstart") })
@@ -428,30 +428,30 @@ func TestDragDetection(t *testing.T) {
 	s.OnDragEnd(func(ctx DragContext) { events = append(events, "dragend") })
 
 	// Press at (50, 50).
-	s.processPointer(0, 50, 50, 50, 50, true, MouseButtonLeft, 0)
+	s.Input.ProcessPointer(s.Root, 0, 50, 50, 50, 50, true, MouseButtonLeft, 0)
 
 	// Move within dead zone  -  no drag.
-	s.processPointer(0, 52, 52, 52, 52, true, MouseButtonLeft, 0)
+	s.Input.ProcessPointer(s.Root, 0, 52, 52, 52, 52, true, MouseButtonLeft, 0)
 	if len(events) != 0 {
 		t.Fatalf("expected no events within dead zone, got %v", events)
 	}
 
 	// Move beyond dead zone.
-	s.processPointer(0, 60, 50, 60, 50, true, MouseButtonLeft, 0)
+	s.Input.ProcessPointer(s.Root, 0, 60, 50, 60, 50, true, MouseButtonLeft, 0)
 	if len(events) != 2 || events[0] != "dragstart" || events[1] != "drag" {
 		t.Fatalf("expected [dragstart drag], got %v", events)
 	}
 
 	// Continue dragging.
 	events = events[:0]
-	s.processPointer(0, 70, 50, 70, 50, true, MouseButtonLeft, 0)
+	s.Input.ProcessPointer(s.Root, 0, 70, 50, 70, 50, true, MouseButtonLeft, 0)
 	if len(events) != 1 || events[0] != "drag" {
 		t.Fatalf("expected [drag], got %v", events)
 	}
 
 	// Release.
 	events = events[:0]
-	s.processPointer(0, 70, 50, 70, 50, false, MouseButtonLeft, 0)
+	s.Input.ProcessPointer(s.Root, 0, 70, 50, 70, 50, false, MouseButtonLeft, 0)
 	if len(events) != 1 || events[0] != "dragend" {
 		t.Fatalf("expected [dragend], got %v", events)
 	}
@@ -461,8 +461,8 @@ func TestClickDetection(t *testing.T) {
 	s := NewScene()
 	sprite := NewSprite("s", TextureRegion{OriginalW: 100, OriginalH: 100})
 	sprite.Interactable = true
-	s.Root().AddChild(sprite)
-	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
+	s.Root.AddChild(sprite)
+	updateWorldTransform(s.Root, identityTransform, 1.0, false, false)
 
 	var clicked bool
 	s.OnClick(func(ctx ClickContext) {
@@ -473,8 +473,8 @@ func TestClickDetection(t *testing.T) {
 	})
 
 	// Press and release at same location within dead zone.
-	s.processPointer(0, 50, 50, 50, 50, true, MouseButtonLeft, 0)
-	s.processPointer(0, 50, 50, 50, 50, false, MouseButtonLeft, 0)
+	s.Input.ProcessPointer(s.Root, 0, 50, 50, 50, 50, true, MouseButtonLeft, 0)
+	s.Input.ProcessPointer(s.Root, 0, 50, 50, 50, 50, false, MouseButtonLeft, 0)
 	if !clicked {
 		t.Error("expected click event")
 	}
@@ -484,16 +484,16 @@ func TestClickNotFiredOnDrag(t *testing.T) {
 	s := NewScene()
 	sprite := NewSprite("s", TextureRegion{OriginalW: 100, OriginalH: 100})
 	sprite.Interactable = true
-	s.Root().AddChild(sprite)
-	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
+	s.Root.AddChild(sprite)
+	updateWorldTransform(s.Root, identityTransform, 1.0, false, false)
 
 	var clicked bool
 	s.OnClick(func(ctx ClickContext) { clicked = true })
 
 	// Press, drag beyond dead zone, release.
-	s.processPointer(0, 50, 50, 50, 50, true, MouseButtonLeft, 0)
-	s.processPointer(0, 60, 50, 60, 50, true, MouseButtonLeft, 0)
-	s.processPointer(0, 60, 50, 60, 50, false, MouseButtonLeft, 0)
+	s.Input.ProcessPointer(s.Root, 0, 50, 50, 50, 50, true, MouseButtonLeft, 0)
+	s.Input.ProcessPointer(s.Root, 0, 60, 50, 60, 50, true, MouseButtonLeft, 0)
+	s.Input.ProcessPointer(s.Root, 0, 60, 50, 60, 50, false, MouseButtonLeft, 0)
 	if clicked {
 		t.Error("click should not fire after drag")
 	}
@@ -507,16 +507,16 @@ func TestClickNotFiredOnDifferentNode(t *testing.T) {
 	b.Interactable = true
 	b.X_ = 50
 
-	s.Root().AddChild(a)
-	s.Root().AddChild(b)
-	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
+	s.Root.AddChild(a)
+	s.Root.AddChild(b)
+	updateWorldTransform(s.Root, identityTransform, 1.0, false, false)
 
 	var clicked bool
 	s.OnClick(func(ctx ClickContext) { clicked = true })
 
 	// Press on a, release on b (within dead zone distance but different node).
-	s.processPointer(0, 25, 50, 25, 50, true, MouseButtonLeft, 0)
-	s.processPointer(0, 75, 50, 75, 50, false, MouseButtonLeft, 0)
+	s.Input.ProcessPointer(s.Root, 0, 25, 50, 25, 50, true, MouseButtonLeft, 0)
+	s.Input.ProcessPointer(s.Root, 0, 75, 50, 75, 50, false, MouseButtonLeft, 0)
 	if clicked {
 		t.Error("click should not fire when press and release are on different nodes")
 	}
@@ -530,8 +530,8 @@ func TestContextCoordinates(t *testing.T) {
 	sprite.Interactable = true
 	sprite.X_ = 50
 	sprite.Y_ = 50
-	s.Root().AddChild(sprite)
-	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
+	s.Root.AddChild(sprite)
+	updateWorldTransform(s.Root, identityTransform, 1.0, false, false)
 
 	s.OnPointerDown(func(ctx PointerContext) {
 		if ctx.GlobalX != 75 || ctx.GlobalY != 75 {
@@ -543,7 +543,7 @@ func TestContextCoordinates(t *testing.T) {
 		}
 	})
 
-	s.firePointerDown(sprite, 0, 75, 75, MouseButtonLeft, 0)
+	s.Input.FirePointerDown(sprite, 0, 75, 75, MouseButtonLeft, 0)
 }
 
 // --- SetDragDeadZone test ---
@@ -552,8 +552,8 @@ func TestSetDragDeadZone(t *testing.T) {
 	s := NewScene()
 	sprite := NewSprite("s", TextureRegion{OriginalW: 100, OriginalH: 100})
 	sprite.Interactable = true
-	s.Root().AddChild(sprite)
-	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
+	s.Root.AddChild(sprite)
+	updateWorldTransform(s.Root, identityTransform, 1.0, false, false)
 
 	s.SetDragDeadZone(20)
 
@@ -561,15 +561,15 @@ func TestSetDragDeadZone(t *testing.T) {
 	s.OnDragStart(func(ctx DragContext) { dragStarted = true })
 
 	// Press.
-	s.processPointer(0, 50, 50, 50, 50, true, MouseButtonLeft, 0)
+	s.Input.ProcessPointer(s.Root, 0, 50, 50, 50, 50, true, MouseButtonLeft, 0)
 	// Move 10 pixels  -  should NOT start drag with 20px dead zone.
-	s.processPointer(0, 60, 50, 60, 50, true, MouseButtonLeft, 0)
+	s.Input.ProcessPointer(s.Root, 0, 60, 50, 60, 50, true, MouseButtonLeft, 0)
 	if dragStarted {
 		t.Error("drag should not start within 20px dead zone")
 	}
 
 	// Move 25 pixels from start  -  should start drag.
-	s.processPointer(0, 75, 50, 75, 50, true, MouseButtonLeft, 0)
+	s.Input.ProcessPointer(s.Root, 0, 75, 50, 75, 50, true, MouseButtonLeft, 0)
 	if !dragStarted {
 		t.Error("drag should start beyond 20px dead zone")
 	}
@@ -583,25 +583,25 @@ func TestIndependentScenes(t *testing.T) {
 
 	sprite1 := NewSprite("s1", TextureRegion{OriginalW: 100, OriginalH: 100})
 	sprite1.Interactable = true
-	s1.Root().AddChild(sprite1)
+	s1.Root.AddChild(sprite1)
 
 	sprite2 := NewSprite("s2", TextureRegion{OriginalW: 100, OriginalH: 100})
 	sprite2.Interactable = true
-	s2.Root().AddChild(sprite2)
+	s2.Root.AddChild(sprite2)
 
-	updateWorldTransform(s1.root, identityTransform, 1.0, false, false)
-	updateWorldTransform(s2.root, identityTransform, 1.0, false, false)
+	updateWorldTransform(s1.Root, identityTransform, 1.0, false, false)
+	updateWorldTransform(s2.Root, identityTransform, 1.0, false, false)
 
 	var count1, count2 int
 	s1.OnPointerDown(func(ctx PointerContext) { count1++ })
 	s2.OnPointerDown(func(ctx PointerContext) { count2++ })
 
-	s1.firePointerDown(sprite1, 0, 50, 50, MouseButtonLeft, 0)
+	s1.Input.FirePointerDown(sprite1, 0, 50, 50, MouseButtonLeft, 0)
 	if count1 != 1 || count2 != 0 {
 		t.Errorf("expected s1=1 s2=0, got s1=%d s2=%d", count1, count2)
 	}
 
-	s2.firePointerDown(sprite2, 0, 50, 50, MouseButtonLeft, 0)
+	s2.Input.FirePointerDown(sprite2, 0, 50, 50, MouseButtonLeft, 0)
 	if count1 != 1 || count2 != 1 {
 		t.Errorf("expected s1=1 s2=1, got s1=%d s2=%d", count1, count2)
 	}
@@ -625,10 +625,10 @@ func TestECSBridge(t *testing.T) {
 	sprite := NewSprite("s", TextureRegion{OriginalW: 100, OriginalH: 100})
 	sprite.Interactable = true
 	sprite.EntityID = 42
-	s.Root().AddChild(sprite)
-	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
+	s.Root.AddChild(sprite)
+	updateWorldTransform(s.Root, identityTransform, 1.0, false, false)
 
-	s.firePointerDown(sprite, 0, 50, 50, MouseButtonLeft, 0)
+	s.Input.FirePointerDown(sprite, 0, 50, 50, MouseButtonLeft, 0)
 
 	if len(store.events) != 1 {
 		t.Fatalf("expected 1 event, got %d", len(store.events))
@@ -647,10 +647,10 @@ func TestECSBridge_NoEntity(t *testing.T) {
 	sprite := NewSprite("s", TextureRegion{OriginalW: 100, OriginalH: 100})
 	sprite.Interactable = true
 	// EntityID is 0  -  should not emit.
-	s.Root().AddChild(sprite)
-	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
+	s.Root.AddChild(sprite)
+	updateWorldTransform(s.Root, identityTransform, 1.0, false, false)
 
-	s.firePointerDown(sprite, 0, 50, 50, MouseButtonLeft, 0)
+	s.Input.FirePointerDown(sprite, 0, 50, 50, MouseButtonLeft, 0)
 	if len(store.events) != 0 {
 		t.Errorf("expected 0 events for node without EntityID, got %d", len(store.events))
 	}
@@ -664,14 +664,14 @@ func TestECSBridge_DragFields(t *testing.T) {
 	sprite := NewSprite("s", TextureRegion{OriginalW: 100, OriginalH: 100})
 	sprite.Interactable = true
 	sprite.EntityID = 7
-	s.Root().AddChild(sprite)
-	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
+	s.Root.AddChild(sprite)
+	updateWorldTransform(s.Root, identityTransform, 1.0, false, false)
 
 	ctx := DragContext{
 		StartX: 10, StartY: 20,
 		DeltaX: 5, DeltaY: -3,
 	}
-	s.fireDrag(sprite, 0, 50, 60, ctx.StartX, ctx.StartY, ctx.DeltaX, ctx.DeltaY, 0, 0, MouseButtonLeft, ModShift)
+	s.Input.FireDrag(sprite, 0, 50, 60, ctx.StartX, ctx.StartY, ctx.DeltaX, ctx.DeltaY, 0, 0, MouseButtonLeft, ModShift)
 
 	if len(store.events) != 1 {
 		t.Fatalf("expected 1 event, got %d", len(store.events))
@@ -702,15 +702,15 @@ func TestECSBridge_PinchFields(t *testing.T) {
 	sprite := NewSprite("s", TextureRegion{OriginalW: 100, OriginalH: 100})
 	sprite.Interactable = true
 	sprite.EntityID = 99
-	s.Root().AddChild(sprite)
-	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
+	s.Root.AddChild(sprite)
+	updateWorldTransform(s.Root, identityTransform, 1.0, false, false)
 
 	// Set up pinch state so firePinch finds a hit node.
-	s.pinch.active = true
-	s.pinch.pointer0 = 1
-	s.pointers[1].hitNode = sprite
+	s.Input.Pinch.Active = true
+	s.Input.Pinch.Pointer0 = 1
+	s.Input.Pointers[1].HitNode = sprite
 
-	s.firePinch(PinchContext{
+	s.Input.FirePinch(PinchContext{
 		Scale: 2.0, ScaleDelta: 0.5,
 		Rotation: 1.57, RotDelta: 0.1,
 		CenterX: 40, CenterY: 60,
@@ -745,14 +745,14 @@ func TestECSBridge_PinchWithoutEntityID(t *testing.T) {
 	sprite := NewSprite("s", TextureRegion{OriginalW: 100, OriginalH: 100})
 	sprite.Interactable = true
 	// EntityID is 0  -  pinch events should still emit.
-	s.Root().AddChild(sprite)
-	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
+	s.Root.AddChild(sprite)
+	updateWorldTransform(s.Root, identityTransform, 1.0, false, false)
 
-	s.pinch.active = true
-	s.pinch.pointer0 = 1
-	s.pointers[1].hitNode = sprite
+	s.Input.Pinch.Active = true
+	s.Input.Pinch.Pointer0 = 1
+	s.Input.Pointers[1].HitNode = sprite
 
-	s.firePinch(PinchContext{Scale: 1.5}, 0)
+	s.Input.FirePinch(PinchContext{Scale: 1.5}, 0)
 
 	if len(store.events) != 1 {
 		t.Fatalf("expected 1 pinch event even without EntityID, got %d", len(store.events))
@@ -771,10 +771,10 @@ func TestECSBridge_PinchNoHitNode(t *testing.T) {
 	s.SetEntityStore(store)
 
 	// No hit node  -  pinch should still emit with EntityID=0.
-	s.pinch.active = true
-	s.pinch.pointer0 = 1
+	s.Input.Pinch.Active = true
+	s.Input.Pinch.Pointer0 = 1
 
-	s.firePinch(PinchContext{Scale: 3.0, CenterX: 100, CenterY: 200}, 0)
+	s.Input.FirePinch(PinchContext{Scale: 3.0, CenterX: 100, CenterY: 200}, 0)
 
 	if len(store.events) != 1 {
 		t.Fatalf("expected 1 pinch event without hit node, got %d", len(store.events))
@@ -791,15 +791,15 @@ func TestECSBridge_NoStore(t *testing.T) {
 	sprite := NewSprite("s", TextureRegion{OriginalW: 100, OriginalH: 100})
 	sprite.Interactable = true
 	sprite.EntityID = 1
-	s.Root().AddChild(sprite)
-	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
+	s.Root.AddChild(sprite)
+	updateWorldTransform(s.Root, identityTransform, 1.0, false, false)
 
-	s.firePointerDown(sprite, 0, 50, 50, MouseButtonLeft, 0)
-	s.fireClick(sprite, 0, 50, 50, MouseButtonLeft, 0)
-	s.fireDragStart(sprite, 0, 50, 50, 50, 50, 0, 0, 0, 0, MouseButtonLeft, 0)
-	s.fireDrag(sprite, 0, 60, 60, 50, 50, 10, 10, 10, 10, MouseButtonLeft, 0)
-	s.fireDragEnd(sprite, 0, 60, 60, 50, 50, 10, 10, 10, 10, MouseButtonLeft, 0)
-	s.firePinch(PinchContext{Scale: 1.0}, 0)
+	s.Input.FirePointerDown(sprite, 0, 50, 50, MouseButtonLeft, 0)
+	s.Input.FireClick(sprite, 0, 50, 50, MouseButtonLeft, 0)
+	s.Input.FireDragStart(sprite, 0, 50, 50, 50, 50, 0, 0, 0, 0, MouseButtonLeft, 0)
+	s.Input.FireDrag(sprite, 0, 60, 60, 50, 50, 10, 10, 10, 10, MouseButtonLeft, 0)
+	s.Input.FireDragEnd(sprite, 0, 60, 60, 50, 50, 10, 10, 10, 10, MouseButtonLeft, 0)
+	s.Input.FirePinch(PinchContext{Scale: 1.0}, 0)
 	// If we reach here without panic, test passes.
 }
 
@@ -809,8 +809,8 @@ func TestPerNodeOnPinch(t *testing.T) {
 	s := NewScene()
 	sprite := NewSprite("s", TextureRegion{OriginalW: 100, OriginalH: 100})
 	sprite.Interactable = true
-	s.Root().AddChild(sprite)
-	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
+	s.Root.AddChild(sprite)
+	updateWorldTransform(s.Root, identityTransform, 1.0, false, false)
 
 	var called bool
 	sprite.OnPinch(func(ctx PinchContext) {
@@ -818,11 +818,11 @@ func TestPerNodeOnPinch(t *testing.T) {
 	})
 
 	// Simulate pinch state.
-	s.pinch.active = true
-	s.pinch.pointer0 = 1
-	s.pointers[1].hitNode = sprite
+	s.Input.Pinch.Active = true
+	s.Input.Pinch.Pointer0 = 1
+	s.Input.Pointers[1].HitNode = sprite
 
-	s.firePinch(PinchContext{Scale: 1.5, ScaleDelta: 0.1}, 0)
+	s.Input.FirePinch(PinchContext{Scale: 1.5, ScaleDelta: 0.1}, 0)
 	if !called {
 		t.Error("per-node OnPinch not fired")
 	}
@@ -834,8 +834,8 @@ func TestHoverMove(t *testing.T) {
 	s := NewScene()
 	sprite := NewSprite("s", TextureRegion{OriginalW: 100, OriginalH: 100})
 	sprite.Interactable = true
-	s.Root().AddChild(sprite)
-	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
+	s.Root.AddChild(sprite)
+	updateWorldTransform(s.Root, identityTransform, 1.0, false, false)
 
 	var moveCalled bool
 	s.OnPointerMove(func(ctx PointerContext) {
@@ -846,7 +846,7 @@ func TestHoverMove(t *testing.T) {
 	})
 
 	// Hover (not pressed) with position change.
-	s.processPointer(0, 50, 50, 50, 50, false, MouseButtonLeft, 0)
+	s.Input.ProcessPointer(s.Root, 0, 50, 50, 50, 50, false, MouseButtonLeft, 0)
 	if !moveCalled {
 		t.Error("pointer move callback not fired on hover")
 	}
@@ -864,10 +864,10 @@ func TestCollectInteractable_SkipsInvisibleSubtree(t *testing.T) {
 	child.Interactable = true
 	container.AddChild(child)
 
-	s.Root().AddChild(container)
-	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
+	s.Root.AddChild(container)
+	updateWorldTransform(s.Root, identityTransform, 1.0, false, false)
 
-	buf := s.collectInteractable(s.root, nil)
+	buf := s.Input.CollectInteractable(s.Root, nil)
 	for _, n := range buf {
 		if n == child {
 			t.Error("invisible subtree children should not be collected")
@@ -884,10 +884,10 @@ func TestCollectInteractable_SkipsNonInteractableSubtree(t *testing.T) {
 	child.Interactable = true
 	container.AddChild(child)
 
-	s.Root().AddChild(container)
-	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
+	s.Root.AddChild(container)
+	updateWorldTransform(s.Root, identityTransform, 1.0, false, false)
 
-	buf := s.collectInteractable(s.root, nil)
+	buf := s.Input.CollectInteractable(s.Root, nil)
 	for _, n := range buf {
 		if n == child {
 			t.Error("non-interactable subtree children should not be collected")
@@ -901,19 +901,19 @@ func TestAutoReleaseCapture(t *testing.T) {
 	s := NewScene()
 	sprite := NewSprite("s", TextureRegion{OriginalW: 100, OriginalH: 100})
 	sprite.Interactable = true
-	s.Root().AddChild(sprite)
-	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
+	s.Root.AddChild(sprite)
+	updateWorldTransform(s.Root, identityTransform, 1.0, false, false)
 
 	s.CapturePointer(0, sprite)
-	if s.captured[0] != sprite {
+	if s.Input.Captured[0] != sprite {
 		t.Fatal("capture not set")
 	}
 
 	// Press and release.
-	s.processPointer(0, 50, 50, 50, 50, true, MouseButtonLeft, 0)
-	s.processPointer(0, 50, 50, 50, 50, false, MouseButtonLeft, 0)
+	s.Input.ProcessPointer(s.Root, 0, 50, 50, 50, 50, true, MouseButtonLeft, 0)
+	s.Input.ProcessPointer(s.Root, 0, 50, 50, 50, 50, false, MouseButtonLeft, 0)
 
-	if s.captured[0] != nil {
+	if s.Input.Captured[0] != nil {
 		t.Error("capture should be auto-released on pointer up")
 	}
 }
@@ -927,7 +927,7 @@ func TestMultipleSceneHandlers(t *testing.T) {
 	s.OnPointerDown(func(ctx PointerContext) { count++ })
 	s.OnPointerDown(func(ctx PointerContext) { count++ })
 
-	s.firePointerDown(nil, 0, 0, 0, MouseButtonLeft, 0)
+	s.Input.FirePointerDown(nil, 0, 0, 0, MouseButtonLeft, 0)
 	if count != 3 {
 		t.Errorf("expected 3, got %d", count)
 	}
@@ -942,14 +942,14 @@ func BenchmarkHitTest_1000Nodes(b *testing.B) {
 		n.Interactable = true
 		n.X_ = float64(i%100) * 12
 		n.Y_ = float64(i/100) * 12
-		s.Root().AddChild(n)
+		s.Root.AddChild(n)
 	}
-	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
+	updateWorldTransform(s.Root, identityTransform, 1.0, false, false)
 
 	b.ResetTimer()
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		s.hitTest(500, 50)
+		s.Input.HitTest(s.Root, 500, 50)
 	}
 }
 
@@ -962,6 +962,6 @@ func BenchmarkDispatch_10Handlers(b *testing.B) {
 	b.ResetTimer()
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		s.firePointerDown(nil, 0, 0, 0, MouseButtonLeft, 0)
+		s.Input.FirePointerDown(nil, 0, 0, 0, MouseButtonLeft, 0)
 	}
 }

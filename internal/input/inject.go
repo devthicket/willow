@@ -68,9 +68,14 @@ func (m *Manager) InjectDrag(fromX, fromY, toX, toY float64, frames int) {
 	m.InjectRelease(toX, toY)
 }
 
-// processInjectedInput pops one event from the inject queue, converts
+// ProcessInjectedInput pops one event from the inject queue, converts
 // screen→world via ScreenToWorldFn, and feeds it through processPointer.
 // Returns true if an event was consumed (real mouse input should be skipped).
+func (m *Manager) ProcessInjectedInput(root *node.Node, mods types.KeyModifiers) bool {
+	return m.processInjectedInput(root, mods)
+}
+
+// processInjectedInput is the internal implementation.
 func (m *Manager) processInjectedInput(root *node.Node, mods types.KeyModifiers) bool {
 	if len(m.InjectQueue) == 0 {
 		return false

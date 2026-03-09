@@ -4,40 +4,41 @@ import "testing"
 
 func TestNewScene(t *testing.T) {
 	s := NewScene()
-	if s.root == nil {
+	if s.Root == nil {
 		t.Fatal("root should not be nil")
 	}
-	if s.root.Name != "root" {
-		t.Errorf("root.Name = %q, want %q", s.root.Name, "root")
+	if s.Root.Name != "root" {
+		t.Errorf("root.Name = %q, want %q", s.Root.Name, "root")
 	}
-	if s.root.Type != NodeTypeContainer {
-		t.Errorf("root.Type = %d, want NodeTypeContainer", s.root.Type)
+	if s.Root.Type != NodeTypeContainer {
+		t.Errorf("root.Type = %d, want NodeTypeContainer", s.Root.Type)
 	}
 }
 
 func TestSceneRoot(t *testing.T) {
 	s := NewScene()
-	if s.Root() != s.root {
-		t.Error("Root() should return the internal root node")
+	r := Root(s)
+	if r == nil {
+		t.Error("Root(s) should return the root node")
+	}
+	if r != s.Root {
+		t.Error("Root(s) should return the internal root node")
 	}
 }
 
 func TestSceneSetEntityStore(t *testing.T) {
 	s := NewScene()
 	s.SetEntityStore(nil) // should not panic
-	if s.store != nil {
-		t.Error("store should be nil")
-	}
 }
 
 func TestSceneSetDebugMode(t *testing.T) {
 	s := NewScene()
 	s.SetDebugMode(true)
-	if !s.debug {
+	if !s.Debug {
 		t.Error("debug should be true")
 	}
 	s.SetDebugMode(false)
-	if s.debug {
+	if s.Debug {
 		t.Error("debug should be false")
 	}
 }

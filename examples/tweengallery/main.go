@@ -84,7 +84,7 @@ func main() {
 		sp.SetPivot(64, 64)
 		sp.SetPosition(startX+float64(i)*spacing, spriteY)
 		sp.Invalidate()
-		scene.Root().AddChild(sp)
+		scene.Root.AddChild(sp)
 		sprites[i] = sp
 	}
 
@@ -93,18 +93,18 @@ func main() {
 		label := makeLabel(tweenLabels[i])
 		lw := float64(len(tweenLabels[i]) * 6)
 		label.SetPosition(startX+float64(i)*spacing-lw/2, spriteY+80)
-		scene.Root().AddChild(label)
+		scene.Root.AddChild(label)
 
 		// Colored indicator dot.
 		dot := willow.NewRect("dot", lw+8, 3, tweenColors[i])
 		dot.SetPosition(startX+float64(i)*spacing-lw/2-4, spriteY+96)
-		scene.Root().AddChild(dot)
+		scene.Root.AddChild(dot)
 	}
 
 	// Status label showing current easing.
 	statusLabel := makeLabel("Select an easing function")
 	statusLabel.SetPosition(screenW/2-float64(len("Select an easing function")*6)/2, 290)
-	scene.Root().AddChild(statusLabel)
+	scene.Root.AddChild(statusLabel)
 
 	// Define easing functions.
 	easings := []*easingEntry{
@@ -163,7 +163,7 @@ func main() {
 		statusLabel.RemoveFromParent()
 		statusLabel = makeLabel(text)
 		statusLabel.SetPosition(screenW/2-float64(len(text)*6)/2, 290)
-		scene.Root().AddChild(statusLabel)
+		scene.Root.AddChild(statusLabel)
 	}
 
 	// Button grid: 3 rows x 4 cols.
@@ -188,14 +188,14 @@ func main() {
 		// Button background.
 		bg := willow.NewRect("btn-"+entry.label, btnW, btnH, inactiveColor)
 		bg.SetPosition(bx, by)
-		scene.Root().AddChild(bg)
+		scene.Root.AddChild(bg)
 		entry.bg = bg
 
 		// Label.
 		label := makeLabel(entry.label)
 		lw := float64(len(entry.label) * 6)
 		label.SetPosition(bx+(btnW-lw)/2, by+7)
-		scene.Root().AddChild(label)
+		scene.Root.AddChild(label)
 
 		// Click handler.
 		idx := i
@@ -217,7 +217,7 @@ func main() {
 	// "Replay" instruction hint.
 	hint := makeLabel("Click a button to see each easing curve applied to all 5 tween properties")
 	hint.SetPosition(screenW/2-float64(len("Click a button to see each easing curve applied to all 5 tween properties")*6)/2, screenH-40)
-	scene.Root().AddChild(hint)
+	scene.Root.AddChild(hint)
 
 	// Update loop: auto-restart when all tweens finish (ticking is automatic).
 	scene.SetUpdateFunc(func() error {

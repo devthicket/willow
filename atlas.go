@@ -8,6 +8,7 @@ import (
 	"log"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/phanxgames/willow/internal/node"
 )
 
 // TextureRegion is aliased from internal/types in willow.go.
@@ -77,7 +78,7 @@ func (a *Atlas) Region(name string) TextureRegion {
 	if r, ok := a.regions[name]; ok {
 		return r
 	}
-	if globalDebug {
+	if node.Debug {
 		log.Printf("willow: atlas region %q not found, using magenta placeholder", name)
 	}
 	return magentaRegion()

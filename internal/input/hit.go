@@ -22,6 +22,11 @@ func nodeContainsLocal(n *node.Node, lx, ly float64) bool {
 	return lx >= 0 && lx <= w && ly >= 0 && ly <= h
 }
 
+// CollectInteractable is the exported version of collectInteractable (for testing).
+func (m *Manager) CollectInteractable(n *node.Node, buf []*node.Node) []*node.Node {
+	return collectInteractable(n, buf)
+}
+
 // collectInteractable walks the tree in painter order (DFS, ZIndex-sorted),
 // appending interactable leaf nodes to buf. Skips Visible=false or
 // Interactable=false subtrees.
@@ -53,8 +58,13 @@ func collectInteractable(n *node.Node, buf []*node.Node) []*node.Node {
 	return buf
 }
 
-// hitTest finds the topmost interactable node at (worldX, worldY).
+// HitTest finds the topmost interactable node at (worldX, worldY).
 // Returns nil if nothing is hit.
+func (m *Manager) HitTest(root *node.Node, worldX, worldY float64) *node.Node {
+	return m.hitTest(root, worldX, worldY)
+}
+
+// hitTest is the internal implementation of HitTest.
 func (m *Manager) hitTest(root *node.Node, worldX, worldY float64) *node.Node {
 	m.HitBuf = collectInteractable(root, m.HitBuf[:0])
 

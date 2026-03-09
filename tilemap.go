@@ -444,8 +444,8 @@ func (l *TileMapLayer) emitCommands(sAny any, treeOrder *int) {
 		commands = &v.Commands
 		viewTransform = v.ViewTransform
 	case *Scene:
-		commands = &v.pipeline.Commands
-		viewTransform = v.pipeline.ViewTransform
+		commands = &v.Pipeline.Commands
+		viewTransform = v.Pipeline.ViewTransform
 	default:
 		return
 	}

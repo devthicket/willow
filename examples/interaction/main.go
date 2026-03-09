@@ -38,7 +38,7 @@ func main() {
 	for i, c := range colors {
 		box := makeBox(fmt.Sprintf("box%d", i), c, altColors[i])
 		box.SetPosition(float64(120+i*160), 200)
-		scene.Root().AddChild(box)
+		scene.Root.AddChild(box)
 	}
 
 	if err := willow.Run(scene, willow.RunConfig{

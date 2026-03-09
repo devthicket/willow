@@ -224,7 +224,7 @@ func TestScene_LoadAtlas_RegistersPages(t *testing.T) {
 
 	scene := NewScene()
 	page := ebiten.NewImage(256, 256)
-	_, err := scene.LoadAtlas([]byte(singlePageJSON), []*ebiten.Image{page})
+	_, err := LoadSceneAtlas(scene, []byte(singlePageJSON), []*ebiten.Image{page})
 	if err != nil {
 		t.Fatalf("Scene.LoadAtlas: %v", err)
 	}
@@ -241,13 +241,13 @@ func TestScene_LoadAtlas_MultipleAtlases(t *testing.T) {
 
 	scene := NewScene()
 	page0 := ebiten.NewImage(256, 256)
-	atlas1, err := scene.LoadAtlas([]byte(singlePageJSON), []*ebiten.Image{page0})
+	atlas1, err := LoadSceneAtlas(scene, []byte(singlePageJSON), []*ebiten.Image{page0})
 	if err != nil {
 		t.Fatalf("Scene.LoadAtlas (first): %v", err)
 	}
 
 	page1 := ebiten.NewImage(256, 256)
-	atlas2, err := scene.LoadAtlas([]byte(singlePageJSON), []*ebiten.Image{page1})
+	atlas2, err := LoadSceneAtlas(scene, []byte(singlePageJSON), []*ebiten.Image{page1})
 	if err != nil {
 		t.Fatalf("Scene.LoadAtlas (second): %v", err)
 	}
@@ -392,7 +392,7 @@ func TestNewAtlas_Add_AfterLoadAtlas(t *testing.T) {
 
 	scene := NewScene()
 	page := ebiten.NewImage(256, 256)
-	atlas, err := scene.LoadAtlas([]byte(singlePageJSON), []*ebiten.Image{page})
+	atlas, err := LoadSceneAtlas(scene, []byte(singlePageJSON), []*ebiten.Image{page})
 	if err != nil {
 		t.Fatalf("Scene.LoadAtlas: %v", err)
 	}

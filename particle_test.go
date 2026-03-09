@@ -223,12 +223,12 @@ func TestRenderCommandIncludesEmitter(t *testing.T) {
 	emitterNode := NewParticleEmitter("emitter", cfg)
 	emitterNode.Emitter.Start()
 	emitterNode.Emitter.Update(0.1) // spawn particles
-	s.Root().AddChild(emitterNode)
+	s.Root.AddChild(emitterNode)
 
 	traverseScene(s)
 
 	found := false
-	for _, cmd := range s.pipeline.Commands {
+	for _, cmd := range s.Pipeline.Commands {
 		if cmd.Type == CommandParticle {
 			found = true
 			if cmd.Emitter == nil {
@@ -249,11 +249,11 @@ func TestNoCommandWhenNoAliveParticles(t *testing.T) {
 	cfg := defaultTestConfig(100)
 	emitterNode := NewParticleEmitter("emitter", cfg)
 	// Don't start  -  no particles alive.
-	s.Root().AddChild(emitterNode)
+	s.Root.AddChild(emitterNode)
 
 	traverseScene(s)
 
-	for _, cmd := range s.pipeline.Commands {
+	for _, cmd := range s.Pipeline.Commands {
 		if cmd.Type == CommandParticle {
 			t.Error("should not emit CommandParticle when no particles alive")
 		}
@@ -405,7 +405,7 @@ func BenchmarkParticleRender_1000(b *testing.B) {
 	for i := 0; i < 200; i++ {
 		emitterNode.Emitter.Update(1.0 / 60.0)
 	}
-	s.Root().AddChild(emitterNode)
+	s.Root.AddChild(emitterNode)
 
 	// Warmup traverse.
 	traverseScene(s)
@@ -413,8 +413,8 @@ func BenchmarkParticleRender_1000(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for b.Loop() {
-		s.pipeline.Commands = s.pipeline.Commands[:0]
+		s.Pipeline.Commands = s.Pipeline.Commands[:0]
 		treeOrder := 0
-		s.pipeline.Traverse(s.root, &treeOrder)
+		s.Pipeline.Traverse(s.Root, &treeOrder)
 	}
 }

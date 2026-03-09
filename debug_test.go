@@ -16,7 +16,7 @@ func TestDebugMode_DisposedNodePanics(t *testing.T) {
 	defer s.SetDebugMode(false)
 
 	parent := NewContainer("parent")
-	s.Root().AddChild(parent)
+	s.Root.AddChild(parent)
 
 	child := NewSprite("child", TextureRegion{OriginalW: 10, OriginalH: 10})
 	child.Dispose()
@@ -79,7 +79,7 @@ func TestReleaseMode_DisposedNodeNoOp(t *testing.T) {
 
 	// This may panic for other reasons (cycle check with nil parent chain),
 	// but not for "disposed" reasons.
-	s.Root().AddChild(child)
+	s.Root.AddChild(child)
 }
 
 func TestDebugMode_TreeDepthWarning(t *testing.T) {
@@ -93,7 +93,7 @@ func TestDebugMode_TreeDepthWarning(t *testing.T) {
 	os.Stderr = w
 
 	// Build a chain deeper than debugMaxTreeDepth (32).
-	current := s.Root()
+	current := s.Root
 	for i := 0; i < debugMaxTreeDepth+5; i++ {
 		child := NewContainer(fmt.Sprintf("depth_%d", i))
 		current.AddChild(child)
@@ -123,7 +123,7 @@ func TestDebugMode_ChildCountWarning(t *testing.T) {
 	os.Stderr = w
 
 	parent := NewContainer("many_children")
-	s.Root().AddChild(parent)
+	s.Root.AddChild(parent)
 
 	for i := 0; i < debugMaxChildCount+1; i++ {
 		child := NewContainer(fmt.Sprintf("c_%d", i))
@@ -212,11 +212,11 @@ func TestScreenshotQueueAppend(t *testing.T) {
 	s.Screenshot("a")
 	s.Screenshot("b")
 	s.Screenshot("c")
-	if len(s.screenshotQueue) != 3 {
-		t.Fatalf("queue len = %d, want 3", len(s.screenshotQueue))
+	if len(s.ScreenshotQueue) != 3 {
+		t.Fatalf("queue len = %d, want 3", len(s.ScreenshotQueue))
 	}
-	if s.screenshotQueue[0] != "a" || s.screenshotQueue[1] != "b" || s.screenshotQueue[2] != "c" {
-		t.Errorf("queue = %v, want [a b c]", s.screenshotQueue)
+	if s.ScreenshotQueue[0] != "a" || s.ScreenshotQueue[1] != "b" || s.ScreenshotQueue[2] != "c" {
+		t.Errorf("queue = %v, want [a b c]", s.ScreenshotQueue)
 	}
 }
 
@@ -233,8 +233,8 @@ func TestInjectClick(t *testing.T) {
 	s := NewScene()
 	sprite := NewSprite("s", TextureRegion{OriginalW: 100, OriginalH: 100})
 	sprite.Interactable = true
-	s.Root().AddChild(sprite)
-	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
+	s.Root.AddChild(sprite)
+	updateWorldTransform(s.Root, identityTransform, 1.0, false, false)
 
 	var clicked bool
 	s.OnClick(func(ctx ClickContext) {
@@ -245,23 +245,23 @@ func TestInjectClick(t *testing.T) {
 	})
 
 	s.InjectClick(50, 50)
-	if len(s.injectQueue) != 2 {
-		t.Fatalf("expected 2 queued events, got %d", len(s.injectQueue))
+	if len(s.Input.InjectQueue) != 2 {
+		t.Fatalf("expected 2 queued events, got %d", len(s.Input.InjectQueue))
 	}
 
 	// Frame 1: press
-	s.processInput()
-	if len(s.injectQueue) != 1 {
-		t.Fatalf("expected 1 remaining event after frame 1, got %d", len(s.injectQueue))
+	s.Input.ProcessInput(s.Root)
+	if len(s.Input.InjectQueue) != 1 {
+		t.Fatalf("expected 1 remaining event after frame 1, got %d", len(s.Input.InjectQueue))
 	}
 	if clicked {
 		t.Error("click should not fire on press frame")
 	}
 
 	// Frame 2: release → click fires
-	s.processInput()
-	if len(s.injectQueue) != 0 {
-		t.Fatalf("expected 0 remaining events after frame 2, got %d", len(s.injectQueue))
+	s.Input.ProcessInput(s.Root)
+	if len(s.Input.InjectQueue) != 0 {
+		t.Fatalf("expected 0 remaining events after frame 2, got %d", len(s.Input.InjectQueue))
 	}
 	if !clicked {
 		t.Error("click should fire on release frame")
@@ -272,8 +272,8 @@ func TestInjectDrag(t *testing.T) {
 	s := NewScene()
 	sprite := NewSprite("s", TextureRegion{OriginalW: 400, OriginalH: 400})
 	sprite.Interactable = true
-	s.Root().AddChild(sprite)
-	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
+	s.Root.AddChild(sprite)
+	updateWorldTransform(s.Root, identityTransform, 1.0, false, false)
 
 	var events []string
 	s.OnDragStart(func(ctx DragContext) { events = append(events, "dragstart") })
@@ -287,13 +287,13 @@ func TestInjectDrag(t *testing.T) {
 	// frame 3: move to ~(152.5, 152.5)
 	// frame 4: release at (200, 200)
 	s.InjectDrag(10, 10, 200, 200, 5)
-	if len(s.injectQueue) != 5 {
-		t.Fatalf("expected 5 queued events, got %d", len(s.injectQueue))
+	if len(s.Input.InjectQueue) != 5 {
+		t.Fatalf("expected 5 queued events, got %d", len(s.Input.InjectQueue))
 	}
 
 	// Drain all frames.
 	for i := 0; i < 5; i++ {
-		s.processInput()
+		s.Input.ProcessInput(s.Root)
 	}
 
 	// Should see dragstart, at least one drag, and dragend.
@@ -311,8 +311,8 @@ func TestInjectDrag(t *testing.T) {
 func TestInjectDrag_MinFrames(t *testing.T) {
 	s := NewScene()
 	s.InjectDrag(0, 0, 100, 100, 1) // should clamp to 2
-	if len(s.injectQueue) != 2 {
-		t.Fatalf("expected 2 queued events (clamped), got %d", len(s.injectQueue))
+	if len(s.Input.InjectQueue) != 2 {
+		t.Fatalf("expected 2 queued events (clamped), got %d", len(s.Input.InjectQueue))
 	}
 }
 
@@ -323,18 +323,18 @@ func TestInjectQueueOrder(t *testing.T) {
 	s.InjectMove(30, 40)
 	s.InjectRelease(50, 60)
 
-	if len(s.injectQueue) != 3 {
-		t.Fatalf("expected 3 events, got %d", len(s.injectQueue))
+	if len(s.Input.InjectQueue) != 3 {
+		t.Fatalf("expected 3 events, got %d", len(s.Input.InjectQueue))
 	}
 
 	// Verify order: press, move, release.
-	if !s.injectQueue[0].pressed || s.injectQueue[0].screenX != 10 {
+	if !s.Input.InjectQueue[0].Pressed || s.Input.InjectQueue[0].ScreenX != 10 {
 		t.Error("first event should be press at (10,20)")
 	}
-	if !s.injectQueue[1].pressed || s.injectQueue[1].screenX != 30 {
+	if !s.Input.InjectQueue[1].Pressed || s.Input.InjectQueue[1].ScreenX != 30 {
 		t.Error("second event should be move at (30,40)")
 	}
-	if s.injectQueue[2].pressed || s.injectQueue[2].screenX != 50 {
+	if s.Input.InjectQueue[2].Pressed || s.Input.InjectQueue[2].ScreenX != 50 {
 		t.Error("third event should be release at (50,60)")
 	}
 }
@@ -343,8 +343,8 @@ func TestProcessInjectedInput(t *testing.T) {
 	s := NewScene()
 	sprite := NewSprite("s", TextureRegion{OriginalW: 100, OriginalH: 100})
 	sprite.Interactable = true
-	s.Root().AddChild(sprite)
-	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
+	s.Root.AddChild(sprite)
+	updateWorldTransform(s.Root, identityTransform, 1.0, false, false)
 
 	var downFired bool
 	s.OnPointerDown(func(ctx PointerContext) {
@@ -356,21 +356,21 @@ func TestProcessInjectedInput(t *testing.T) {
 
 	// No camera → screen coords = world coords.
 	s.InjectPress(50, 50)
-	consumed := s.processInjectedInput(nil, 0)
+	consumed := s.Input.ProcessInjectedInput(s.Root, 0)
 	if !consumed {
 		t.Error("expected processInjectedInput to consume an event")
 	}
 	if !downFired {
 		t.Error("pointer down should have fired")
 	}
-	if len(s.injectQueue) != 0 {
-		t.Errorf("queue should be empty, got %d", len(s.injectQueue))
+	if len(s.Input.InjectQueue) != 0 {
+		t.Errorf("queue should be empty, got %d", len(s.Input.InjectQueue))
 	}
 }
 
 func TestProcessInjectedInput_EmptyQueue(t *testing.T) {
 	s := NewScene()
-	consumed := s.processInjectedInput(nil, 0)
+	consumed := s.Input.ProcessInjectedInput(s.Root, 0)
 	if consumed {
 		t.Error("should not consume when queue is empty")
 	}
@@ -388,8 +388,8 @@ func TestInjectWithCamera(t *testing.T) {
 	sprite.Interactable = true
 	sprite.X_ = 295
 	sprite.Y_ = 215
-	s.Root().AddChild(sprite)
-	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
+	s.Root.AddChild(sprite)
+	updateWorldTransform(s.Root, identityTransform, 1.0, false, false)
 
 	var hitNode *Node
 	s.OnPointerDown(func(ctx PointerContext) {
@@ -398,7 +398,7 @@ func TestInjectWithCamera(t *testing.T) {
 
 	// Screen center (320, 240) maps to world (320, 240) with camera centered there.
 	s.InjectPress(320, 240)
-	s.processInjectedInput(cam, 0)
+	s.Input.ProcessInjectedInput(s.Root, 0)
 
 	if hitNode != sprite {
 		t.Errorf("expected sprite hit via camera transform, got %v", hitNode)
@@ -421,16 +421,16 @@ func TestLoadTestScript(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if len(runner.steps) != 4 {
-		t.Fatalf("expected 4 steps, got %d", len(runner.steps))
+	if len(runner.Steps) != 4 {
+		t.Fatalf("expected 4 steps, got %d", len(runner.Steps))
 	}
-	if runner.steps[0].Action != "screenshot" || runner.steps[0].Label != "initial" {
+	if runner.Steps[0].Action != "screenshot" || runner.Steps[0].Label != "initial" {
 		t.Error("step 0 mismatch")
 	}
-	if runner.steps[1].Action != "click" || runner.steps[1].X != 100 || runner.steps[1].Y != 200 {
+	if runner.Steps[1].Action != "click" || runner.Steps[1].X != 100 || runner.Steps[1].Y != 200 {
 		t.Error("step 1 mismatch")
 	}
-	if runner.steps[2].Action != "wait" || runner.steps[2].Frames != 3 {
+	if runner.Steps[2].Action != "wait" || runner.Steps[2].Frames != 3 {
 		t.Error("step 2 mismatch")
 	}
 }
@@ -453,8 +453,8 @@ func TestRunnerStep_Click(t *testing.T) {
 	s := NewScene()
 	sprite := NewSprite("s", TextureRegion{OriginalW: 200, OriginalH: 200})
 	sprite.Interactable = true
-	s.Root().AddChild(sprite)
-	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
+	s.Root.AddChild(sprite)
+	updateWorldTransform(s.Root, identityTransform, 1.0, false, false)
 
 	data := []byte(`{"steps": [{"action": "click", "x": 50, "y": 50}]}`)
 	runner, err := LoadTestScript(data)
@@ -464,9 +464,9 @@ func TestRunnerStep_Click(t *testing.T) {
 	s.SetTestRunner(runner)
 
 	// First step call: click queues press+release (2 events).
-	runner.step(s)
-	if len(s.injectQueue) != 2 {
-		t.Fatalf("expected 2 queued events, got %d", len(s.injectQueue))
+	runner.Step(stepActionFor(s))
+	if len(s.Input.InjectQueue) != 2 {
+		t.Fatalf("expected 2 queued events, got %d", len(s.Input.InjectQueue))
 	}
 	// Runner should not be done yet  -  injections still pending.
 	if runner.Done() {
@@ -474,11 +474,11 @@ func TestRunnerStep_Click(t *testing.T) {
 	}
 
 	// Drain injections.
-	s.processInput()
-	s.processInput()
+	s.Input.ProcessInput(s.Root)
+	s.Input.ProcessInput(s.Root)
 
 	// Now step again  -  should finalize.
-	runner.step(s)
+	runner.Step(stepActionFor(s))
 	if !runner.Done() {
 		t.Error("runner should be done after all steps executed and queue drained")
 	}
@@ -497,32 +497,32 @@ func TestRunnerStep_Wait(t *testing.T) {
 	}
 
 	// Frame 1: execute wait (waitCount becomes 2).
-	runner.step(s)
+	runner.Step(stepActionFor(s))
 	if runner.Done() {
 		t.Error("should not be done during wait")
 	}
 
 	// Frame 2: waitCount 2→1.
-	runner.step(s)
+	runner.Step(stepActionFor(s))
 	if runner.Done() {
 		t.Error("should not be done during wait countdown")
 	}
 
 	// Frame 3: waitCount 1→0.
-	runner.step(s)
+	runner.Step(stepActionFor(s))
 	if runner.Done() {
 		t.Error("should not be done  -  screenshot step not yet executed")
 	}
 
 	// Frame 4: execute screenshot step, runner finishes.
-	runner.step(s)
+	runner.Step(stepActionFor(s))
 	if !runner.Done() {
 		t.Error("runner should be done after screenshot step")
 	}
 
 	// Verify screenshot was queued.
-	if len(s.screenshotQueue) != 1 || s.screenshotQueue[0] != "done" {
-		t.Errorf("expected screenshot 'done', got %v", s.screenshotQueue)
+	if len(s.ScreenshotQueue) != 1 || s.ScreenshotQueue[0] != "done" {
+		t.Errorf("expected screenshot 'done', got %v", s.ScreenshotQueue)
 	}
 }
 
@@ -530,8 +530,8 @@ func TestRunnerStep_Drag(t *testing.T) {
 	s := NewScene()
 	sprite := NewSprite("s", TextureRegion{OriginalW: 400, OriginalH: 400})
 	sprite.Interactable = true
-	s.Root().AddChild(sprite)
-	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
+	s.Root.AddChild(sprite)
+	updateWorldTransform(s.Root, identityTransform, 1.0, false, false)
 
 	data := []byte(`{"steps": [{"action": "drag", "fromX": 10, "fromY": 10, "toX": 200, "toY": 200, "frames": 4}]}`)
 	runner, err := LoadTestScript(data)
@@ -539,9 +539,9 @@ func TestRunnerStep_Drag(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	runner.step(s)
-	if len(s.injectQueue) != 4 {
-		t.Fatalf("expected 4 queued events for drag, got %d", len(s.injectQueue))
+	runner.Step(stepActionFor(s))
+	if len(s.Input.InjectQueue) != 4 {
+		t.Fatalf("expected 4 queued events for drag, got %d", len(s.Input.InjectQueue))
 	}
 }
 
@@ -558,7 +558,7 @@ func TestRunnerDone(t *testing.T) {
 		t.Error("runner should not be done before any steps")
 	}
 
-	runner.step(s)
+	runner.Step(stepActionFor(s))
 	if !runner.Done() {
 		t.Error("runner should be done after single screenshot step")
 	}
@@ -577,24 +577,24 @@ func TestRunnerWaitsForInjectQueue(t *testing.T) {
 	}
 
 	// Step 1: click queues 2 events.
-	runner.step(s)
-	if len(s.injectQueue) != 2 {
-		t.Fatalf("expected 2 events, got %d", len(s.injectQueue))
+	runner.Step(stepActionFor(s))
+	if len(s.Input.InjectQueue) != 2 {
+		t.Fatalf("expected 2 events, got %d", len(s.Input.InjectQueue))
 	}
 
 	// Step again  -  should NOT advance because inject queue is not drained.
-	runner.step(s)
-	if runner.cursor != 1 {
-		t.Errorf("cursor should still be 1, got %d", runner.cursor)
+	runner.Step(stepActionFor(s))
+	if runner.Cursor != 1 {
+		t.Errorf("cursor should still be 1, got %d", runner.Cursor)
 	}
 
 	// Drain inject queue manually.
-	s.injectQueue = s.injectQueue[:0]
+	s.Input.InjectQueue = s.Input.InjectQueue[:0]
 
 	// Now step  -  should execute screenshot.
-	runner.step(s)
-	if len(s.screenshotQueue) != 1 || s.screenshotQueue[0] != "after" {
-		t.Errorf("expected screenshot 'after', got %v", s.screenshotQueue)
+	runner.Step(stepActionFor(s))
+	if len(s.ScreenshotQueue) != 1 || s.ScreenshotQueue[0] != "after" {
+		t.Errorf("expected screenshot 'after', got %v", s.ScreenshotQueue)
 	}
 	if !runner.Done() {
 		t.Error("runner should be done")

@@ -27,6 +27,6 @@ func ToTexture(n *Node, s *Scene) *ebiten.Image {
 		return ebiten.NewImage(1, 1)
 	}
 	img := ebiten.NewImage(w, h)
-	s.pipeline.RenderSubtree(n, img, bounds)
+	s.Pipeline.RenderSubtree(n, img, bounds)
 	return img
 }

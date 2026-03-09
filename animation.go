@@ -29,7 +29,7 @@ func tweenEase(cfg TweenConfig) func(t, b, c, d float32) float32 {
 func autoRegister(g *TweenGroup, n *Node) {
 	if n.Scene_ != nil {
 		g.Managed = true
-		n.Scene_.(*Scene).registerTween(g)
+		n.Scene_.(*Scene).RegisterTween(g)
 	}
 }
 

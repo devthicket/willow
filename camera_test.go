@@ -131,7 +131,7 @@ func TestCameraFollow(t *testing.T) {
 	target.Y_ = 150
 	target.TransformDirty = false
 	target.WorldTransform = [6]float64{1, 0, 0, 1, 200, 150}
-	scene.Root().AddChild(target)
+	scene.Root.AddChild(target)
 
 	cam.Follow(target, 0, 0, 1.0) // lerp=1 snaps immediately
 
@@ -345,25 +345,25 @@ func TestCulling_IntegrationWithScene(t *testing.T) {
 	visible := NewSprite("visible", TextureRegion{Width: 64, Height: 64, OriginalW: 64, OriginalH: 64, Page: 0})
 	visible.X_ = 400
 	visible.Y_ = 300
-	scene.Root().AddChild(visible)
+	scene.Root.AddChild(visible)
 
 	// Sprite far outside viewport
 	hidden := NewSprite("hidden", TextureRegion{Width: 64, Height: 64, OriginalW: 64, OriginalH: 64, Page: 0})
 	hidden.X_ = 5000
 	hidden.Y_ = 5000
-	scene.Root().AddChild(hidden)
+	scene.Root.AddChild(hidden)
 
 	// Register a dummy page so commands can be emitted
 	page := ebiten.NewImage(1024, 1024)
 	scene.RegisterPage(0, page)
 
 	screen := ebiten.NewImage(800, 600)
-	updateWorldTransform(scene.root, identityTransform, 1.0, false, false)
+	updateWorldTransform(scene.Root, identityTransform, 1.0, false, false)
 	scene.Draw(screen)
 
 	// Only the visible sprite should produce a command
-	if len(scene.pipeline.Commands) != 1 {
-		t.Errorf("command count = %d, want 1 (visible only)", len(scene.pipeline.Commands))
+	if len(scene.Pipeline.Commands) != 1 {
+		t.Errorf("command count = %d, want 1 (visible only)", len(scene.Pipeline.Commands))
 	}
 }
 
@@ -378,19 +378,19 @@ func TestCulling_DisabledShowsAll(t *testing.T) {
 	visible := NewSprite("s1", TextureRegion{Width: 64, Height: 64, OriginalW: 64, OriginalH: 64})
 	visible.X_ = 400
 	visible.Y_ = 300
-	scene.Root().AddChild(visible)
+	scene.Root.AddChild(visible)
 
 	hidden := NewSprite("s2", TextureRegion{Width: 64, Height: 64, OriginalW: 64, OriginalH: 64})
 	hidden.X_ = 5000
 	hidden.Y_ = 5000
-	scene.Root().AddChild(hidden)
+	scene.Root.AddChild(hidden)
 
 	screen := ebiten.NewImage(800, 600)
-	updateWorldTransform(scene.root, identityTransform, 1.0, false, false)
+	updateWorldTransform(scene.Root, identityTransform, 1.0, false, false)
 	scene.Draw(screen)
 
-	if len(scene.pipeline.Commands) != 2 {
-		t.Errorf("culling disabled: command count = %d, want 2", len(scene.pipeline.Commands))
+	if len(scene.Pipeline.Commands) != 2 {
+		t.Errorf("culling disabled: command count = %d, want 2", len(scene.Pipeline.Commands))
 	}
 }
 
@@ -401,7 +401,7 @@ func TestSceneNewCamera(t *testing.T) {
 	cam1 := scene.NewCamera(Rect{X: 0, Y: 0, Width: 400, Height: 300})
 	cam2 := scene.NewCamera(Rect{X: 400, Y: 0, Width: 400, Height: 300})
 
-	cams := scene.Cameras()
+	cams := scene.Cameras
 	if len(cams) != 2 {
 		t.Fatalf("camera count = %d, want 2", len(cams))
 	}
@@ -416,8 +416,8 @@ func TestSceneRemoveCamera(t *testing.T) {
 	scene.NewCamera(Rect{X: 400, Y: 0, Width: 400, Height: 300})
 
 	scene.RemoveCamera(cam1)
-	if len(scene.Cameras()) != 1 {
-		t.Errorf("camera count after remove = %d, want 1", len(scene.Cameras()))
+	if len(scene.Cameras) != 1 {
+		t.Errorf("camera count after remove = %d, want 1", len(scene.Cameras))
 	}
 }
 
@@ -427,10 +427,10 @@ func TestMultiCamera_BothRender(t *testing.T) {
 	scene.NewCamera(Rect{X: 400, Y: 0, Width: 400, Height: 300})
 
 	sprite := NewSprite("s", TextureRegion{Width: 32, Height: 32, OriginalW: 32, OriginalH: 32})
-	scene.Root().AddChild(sprite)
+	scene.Root.AddChild(sprite)
 
 	screen := ebiten.NewImage(800, 300)
-	updateWorldTransform(scene.root, identityTransform, 1.0, false, false)
+	updateWorldTransform(scene.Root, identityTransform, 1.0, false, false)
 	scene.Draw(screen)
 	// Both cameras should render the sprite — we can verify that Draw didn't panic.
 }
@@ -449,10 +449,10 @@ func TestSceneUpdateRunsCameraUpdates(t *testing.T) {
 func TestNoCameraImplicitIdentity(t *testing.T) {
 	scene := NewScene()
 	sprite := NewSprite("s", TextureRegion{Width: 32, Height: 32, OriginalW: 32, OriginalH: 32})
-	scene.Root().AddChild(sprite)
+	scene.Root.AddChild(sprite)
 
 	screen := ebiten.NewImage(800, 600)
-	updateWorldTransform(scene.root, identityTransform, 1.0, false, false)
+	updateWorldTransform(scene.Root, identityTransform, 1.0, false, false)
 	scene.Draw(screen) // Should not panic — uses implicit identity camera
 }
 
@@ -502,12 +502,12 @@ func BenchmarkCulling_10000Nodes(b *testing.B) {
 			s.X_ = 5000
 			s.Y_ = 5000
 		}
-		scene.Root().AddChild(s)
+		scene.Root.AddChild(s)
 	}
 
 	screen := ebiten.NewImage(800, 600)
 	// Warm up: compute all transforms then draw
-	updateWorldTransform(scene.root, identityTransform, 1.0, false, false)
+	updateWorldTransform(scene.Root, identityTransform, 1.0, false, false)
 	scene.Draw(screen)
 
 	b.ReportAllocs()

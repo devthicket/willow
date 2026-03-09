@@ -13,7 +13,7 @@ import (
 // Each sprite gets a magenta placeholder TextureRegion (no atlas page needed).
 func setupBenchScene(n int) *Scene {
 	s := NewScene()
-	root := s.Root()
+	root := s.Root
 	region := TextureRegion{
 		Page:      magentaPlaceholderPage,
 		Width:     32,
@@ -49,7 +49,7 @@ func BenchmarkDraw_10000Sprites_Static(b *testing.B) {
 func BenchmarkDraw_10000Sprites_Rotating(b *testing.B) {
 	s := setupBenchScene(10000)
 	screen := ebiten.NewImage(1280, 720)
-	children := s.Root().Children()
+	children := s.Root.Children()
 
 	s.Draw(screen) // warmup
 
@@ -68,7 +68,7 @@ func BenchmarkDraw_10000Sprites_Rotating(b *testing.B) {
 func BenchmarkDraw_10000Sprites_AlphaVarying(b *testing.B) {
 	s := setupBenchScene(10000)
 	screen := ebiten.NewImage(1280, 720)
-	children := s.Root().Children()
+	children := s.Root.Children()
 
 	s.Draw(screen) // warmup
 
@@ -86,7 +86,7 @@ func BenchmarkDraw_10000Sprites_AlphaVarying(b *testing.B) {
 func BenchmarkDraw_10000Sprites_AlphaOnly(b *testing.B) {
 	s := setupBenchScene(10000)
 	screen := ebiten.NewImage(1280, 720)
-	children := s.Root().Children()
+	children := s.Root.Children()
 
 	s.Draw(screen) // warmup
 
@@ -119,7 +119,7 @@ func BenchmarkDraw_10000Sprites_Rotating_Coalesced(b *testing.B) {
 	s := setupBenchScene(10000)
 	s.SetBatchMode(BatchModeCoalesced)
 	screen := ebiten.NewImage(1280, 720)
-	children := s.Root().Children()
+	children := s.Root.Children()
 
 	s.Draw(screen) // warmup
 
@@ -138,7 +138,7 @@ func BenchmarkDraw_10000Sprites_AlphaVarying_Coalesced(b *testing.B) {
 	s := setupBenchScene(10000)
 	s.SetBatchMode(BatchModeCoalesced)
 	screen := ebiten.NewImage(1280, 720)
-	children := s.Root().Children()
+	children := s.Root.Children()
 
 	s.Draw(screen) // warmup
 
@@ -157,7 +157,7 @@ func BenchmarkDraw_10000Sprites_AlphaOnly_Coalesced(b *testing.B) {
 	s := setupBenchScene(10000)
 	s.SetBatchMode(BatchModeCoalesced)
 	screen := ebiten.NewImage(1280, 720)
-	children := s.Root().Children()
+	children := s.Root.Children()
 
 	s.Draw(screen) // warmup
 
@@ -188,7 +188,7 @@ func BenchmarkDraw_100000Sprites_Static(b *testing.B) {
 func BenchmarkDraw_100000Sprites_Rotating(b *testing.B) {
 	s := setupBenchScene(100000)
 	screen := ebiten.NewImage(1280, 720)
-	children := s.Root().Children()
+	children := s.Root.Children()
 	s.Draw(screen) // warmup
 
 	b.ResetTimer()
@@ -219,7 +219,7 @@ func BenchmarkDraw_100000Sprites_Rotating_Coalesced(b *testing.B) {
 	s := setupBenchScene(100000)
 	s.SetBatchMode(BatchModeCoalesced)
 	screen := ebiten.NewImage(1280, 720)
-	children := s.Root().Children()
+	children := s.Root.Children()
 	s.Draw(screen) // warmup
 
 	b.ResetTimer()
@@ -239,7 +239,7 @@ func BenchmarkDraw_100000Sprites_Rotating_Coalesced(b *testing.B) {
 // (CacheAsTree enabled) holding n sprites.
 func setupCacheAsTreeBenchScene(n int, mode CacheTreeMode) *Scene {
 	s := NewScene()
-	root := s.Root()
+	root := s.Root
 	container := NewContainer("cached")
 	root.AddChild(container)
 	region := TextureRegion{
@@ -292,7 +292,7 @@ func BenchmarkDraw_CacheAsTree_Manual_TextureSwap(b *testing.B) {
 	s.Draw(screen) // warmup: builds cache
 
 	// Pick 100 tiles to animate (same page, different UVs).
-	container := s.Root().ChildAt(0)
+	container := s.Root.ChildAt(0)
 	animated := container.Children()[:100]
 	frames := [2]TextureRegion{
 		{Page: magentaPlaceholderPage, X: 0, Y: 0, Width: 32, Height: 32, OriginalW: 32, OriginalH: 32},
@@ -320,7 +320,7 @@ func BenchmarkDraw_CacheAsTree_Auto_1PctMoving(b *testing.B) {
 	s.Draw(screen) // warmup
 
 	// 1% of sprites move each frame (triggers auto-invalidation).
-	container := s.Root().ChildAt(0)
+	container := s.Root.ChildAt(0)
 	movers := container.Children()[:100]
 
 	b.ResetTimer()
@@ -350,7 +350,7 @@ func BenchmarkDraw_CacheAsTree_Manual_ContainerMove(b *testing.B) {
 	screen := ebiten.NewImage(1280, 720)
 	s.Draw(screen) // warmup
 
-	container := s.Root().ChildAt(0)
+	container := s.Root.ChildAt(0)
 	b.ResetTimer()
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
@@ -390,7 +390,7 @@ func setupParticleDrawScene(mode BatchMode) *Scene {
 	for emitterNode.Emitter.Alive < cfg.MaxParticles {
 		emitterNode.Emitter.Update(1.0 / 60.0)
 	}
-	s.Root().AddChild(emitterNode)
+	s.Root.AddChild(emitterNode)
 	return s
 }
 
@@ -427,38 +427,38 @@ func BenchmarkTransform_10000Dirty(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		// Mark all transforms dirty.
-		markSubtreeDirty(s.Root())
-		updateWorldTransform(s.Root(), identityTransform, 1.0, false, false)
+		markSubtreeDirty(s.Root)
+		updateWorldTransform(s.Root, identityTransform, 1.0, false, false)
 	}
 }
 
 func BenchmarkTransform_10000Clean(b *testing.B) {
 	s := setupBenchScene(10000)
 	// Pre-compute so nothing is dirty.
-	updateWorldTransform(s.Root(), identityTransform, 1.0, true, true)
+	updateWorldTransform(s.Root, identityTransform, 1.0, true, true)
 
 	b.ResetTimer()
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		updateWorldTransform(s.Root(), identityTransform, 1.0, false, false)
+		updateWorldTransform(s.Root, identityTransform, 1.0, false, false)
 	}
 }
 
 func BenchmarkTransform_10000AlphaOnly(b *testing.B) {
 	s := setupBenchScene(10000)
 	// Pre-compute all transforms so they're clean.
-	updateWorldTransform(s.Root(), identityTransform, 1.0, true, true)
+	updateWorldTransform(s.Root, identityTransform, 1.0, true, true)
 
 	b.ResetTimer()
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		// Mark only alpha dirty on every node.
-		children := s.Root().Children()
+		children := s.Root.Children()
 		for _, child := range children {
 			child.AlphaDirty = true
 		}
-		s.Root().AlphaDirty = true
-		updateWorldTransform(s.Root(), identityTransform, 1.0, false, false)
+		s.Root.AlphaDirty = true
+		updateWorldTransform(s.Root, identityTransform, 1.0, false, false)
 	}
 }
 
@@ -472,19 +472,19 @@ func BenchmarkCommandSort_10000(b *testing.B) {
 	s.Draw(screen)
 
 	// Save commands for reset.
-	saved := make([]RenderCommand, len(s.pipeline.Commands))
-	copy(saved, s.pipeline.Commands)
+	saved := make([]RenderCommand, len(s.Pipeline.Commands))
+	copy(saved, s.Pipeline.Commands)
 
 	// Warm up sortBuf to high-water mark.
-	render.MergeSort(s.pipeline.Commands, &s.pipeline.SortBuf)
+	render.MergeSort(s.Pipeline.Commands, &s.Pipeline.SortBuf)
 
 	b.ResetTimer()
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		// Restore unsorted commands.
-		s.pipeline.Commands = s.pipeline.Commands[:len(saved)]
-		copy(s.pipeline.Commands, saved)
-		render.MergeSort(s.pipeline.Commands, &s.pipeline.SortBuf)
+		s.Pipeline.Commands = s.Pipeline.Commands[:len(saved)]
+		copy(s.Pipeline.Commands, saved)
+		render.MergeSort(s.Pipeline.Commands, &s.Pipeline.SortBuf)
 	}
 }
 
@@ -529,14 +529,14 @@ func BenchmarkHitTest_1000Interactable(b *testing.B) {
 		n.Interactable = true
 		n.X_ = float64(i%100) * 12
 		n.Y_ = float64(i/100) * 12
-		s.Root().AddChild(n)
+		s.Root.AddChild(n)
 	}
-	updateWorldTransform(s.root, identityTransform, 1.0, true, true)
+	updateWorldTransform(s.Root, identityTransform, 1.0, true, true)
 
 	b.ResetTimer()
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		s.hitTest(500, 50)
+		s.Input.HitTest(s.Root, 500, 50)
 	}
 }
 
@@ -624,7 +624,7 @@ func BenchmarkParticle_MaxEmitters(b *testing.B) {
 
 func BenchmarkFilter_BlurOutline(b *testing.B) {
 	s := NewScene()
-	root := s.Root()
+	root := s.Root
 	region := TextureRegion{
 		Page:      magentaPlaceholderPage,
 		Width:     32,
@@ -689,7 +689,7 @@ func setupMultiPageScene(n int) *Scene {
 	for i, p := range pages {
 		s.RegisterPage(i, p)
 	}
-	root := s.Root()
+	root := s.Root
 	for i := 0; i < n; i++ {
 		region := TextureRegion{
 			Page:      uint16(i % 4),
@@ -721,7 +721,7 @@ func setupMixedScene(nSprites, nEmitters int) *Scene {
 	for i, p := range pages {
 		s.RegisterPage(i, p)
 	}
-	root := s.Root()
+	root := s.Root
 
 	spritesPerGroup := nSprites / (nEmitters + 1)
 	spriteIdx := 0
@@ -796,7 +796,7 @@ func setupWorstCaseScene(n int) *Scene {
 	for i, p := range pages {
 		s.RegisterPage(i, p)
 	}
-	root := s.Root()
+	root := s.Root
 	for i := 0; i < n; i++ {
 		region := TextureRegion{
 			Page:      uint16(i % 2),
@@ -906,7 +906,7 @@ func setupRealWorldAtlasScene(runLen, runs int) *Scene {
 	for i, p := range pages {
 		s.RegisterPage(i, p)
 	}
-	root := s.Root()
+	root := s.Root
 	total := runLen * runs
 	for i := 0; i < total; i++ {
 		// Determine which page based on which run we're in.

@@ -42,7 +42,7 @@ func TestMaskNodeNotInSceneTree(t *testing.T) {
 	target := NewSprite("target", TextureRegion{Width: 32, Height: 32})
 	maskNode := NewSprite("mask", TextureRegion{Width: 32, Height: 32})
 	target.SetMask(maskNode)
-	s.Root().AddChild(target)
+	s.Root.AddChild(target)
 
 	// The mask node should not have a parent (it's not in the tree).
 	if maskNode.Parent != nil {
@@ -78,15 +78,15 @@ func TestSpecialNodeWithFilterSkipsNormalEmission(t *testing.T) {
 	s := NewScene()
 	n := NewSprite("s", TextureRegion{Width: 32, Height: 32, OriginalW: 32, OriginalH: 32})
 	n.Filters = []any{NewColorMatrixFilter()}
-	s.Root().AddChild(n)
+	s.Root.AddChild(n)
 
 	traverseScene(s)
 
 	// Should emit exactly 1 command (the directImage command from renderSpecialNode).
-	if len(s.pipeline.Commands) != 1 {
-		t.Fatalf("commands = %d, want 1", len(s.pipeline.Commands))
+	if len(s.Pipeline.Commands) != 1 {
+		t.Fatalf("commands = %d, want 1", len(s.Pipeline.Commands))
 	}
-	if s.pipeline.Commands[0].DirectImage == nil {
+	if s.Pipeline.Commands[0].DirectImage == nil {
 		t.Error("command should have directImage set for filtered node")
 	}
 }
@@ -95,14 +95,14 @@ func TestSpecialNodeWithCacheEmitsDirectImage(t *testing.T) {
 	s := NewScene()
 	n := NewSprite("s", TextureRegion{Width: 32, Height: 32, OriginalW: 32, OriginalH: 32})
 	n.SetCacheAsTexture(true)
-	s.Root().AddChild(n)
+	s.Root.AddChild(n)
 
 	traverseScene(s)
 
-	if len(s.pipeline.Commands) != 1 {
-		t.Fatalf("commands = %d, want 1", len(s.pipeline.Commands))
+	if len(s.Pipeline.Commands) != 1 {
+		t.Fatalf("commands = %d, want 1", len(s.Pipeline.Commands))
 	}
-	if s.pipeline.Commands[0].DirectImage == nil {
+	if s.Pipeline.Commands[0].DirectImage == nil {
 		t.Error("command should have directImage set for cached node")
 	}
 }
@@ -123,7 +123,7 @@ func BenchmarkMaskedNode(b *testing.B) {
 	target := NewSprite("target", region)
 	maskNode := NewSprite("mask", region)
 	target.SetMask(maskNode)
-	s.Root().AddChild(target)
+	s.Root.AddChild(target)
 
 	s.Draw(screen) // warmup
 

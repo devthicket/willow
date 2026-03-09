@@ -1,6 +1,7 @@
 package willow
 
 import (
+	"github.com/phanxgames/willow/internal/core"
 	"github.com/phanxgames/willow/internal/particle"
 )
 
@@ -13,6 +14,11 @@ type ParticleEmitter = particle.Emitter
 // newParticleEmitter creates a ParticleEmitter with a preallocated pool.
 func newParticleEmitter(cfg EmitterConfig) *ParticleEmitter {
 	return particle.NewEmitter(cfg)
+}
+
+// updateNodesAndParticles delegates to core.UpdateNodesAndParticles.
+func updateNodesAndParticles(n *Node, dt float64) {
+	core.UpdateNodesAndParticles(n, dt)
 }
 
 // lerp linearly interpolates between a and b by t.

@@ -246,14 +246,14 @@ func TestMeshTraverseEmitsTransformedVerts(t *testing.T) {
 	n := NewMesh("m", nil, verts, inds)
 	n.X_ = 50
 	n.Y_ = 100
-	s.Root().AddChild(n)
+	s.Root.AddChild(n)
 
 	traverseScene(s)
 
-	if len(s.pipeline.Commands) != 1 {
-		t.Fatalf("commands = %d, want 1", len(s.pipeline.Commands))
+	if len(s.Pipeline.Commands) != 1 {
+		t.Fatalf("commands = %d, want 1", len(s.Pipeline.Commands))
 	}
-	cmd := &s.pipeline.Commands[0]
+	cmd := &s.Pipeline.Commands[0]
 	if cmd.Type != CommandMesh {
 		t.Fatalf("Type = %d, want CommandMesh", cmd.Type)
 	}
@@ -272,12 +272,12 @@ func TestMeshTraverseEmitsTransformedVerts(t *testing.T) {
 func TestMeshTraverseEmptySkipped(t *testing.T) {
 	s := NewScene()
 	n := NewMesh("empty", nil, nil, nil)
-	s.Root().AddChild(n)
+	s.Root.AddChild(n)
 
 	traverseScene(s)
 
-	if len(s.pipeline.Commands) != 0 {
-		t.Errorf("empty mesh should emit 0 commands, got %d", len(s.pipeline.Commands))
+	if len(s.Pipeline.Commands) != 0 {
+		t.Errorf("empty mesh should emit 0 commands, got %d", len(s.Pipeline.Commands))
 	}
 }
 
@@ -290,14 +290,14 @@ func TestMeshTraverseColorTint(t *testing.T) {
 	n := NewMesh("m", nil, verts, inds)
 	n.Color_ = RGBA(0.5, 0.8, 1.0, 1.0)
 	n.Alpha_ = 0.5
-	s.Root().AddChild(n)
+	s.Root.AddChild(n)
 
 	traverseScene(s)
 
-	if len(s.pipeline.Commands) != 1 {
-		t.Fatalf("commands = %d, want 1", len(s.pipeline.Commands))
+	if len(s.Pipeline.Commands) != 1 {
+		t.Fatalf("commands = %d, want 1", len(s.Pipeline.Commands))
 	}
-	v := &s.pipeline.Commands[0].MeshVerts[0]
+	v := &s.Pipeline.Commands[0].MeshVerts[0]
 	// worldAlpha = 1.0 * 0.5 = 0.5, tint = {0.5, 0.8, 1.0, 1.0*0.5=0.5}
 	// ColorR = 1.0 * 0.5 * 0.5 = 0.25
 	// ColorG = 1.0 * 0.8 * 0.5 = 0.40
