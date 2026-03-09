@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/phanxgames/willow/internal/node"
 )
 
 // EntityStore is the interface for optional ECS integration.
@@ -439,6 +440,7 @@ func (s *Scene) SetEntityStore(store EntityStore) {
 func (s *Scene) SetDebugMode(enabled bool) {
 	s.debug = enabled
 	globalDebug = enabled
+	node.Debug = enabled
 }
 
 // SetBatchMode sets the draw-call batching strategy.

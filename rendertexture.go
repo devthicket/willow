@@ -4,6 +4,7 @@ import (
 	"image"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/phanxgames/willow/internal/node"
 )
 
 // RenderTexture is a persistent offscreen canvas that can be attached to a
@@ -64,8 +65,7 @@ func (rt *RenderTexture) DrawImageAt(src *ebiten.Image, x, y float64, blend Blen
 // NewSpriteNode creates a NodeTypeSprite with customImage pre-set to this
 // texture. The returned node will display the RenderTexture contents.
 func (rt *RenderTexture) NewSpriteNode(name string) *Node {
-	n := &Node{Name: name, Type: NodeTypeSprite}
-	nodeDefaults(n)
+	n := node.NewNode(name, NodeTypeSprite)
 	n.CustomImage_ = rt.image
 	return n
 }

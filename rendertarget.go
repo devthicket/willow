@@ -67,45 +67,10 @@ func nextPowerOfTwo(n int) int {
 	return 1 << int(math.Ceil(math.Log2(float64(n))))
 }
 
-// --- CacheAsTexture API ---
-
-// SetCacheAsTexture enables or disables caching of this node's subtree as a
-// single texture. When enabled, the subtree is rendered to an offscreen image
-// and reused across frames until InvalidateCache is called.
-func (n *Node) SetCacheAsTexture(enabled bool) {
-	if n.CacheEnabled == enabled {
-		return
-	}
-	n.CacheEnabled = enabled
-	if !enabled {
-		if n.CacheTexture != nil {
-			n.CacheTexture.Deallocate()
-			n.CacheTexture = nil
-		}
-		n.CacheDirty = false
-	} else {
-		n.CacheDirty = true
-	}
-	invalidateAncestorCache(n)
-}
-
-// InvalidateCache marks the cached texture as dirty so it will be re-rendered
-// on the next frame. No-op if caching is not enabled.
-func (n *Node) InvalidateCache() {
-	if n.CacheEnabled {
-		n.CacheDirty = true
-	}
-}
-
-// IsCacheEnabled reports whether subtree caching is enabled for this node.
-func (n *Node) IsCacheEnabled() bool {
-	return n.CacheEnabled
-}
-
-// ToTexture renders this node's subtree to a new offscreen image and returns it.
+// ToTexture renders a node's subtree to a new offscreen image and returns it.
 // The caller owns the returned image (it is NOT pooled). Requires a Scene
 // reference to use the render pipeline.
-func (n *Node) ToTexture(s *Scene) *ebiten.Image {
+func ToTexture(n *Node, s *Scene) *ebiten.Image {
 	bounds := subtreeBounds(n)
 	w := int(math.Ceil(bounds.Width))
 	h := int(math.Ceil(bounds.Height))

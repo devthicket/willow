@@ -191,7 +191,7 @@ func TestMeshAABBDirtyOnNew(t *testing.T) {
 		t.Error("meshAABBDirty should be true after NewMesh")
 	}
 
-	n.recomputeMeshAABB()
+	recomputeMeshAABB(n)
 	if n.Mesh.AabbDirty {
 		t.Error("meshAABBDirty should be false after recompute")
 	}

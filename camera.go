@@ -280,7 +280,7 @@ func nodeDimensions(n *Node) (w, h float64) {
 		}
 		return float64(n.TextureRegion_.OriginalW), float64(n.TextureRegion_.OriginalH)
 	case NodeTypeMesh:
-		n.recomputeMeshAABB()
+		recomputeMeshAABB(n)
 		return n.Mesh.Aabb.Width, n.Mesh.Aabb.Height
 	case NodeTypeParticleEmitter:
 		if n.Emitter != nil {

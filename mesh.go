@@ -80,14 +80,8 @@ func ensureTransformedVerts(n *Node) []ebiten.Vertex {
 	return n.Mesh.TransformedVerts
 }
 
-// InvalidateMeshAABB marks the mesh's cached AABB as needing recomputation.
-// Call this after modifying Vertices.
-func (n *Node) InvalidateMeshAABB() {
-	n.Mesh.AabbDirty = true
-}
-
 // recomputeMeshAABB recomputes the cached local-space AABB if dirty.
-func (n *Node) recomputeMeshAABB() {
+func recomputeMeshAABB(n *Node) {
 	if !n.Mesh.AabbDirty {
 		return
 	}
@@ -113,7 +107,7 @@ func ensureWhitePixel() *ebiten.Image {
 // the fact that mesh vertices may not start at origin (0,0). It shifts the
 // transform by the AABB origin before computing worldAABB.
 func meshWorldAABB(n *Node, transform [6]float64) Rect {
-	n.recomputeMeshAABB()
+	recomputeMeshAABB(n)
 	aabb := n.Mesh.Aabb
 	if aabb.Width == 0 && aabb.Height == 0 {
 		return Rect{}
@@ -130,7 +124,7 @@ func meshWorldAABB(n *Node, transform [6]float64) Rect {
 // camera culling path. The transform parameter is the coordinate-space
 // transform to use (e.g. view*world for culling in screen space).
 func meshWorldAABBOffset(n *Node, transform [6]float64) Rect {
-	n.recomputeMeshAABB()
+	recomputeMeshAABB(n)
 	aabb := n.Mesh.Aabb
 	if aabb.Width == 0 && aabb.Height == 0 {
 		return Rect{}

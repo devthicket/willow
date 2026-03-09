@@ -109,7 +109,7 @@ func TestRopeInvalidatesMeshAABB(t *testing.T) {
 	points := []Vec2{{X: 0, Y: 0}, {X: 10, Y: 0}}
 	r := NewRope("rope", nil, points, RopeConfig{Width: 4})
 	n := r.Node()
-	n.recomputeMeshAABB()
+	recomputeMeshAABB(n)
 	if n.Mesh.AabbDirty {
 		t.Error("AABB should not be dirty after recompute")
 	}
@@ -436,19 +436,19 @@ func TestDistortionGridUVStability(t *testing.T) {
 func TestDistortionGridInvalidatesAABB(t *testing.T) {
 	g := NewDistortionGrid("grid", nil, 2, 2)
 	n := g.Node()
-	n.recomputeMeshAABB()
+	recomputeMeshAABB(n)
 	g.SetVertex(0, 0, 5, 5)
 	if !n.Mesh.AabbDirty {
 		t.Error("SetVertex should invalidate AABB")
 	}
 
-	n.recomputeMeshAABB()
+	recomputeMeshAABB(n)
 	g.SetAllVertices(func(c, r int, rx, ry float64) (float64, float64) { return 0, 0 })
 	if !n.Mesh.AabbDirty {
 		t.Error("SetAllVertices should invalidate AABB")
 	}
 
-	n.recomputeMeshAABB()
+	recomputeMeshAABB(n)
 	g.Reset()
 	if !n.Mesh.AabbDirty {
 		t.Error("Reset should invalidate AABB")
