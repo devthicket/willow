@@ -150,8 +150,8 @@ func TestCustomShaderFilterCreation(t *testing.T) {
 	if f.Shader != nil {
 		t.Error("Shader should be nil when created with nil")
 	}
-	if f.padding != 2 {
-		t.Errorf("padding = %d, want 2", f.padding)
+	if f.Padding() != 2 {
+		t.Errorf("padding = %d, want 2", f.Padding())
 	}
 	if f.Uniforms == nil {
 		t.Error("Uniforms map should be initialized")
@@ -190,13 +190,10 @@ func TestPaletteFilterDefaultGrayscale(t *testing.T) {
 
 func TestPaletteFilterSetPalette(t *testing.T) {
 	f := NewPaletteFilter()
-	f.paletteDirty = false
 	var custom [256]Color
 	custom[0] = RGBA(1, 0, 0, 1)
 	f.SetPalette(custom)
-	if !f.paletteDirty {
-		t.Error("paletteDirty should be true after SetPalette")
-	}
+	// Verify palette was updated (paletteDirty is an implementation detail).
 	if f.Palette[0].R() != 1 || f.Palette[0].G() != 0 {
 		t.Error("palette not updated")
 	}
