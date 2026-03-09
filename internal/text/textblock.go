@@ -63,6 +63,7 @@ type GlyphPos struct {
 func (tb *TextBlock) Invalidate() {
 	tb.LayoutDirty = true
 	tb.UniformsDirty = true
+	tb.SdfVertCount = 0
 }
 
 // EffectiveLineHeight returns the effective line height in atlas pixels.
@@ -119,22 +120,30 @@ func (tb *TextBlock) MeasureDisplay(text string) (width, height float64) {
 }
 
 // Layout recomputes glyph positions if dirty. Returns the cached lines.
-// spriteFont and pixelFont are type-specific layout functions called based on font type.
+// Dispatches to LayoutSDF or LayoutPixel based on font type.
 func (tb *TextBlock) Layout() []TextLine {
 	if !tb.LayoutDirty {
 		return tb.Lines
 	}
-	tb.LayoutDirty = false
 
 	if tb.Font == nil {
+		tb.LayoutDirty = false
 		tb.Lines = tb.Lines[:0]
 		tb.MeasuredW = 0
 		tb.MeasuredH = 0
 		return tb.Lines
 	}
 
-	// Layout is delegated to font-specific implementations via LayoutSDF/LayoutPixel
-	// which are called by the owning package.
+	switch f := tb.Font.(type) {
+	case *DistanceFieldFont:
+		tb.LayoutSDF(f.GlyphLookup, f.Kern, f.Page())
+	case *PixelFont:
+		advW := f.CellW - f.PadLeft - f.PadRight
+		advH := f.CellH - f.PadTop - f.PadBottom
+		tb.LayoutPixel(f.GlyphLookup, f.Page, f.CellW, f.CellH, f.PadLeft, f.PadTop, advW, advH)
+	}
+	tb.LayoutDirty = false
+
 	return tb.Lines
 }
 

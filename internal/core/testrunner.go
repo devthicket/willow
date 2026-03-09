@@ -9,6 +9,8 @@ import (
 type TestStep struct {
 	Action string  `json:"action"`
 	Label  string  `json:"label,omitempty"`
+	Text   string  `json:"text,omitempty"`
+	Key    string  `json:"key,omitempty"`
 	X      float64 `json:"x,omitempty"`
 	Y      float64 `json:"y,omitempty"`
 	FromX  float64 `json:"fromX,omitempty"`
@@ -50,9 +52,11 @@ func (r *TestRunner) Done() bool {
 // StepAction is the interface that Scene uses to execute test steps.
 // The Scene provides screenshot, inject, and queue access.
 type StepAction struct {
-	Screenshot func(label string)
+	Screenshot  func(label string)
 	InjectClick func(x, y float64)
 	InjectDrag  func(fromX, fromY, toX, toY float64, frames int)
+	InjectText  func(text string)
+	InjectKey   func(key string)
 	QueueLen    func() int
 }
 
@@ -87,6 +91,14 @@ func (r *TestRunner) Step(a StepAction) {
 			frames = 2
 		}
 		a.InjectDrag(st.FromX, st.FromY, st.ToX, st.ToY, frames)
+	case "type":
+		if a.InjectText != nil {
+			a.InjectText(st.Text)
+		}
+	case "key":
+		if a.InjectKey != nil {
+			a.InjectKey(st.Key)
+		}
 	case "wait":
 		if st.Frames > 0 {
 			r.WaitCount = st.Frames - 1

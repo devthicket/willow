@@ -60,6 +60,10 @@ type Scene struct {
 	// AntiAlias enables anti-aliased edges on DrawTriangles calls.
 	AntiAlias bool
 
+	// Injected keyboard input for test automation.
+	InjectedChars []rune       // synthetic characters consumed by AppendInjectedChars
+	InjectedKeys  []ebiten.Key // synthetic key presses consumed by IsInjectedKeyPressed
+
 	// User callbacks set via SetUpdateFunc / SetPostDrawFunc.
 	UpdateFunc   func() error
 	PostDrawFunc func(screen *ebiten.Image)
@@ -357,6 +361,42 @@ func (s *Scene) InjectDrag(fromX, fromY, toX, toY float64, frames int) {
 	s.Input.InjectDrag(fromX, fromY, toX, toY, frames)
 }
 
+// InjectText queues synthetic character input. Each rune is appended to
+// InjectedChars, consumed one batch per frame by AppendInjectedChars.
+func (s *Scene) InjectText(text string) {
+	s.InjectedChars = append(s.InjectedChars, []rune(text)...)
+}
+
+// InjectKey queues a synthetic key press consumed by IsInjectedKeyPressed.
+func (s *Scene) InjectKey(key ebiten.Key) {
+	s.InjectedKeys = append(s.InjectedKeys, key)
+}
+
+// AppendInjectedChars appends all injected characters to buf, then clears
+// the queue. Mirrors ebiten.AppendInputChars for synthetic input.
+func (s *Scene) AppendInjectedChars(buf []rune) []rune {
+	buf = append(buf, s.InjectedChars...)
+	s.InjectedChars = s.InjectedChars[:0]
+	return buf
+}
+
+// IsInjectedKeyPressed checks if key is in the injected keys queue and
+// removes it. Returns true if found.
+func (s *Scene) IsInjectedKeyPressed(key ebiten.Key) bool {
+	for i, k := range s.InjectedKeys {
+		if k == key {
+			s.InjectedKeys = append(s.InjectedKeys[:i], s.InjectedKeys[i+1:]...)
+			return true
+		}
+	}
+	return false
+}
+
+// HasInjectedInput returns true if there are any pending injected chars or keys.
+func (s *Scene) HasInjectedInput() bool {
+	return len(s.InjectedChars) > 0 || len(s.InjectedKeys) > 0
+}
+
 // --- Update ---
 
 // Update processes input, advances animations, and simulates particles.
@@ -377,7 +417,11 @@ func (s *Scene) Update() {
 			Screenshot:  s.Screenshot,
 			InjectClick: s.Input.InjectClick,
 			InjectDrag:  s.Input.InjectDrag,
-			QueueLen:    func() int { return len(s.Input.InjectQueue) },
+			InjectText:  s.InjectText,
+			InjectKey:   func(key string) { s.InjectKey(KeyFromName(key)) },
+			QueueLen: func() int {
+				return len(s.Input.InjectQueue) + len(s.InjectedChars) + len(s.InjectedKeys)
+			},
 		})
 	}
 
