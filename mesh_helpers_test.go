@@ -305,13 +305,21 @@ func TestRopeUpdateBufferReuse(t *testing.T) {
 		End:       &end,
 	})
 	r.Update()
-	ptsCap := cap(r.ptsBuf)
 
-	// Update again with fewer segments  -  buffer should not shrink.
-	r.config.Segments = 5
+	// Update again with fewer segments via Config() accessor.
+	// The vertex/index backing arrays should not reallocate.
+	n := r.Node()
+	vertCapBefore := cap(n.Mesh.Vertices)
+	indCapBefore := cap(n.Mesh.Indices)
+
+	r.Config().Segments = 5
 	r.Update()
-	if cap(r.ptsBuf) != ptsCap {
-		t.Errorf("ptsBuf cap changed from %d to %d", ptsCap, cap(r.ptsBuf))
+
+	if cap(n.Mesh.Vertices) != vertCapBefore {
+		t.Errorf("vertex backing array reallocated: was %d, now %d", vertCapBefore, cap(n.Mesh.Vertices))
+	}
+	if cap(n.Mesh.Indices) != indCapBefore {
+		t.Errorf("index backing array reallocated: was %d, now %d", indCapBefore, cap(n.Mesh.Indices))
 	}
 }
 
