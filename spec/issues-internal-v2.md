@@ -160,11 +160,36 @@ KeyModifiers, TextAlign, TextureRegion, CacheTreeMode, HitShape aliased.
 - Deleted duplicate methods from transform.go, rendertarget.go, mesh.go, mask.go
 - Net: -1,273 lines in the atomic swap commit
 
+### [done] Render type aliases from internal/render
+- `RenderCommand = render.RenderCommand`
+- `CommandType = render.CommandType`
+- `color32 = render.Color32`
+- `BatchMode = render.BatchMode`
+- `batchKey = render.BatchKey`
+- `cacheTreeData = render.CacheTreeData`
+- `cachedCmd = render.CachedCmd`
+- `renderTexturePool = render.RenderTexturePool`
+- Delegated mergeSort, multiplyAffine32, invertAffine32, commandBatchKey
+- Exported all RenderCommand field accesses
+
+### [done] Function pointers wired
+- render.AtlasPageFn, EnsureMagentaImageFn, ShouldCullFn, BlendMaskFn
+- render.PageFn, MagentaImageFn, NewSpriteFn
+- input.NodeDimensionsFn, RebuildSortedChildrenFn
+- Per-scene: input.ScreenToWorldFn, input.EmitInteractionEventFn
+
+### [done] TileMapLayer CustomEmit accepts *Pipeline or *Scene
+Type switch in emitCommands for forward-compatibility with Pipeline.Traverse.
+
 ### Root facade — remaining work
-- Delete root files fully replaced by internal/ (render.go, batch.go,
-  camera.go, input.go, text.go, filter.go, lightlayer.go, tilemap.go,
-  atlas.go, etc.) — requires Scene to delegate to core.Scene
-- Wire remaining ~10 function pointers (render/, input/ packages)
+- Embed render.Pipeline in Scene, delegate traverse/sort/submit
+- Delete root's traverse, renderSpecialNode, replayCacheAsTree,
+  buildCacheAsTree, emitNodeCommandInline, rebuildSortedChildren
+- Delete root's submitBatches, submitBatchesCoalesced and batch helpers
+- Delete root's debug stats (countBatches, countDrawCalls, etc.)
+- Rewrite Scene.Draw/drawWithCamera to use Pipeline
+- Delete remaining root duplicates (camera.go, input.go, text.go,
+  filter.go, lightlayer.go, atlas.go, etc.)
 - Rewrite Scene to wrap core.Scene
 - Integration tests
 - Phase 10: cleanup, benchmarks, docs

@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/phanxgames/willow/internal/render"
 )
 
 // GID flag bits (same convention as Tiled TMX format).
@@ -435,7 +436,20 @@ func (l *TileMapLayer) lateRebuildCheck() {
 // It transforms vertex positions from world to screen space and emits
 // CommandTilemap commands into the scene's command pipeline.
 func (l *TileMapLayer) emitCommands(sAny any, treeOrder *int) {
-	s := sAny.(*Scene)
+	// Accept either *render.Pipeline (internal path) or *Scene (legacy path).
+	var commands *[]RenderCommand
+	var viewTransform [6]float64
+	switch v := sAny.(type) {
+	case *render.Pipeline:
+		commands = &v.Commands
+		viewTransform = v.ViewTransform
+	case *Scene:
+		commands = &v.commands
+		viewTransform = v.viewTransform
+	default:
+		return
+	}
+
 	l.lateRebuildCheck()
 
 	if l.tileCount == 0 || l.atlasImage == nil {
@@ -457,7 +471,7 @@ func (l *TileMapLayer) emitCommands(sAny any, treeOrder *int) {
 	th := float32(l.viewport.TileHeight)
 
 	// View transform for world-to-screen conversion.
-	vt := s.viewTransform
+	vt := viewTransform
 	va, vb := float32(vt[0]), float32(vt[1])
 	vc, vd := float32(vt[2]), float32(vt[3])
 	vtx, vty := float32(vt[4]), float32(vt[5])
@@ -518,7 +532,7 @@ func (l *TileMapLayer) emitCommands(sAny any, treeOrder *int) {
 		batchTiles := end - offset
 
 		*treeOrder++
-		s.commands = append(s.commands, RenderCommand{
+		*commands = append(*commands, RenderCommand{
 			Type:         CommandTilemap,
 			RenderLayer:  l.node.RenderLayer,
 			GlobalOrder:  l.node.GlobalOrder,
