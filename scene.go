@@ -404,7 +404,7 @@ func (s *Scene) registerTween(g *TweenGroup) {
 func (s *Scene) tickTweens(dt float32) {
 	n := 0
 	for _, g := range s.tweens {
-		g.tick(dt)
+		g.Tick(dt)
 		if !g.Done {
 			s.tweens[n] = g
 			n++
