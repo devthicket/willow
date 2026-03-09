@@ -107,6 +107,14 @@ func (ll *LightLayer) Node() *node.Node {
 	return ll.node_
 }
 
+// RenderTextureImage returns the underlying *ebiten.Image of the render texture.
+func (ll *LightLayer) RenderTextureImage() *ebiten.Image {
+	if ll.rt == nil || RenderTextureImageFn == nil {
+		return nil
+	}
+	return RenderTextureImageFn(ll.rt)
+}
+
 // AddLight adds a light to the layer.
 func (ll *LightLayer) AddLight(l *Light) {
 	ll.lights = append(ll.lights, l)

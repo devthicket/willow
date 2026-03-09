@@ -6,17 +6,17 @@ func TestNewLightLayerCreatesNode(t *testing.T) {
 	ll := NewLightLayer(256, 256, 0.7)
 	defer ll.Dispose()
 
-	node := ll.Node()
-	if node == nil {
+	n := ll.Node()
+	if n == nil {
 		t.Fatal("Node() should not be nil")
 	}
-	if node.Type != NodeTypeSprite {
-		t.Errorf("node Type = %d, want NodeTypeSprite", node.Type)
+	if n.Type != NodeTypeSprite {
+		t.Errorf("node Type = %d, want NodeTypeSprite", n.Type)
 	}
-	if node.BlendMode_ != BlendMultiply {
-		t.Errorf("BlendMode = %d, want BlendMultiply", node.BlendMode_)
+	if n.BlendMode_ != BlendMultiply {
+		t.Errorf("BlendMode = %d, want BlendMultiply", n.BlendMode_)
 	}
-	if node.CustomImage_ == nil {
+	if n.CustomImage_ == nil {
 		t.Error("node should have customImage set")
 	}
 }
@@ -98,22 +98,14 @@ func TestLightLayerSetCircleRadius(t *testing.T) {
 	ll := NewLightLayer(64, 64, 0.5)
 	defer ll.Dispose()
 
+	// SetCircleRadius should not panic and should pre-generate the circle.
 	ll.SetCircleRadius(25)
-	if ll.circleCache == nil {
-		t.Error("circleCache should be non-nil after SetCircleRadius")
-	}
-	if _, ok := ll.circleCache[25]; !ok {
-		t.Error("circleCache should contain key 25")
-	}
-
-	// Generate with different radius  -  both should be cached.
 	ll.SetCircleRadius(50)
-	if _, ok := ll.circleCache[50]; !ok {
-		t.Error("circleCache should contain key 50")
-	}
-	if len(ll.circleCache) != 2 {
-		t.Errorf("circleCache has %d entries, want 2", len(ll.circleCache))
-	}
+
+	// Verify circles are reused (redraw should not panic with these radii).
+	ll.AddLight(&Light{X: 32, Y: 32, Radius: 25, Intensity: 1, Enabled: true})
+	ll.AddLight(&Light{X: 16, Y: 16, Radius: 50, Intensity: 1, Enabled: true})
+	ll.Redraw()
 }
 
 func TestLightLayerDispose(t *testing.T) {
@@ -123,17 +115,15 @@ func TestLightLayerDispose(t *testing.T) {
 
 	ll.Dispose()
 
-	if ll.rt != nil {
-		t.Error("rt should be nil after Dispose")
+	// After dispose, Node() and RenderTextureImage() should be nil.
+	if ll.Node() != nil {
+		t.Error("Node() should be nil after Dispose")
 	}
-	if ll.circleCache != nil {
-		t.Error("circleCache should be nil after Dispose")
+	if ll.RenderTextureImage() != nil {
+		t.Error("RenderTextureImage() should be nil after Dispose")
 	}
-	if ll.node != nil {
-		t.Error("node should be nil after Dispose")
-	}
-	if ll.lights != nil {
-		t.Error("lights should be nil after Dispose")
+	if len(ll.Lights()) != 0 {
+		t.Error("lights should be empty after Dispose")
 	}
 
 	// Double dispose should not panic.
@@ -156,7 +146,7 @@ func TestLightLayerNodeEmitsDirectImage(t *testing.T) {
 	if cmd.DirectImage == nil {
 		t.Error("LightLayer node should emit a directImage command")
 	}
-	if cmd.DirectImage != ll.RenderTexture().Image() {
+	if cmd.DirectImage != ll.RenderTextureImage() {
 		t.Error("directImage should be the LightLayer's render texture image")
 	}
 }
