@@ -67,24 +67,24 @@ func TestAtlasManagerRetainRelease(t *testing.T) {
 
 	am.Retain(0)
 	am.Retain(0)
-	if am.refs[0] != 2 {
-		t.Errorf("refs[0] = %d, want 2", am.refs[0])
+	if am.Refs[0] != 2 {
+		t.Errorf("refs[0] = %d, want 2", am.Refs[0])
 	}
 
 	am.Release(0)
-	if am.refs[0] != 1 {
-		t.Errorf("refs[0] = %d, want 1", am.refs[0])
+	if am.Refs[0] != 1 {
+		t.Errorf("refs[0] = %d, want 1", am.Refs[0])
 	}
 
 	am.Release(0)
-	if am.refs[0] != 0 {
-		t.Errorf("refs[0] = %d, want 0", am.refs[0])
+	if am.Refs[0] != 0 {
+		t.Errorf("refs[0] = %d, want 0", am.Refs[0])
 	}
 
 	// Release below zero should not go negative.
 	am.Release(0)
-	if am.refs[0] != 0 {
-		t.Errorf("refs[0] = %d, want 0 (should not go negative)", am.refs[0])
+	if am.Refs[0] != 0 {
+		t.Errorf("refs[0] = %d, want 0 (should not go negative)", am.Refs[0])
 	}
 
 	// Release out of range should not panic.
@@ -100,13 +100,13 @@ func TestAtlasManagerSetStatic(t *testing.T) {
 	am.RegisterPage(0, nil)
 
 	am.SetStatic(0)
-	if !am.static[0] {
+	if !am.Static[0] {
 		t.Error("page 0 should be static")
 	}
 
 	// SetStatic on unregistered index should grow slices without panic.
 	am.SetStatic(5)
-	if !am.static[5] {
+	if !am.Static[5] {
 		t.Error("page 5 should be static")
 	}
 }
@@ -118,11 +118,11 @@ func TestAtlasManagerRetainGrowsSlice(t *testing.T) {
 	am := atlasManager()
 	// Retain on an index beyond current refs length should grow without panic.
 	am.Retain(3)
-	if len(am.refs) < 4 {
-		t.Errorf("refs length = %d, want >= 4", len(am.refs))
+	if len(am.Refs) < 4 {
+		t.Errorf("refs length = %d, want >= 4", len(am.Refs))
 	}
-	if am.refs[3] != 1 {
-		t.Errorf("refs[3] = %d, want 1", am.refs[3])
+	if am.Refs[3] != 1 {
+		t.Errorf("refs[3] = %d, want 1", am.Refs[3])
 	}
 }
 

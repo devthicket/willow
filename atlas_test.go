@@ -84,7 +84,7 @@ func TestLoadAtlas_SinglePage_RegionCount(t *testing.T) {
 	if err != nil {
 		t.Fatalf("LoadAtlas: %v", err)
 	}
-	if got := len(atlas.regions); got != 4 {
+	if got := len(atlas.Regions); got != 4 {
 		t.Errorf("region count = %d, want 4", got)
 	}
 }
@@ -170,7 +170,7 @@ func TestLoadAtlas_MultiPage(t *testing.T) {
 		t.Fatalf("LoadAtlas: %v", err)
 	}
 
-	if got := len(atlas.regions); got != 2 {
+	if got := len(atlas.Regions); got != 2 {
 		t.Errorf("region count = %d, want 2", got)
 	}
 

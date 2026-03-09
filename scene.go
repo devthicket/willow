@@ -86,9 +86,9 @@ func LoadSceneAtlas(s *Scene, jsonData []byte, pages []*ebiten.Image) (*Atlas, e
 	}
 	// Remap region page indices to account for startIndex offset.
 	if startIndex > 0 {
-		for name, r := range atlas.regions {
+		for name, r := range atlas.Regions {
 			r.Page += uint16(startIndex)
-			atlas.regions[name] = r
+			atlas.Regions[name] = r
 		}
 	}
 	return atlas, nil

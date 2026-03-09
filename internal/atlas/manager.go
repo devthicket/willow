@@ -8,8 +8,8 @@ import "github.com/hajimehoshi/ebiten/v2"
 type Manager struct {
 	pages    []*ebiten.Image
 	nextPage int
-	refs     []int
-	static   []bool
+	Refs     []int  // reference counts per page (exported for test access)
+	Static   []bool // static pages that are never cleaned up (exported for test access)
 }
 
 var globalManager *Manager
@@ -62,39 +62,39 @@ func (am *Manager) RegisterPage(index int, img *ebiten.Image) {
 	}
 
 	// Grow auxiliary slices to match.
-	for len(am.refs) <= index {
-		am.refs = append(am.refs, 0)
+	for len(am.Refs) <= index {
+		am.Refs = append(am.Refs, 0)
 	}
-	for len(am.static) <= index {
-		am.static = append(am.static, false)
+	for len(am.Static) <= index {
+		am.Static = append(am.Static, false)
 	}
 }
 
 // Retain increments the reference count for the given page index.
 func (am *Manager) Retain(index int) {
-	for len(am.refs) <= index {
-		am.refs = append(am.refs, 0)
+	for len(am.Refs) <= index {
+		am.Refs = append(am.Refs, 0)
 	}
-	am.refs[index]++
+	am.Refs[index]++
 }
 
 // Release decrements the reference count for the given page index.
 // Does not go below zero.
 func (am *Manager) Release(index int) {
-	if index < 0 || index >= len(am.refs) {
+	if index < 0 || index >= len(am.Refs) {
 		return
 	}
-	if am.refs[index] > 0 {
-		am.refs[index]--
+	if am.Refs[index] > 0 {
+		am.Refs[index]--
 	}
 }
 
 // SetStatic marks a page as permanent so Cleanup never deallocates it.
 func (am *Manager) SetStatic(index int) {
-	for len(am.static) <= index {
-		am.static = append(am.static, false)
+	for len(am.Static) <= index {
+		am.Static = append(am.Static, false)
 	}
-	am.static[index] = true
+	am.Static[index] = true
 }
 
 // Cleanup deallocates dynamic pages with zero references.
@@ -104,10 +104,10 @@ func (am *Manager) Cleanup() {
 		if am.pages[i] == nil {
 			continue
 		}
-		if i < len(am.static) && am.static[i] {
+		if i < len(am.Static) && am.Static[i] {
 			continue
 		}
-		if i < len(am.refs) && am.refs[i] > 0 {
+		if i < len(am.Refs) && am.Refs[i] > 0 {
 			continue
 		}
 		am.pages[i].Deallocate()
