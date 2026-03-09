@@ -26,7 +26,3 @@ func lerp(a, b, t float64) float64 {
 	return a + (b-a)*t
 }
 
-// lerp32 linearly interpolates between a and b by t (float32).
-func lerp32(a, b, t float32) float32 {
-	return a + (b-a)*t
-}
