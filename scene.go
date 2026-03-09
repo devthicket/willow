@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/phanxgames/willow/internal/camera"
 	"github.com/phanxgames/willow/internal/input"
 	"github.com/phanxgames/willow/internal/node"
 	"github.com/phanxgames/willow/internal/render"
@@ -246,7 +247,7 @@ func (s *Scene) Update() {
 	s.transformsReady = true
 
 	for _, cam := range s.cameras {
-		cam.update(dt)
+		cam.Update(dt)
 	}
 	updateNodesAndParticles(s.root, float64(dt))
 	s.tickTweens(dt)
@@ -321,7 +322,7 @@ func (s *Scene) drawWithCamera(target *ebiten.Image, cam *Camera) {
 	p.AntiAlias = s.AntiAlias
 
 	if cam != nil {
-		p.ViewTransform = cam.computeViewMatrix()
+		p.ViewTransform = cam.ComputeViewMatrix()
 		p.CullActive = cam.CullEnabled
 		if cam.CullEnabled {
 			p.CullBounds = cam.Viewport
@@ -374,7 +375,7 @@ func (s *Scene) drawWithCamera(target *ebiten.Image, cam *Camera) {
 
 // NewCamera creates a camera with the given viewport and adds it to the scene.
 func (s *Scene) NewCamera(viewport Rect) *Camera {
-	cam := newCamera(viewport)
+	cam := camera.NewCamera(viewport)
 	s.cameras = append(s.cameras, cam)
 	return cam
 }

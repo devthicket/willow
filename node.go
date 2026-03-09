@@ -2,6 +2,7 @@ package willow
 
 import (
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/phanxgames/willow/internal/camera"
 	"github.com/phanxgames/willow/internal/input"
 	"github.com/phanxgames/willow/internal/node"
 	"github.com/phanxgames/willow/internal/render"
@@ -64,7 +65,7 @@ func init() {
 		return atlasManager().Page(pageIdx)
 	}
 	render.EnsureMagentaImageFn = ensureMagentaImage
-	render.ShouldCullFn = shouldCull
+	render.ShouldCullFn = camera.ShouldCull
 	render.BlendMaskFn = func() types.BlendMode { return types.BlendMask }
 
 	// Render texture function pointers (rendertexture.go path)
@@ -75,7 +76,7 @@ func init() {
 	render.NewSpriteFn = NewSprite
 
 	// Input function pointers
-	input.NodeDimensionsFn = nodeDimensions
+	input.NodeDimensionsFn = camera.NodeDimensions
 	input.RebuildSortedChildrenFn = render.RebuildSortedChildren
 }
 

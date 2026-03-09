@@ -3,22 +3,16 @@ package willow
 import (
 	"github.com/phanxgames/willow/internal/types"
 	"github.com/tanema/gween"
-	"github.com/tanema/gween/ease"
 )
 
 // TweenConfig holds the duration and easing function for a tween.
 // A nil Ease defaults to ease.Linear. Duration is in seconds; 0 means instant.
-type TweenConfig struct {
-	Duration float32        // seconds; 0 = instant
-	Ease     ease.TweenFunc // nil defaults to ease.Linear
-}
+// Aliased from internal/types.TweenConfig.
+type TweenConfig = types.TweenConfig
 
 // tweenEase returns cfg.Ease if non-nil, otherwise ease.Linear.
-func tweenEase(cfg TweenConfig) ease.TweenFunc {
-	if cfg.Ease != nil {
-		return cfg.Ease
-	}
-	return ease.Linear
+func tweenEase(cfg TweenConfig) func(t, b, c, d float32) float32 {
+	return types.TweenEase(cfg)
 }
 
 // TweenGroup animates up to 4 float64 fields on a Node simultaneously.

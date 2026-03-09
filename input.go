@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/phanxgames/willow/internal/camera"
 	"github.com/phanxgames/willow/internal/render"
 )
 
@@ -356,7 +357,7 @@ func nodeContainsLocal(n *Node, lx, ly float64) bool {
 	if n.HitShape != nil {
 		return n.HitShape.Contains(lx, ly)
 	}
-	w, h := nodeDimensions(n)
+	w, h := camera.NodeDimensions(n)
 	if w == 0 && h == 0 {
 		return false
 	}
@@ -438,7 +439,7 @@ func (s *Scene) processInput() {
 	var cam *Camera
 	if len(s.cameras) > 0 {
 		cam = s.cameras[0]
-		cam.computeViewMatrix()
+		cam.ComputeViewMatrix()
 	}
 
 	if !s.processInjectedInput(cam, mods) {

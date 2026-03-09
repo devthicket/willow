@@ -382,7 +382,7 @@ func TestInjectWithCamera(t *testing.T) {
 	cam.X = 320
 	cam.Y = 240
 	cam.Zoom = 2.0
-	cam.computeViewMatrix()
+	cam.ComputeViewMatrix()
 
 	sprite := NewSprite("s", TextureRegion{OriginalW: 50, OriginalH: 50})
 	sprite.Interactable = true

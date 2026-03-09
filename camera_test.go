@@ -13,7 +13,7 @@ func approxEqual(a, b, eps float64) bool {
 }
 
 func TestCameraDefaults(t *testing.T) {
-	cam := newCamera(Rect{X: 0, Y: 0, Width: 800, Height: 600})
+	cam := NewCamera(Rect{X: 0, Y: 0, Width: 800, Height: 600})
 	if cam.Zoom != 1.0 {
 		t.Errorf("Zoom = %f, want 1.0", cam.Zoom)
 	}
@@ -26,8 +26,8 @@ func TestCameraDefaults(t *testing.T) {
 }
 
 func TestCameraIdentityViewMatrix(t *testing.T) {
-	cam := newCamera(Rect{X: 0, Y: 0, Width: 800, Height: 600})
-	vm := cam.computeViewMatrix()
+	cam := NewCamera(Rect{X: 0, Y: 0, Width: 800, Height: 600})
+	vm := cam.ComputeViewMatrix()
 	// At (0,0), zoom 1, no rotation:
 	// viewMatrix should translate to viewport center (400, 300)
 	sx, sy := transformPoint(vm, 0, 0)
@@ -37,10 +37,10 @@ func TestCameraIdentityViewMatrix(t *testing.T) {
 }
 
 func TestCameraTranslation(t *testing.T) {
-	cam := newCamera(Rect{X: 0, Y: 0, Width: 800, Height: 600})
+	cam := NewCamera(Rect{X: 0, Y: 0, Width: 800, Height: 600})
 	cam.X = 100
 	cam.Y = 50
-	cam.dirty = true
+	cam.Invalidate()
 	sx, sy := cam.WorldToScreen(100, 50)
 	// Camera at (100,50) looking at (100,50) should map to viewport center
 	if !approxEqual(sx, 400, epsilon) || !approxEqual(sy, 300, epsilon) {
@@ -49,9 +49,9 @@ func TestCameraTranslation(t *testing.T) {
 }
 
 func TestCameraZoom(t *testing.T) {
-	cam := newCamera(Rect{X: 0, Y: 0, Width: 800, Height: 600})
+	cam := NewCamera(Rect{X: 0, Y: 0, Width: 800, Height: 600})
 	cam.Zoom = 2.0
-	cam.dirty = true
+	cam.Invalidate()
 
 	// At zoom 2, a point 1 unit from camera center should appear 2 pixels away
 	sx1, _ := cam.WorldToScreen(1, 0)
@@ -63,9 +63,9 @@ func TestCameraZoom(t *testing.T) {
 }
 
 func TestCameraRotation90(t *testing.T) {
-	cam := newCamera(Rect{X: 0, Y: 0, Width: 800, Height: 600})
+	cam := NewCamera(Rect{X: 0, Y: 0, Width: 800, Height: 600})
 	cam.Rotation = math.Pi / 2 // 90 degrees
-	cam.dirty = true
+	cam.Invalidate()
 
 	// World point (1, 0) with 90° camera rotation
 	sx, sy := cam.WorldToScreen(1, 0)
@@ -78,12 +78,12 @@ func TestCameraRotation90(t *testing.T) {
 }
 
 func TestScreenToWorldRoundtrip(t *testing.T) {
-	cam := newCamera(Rect{X: 0, Y: 0, Width: 800, Height: 600})
+	cam := NewCamera(Rect{X: 0, Y: 0, Width: 800, Height: 600})
 	cam.X = 42
 	cam.Y = -17
 	cam.Zoom = 1.5
 	cam.Rotation = 0.3
-	cam.dirty = true
+	cam.Invalidate()
 
 	origWX, origWY := 123.0, -456.0
 	sx, sy := cam.WorldToScreen(origWX, origWY)
@@ -95,10 +95,10 @@ func TestScreenToWorldRoundtrip(t *testing.T) {
 }
 
 func TestVisibleBounds_Zoom1(t *testing.T) {
-	cam := newCamera(Rect{X: 0, Y: 0, Width: 800, Height: 600})
+	cam := NewCamera(Rect{X: 0, Y: 0, Width: 800, Height: 600})
 	cam.X = 400
 	cam.Y = 300
-	cam.dirty = true
+	cam.Invalidate()
 	bounds := cam.VisibleBounds()
 	// Camera centered at (400,300), viewport 800x600, zoom 1: visible is (0,0)-(800,600)
 	if !approxEqual(bounds.X, 0, 1e-6) || !approxEqual(bounds.Y, 0, 1e-6) {
@@ -110,11 +110,11 @@ func TestVisibleBounds_Zoom1(t *testing.T) {
 }
 
 func TestVisibleBounds_Zoom2(t *testing.T) {
-	cam := newCamera(Rect{X: 0, Y: 0, Width: 800, Height: 600})
+	cam := NewCamera(Rect{X: 0, Y: 0, Width: 800, Height: 600})
 	cam.X = 400
 	cam.Y = 300
 	cam.Zoom = 2.0
-	cam.dirty = true
+	cam.Invalidate()
 	bounds := cam.VisibleBounds()
 	// Zoom 2 halves the visible area
 	if !approxEqual(bounds.Width, 400, 1e-6) || !approxEqual(bounds.Height, 300, 1e-6) {
@@ -135,19 +135,19 @@ func TestCameraFollow(t *testing.T) {
 
 	cam.Follow(target, 0, 0, 1.0) // lerp=1 snaps immediately
 
-	cam.update(1.0 / 60.0)
+	cam.Update(1.0 / 60.0)
 	if !approxEqual(cam.X, 200, epsilon) || !approxEqual(cam.Y, 150, epsilon) {
 		t.Errorf("after follow snap: cam = (%f,%f), want (200,150)", cam.X, cam.Y)
 	}
 }
 
 func TestCameraFollowLerp(t *testing.T) {
-	cam := newCamera(Rect{X: 0, Y: 0, Width: 800, Height: 600})
+	cam := NewCamera(Rect{X: 0, Y: 0, Width: 800, Height: 600})
 	target := NewSprite("target", TextureRegion{})
 	target.WorldTransform = [6]float64{1, 0, 0, 1, 100, 0}
 
 	cam.Follow(target, 0, 0, 0.5)
-	cam.update(1.0 / 60.0)
+	cam.Update(1.0 / 60.0)
 	// Should move halfway from 0 to 100
 	if !approxEqual(cam.X, 50, epsilon) {
 		t.Errorf("after lerp 0.5: cam.X = %f, want 50", cam.X)
@@ -155,75 +155,75 @@ func TestCameraFollowLerp(t *testing.T) {
 }
 
 func TestCameraFollowWithOffset(t *testing.T) {
-	cam := newCamera(Rect{X: 0, Y: 0, Width: 800, Height: 600})
+	cam := NewCamera(Rect{X: 0, Y: 0, Width: 800, Height: 600})
 	target := NewSprite("target", TextureRegion{})
 	target.WorldTransform = [6]float64{1, 0, 0, 1, 100, 100}
 
 	cam.Follow(target, 10, -20, 1.0)
-	cam.update(1.0 / 60.0)
+	cam.Update(1.0 / 60.0)
 	if !approxEqual(cam.X, 110, epsilon) || !approxEqual(cam.Y, 80, epsilon) {
 		t.Errorf("follow with offset: cam = (%f,%f), want (110,80)", cam.X, cam.Y)
 	}
 }
 
 func TestCameraUnfollow(t *testing.T) {
-	cam := newCamera(Rect{X: 0, Y: 0, Width: 800, Height: 600})
+	cam := NewCamera(Rect{X: 0, Y: 0, Width: 800, Height: 600})
 	target := NewSprite("target", TextureRegion{})
 	target.WorldTransform = [6]float64{1, 0, 0, 1, 100, 100}
 
 	cam.Follow(target, 0, 0, 1.0)
-	cam.update(1.0 / 60.0)
+	cam.Update(1.0 / 60.0)
 	cam.Unfollow()
 
 	// Move target, camera should not follow
 	target.WorldTransform[4] = 500
-	cam.update(1.0 / 60.0)
+	cam.Update(1.0 / 60.0)
 	if !approxEqual(cam.X, 100, epsilon) {
 		t.Errorf("after unfollow: cam.X = %f, want 100", cam.X)
 	}
 }
 
 func TestCameraScrollTo(t *testing.T) {
-	cam := newCamera(Rect{X: 0, Y: 0, Width: 800, Height: 600})
+	cam := NewCamera(Rect{X: 0, Y: 0, Width: 800, Height: 600})
 	cam.ScrollTo(100, 200, TweenConfig{Duration: 1.0, Ease: ease.Linear})
 
 	// Advance halfway
-	cam.update(0.5)
+	cam.Update(0.5)
 	if !approxEqual(cam.X, 50, 1.0) || !approxEqual(cam.Y, 100, 1.0) {
 		t.Errorf("scroll halfway: cam = (%f,%f), want ~(50,100)", cam.X, cam.Y)
 	}
 
 	// Advance to end
-	cam.update(0.5)
+	cam.Update(0.5)
 	if !approxEqual(cam.X, 100, 1.0) || !approxEqual(cam.Y, 200, 1.0) {
 		t.Errorf("scroll end: cam = (%f,%f), want ~(100,200)", cam.X, cam.Y)
 	}
 
 	// Tween should be cleared
-	if cam.scrollTween != nil {
-		t.Error("scrollTween not nil after completion")
+	if cam.ScrollTweenActive() {
+		t.Error("scroll tween should be inactive after completion")
 	}
 }
 
 func TestCameraScrollToTile(t *testing.T) {
-	cam := newCamera(Rect{X: 0, Y: 0, Width: 800, Height: 600})
+	cam := NewCamera(Rect{X: 0, Y: 0, Width: 800, Height: 600})
 	cam.ScrollToTile(3, 2, 32, 32, TweenConfig{Duration: 0.0001, Ease: ease.Linear})
 
 	// tile center: (3*32+16, 2*32+16) = (112, 80)
-	cam.update(1.0) // large dt to finish instantly
+	cam.Update(1.0) // large dt to finish instantly
 	if !approxEqual(cam.X, 112, 1.0) || !approxEqual(cam.Y, 80, 1.0) {
 		t.Errorf("scrollToTile: cam = (%f,%f), want ~(112,80)", cam.X, cam.Y)
 	}
 }
 
 func TestCameraBounds(t *testing.T) {
-	cam := newCamera(Rect{X: 0, Y: 0, Width: 100, Height: 100})
+	cam := NewCamera(Rect{X: 0, Y: 0, Width: 100, Height: 100})
 	cam.SetBounds(Rect{X: 0, Y: 0, Width: 1000, Height: 1000})
 
-	// Camera at (0,0) with viewport 100x100  -  min visible area is (50,50) center
+	// Camera at (0,0) with viewport 100x100 — min visible area is (50,50) center
 	cam.X = 0
 	cam.Y = 0
-	cam.update(0)
+	cam.Update(0)
 	if cam.X < 50 || cam.Y < 50 {
 		t.Errorf("bounds clamp min: cam = (%f,%f), want >= (50,50)", cam.X, cam.Y)
 	}
@@ -231,21 +231,21 @@ func TestCameraBounds(t *testing.T) {
 	// Try to go past right edge
 	cam.X = 999
 	cam.Y = 999
-	cam.dirty = true
-	cam.update(0)
+	cam.Invalidate()
+	cam.Update(0)
 	if cam.X > 950 || cam.Y > 950 {
 		t.Errorf("bounds clamp max: cam = (%f,%f), want <= (950,950)", cam.X, cam.Y)
 	}
 }
 
 func TestCameraClearBounds(t *testing.T) {
-	cam := newCamera(Rect{X: 0, Y: 0, Width: 100, Height: 100})
+	cam := NewCamera(Rect{X: 0, Y: 0, Width: 100, Height: 100})
 	cam.SetBounds(Rect{X: 0, Y: 0, Width: 1000, Height: 1000})
 	cam.ClearBounds()
 
 	cam.X = -999
 	cam.Y = -999
-	cam.update(0)
+	cam.Update(0)
 	// No clamping should occur
 	if cam.X != -999 || cam.Y != -999 {
 		t.Errorf("after ClearBounds: cam = (%f,%f), want (-999,-999)", cam.X, cam.Y)
@@ -253,12 +253,12 @@ func TestCameraClearBounds(t *testing.T) {
 }
 
 func TestCameraBoundsSmallWorld(t *testing.T) {
-	cam := newCamera(Rect{X: 0, Y: 0, Width: 800, Height: 600})
-	// World smaller than viewport  -  should center
+	cam := NewCamera(Rect{X: 0, Y: 0, Width: 800, Height: 600})
+	// World smaller than viewport — should center
 	cam.SetBounds(Rect{X: 0, Y: 0, Width: 100, Height: 100})
 	cam.X = 0
 	cam.Y = 0
-	cam.update(0)
+	cam.Update(0)
 	if !approxEqual(cam.X, 50, epsilon) || !approxEqual(cam.Y, 50, epsilon) {
 		t.Errorf("small world center: cam = (%f,%f), want (50,50)", cam.X, cam.Y)
 	}
@@ -339,7 +339,7 @@ func TestCulling_IntegrationWithScene(t *testing.T) {
 	cam := scene.NewCamera(Rect{X: 0, Y: 0, Width: 800, Height: 600})
 	cam.X = 400
 	cam.Y = 300
-	cam.dirty = true
+	cam.Invalidate()
 
 	// Sprite inside viewport
 	visible := NewSprite("visible", TextureRegion{Width: 64, Height: 64, OriginalW: 64, OriginalH: 64, Page: 0})
@@ -373,7 +373,7 @@ func TestCulling_DisabledShowsAll(t *testing.T) {
 	cam.X = 400
 	cam.Y = 300
 	cam.CullEnabled = false
-	cam.dirty = true
+	cam.Invalidate()
 
 	visible := NewSprite("s1", TextureRegion{Width: 64, Height: 64, OriginalW: 64, OriginalH: 64})
 	visible.X_ = 400
@@ -432,8 +432,7 @@ func TestMultiCamera_BothRender(t *testing.T) {
 	screen := ebiten.NewImage(800, 300)
 	updateWorldTransform(scene.root, identityTransform, 1.0, false, false)
 	scene.Draw(screen)
-	// Both cameras should render the sprite  -  we can verify that Draw didn't panic.
-	// Detailed multi-camera output verification would need pixel checks.
+	// Both cameras should render the sprite — we can verify that Draw didn't panic.
 }
 
 func TestSceneUpdateRunsCameraUpdates(t *testing.T) {
@@ -454,19 +453,19 @@ func TestNoCameraImplicitIdentity(t *testing.T) {
 
 	screen := ebiten.NewImage(800, 600)
 	updateWorldTransform(scene.root, identityTransform, 1.0, false, false)
-	scene.Draw(screen) // Should not panic  -  uses implicit identity camera
+	scene.Draw(screen) // Should not panic — uses implicit identity camera
 }
 
 // --- Camera Invalidate ---
 
 func TestCameraInvalidate(t *testing.T) {
-	cam := newCamera(Rect{X: 0, Y: 0, Width: 800, Height: 600})
-	cam.computeViewMatrix()
-	if cam.dirty {
-		t.Error("camera should not be dirty after computeViewMatrix")
+	cam := NewCamera(Rect{X: 0, Y: 0, Width: 800, Height: 600})
+	cam.ComputeViewMatrix()
+	if cam.IsDirty() {
+		t.Error("camera should not be dirty after ComputeViewMatrix")
 	}
 	cam.Invalidate()
-	if !cam.dirty {
+	if !cam.IsDirty() {
 		t.Error("camera should be dirty after Invalidate")
 	}
 }
@@ -487,7 +486,7 @@ func BenchmarkCulling_10000Nodes(b *testing.B) {
 	cam := scene.NewCamera(Rect{X: 0, Y: 0, Width: 800, Height: 600})
 	cam.X = 400
 	cam.Y = 300
-	cam.dirty = true
+	cam.Invalidate()
 
 	page := ebiten.NewImage(1024, 1024)
 	scene.RegisterPage(0, page)

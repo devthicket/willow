@@ -5,6 +5,7 @@ import (
 	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/phanxgames/willow/internal/camera"
 )
 
 // transformVertices applies an affine transform and color tint to src vertices,
@@ -105,7 +106,7 @@ func ensureWhitePixel() *ebiten.Image {
 
 // meshWorldAABB computes the world-space AABB for a mesh node, accounting for
 // the fact that mesh vertices may not start at origin (0,0). It shifts the
-// transform by the AABB origin before computing worldAABB.
+// transform by the AABB origin before computing WorldAABB.
 func meshWorldAABB(n *Node, transform [6]float64) Rect {
 	recomputeMeshAABB(n)
 	aabb := n.Mesh.Aabb
@@ -117,7 +118,7 @@ func meshWorldAABB(n *Node, transform [6]float64) Rect {
 	shiftedTx := a*aabb.X + c*aabb.Y + tx
 	shiftedTy := b*aabb.X + d*aabb.Y + ty
 	shifted := [6]float64{a, b, c, d, shiftedTx, shiftedTy}
-	return worldAABB(shifted, aabb.Width, aabb.Height)
+	return camera.WorldAABB(shifted, aabb.Width, aabb.Height)
 }
 
 // meshWorldAABBOffset is a helper for computing mesh world AABB using the

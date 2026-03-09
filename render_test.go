@@ -334,7 +334,7 @@ func traverseSceneWithCamera(s *Scene, cam *Camera) {
 	s.pipeline.CommandsDirtyThisFrame = false
 	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
 	if cam != nil {
-		s.pipeline.ViewTransform = cam.computeViewMatrix()
+		s.pipeline.ViewTransform = cam.ComputeViewMatrix()
 	} else {
 		s.pipeline.ViewTransform = identityTransform
 	}
