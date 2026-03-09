@@ -12,6 +12,10 @@ import (
 var (
 	// NewContainerFn creates a container node. Set by root package.
 	NewContainerFn func(name string) *node.Node
+
+	// NewLayerEmitFn, if set, is called after AddTileLayer creates a Layer so
+	// root can inject the render-command emission logic as Layer.EmitFn.
+	NewLayerEmitFn func(layer *Layer)
 )
 
 // GID flag bits (same convention as Tiled TMX format).
@@ -149,6 +153,10 @@ func (v *Viewport) AddTileLayer(cfg LayerConfig) *Layer {
 		if layer.EmitFn != nil {
 			layer.EmitFn(layer, sceneAny, treeOrder)
 		}
+	}
+
+	if NewLayerEmitFn != nil {
+		NewLayerEmitFn(layer)
 	}
 
 	v.node_.AddChild(layer.Node_)
