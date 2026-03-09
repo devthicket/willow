@@ -149,7 +149,7 @@ func EnsureMSDFShader() *ebiten.Shader {
 }
 
 // EnsureUniforms builds or updates the cached uniform map for the SDF shader.
-func EnsureUniforms(tb *text.TextBlock, f *text.SpriteFont, displayScale float64) {
+func EnsureUniforms(tb *text.TextBlock, f *text.DistanceFieldFont, displayScale float64) {
 	smoothing := float32(1.5 / (f.DistanceRange() * displayScale))
 
 	threshold := float32(0.5)
@@ -232,7 +232,7 @@ func EmitSDFTextCommand(tb *text.TextBlock, n *node.Node, worldTransform [6]floa
 		return commands
 	}
 
-	f, ok := tb.Font.(*text.SpriteFont)
+	f, ok := tb.Font.(*text.DistanceFieldFont)
 	if !ok {
 		return commands
 	}

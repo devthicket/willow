@@ -138,7 +138,7 @@ func (tb *TextBlock) Layout() []TextLine {
 	return tb.Lines
 }
 
-// LayoutSDF computes glyph positions for an SDF font (SpriteFont).
+// LayoutSDF computes glyph positions for an SDF font (DistanceFieldFont).
 func (tb *TextBlock) LayoutSDF(glyphLookup func(r rune) *Glyph, kernLookup func(first, second rune) int16, page uint16) {
 	lh := tb.EffectiveLineHeight()
 	content := tb.Content

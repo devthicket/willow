@@ -365,15 +365,15 @@ func fixedToFloat64(f fixed.Int26_6) float64 {
 }
 
 // ---------------------------------------------------------------------------
-// LoadSpriteFontFromTTF
+// LoadDistanceFieldFontFromTTF
 // ---------------------------------------------------------------------------
 
-// LoadSpriteFontFromTTF generates an SDF font atlas at runtime from TTF/OTF data.
+// LoadDistanceFieldFontFromTTF generates an SDF font atlas at runtime from TTF/OTF data.
 // Uses pure-Go rasterization (golang.org/x/image/font/opentype) so it can be
-// called before the Ebitengine game loop starts. Returns the SpriteFont, the atlas
+// called before the Ebitengine game loop starts. Returns the DistanceFieldFont, the atlas
 // as an ebiten.Image (caller must register via Scene.RegisterPage), the raw
 // atlas as an *image.NRGBA (for saving to disk), and any error.
-func LoadSpriteFontFromTTF(ttfData []byte, opts SDFGenOptions) (*SpriteFont, *ebiten.Image, *image.NRGBA, error) {
+func LoadDistanceFieldFontFromTTF(ttfData []byte, opts SDFGenOptions) (*DistanceFieldFont, *ebiten.Image, *image.NRGBA, error) {
 	opts.Defaults()
 
 	// Parse font with golang.org/x/image/font/opentype (pure Go, no GPU needed).
@@ -470,7 +470,7 @@ func LoadSpriteFontFromTTF(ttfData []byte, opts SDFGenOptions) (*SpriteFont, *eb
 	m.Base = ascent
 	metricsJSON, _ = json.Marshal(m)
 
-	sdfFont, err := LoadSpriteFont(metricsJSON, opts.PageIndex)
+	sdfFont, err := LoadDistanceFieldFont(metricsJSON, opts.PageIndex)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("text: failed to load generated SDF font: %w", err)
 	}

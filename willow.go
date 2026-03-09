@@ -161,8 +161,8 @@ type PackerConfig = atlas.PackerConfig
 // Font is the interface for text measurement and layout.
 type Font = text.Font
 
-// SpriteFont renders text from a pre-generated SDF or MSDF atlas.
-type SpriteFont = text.SpriteFont
+// DistanceFieldFont renders text from a pre-generated SDF or MSDF atlas.
+type DistanceFieldFont = text.DistanceFieldFont
 
 // PixelFont is a pixel-perfect bitmap font renderer.
 type PixelFont = text.PixelFont
@@ -403,8 +403,8 @@ var (
 
 // Text / Font constructors.
 var (
-	LoadSpriteFont         = text.LoadSpriteFont
-	LoadSpriteFontFromTTF  = text.LoadSpriteFontFromTTF
+	LoadDistanceFieldFont        = text.LoadDistanceFieldFont
+	LoadDistanceFieldFontFromTTF = text.LoadDistanceFieldFontFromTTF
 	GenerateSDFFromBitmaps = text.GenerateSDFFromBitmaps
 )
 
@@ -711,7 +711,7 @@ func NewPixelFont(img *ebiten.Image, cellW, cellH int, chars string) *PixelFont 
 
 // NewFontFromTTF generates an SDF font from TTF/OTF data, registers the atlas
 // page, and returns the font ready to use.
-func NewFontFromTTF(ttfData []byte, size float64) (*SpriteFont, error) {
+func NewFontFromTTF(ttfData []byte, size float64) (*DistanceFieldFont, error) {
 	return text.NewFontFromTTF(ttfData, size)
 }
 

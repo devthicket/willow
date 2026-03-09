@@ -8,7 +8,7 @@ const (
 	NodeTypeSprite                          // renders a TextureRegion or custom image
 	NodeTypeMesh                            // renders arbitrary triangles via DrawTriangles
 	NodeTypeParticleEmitter                 // CPU-simulated particle system
-	NodeTypeText                            // renders text via SpriteFont
+	NodeTypeText                            // renders text via DistanceFieldFont
 )
 
 // EventType identifies a kind of interaction event.

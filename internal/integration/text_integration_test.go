@@ -65,7 +65,7 @@ func TestFontScale_NilFont(t *testing.T) {
 }
 
 func TestFontScale_ZeroFontSize(t *testing.T) {
-	sf := &SpriteFont{}
+	sf := &DistanceFieldFont{}
 	sf.SetLineHeight(80)
 	tb := &TextBlock{FontSize: 0, Font: sf}
 	if textBlockFontScale(tb) != 1.0 {
@@ -74,7 +74,7 @@ func TestFontScale_ZeroFontSize(t *testing.T) {
 }
 
 func TestFontScale_NegativeFontSize(t *testing.T) {
-	sf := &SpriteFont{}
+	sf := &DistanceFieldFont{}
 	sf.SetLineHeight(80)
 	tb := &TextBlock{FontSize: -1, Font: sf}
 	if textBlockFontScale(tb) != 1.0 {
@@ -83,7 +83,7 @@ func TestFontScale_NegativeFontSize(t *testing.T) {
 }
 
 func TestFontScale_Computed(t *testing.T) {
-	sf := &SpriteFont{}
+	sf := &DistanceFieldFont{}
 	sf.SetLineHeight(80)
 	tb := &TextBlock{FontSize: 24, Font: sf}
 	expected := 24.0 / 80.0

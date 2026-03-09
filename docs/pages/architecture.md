@@ -85,7 +85,7 @@ internal/
   types/               ← Color, Vec2, Rect, TextureRegion, BlendMode, enums
   node/                ← Node struct, tree ops, transform, callbacks
   particle/            ← Emitter, EmitterConfig
-  text/                ← Font, SpriteFont, PixelFont, TextBlock, glyph layout
+  text/                ← Font, DistanceFieldFont, PixelFont, TextBlock, glyph layout
   atlas/               ← Atlas, Manager, packer
   filter/              ← ColorMatrix, Blur, Outline, Palette, Custom shader filters
   lighting/            ← LightLayer, Light

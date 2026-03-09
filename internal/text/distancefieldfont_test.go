@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestLoadSpriteFont_Basic(t *testing.T) {
+func TestLoadDistanceFieldFont_Basic(t *testing.T) {
 	metrics := sdfMetrics{
 		Type:          "sdf",
 		Size:          80,
@@ -19,9 +19,9 @@ func TestLoadSpriteFont_Basic(t *testing.T) {
 	}
 	data, _ := json.Marshal(metrics)
 
-	f, err := LoadSpriteFont(data, 0)
+	f, err := LoadDistanceFieldFont(data, 0)
 	if err != nil {
-		t.Fatalf("LoadSpriteFont: %v", err)
+		t.Fatalf("LoadDistanceFieldFont: %v", err)
 	}
 
 	if f.LineHeight() != 96 {
@@ -37,7 +37,7 @@ func TestLoadSpriteFont_Basic(t *testing.T) {
 	}
 }
 
-func TestLoadSpriteFont_MissingLineHeight(t *testing.T) {
+func TestLoadDistanceFieldFont_MissingLineHeight(t *testing.T) {
 	metrics := sdfMetrics{
 		Glyphs: []sdfGlyphEntry{
 			{ID: 65, X: 0, Y: 0, Width: 10, Height: 10, XAdvance: 10},
@@ -45,13 +45,13 @@ func TestLoadSpriteFont_MissingLineHeight(t *testing.T) {
 	}
 	data, _ := json.Marshal(metrics)
 
-	_, err := LoadSpriteFont(data, 0)
+	_, err := LoadDistanceFieldFont(data, 0)
 	if err == nil {
 		t.Error("expected error for missing lineHeight")
 	}
 }
 
-func TestSpriteFont_MeasureString(t *testing.T) {
+func TestDistanceFieldFont_MeasureString(t *testing.T) {
 	metrics := sdfMetrics{
 		Type:          "sdf",
 		Size:          80,
@@ -65,9 +65,9 @@ func TestSpriteFont_MeasureString(t *testing.T) {
 	}
 	data, _ := json.Marshal(metrics)
 
-	f, err := LoadSpriteFont(data, 0)
+	f, err := LoadDistanceFieldFont(data, 0)
 	if err != nil {
-		t.Fatalf("LoadSpriteFont: %v", err)
+		t.Fatalf("LoadDistanceFieldFont: %v", err)
 	}
 
 	w, h := f.MeasureString("Hi")
@@ -79,8 +79,8 @@ func TestSpriteFont_MeasureString(t *testing.T) {
 	}
 }
 
-func TestSpriteFont_Kern(t *testing.T) {
-	f := &SpriteFont{}
+func TestDistanceFieldFont_Kern(t *testing.T) {
+	f := &DistanceFieldFont{}
 	if f.Kern('A', 'V') != 0 {
 		t.Error("kern with nil map should be 0")
 	}

@@ -1,7 +1,7 @@
 package text
 
 // Font is the interface for text measurement and layout.
-// Implemented by SpriteFont and PixelFont.
+// Implemented by DistanceFieldFont and PixelFont.
 //
 // All measurements are in native atlas pixels. To get display-sized values,
 // use TextBlock.MeasureDisplay or scale manually by TextBlock.FontScale().

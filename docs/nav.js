@@ -96,8 +96,8 @@ const NAV_TABS = [
             { label: "Interaction", page: "examples", anchor: "interaction" },
         ]},
         { title: "Text", items: [
-            { label: "SpriteFont", page: "examples", anchor: "spritefont" },
-            { label: "SpriteFont (TTF)", page: "examples", anchor: "spritefont-ttf" },
+            { label: "DistanceFieldFont", page: "examples", anchor: "distancefieldfont" },
+            { label: "DistanceFieldFont (TTF)", page: "examples", anchor: "distancefieldfont-ttf" },
             { label: "PixelFont", page: "examples", anchor: "pixelfont" },
         ]},
         { title: "Animation", items: [
