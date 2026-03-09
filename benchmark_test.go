@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/phanxgames/willow/internal/node"
 	"github.com/phanxgames/willow/internal/render"
 )
 
@@ -428,26 +429,26 @@ func BenchmarkTransform_10000Dirty(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		// Mark all transforms dirty.
 		markSubtreeDirty(s.Root)
-		updateWorldTransform(s.Root, identityTransform, 1.0, false, false)
+		node.UpdateWorldTransform(s.Root, node.IdentityTransform, 1.0, false, false)
 	}
 }
 
 func BenchmarkTransform_10000Clean(b *testing.B) {
 	s := setupBenchScene(10000)
 	// Pre-compute so nothing is dirty.
-	updateWorldTransform(s.Root, identityTransform, 1.0, true, true)
+	node.UpdateWorldTransform(s.Root, node.IdentityTransform, 1.0, true, true)
 
 	b.ResetTimer()
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		updateWorldTransform(s.Root, identityTransform, 1.0, false, false)
+		node.UpdateWorldTransform(s.Root, node.IdentityTransform, 1.0, false, false)
 	}
 }
 
 func BenchmarkTransform_10000AlphaOnly(b *testing.B) {
 	s := setupBenchScene(10000)
 	// Pre-compute all transforms so they're clean.
-	updateWorldTransform(s.Root, identityTransform, 1.0, true, true)
+	node.UpdateWorldTransform(s.Root, node.IdentityTransform, 1.0, true, true)
 
 	b.ResetTimer()
 	b.ReportAllocs()
@@ -458,7 +459,7 @@ func BenchmarkTransform_10000AlphaOnly(b *testing.B) {
 			child.AlphaDirty = true
 		}
 		s.Root.AlphaDirty = true
-		updateWorldTransform(s.Root, identityTransform, 1.0, false, false)
+		node.UpdateWorldTransform(s.Root, node.IdentityTransform, 1.0, false, false)
 	}
 }
 
@@ -531,7 +532,7 @@ func BenchmarkHitTest_1000Interactable(b *testing.B) {
 		n.Y_ = float64(i/100) * 12
 		s.Root.AddChild(n)
 	}
-	updateWorldTransform(s.Root, identityTransform, 1.0, true, true)
+	node.UpdateWorldTransform(s.Root, node.IdentityTransform, 1.0, true, true)
 
 	b.ResetTimer()
 	b.ReportAllocs()
@@ -675,9 +676,6 @@ func BenchmarkLighting_MultipleLights(b *testing.B) {
 
 // --- Realistic Multi-Page / Mixed Benchmarks ---
 
-// setupMultiPageScene creates a scene with n sprites spread across 4 synthetic
-// atlas pages. Sprites cycle through pages so the sorted command list produces
-// batch runs of varying length.
 func setupMultiPageScene(n int) *Scene {
 	s := NewScene()
 	pages := [4]*ebiten.Image{
@@ -708,10 +706,6 @@ func setupMultiPageScene(n int) *Scene {
 	return s
 }
 
-// setupMixedScene creates a scene mixing sprites across 2 atlas pages,
-// particle emitters (pre-filled), and varied blend modes.
-// Emitters are interleaved with sprites in the tree so the sorted command
-// list has sprite→particle→sprite transitions that force batch flushes.
 func setupMixedScene(nSprites, nEmitters int) *Scene {
 	s := NewScene()
 	pages := [2]*ebiten.Image{
@@ -740,7 +734,6 @@ func setupMixedScene(nSprites, nEmitters int) *Scene {
 			sp := NewSprite("sp", region)
 			sp.X_ = float64(spriteIdx%100) * 40
 			sp.Y_ = float64(spriteIdx/100) * 40
-			// Every 10th sprite uses additive blending.
 			if spriteIdx%10 == 0 {
 				sp.BlendMode_ = BlendAdd
 			}
@@ -778,15 +771,11 @@ func setupMixedScene(nSprites, nEmitters int) *Scene {
 		}
 		root.AddChild(emitterNode)
 	}
-	// Remaining sprites after last emitter.
 	addSprites(nSprites - spriteIdx)
 
 	return s
 }
 
-// setupWorstCaseScene creates n sprites that alternate between page 0 and
-// page 1 on every sprite, producing batch runs of length 1  -  the worst case
-// for coalesced mode overhead.
 func setupWorstCaseScene(n int) *Scene {
 	s := NewScene()
 	pages := [2]*ebiten.Image{
@@ -808,8 +797,6 @@ func setupWorstCaseScene(n int) *Scene {
 			OriginalH: 32,
 		}
 		sp := NewSprite("sp", region)
-		// Place all sprites at the same depth so page-alternation is preserved
-		// through the sort (stable sort keeps insertion order for equal keys).
 		sp.X_ = float64(i%100) * 40
 		sp.Y_ = float64(i/100) * 40
 		root.AddChild(sp)
@@ -892,11 +879,6 @@ func BenchmarkDraw_WorstCase_Coalesced(b *testing.B) {
 	}
 }
 
-// setupRealWorldAtlasScene creates a scene simulating a real tilemap/game
-// scenario: two 4096×4096 atlas pages (full-size like a real texture packer
-// output), with sprites grouped in runs of `runLen` alternating between the
-// two pages, repeated `runs` times.
-// Total sprites = runLen * runs.
 func setupRealWorldAtlasScene(runLen, runs int) *Scene {
 	s := NewScene()
 	pages := [2]*ebiten.Image{
@@ -909,11 +891,9 @@ func setupRealWorldAtlasScene(runLen, runs int) *Scene {
 	root := s.Root
 	total := runLen * runs
 	for i := 0; i < total; i++ {
-		// Determine which page based on which run we're in.
 		run := i / runLen
 		page := uint16(run % 2)
-		// Tile-like regions at varying positions within the atlas page.
-		tileX := uint16((i % 64) * 64) // 64 tiles across = 4096
+		tileX := uint16((i % 64) * 64)
 		tileY := uint16((i / 64 % 64) * 64)
 		region := TextureRegion{
 			Page:      page,
@@ -958,24 +938,20 @@ func BenchmarkDraw_RealWorldAtlas_Coalesced(b *testing.B) {
 }
 
 // =============================================================================
-// Raw Ebitengine baselines  -  no scene graph, no traversal, no sorting.
-// These measure the floor: pure draw call cost with pre-computed transforms.
+// Raw Ebitengine baselines
 // =============================================================================
 
-// rawSprite holds pre-computed data for a raw Ebitengine DrawImage call.
 type rawSprite struct {
 	sub *ebiten.Image
 	op  ebiten.DrawImageOptions
 }
 
-// rawBatch holds pre-computed vertex/index data for a raw DrawTriangles32 call.
 type rawBatch struct {
 	verts []ebiten.Vertex
 	inds  []uint32
 	page  *ebiten.Image
 }
 
-// buildRawSprites creates n pre-computed DrawImage calls against a single page.
 func buildRawSprites_SinglePage(n int) ([]rawSprite, *ebiten.Image) {
 	page := ebiten.NewImage(128, 128)
 	sub := page.SubImage(image.Rect(0, 0, 32, 32)).(*ebiten.Image)
@@ -988,7 +964,6 @@ func buildRawSprites_SinglePage(n int) ([]rawSprite, *ebiten.Image) {
 	return sprites, page
 }
 
-// buildRawBatches_SinglePage creates a single DrawTriangles32 batch for n sprites.
 func buildRawBatches_SinglePage(n int) ([]rawBatch, *ebiten.Image) {
 	page := ebiten.NewImage(128, 128)
 	verts := make([]ebiten.Vertex, 0, n*4)
@@ -1008,8 +983,6 @@ func buildRawBatches_SinglePage(n int) ([]rawBatch, *ebiten.Image) {
 	return []rawBatch{{verts: verts, inds: inds, page: page}}, page
 }
 
-// buildRawSprites_RealWorld creates n pre-computed DrawImage calls across 2
-// 4096x4096 pages in runs of runLen (matching setupRealWorldAtlasScene).
 func buildRawSprites_RealWorld(runLen, runs int) []rawSprite {
 	pages := [2]*ebiten.Image{
 		ebiten.NewImage(4096, 4096),
@@ -1029,8 +1002,6 @@ func buildRawSprites_RealWorld(runLen, runs int) []rawSprite {
 	return sprites
 }
 
-// buildRawBatches_RealWorld creates DrawTriangles32 batches matching the
-// real-world atlas layout: runs of runLen sprites per page, alternating pages.
 func buildRawBatches_RealWorld(runLen, runs int) []rawBatch {
 	pages := [2]*ebiten.Image{
 		ebiten.NewImage(4096, 4096),
@@ -1076,8 +1047,6 @@ func buildRawBatches_RealWorld(runLen, runs int) []rawBatch {
 	return batches
 }
 
-// buildRawSprites_Mixed creates pre-computed DrawImage calls matching
-// setupMixedScene: sprites across 2 pages with particle-equivalent sprites interleaved.
 func buildRawSprites_Mixed(nSprites, nEmitters, particlesPerEmitter int) []rawSprite {
 	pages := [2]*ebiten.Image{
 		ebiten.NewImage(128, 128),
@@ -1154,7 +1123,7 @@ func BenchmarkRaw_SinglePage_DrawTriangles32(b *testing.B) {
 	}
 }
 
-// --- Raw Ebitengine: Real-World Atlas (10K sprites, 2x 4096x4096, runs of 1000) ---
+// --- Raw Ebitengine: Real-World Atlas ---
 
 func BenchmarkRaw_RealWorldAtlas_DrawImage(b *testing.B) {
 	sprites := buildRawSprites_RealWorld(1000, 10)
@@ -1184,7 +1153,7 @@ func BenchmarkRaw_RealWorldAtlas_DrawTriangles32(b *testing.B) {
 	}
 }
 
-// --- Raw Ebitengine: Mixed (5K sprites + 5 emitters x 200 particles) ---
+// --- Raw Ebitengine: Mixed ---
 
 func BenchmarkRaw_Mixed_DrawImage(b *testing.B) {
 	sprites := buildRawSprites_Mixed(5000, 5, 200)
@@ -1199,7 +1168,7 @@ func BenchmarkRaw_Mixed_DrawImage(b *testing.B) {
 	}
 }
 
-// --- Raw Ebitengine: Particles (1000 particles) ---
+// --- Raw Ebitengine: Particles ---
 
 func BenchmarkRaw_Particles_DrawImage(b *testing.B) {
 	page := ebiten.NewImage(128, 128)

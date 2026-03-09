@@ -116,3 +116,121 @@ func TestManager_RetainRelease(t *testing.T) {
 	am.Release(0)
 	ResetGlobalManager()
 }
+
+// --- Additional tests migrated from archived atlas_manager_test.go ---
+
+func TestManagerSingleton(t *testing.T) {
+	ResetGlobalManager()
+	defer ResetGlobalManager()
+
+	am1 := GlobalManager()
+	am2 := GlobalManager()
+	if am1 != am2 {
+		t.Error("GlobalManager() should return the same instance")
+	}
+}
+
+func TestManagerRegisterAndPage(t *testing.T) {
+	ResetGlobalManager()
+	defer ResetGlobalManager()
+
+	am := GlobalManager()
+
+	// Page out of range returns nil.
+	if am.Page(0) != nil {
+		t.Error("expected nil for unregistered page 0")
+	}
+	if am.Page(-1) != nil {
+		t.Error("expected nil for negative index")
+	}
+
+	// Register a nil page (valid in tests without GPU).
+	am.RegisterPage(2, nil)
+	if am.PageCount() != 3 {
+		t.Errorf("PageCount = %d, want 3", am.PageCount())
+	}
+
+	// NextPage should be past registered pages.
+	if am.NextPage() != 3 {
+		t.Errorf("NextPage = %d, want 3", am.NextPage())
+	}
+}
+
+func TestManagerRetainRelease_Detailed(t *testing.T) {
+	ResetGlobalManager()
+	defer ResetGlobalManager()
+
+	am := GlobalManager()
+	am.RegisterPage(0, nil)
+
+	am.Retain(0)
+	am.Retain(0)
+	if am.Refs[0] != 2 {
+		t.Errorf("refs[0] = %d, want 2", am.Refs[0])
+	}
+
+	am.Release(0)
+	if am.Refs[0] != 1 {
+		t.Errorf("refs[0] = %d, want 1", am.Refs[0])
+	}
+
+	am.Release(0)
+	if am.Refs[0] != 0 {
+		t.Errorf("refs[0] = %d, want 0", am.Refs[0])
+	}
+
+	// Release below zero should not go negative.
+	am.Release(0)
+	if am.Refs[0] != 0 {
+		t.Errorf("refs[0] = %d, want 0 (should not go negative)", am.Refs[0])
+	}
+
+	// Release out of range should not panic.
+	am.Release(999)
+	am.Release(-1)
+}
+
+func TestManagerSetStatic(t *testing.T) {
+	ResetGlobalManager()
+	defer ResetGlobalManager()
+
+	am := GlobalManager()
+	am.RegisterPage(0, nil)
+
+	am.SetStatic(0)
+	if !am.Static[0] {
+		t.Error("page 0 should be static")
+	}
+
+	// SetStatic on unregistered index should grow slices without panic.
+	am.SetStatic(5)
+	if !am.Static[5] {
+		t.Error("page 5 should be static")
+	}
+}
+
+func TestManagerRetainGrowsSlice(t *testing.T) {
+	ResetGlobalManager()
+	defer ResetGlobalManager()
+
+	am := GlobalManager()
+	// Retain on an index beyond current refs length should grow without panic.
+	am.Retain(3)
+	if len(am.Refs) < 4 {
+		t.Errorf("refs length = %d, want >= 4", len(am.Refs))
+	}
+	if am.Refs[3] != 1 {
+		t.Errorf("refs[3] = %d, want 1", am.Refs[3])
+	}
+}
+
+func TestManagerReset(t *testing.T) {
+	am := GlobalManager()
+	am.RegisterPage(0, nil)
+	ResetGlobalManager()
+
+	am2 := GlobalManager()
+	if am2.PageCount() != 0 {
+		t.Errorf("PageCount after reset = %d, want 0", am2.PageCount())
+	}
+}

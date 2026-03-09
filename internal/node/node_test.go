@@ -167,3 +167,70 @@ func TestNode_SetZIndex(t *testing.T) {
 		t.Error("parent.ChildrenSorted should be false after SetZIndex")
 	}
 }
+
+// --- CacheAsTexture tests migrated from archived rendertarget_test.go ---
+
+func TestSetCacheAsTextureEnabled(t *testing.T) {
+	n := NewNode("s", types.NodeTypeSprite)
+	n.SetCacheAsTexture(true)
+	if !n.CacheEnabled {
+		t.Error("cacheEnabled should be true")
+	}
+	if !n.CacheDirty {
+		t.Error("cacheDirty should be true after enabling")
+	}
+}
+
+func TestSetCacheAsTextureDisabled(t *testing.T) {
+	n := NewNode("s", types.NodeTypeSprite)
+	n.SetCacheAsTexture(true)
+	n.SetCacheAsTexture(false)
+	if n.CacheEnabled {
+		t.Error("cacheEnabled should be false after disabling")
+	}
+	if n.CacheDirty {
+		t.Error("cacheDirty should be false after disabling")
+	}
+	if n.CacheTexture != nil {
+		t.Error("cacheTexture should be nil after disabling")
+	}
+}
+
+func TestSetCacheAsTextureIdempotent(t *testing.T) {
+	n := NewNode("s", types.NodeTypeSprite)
+	n.SetCacheAsTexture(true)
+	n.CacheDirty = false
+	n.SetCacheAsTexture(true) // should be no-op
+	if n.CacheDirty {
+		t.Error("setting cache to same value should not reset dirty flag")
+	}
+}
+
+func TestInvalidateCache(t *testing.T) {
+	n := NewNode("s", types.NodeTypeSprite)
+	n.SetCacheAsTexture(true)
+	n.CacheDirty = false
+	n.InvalidateCache()
+	if !n.CacheDirty {
+		t.Error("cacheDirty should be true after InvalidateCache")
+	}
+}
+
+func TestInvalidateCacheNoCacheNoOp(t *testing.T) {
+	n := NewNode("s", types.NodeTypeSprite)
+	n.InvalidateCache() // cache not enabled - should be no-op
+	if n.CacheDirty {
+		t.Error("InvalidateCache on non-cached node should not set dirty")
+	}
+}
+
+func TestIsCacheEnabled(t *testing.T) {
+	n := NewNode("s", types.NodeTypeSprite)
+	if n.IsCacheEnabled() {
+		t.Error("should be false by default")
+	}
+	n.SetCacheAsTexture(true)
+	if !n.IsCacheEnabled() {
+		t.Error("should be true after enabling")
+	}
+}

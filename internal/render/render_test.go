@@ -254,3 +254,121 @@ func TestClamp01(t *testing.T) {
 		t.Error("Clamp01(1.5) should be 1")
 	}
 }
+
+// --- Additional tests migrated from archived rendertarget_test.go ---
+
+func TestNextPowerOfTwo_Thorough(t *testing.T) {
+	tests := []struct {
+		input, want int
+	}{
+		{0, 1},
+		{1, 1},
+		{2, 2},
+		{3, 4},
+		{4, 4},
+		{5, 8},
+		{127, 128},
+		{128, 128},
+		{129, 256},
+		{255, 256},
+		{256, 256},
+		{1000, 1024},
+	}
+	for _, tt := range tests {
+		got := NextPowerOfTwo(tt.input)
+		if got != tt.want {
+			t.Errorf("NextPowerOfTwo(%d) = %d, want %d", tt.input, got, tt.want)
+		}
+	}
+}
+
+func TestPoolAcquireReturnsPow2(t *testing.T) {
+	var pool RenderTexturePool
+	img := pool.Acquire(100, 50)
+	defer pool.Release(img)
+
+	b := img.Bounds()
+	if b.Dx() != 128 {
+		t.Errorf("width = %d, want 128 (next pow2 of 100)", b.Dx())
+	}
+	if b.Dy() != 64 {
+		t.Errorf("height = %d, want 64 (next pow2 of 50)", b.Dy())
+	}
+}
+
+func TestPoolDifferentSizes(t *testing.T) {
+	var pool RenderTexturePool
+	a := pool.Acquire(32, 32)
+	b := pool.Acquire(64, 64)
+	if a == b {
+		t.Error("different sizes should return different images")
+	}
+	pool.Release(a)
+	pool.Release(b)
+}
+
+func TestPoolReleaseNilNoPanic(t *testing.T) {
+	var pool RenderTexturePool
+	pool.Release(nil) // should not panic
+}
+
+func TestSubtreeBoundsWithChildren(t *testing.T) {
+	parent := node.NewNode("parent", types.NodeTypeContainer)
+	child := node.NewNode("child", types.NodeTypeSprite)
+	child.TextureRegion_ = types.TextureRegion{Width: 20, Height: 20, OriginalW: 20, OriginalH: 20}
+	child.X_ = 50
+	child.Y_ = 50
+	parent.AddChild(child)
+
+	b := SubtreeBounds(parent)
+	// Child at (50,50) with size 20x20 -> bounds should be [50,50,20,20]
+	if b.X != 50 || b.Y != 50 || b.Width != 20 || b.Height != 20 {
+		t.Errorf("bounds = %v, want {50 50 20 20}", b)
+	}
+}
+
+func TestSubtreeBoundsMultipleChildren(t *testing.T) {
+	parent := node.NewNode("parent", types.NodeTypeContainer)
+	a := node.NewNode("a", types.NodeTypeSprite)
+	a.TextureRegion_ = types.TextureRegion{Width: 10, Height: 10, OriginalW: 10, OriginalH: 10}
+	b := node.NewNode("b", types.NodeTypeSprite)
+	b.TextureRegion_ = types.TextureRegion{Width: 10, Height: 10, OriginalW: 10, OriginalH: 10}
+	b.X_ = 100
+	b.Y_ = 100
+	parent.AddChild(a)
+	parent.AddChild(b)
+
+	bounds := SubtreeBounds(parent)
+	// a at (0,0)+10x10, b at (100,100)+10x10 -> union [0,0,110,110]
+	if bounds.X != 0 || bounds.Y != 0 {
+		t.Errorf("origin = (%v, %v), want (0, 0)", bounds.X, bounds.Y)
+	}
+	if bounds.Width != 110 || bounds.Height != 110 {
+		t.Errorf("size = (%v, %v), want (110, 110)", bounds.Width, bounds.Height)
+	}
+}
+
+func TestSubtreeBoundsEmptyContainer(t *testing.T) {
+	c := node.NewNode("empty", types.NodeTypeContainer)
+	b := SubtreeBounds(c)
+	// No renderable content -> zero bounds.
+	if b.Width != 0 || b.Height != 0 {
+		t.Errorf("empty container bounds = %v, want zero", b)
+	}
+}
+
+// --- Benchmarks ---
+
+func BenchmarkPoolAcquireRelease(b *testing.B) {
+	var pool RenderTexturePool
+	// Warmup: create the bucket.
+	img := pool.Acquire(256, 256)
+	pool.Release(img)
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for b.Loop() {
+		img := pool.Acquire(256, 256)
+		pool.Release(img)
+	}
+}
