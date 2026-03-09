@@ -73,6 +73,11 @@ func (f *SpriteFont) LineHeight() float64 {
 	return f.lineHeight
 }
 
+// SetLineHeight sets the line height. Intended for test setup only.
+func (f *SpriteFont) SetLineHeight(h float64) {
+	f.lineHeight = h
+}
+
 // DistanceRange returns the pixel range of the distance field.
 func (f *SpriteFont) DistanceRange() float64 {
 	return f.distanceRange
