@@ -635,7 +635,7 @@ func BenchmarkFilter_BlurOutline(b *testing.B) {
 		sp := NewSprite("sp", region)
 		sp.X_ = float64(i%10) * 40
 		sp.Y_ = float64(i/10) * 40
-		sp.Filters = []Filter{NewBlurFilter(4), NewOutlineFilter(2, ColorWhite)}
+		sp.Filters = []any{NewBlurFilter(4), NewOutlineFilter(2, ColorWhite)}
 		root.AddChild(sp)
 	}
 	screen := ebiten.NewImage(640, 480)

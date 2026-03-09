@@ -87,6 +87,14 @@ type cacheTreeData struct {
 	parentAlpha     float32
 }
 
+// getCacheTree returns the *cacheTreeData from n.CacheData, or nil if unset.
+func getCacheTree(n *Node) *cacheTreeData {
+	if n.CacheData == nil {
+		return nil
+	}
+	return n.CacheData.(*cacheTreeData)
+}
+
 // meshData is an alias for the internal MeshData type.
 type meshData = node.MeshData
 
@@ -152,7 +160,7 @@ type Node struct {
 
 	CustomImage_ *ebiten.Image // user-provided offscreen canvas (RenderTexture)
 
-	cacheTree     *cacheTreeData // lazily allocated subtree command cache
+	CacheData     any            // lazily allocated subtree command cache (*cacheTreeData)
 	GlobalOrder   int
 	TextureRegion_ TextureRegion
 	Color_        Color
@@ -171,7 +179,7 @@ type Node struct {
 
 	// Parent points to this node's parent, or nil for the root.
 	Parent *Node
-	Scene_ *Scene
+	Scene_ any
 	// ID is a unique auto-assigned identifier (never zero for live nodes).
 	ID     uint32
 	ZIndex_ int
@@ -201,7 +209,7 @@ type Node struct {
 	// normal command-emit path. Used by TileMapLayer to emit
 	// CommandTilemap commands. The callback receives the scene and a
 	// pointer to the current treeOrder counter.
-	CustomEmit func(s *Scene, treeOrder *int)
+	CustomEmit func(s any, treeOrder *int)
 
 	// ---- COLD: hit testing ----
 
@@ -219,7 +227,7 @@ type Node struct {
 	// Filters is the chain of visual effects applied to this node's rendered
 	// output. Filters are applied in order; each reads from the previous
 	// result and writes to a new buffer.
-	Filters      []Filter
+	Filters      []any
 	CacheEnabled bool
 	CacheTexture *ebiten.Image
 	CacheDirty   bool
@@ -544,8 +552,8 @@ func (n *Node) SetBlendMode(b BlendMode) {
 // SetVisible sets the node's visibility and invalidates ancestor caches.
 func (n *Node) SetVisible(v bool) {
 	n.Visible_ = v
-	if n.cacheTree != nil {
-		n.cacheTree.dirty = true
+	if n.CacheData != nil {
+		getCacheTree(n).dirty = true
 	}
 	invalidateAncestorCache(n)
 }
@@ -843,8 +851,8 @@ func (n *Node) AddChild(child *Node) {
 	n.ChildrenSorted = false
 	propagateScene(child, n.Scene_)
 	markSubtreeDirty(child)
-	if n.cacheTree != nil {
-		n.cacheTree.dirty = true
+	if n.CacheData != nil {
+		getCacheTree(n).dirty = true
 	}
 	invalidateAncestorCache(n)
 	if globalDebug {
@@ -879,8 +887,8 @@ func (n *Node) AddChildAt(child *Node, index int) {
 	n.ChildrenSorted = false
 	propagateScene(child, n.Scene_)
 	markSubtreeDirty(child)
-	if n.cacheTree != nil {
-		n.cacheTree.dirty = true
+	if n.CacheData != nil {
+		getCacheTree(n).dirty = true
 	}
 	invalidateAncestorCache(n)
 	if globalDebug {
@@ -904,8 +912,8 @@ func (n *Node) RemoveChild(child *Node) {
 	propagateScene(child, nil)
 	n.ChildrenSorted = false
 	markSubtreeDirty(child)
-	if n.cacheTree != nil {
-		n.cacheTree.dirty = true
+	if n.CacheData != nil {
+		getCacheTree(n).dirty = true
 	}
 	invalidateAncestorCache(n)
 }
@@ -927,8 +935,8 @@ func (n *Node) RemoveChildAt(index int) *Node {
 	propagateScene(child, nil)
 	n.ChildrenSorted = false
 	markSubtreeDirty(child)
-	if n.cacheTree != nil {
-		n.cacheTree.dirty = true
+	if n.CacheData != nil {
+		getCacheTree(n).dirty = true
 	}
 	invalidateAncestorCache(n)
 	return child
@@ -954,8 +962,8 @@ func (n *Node) RemoveChildren() {
 	}
 	n.Children_ = n.Children_[:0]
 	n.ChildrenSorted = true
-	if n.cacheTree != nil {
-		n.cacheTree.dirty = true
+	if n.CacheData != nil {
+		getCacheTree(n).dirty = true
 	}
 	invalidateAncestorCache(n)
 }
@@ -1068,31 +1076,32 @@ func (n *Node) SetZIndex(z int) {
 //	                  the developer knows exactly when tiles change.
 func (n *Node) SetCacheAsTree(enabled bool, mode ...CacheTreeMode) {
 	if enabled {
-		if n.cacheTree == nil {
-			n.cacheTree = &cacheTreeData{}
+		if n.CacheData == nil {
+			n.CacheData = &cacheTreeData{}
 		}
+		ct := getCacheTree(n)
 		if len(mode) > 0 {
-			n.cacheTree.mode = mode[0]
+			ct.mode = mode[0]
 		} else {
-			n.cacheTree.mode = CacheTreeAuto
+			ct.mode = CacheTreeAuto
 		}
-		n.cacheTree.dirty = true
+		ct.dirty = true
 	} else {
-		n.cacheTree = nil
+		n.CacheData = nil
 	}
 }
 
 // InvalidateCacheTree marks the cache as stale. Next Draw() re-traverses.
 // Works with both Auto and Manual modes.
 func (n *Node) InvalidateCacheTree() {
-	if n.cacheTree != nil {
-		n.cacheTree.dirty = true
+	if n.CacheData != nil {
+		getCacheTree(n).dirty = true
 	}
 }
 
 // IsCacheAsTreeEnabled reports whether subtree command caching is enabled.
 func (n *Node) IsCacheAsTreeEnabled() bool {
-	return n.cacheTree != nil
+	return n.CacheData != nil
 }
 
 // registerAnimatedInCache walks up to the nearest CacheAsTree ancestor and
@@ -1101,15 +1110,16 @@ func (n *Node) IsCacheAsTreeEnabled() bool {
 // starts animating  -  not per frame.
 func (n *Node) registerAnimatedInCache() {
 	for p := n.Parent; p != nil; p = p.Parent {
-		if p.cacheTree == nil {
+		if p.CacheData == nil {
 			continue
 		}
-		if len(p.cacheTree.commands) == 0 {
+		ct := getCacheTree(p)
+		if len(ct.commands) == 0 {
 			return // cache not built yet; source will be set on first build
 		}
-		for i := range p.cacheTree.commands {
-			if p.cacheTree.commands[i].source == n || p.cacheTree.commands[i].sourceNodeID == n.ID {
-				p.cacheTree.commands[i].source = n
+		for i := range ct.commands {
+			if ct.commands[i].source == n || ct.commands[i].sourceNodeID == n.ID {
+				ct.commands[i].source = n
 				return
 			}
 		}
@@ -1122,9 +1132,10 @@ func (n *Node) registerAnimatedInCache() {
 // Manual mode stops bubbling  -  user manages invalidation.
 func invalidateAncestorCache(n *Node) {
 	for p := n.Parent; p != nil; p = p.Parent {
-		if p.cacheTree != nil {
-			if p.cacheTree.mode == CacheTreeAuto {
-				p.cacheTree.dirty = true
+		if p.CacheData != nil {
+			ct := getCacheTree(p)
+			if ct.mode == CacheTreeAuto {
+				ct.dirty = true
 			}
 			return
 		}
@@ -1163,7 +1174,7 @@ func (n *Node) dispose() {
 	}
 	n.CacheDirty = false
 	n.MaskNode = nil
-	n.cacheTree = nil
+	n.CacheData = nil
 	n.CustomImage_ = nil
 	n.CustomEmit = nil
 	n.Mesh = nil
@@ -1180,12 +1191,15 @@ func (n *Node) IsDisposed() bool {
 
 // Scene returns the Scene this node belongs to, or nil if not in a scene graph.
 func (n *Node) Scene() *Scene {
-	return n.Scene_
+	if n.Scene_ == nil {
+		return nil
+	}
+	return n.Scene_.(*Scene)
 }
 
 // propagateScene recursively sets the scene back-pointer on n and all descendants.
 // Early-outs if the scene is already the target value.
-func propagateScene(n *Node, s *Scene) {
+func propagateScene(n *Node, s any) {
 	if n.Scene_ == s {
 		return
 	}

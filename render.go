@@ -106,11 +106,12 @@ func (s *Scene) traverse(n *Node, treeOrder *int) {
 	culled := s.cullActive && n.Renderable_ && shouldCull(n, viewWorld, s.cullBounds)
 
 	// CacheAsTree: replay cached commands (hit) or build cache (miss).
-	if n.cacheTree != nil && !culled {
+	if n.CacheData != nil && !culled {
 		containerTransform32 := affine32(viewWorld)
 		containerAlpha := float32(n.WorldAlpha)
+		ct := getCacheTree(n)
 
-		if !n.cacheTree.dirty && len(n.cacheTree.commands) > 0 {
+		if !ct.dirty && len(ct.commands) > 0 {
 			// Cache hit  -  delta remap and replay.
 			s.replayCacheAsTree(n, containerTransform32, containerAlpha, treeOrder)
 			return
@@ -531,21 +532,22 @@ func invertAffine32(m [6]float32) [6]float32 {
 // replayCacheAsTree replays cached commands with delta remap for transform
 // and alpha changes. Animated tiles read live TextureRegion from source node.
 func (s *Scene) replayCacheAsTree(n *Node, containerTransform32 [6]float32, containerAlpha float32, treeOrder *int) {
-	transformChanged := containerTransform32 != n.cacheTree.parentTransform
-	alphaChanged := containerAlpha != n.cacheTree.parentAlpha
+	ct := getCacheTree(n)
+	transformChanged := containerTransform32 != ct.parentTransform
+	alphaChanged := containerAlpha != ct.parentAlpha
 
 	var delta [6]float32
 	if transformChanged {
-		inv := invertAffine32(n.cacheTree.parentTransform)
+		inv := invertAffine32(ct.parentTransform)
 		delta = multiplyAffine32(containerTransform32, inv)
 	}
 	var alphaRatio float32 = 1.0
-	if alphaChanged && n.cacheTree.parentAlpha > 1e-6 {
-		alphaRatio = containerAlpha / n.cacheTree.parentAlpha
+	if alphaChanged && ct.parentAlpha > 1e-6 {
+		alphaRatio = containerAlpha / ct.parentAlpha
 	}
 
-	for i := range n.cacheTree.commands {
-		src := &n.cacheTree.commands[i]
+	for i := range ct.commands {
+		src := &ct.commands[i]
 		cmd := src.cmd // copy from cache
 		if transformChanged {
 			cmd.Transform = multiplyAffine32(delta, cmd.Transform)
@@ -623,29 +625,30 @@ func (s *Scene) buildCacheAsTree(n *Node, containerTransform32 [6]float32, conta
 		}
 	}
 
+	ct := getCacheTree(n)
 	if blocked {
 		// Can't cache  -  disable and fall through. Commands are already emitted.
-		n.cacheTree.dirty = true
+		ct.dirty = true
 		return
 	}
 
 	// Store in cachedCommands.
-	if cap(n.cacheTree.commands) < len(newCmds) {
-		n.cacheTree.commands = make([]cachedCmd, len(newCmds))
+	if cap(ct.commands) < len(newCmds) {
+		ct.commands = make([]cachedCmd, len(newCmds))
 	}
-	n.cacheTree.commands = n.cacheTree.commands[:len(newCmds)]
+	ct.commands = ct.commands[:len(newCmds)]
 
 	for i := range newCmds {
-		n.cacheTree.commands[i] = cachedCmd{
+		ct.commands[i] = cachedCmd{
 			cmd:          newCmds[i],
 			source:       nil, // static by default (two-tier)
 			sourceNodeID: newCmds[i].emittingNodeID,
 		}
 	}
 
-	n.cacheTree.parentTransform = containerTransform32
-	n.cacheTree.parentAlpha = containerAlpha
-	n.cacheTree.dirty = false
+	ct.parentTransform = containerTransform32
+	ct.parentAlpha = containerAlpha
+	ct.dirty = false
 }
 
 // emitNodeCommandInline emits a command for the node itself (used by buildCacheAsTree

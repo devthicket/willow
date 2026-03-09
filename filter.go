@@ -662,10 +662,10 @@ func (f *CustomShaderFilter) Padding() int { return f.padding }
 // filterChainPadding returns the cumulative padding required by a slice of filters.
 // Per spec section 13.5: "Padding is cumulative: the initial RenderTexture is
 // sized to accommodate the sum of all filters' Padding() values."
-func filterChainPadding(filters []Filter) int {
+func filterChainPadding(filters []any) int {
 	pad := 0
 	for _, f := range filters {
-		pad += f.Padding()
+		pad += f.(Filter).Padding()
 	}
 	return pad
 }
@@ -675,7 +675,7 @@ func filterChainPadding(filters []Filter) int {
 // applyFilters runs a filter chain on src, ping-ponging between two images.
 // Returns the image containing the final result (either src or the provided
 // scratch image). The caller must handle releasing scratch if pooled.
-func applyFilters(filters []Filter, src *ebiten.Image, pool *renderTexturePool) *ebiten.Image {
+func applyFilters(filters []any, src *ebiten.Image, pool *renderTexturePool) *ebiten.Image {
 	if len(filters) == 0 {
 		return src
 	}
@@ -692,7 +692,7 @@ func applyFilters(filters []Filter, src *ebiten.Image, pool *renderTexturePool) 
 		} else {
 			scratch.Clear()
 		}
-		f.Apply(current, scratch)
+		f.(Filter).Apply(current, scratch)
 		current, scratch = scratch, current
 	}
 

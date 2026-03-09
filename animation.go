@@ -89,7 +89,7 @@ func (g *TweenGroup) Cancel() {
 func (g *TweenGroup) autoRegister(node *Node) {
 	if node.Scene_ != nil {
 		g.managed = true
-		node.Scene_.registerTween(g)
+		node.Scene_.(*Scene).registerTween(g)
 	}
 }
 

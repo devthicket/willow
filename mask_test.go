@@ -77,7 +77,7 @@ func TestDisposeCleansCache(t *testing.T) {
 func TestSpecialNodeWithFilterSkipsNormalEmission(t *testing.T) {
 	s := NewScene()
 	n := NewSprite("s", TextureRegion{Width: 32, Height: 32, OriginalW: 32, OriginalH: 32})
-	n.Filters = []Filter{NewColorMatrixFilter()}
+	n.Filters = []any{NewColorMatrixFilter()}
 	s.Root().AddChild(n)
 
 	traverseScene(s)

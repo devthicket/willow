@@ -116,14 +116,14 @@ func TestFilterChainOnNode(t *testing.T) {
 	n := NewSprite("s", TextureRegion{Width: 32, Height: 32})
 	f1 := NewColorMatrixFilter()
 	f2 := NewBlurFilter(4)
-	n.Filters = []Filter{f1, f2}
+	n.Filters = []any{f1, f2}
 	if len(n.Filters) != 2 {
 		t.Errorf("filter count = %d, want 2", len(n.Filters))
 	}
 }
 
 func TestFilterChainPadding(t *testing.T) {
-	filters := []Filter{
+	filters := []any{
 		NewColorMatrixFilter(),                   // padding 0
 		NewBlurFilter(8),                         // padding 8
 		NewOutlineFilter(3, ColorWhite),          // padding 3

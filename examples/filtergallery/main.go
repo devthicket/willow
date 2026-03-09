@@ -162,7 +162,7 @@ func main() {
 
 	// rebuildFilters collects all active filters and updates the whelp and status.
 	rebuildFilters := func() {
-		var active []willow.Filter
+		var active []any
 		var names []string
 		for _, e := range entries {
 			if e.active {

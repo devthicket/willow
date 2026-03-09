@@ -52,12 +52,12 @@ func main() {
 
 	type column struct {
 		label   string
-		filters []willow.Filter
+		filters []any
 	}
 	cols := []column{
-		{"Outline", []willow.Filter{outline}},
+		{"Outline", []any{outline}},
 		{"Original", nil},
-		{"Inline", []willow.Filter{inline}},
+		{"Inline", []any{inline}},
 	}
 
 	whelpW := float64(whelpImg.Bounds().Dx())

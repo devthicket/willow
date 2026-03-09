@@ -434,7 +434,8 @@ func (l *TileMapLayer) lateRebuildCheck() {
 // emitCommands is the customEmit callback for a TileMapLayer node.
 // It transforms vertex positions from world to screen space and emits
 // CommandTilemap commands into the scene's command pipeline.
-func (l *TileMapLayer) emitCommands(s *Scene, treeOrder *int) {
+func (l *TileMapLayer) emitCommands(sAny any, treeOrder *int) {
+	s := sAny.(*Scene)
 	l.lateRebuildCheck()
 
 	if l.tileCount == 0 || l.atlasImage == nil {

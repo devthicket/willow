@@ -82,20 +82,20 @@ func main() {
 	// Define the 9 shader demos.
 	type panelDef struct {
 		name    string
-		filters []willow.Filter
+		filters []any
 		update  func(t float64)
 	}
 	defs := []panelDef{
-		{"Brightness", []willow.Filter{brightness}, func(t float64) {
+		{"Brightness", []any{brightness}, func(t float64) {
 			brightness.SetBrightness(0.35 * math.Sin(t*3))
 		}},
-		{"Saturation", []willow.Filter{saturation}, func(t float64) {
+		{"Saturation", []any{saturation}, func(t float64) {
 			saturation.SetSaturation(0.5 + 0.5*math.Cos(t*2))
 		}},
-		{"Contrast", []willow.Filter{contrast}, func(t float64) {
+		{"Contrast", []any{contrast}, func(t float64) {
 			contrast.SetContrast(1.2 + 0.8*math.Sin(t*2))
 		}},
-		{"Sepia", []willow.Filter{sepia}, func(t float64) {
+		{"Sepia", []any{sepia}, func(t float64) {
 			// Fade from normal to full sepia and back.
 			s := 0.5 + 0.5*math.Sin(t*1.5)
 			sepia.Matrix = [20]float64{
@@ -105,7 +105,7 @@ func main() {
 				0, 0, 0, 1, 0,
 			}
 		}},
-		{"Invert", []willow.Filter{invert}, func(t float64) {
+		{"Invert", []any{invert}, func(t float64) {
 			// Smoothly transition between normal and inverted.
 			s := 0.5 + 0.5*math.Sin(t*1.2)
 			f := 1 - 2*s // +1 (normal) to -1 (inverted)
@@ -117,7 +117,7 @@ func main() {
 				0, 0, 0, 1, 0,
 			}
 		}},
-		{"Night Vision", []willow.Filter{nightVision}, func(t float64) {
+		{"Night Vision", []any{nightVision}, func(t float64) {
 			// Green-tinted with pulsing intensity.
 			p := 0.8 + 0.2*math.Sin(t*4)
 			nightVision.Matrix = [20]float64{
@@ -127,7 +127,7 @@ func main() {
 				0, 0, 0, 1, 0,
 			}
 		}},
-		{"Hue Shift", []willow.Filter{hueShift}, func(t float64) {
+		{"Hue Shift", []any{hueShift}, func(t float64) {
 			// Rotate hue through the color wheel.
 			angle := t * 0.8
 			cos, sin := math.Cos(angle), math.Sin(angle)
@@ -139,7 +139,7 @@ func main() {
 				0, 0, 0, 1, 0,
 			}
 		}},
-		{"Warm / Cool", []willow.Filter{warmCool}, func(t float64) {
+		{"Warm / Cool", []any{warmCool}, func(t float64) {
 			// Cycle between warm (orange tint) and cool (blue tint).
 			s := math.Sin(t * math.Pi * 2 / 3) // full cycle every 3 seconds
 			warmCool.Matrix = [20]float64{
@@ -149,7 +149,7 @@ func main() {
 				0, 0, 0, 1, 0,
 			}
 		}},
-		{"Blur", []willow.Filter{blur}, func(t float64) {
+		{"Blur", []any{blur}, func(t float64) {
 			blur.Radius = int(12 * (0.5 + 0.5*math.Sin(t*1.5)))
 		}},
 	}
