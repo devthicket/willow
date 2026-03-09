@@ -25,23 +25,6 @@ type glyphPos = text.GlyphPos
 // Glyph holds glyph metrics and atlas position.
 type Glyph = text.Glyph
 
-// --- glyph (internal, used by font.go / pixel_font.go) ---
-
-// glyph holds per-glyph metrics for the root-owned SpriteFont.
-type glyph struct {
-	id       rune
-	x, y     uint16
-	width    uint16
-	height   uint16
-	xOffset  int16
-	yOffset  int16
-	xAdvance int16
-	page     uint16
-}
-
-// asciiGlyphCount is the fixed-size fast-path table size.
-const asciiGlyphCount = 128
-
 // --- Text rendering helpers ---
 
 // textBlockFontScale returns the scale factor that maps native atlas pixels to display pixels.
