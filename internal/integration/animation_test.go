@@ -1,10 +1,12 @@
-package willow
+package integration
 
 import (
 	"math"
 	"testing"
 
 	"github.com/tanema/gween/ease"
+
+	. "github.com/phanxgames/willow"
 )
 
 func TestTweenPositionReachesTarget(t *testing.T) {

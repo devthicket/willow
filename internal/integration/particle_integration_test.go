@@ -1,8 +1,10 @@
-package willow
+package integration
 
 import (
 	"math"
 	"testing"
+
+	. "github.com/phanxgames/willow"
 )
 
 func defaultTestConfig(max int) EmitterConfig {

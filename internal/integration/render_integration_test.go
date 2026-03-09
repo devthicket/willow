@@ -1,4 +1,4 @@
-package willow
+package integration
 
 import (
 	"math"
@@ -8,6 +8,8 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/phanxgames/willow/internal/node"
 	"github.com/phanxgames/willow/internal/render"
+
+	. "github.com/phanxgames/willow"
 )
 
 // --- Command emission ---
@@ -593,15 +595,6 @@ func TestCacheAsTree_Disable(t *testing.T) {
 }
 
 // --- Benchmarks ---
-
-func buildSpriteScene(count int) *Scene {
-	s := NewScene()
-	for i := 0; i < count; i++ {
-		sp := NewSprite("", TextureRegion{Width: 32, Height: 32})
-		s.Root.AddChild(sp)
-	}
-	return s
-}
 
 func BenchmarkTraverse1000(b *testing.B) {
 	s := buildSpriteScene(1000)

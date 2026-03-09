@@ -1,10 +1,13 @@
-package willow
+package integration
 
 import (
 	"math"
 	"testing"
 
 	"github.com/phanxgames/willow/internal/node"
+	"github.com/phanxgames/willow/internal/render"
+
+	. "github.com/phanxgames/willow"
 )
 
 // traverseScene runs the render pipeline traverse without needing an ebiten screen.
@@ -52,4 +55,19 @@ func assertVertexNear(t *testing.T, label string, got, want float32) {
 	if diff := got - want; diff > 0.001 || diff < -0.001 {
 		t.Errorf("%s = %f, want %f", label, got, want)
 	}
+}
+
+// buildSpriteScene creates a scene with count sprite nodes.
+func buildSpriteScene(count int) *Scene {
+	s := NewScene()
+	for i := 0; i < count; i++ {
+		sp := NewSprite("", TextureRegion{Width: 32, Height: 32})
+		s.Root.AddChild(sp)
+	}
+	return s
+}
+
+// mergeSort is a convenience wrapper for render.MergeSort.
+func mergeSort(cmds []RenderCommand, buf *[]RenderCommand) {
+	render.MergeSort(cmds, buf)
 }

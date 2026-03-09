@@ -1,4 +1,4 @@
-package willow
+package integration
 
 import (
 	"fmt"
@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	. "github.com/phanxgames/willow"
 )
 
 // --- Test JSON fixtures ---

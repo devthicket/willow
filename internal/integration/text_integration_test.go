@@ -1,10 +1,12 @@
-package willow
+package integration
 
 import (
 	"math"
 	"testing"
 
 	"github.com/phanxgames/willow/internal/node"
+
+	. "github.com/phanxgames/willow"
 )
 
 // --- TextBlock color tint ---

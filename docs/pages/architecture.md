@@ -77,7 +77,27 @@ Willow targets **10,000+ sprites at 120+ FPS** on desktop and **60+ FPS** on mob
 
 ## Package Structure
 
-Willow is a single flat Go package (`github.com/phanxgames/willow`). There are no `internal/` sub-packages. Go's unexported (lowercase) visibility serves as the internal boundary.
+Willow's public API is a single import (`github.com/phanxgames/willow`). The root `willow.go` file is a thin facade of type aliases, constructors, and re-exports. All implementation lives in `internal/` sub-packages:
+
+```
+willow.go              ← public API facade (type aliases, constructors, init() wiring)
+internal/
+  types/               ← Color, Vec2, Rect, TextureRegion, BlendMode, enums
+  node/                ← Node struct, tree ops, transform, callbacks
+  particle/            ← Emitter, EmitterConfig
+  text/                ← Font, SpriteFont, PixelFont, TextBlock, glyph layout
+  atlas/               ← Atlas, Manager, packer
+  filter/              ← ColorMatrix, Blur, Outline, Palette, Custom shader filters
+  lighting/            ← LightLayer, Light
+  mesh/                ← Rope, DistortionGrid, Polygon, vertex transform
+  tilemap/             ← TileMapViewport, tile command emission
+  camera/              ← Camera, culling
+  input/               ← InputManager, hit testing, pointer callbacks
+  render/              ← Pipeline, batch, sort, cache, RenderTexture
+  core/                ← Scene, tweens, debug, update loop, TestRunner
+```
+
+Dependencies flow strictly downward  -  `types/` is the foundation, `node/` imports sub-packages like `particle/` and `text/` for concrete typed fields, and `core/` sits at the top importing `camera/`, `render/`, and `input/`. Cross-package calls that would create cycles use function pointers wired in the root's `init()`, keeping the dependency graph acyclic.
 
 ## Next Steps
 

@@ -1,9 +1,11 @@
-package willow
+package integration
 
 import (
 	"testing"
 
 	"github.com/hajimehoshi/ebiten/v2"
+
+	. "github.com/phanxgames/willow"
 )
 
 func TestSetMask(t *testing.T) {

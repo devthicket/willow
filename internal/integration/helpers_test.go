@@ -1,14 +1,8 @@
-package willow
-
-// helpers.go provides package-level forwarding functions used by integration
-// tests (and potentially future root-level code). Each function delegates to the
-// corresponding internal/ package so tests written against the root API do not
-// import internal paths directly.
+package integration
 
 import (
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/phanxgames/willow/internal/atlas"
@@ -18,26 +12,24 @@ import (
 	"github.com/phanxgames/willow/internal/particle"
 	"github.com/phanxgames/willow/internal/render"
 	"github.com/phanxgames/willow/internal/types"
+
+	. "github.com/phanxgames/willow"
 )
 
 // ---------------------------------------------------------------------------
 // Atlas helpers
 // ---------------------------------------------------------------------------
 
-// magentaPlaceholderPage is re-exported for use in root helpers.
 const magentaPlaceholderPage = atlas.MagentaPlaceholderPage
 
-// ensureMagentaImage returns the 1x1 magenta placeholder image.
 func ensureMagentaImage() *ebiten.Image {
 	return atlas.EnsureMagentaImage()
 }
 
-// atlasManager returns the global AtlasManager singleton.
 func atlasManager() *atlas.Manager {
 	return atlas.GlobalManager()
 }
 
-// resetAtlasManager resets the global singleton for test isolation.
 func resetAtlasManager() {
 	atlas.ResetGlobalManager()
 }
@@ -46,29 +38,25 @@ func resetAtlasManager() {
 // Batch helpers
 // ---------------------------------------------------------------------------
 
-// batchKey groups render commands that can be submitted in a single draw call.
 type batchKey = render.BatchKey
 
 func commandBatchKey(cmd *RenderCommand) batchKey {
 	return render.CommandBatchKey(cmd)
 }
 
-// identityTransform32 is the float32 identity used by batch quad tests.
 var identityTransform32 = [6]float32{1, 0, 0, 1, 0, 0}
 
-// color32 is the internal float32 RGBA used by render commands.
 type color32 = render.Color32
 
 // ---------------------------------------------------------------------------
 // Debug / stats helpers
 // ---------------------------------------------------------------------------
 
-// debugStats holds per-frame timing and draw-call metrics.
 type debugStats struct {
-	traverseTime  time.Duration
-	sortTime      time.Duration
-	batchTime     time.Duration
-	submitTime    time.Duration
+	traverseTime  int
+	sortTime      int
+	batchTime     int
+	submitTime    int
 	commandCount  int
 	batchCount    int
 	drawCallCount int
@@ -90,7 +78,6 @@ func sanitizeLabel(label string) string {
 	return core.SanitizeLabel(label)
 }
 
-// stepActionFor builds a core.StepAction bound to the given scene.
 func stepActionFor(s *Scene) core.StepAction {
 	return core.StepAction{
 		Screenshot:  s.Screenshot,
@@ -214,15 +201,12 @@ func resolvePageImage(region TextureRegion, pages []*ebiten.Image) *ebiten.Image
 // Node helpers
 // ---------------------------------------------------------------------------
 
-// getCacheTree returns the *cacheTreeData from n.CacheData, or nil if unset.
 func getCacheTree(n *Node) *render.CacheTreeData {
 	return render.GetCacheTreeData(n)
 }
 
-// markSubtreeDirty marks a node as needing transform and alpha recomputation.
 func markSubtreeDirty(n *Node) {
 	render.InvalidateAncestorCache(n)
 	n.TransformDirty = true
 	n.AlphaDirty = true
 }
-

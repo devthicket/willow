@@ -1,4 +1,4 @@
-package willow
+package integration
 
 import (
 	"bytes"
@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/phanxgames/willow/internal/node"
+	. "github.com/phanxgames/willow"
 )
 
 // ---- Debug mode tests ------------------------------------------------------

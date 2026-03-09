@@ -1,10 +1,11 @@
-package willow
+package integration
 
 import (
 	"math"
 	"testing"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	. "github.com/phanxgames/willow"
 )
 
 func TestBatchKeySameAtlasSameBlend(t *testing.T) {

@@ -1,4 +1,4 @@
-package willow
+package integration
 
 import (
 	"image"
@@ -8,6 +8,8 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/phanxgames/willow/internal/node"
 	"github.com/phanxgames/willow/internal/render"
+
+	. "github.com/phanxgames/willow"
 )
 
 // setupBenchScene creates a Scene with n sprite nodes for benchmark use.
