@@ -86,7 +86,7 @@ func TestSpecialNodeWithFilterSkipsNormalEmission(t *testing.T) {
 	if len(s.commands) != 1 {
 		t.Fatalf("commands = %d, want 1", len(s.commands))
 	}
-	if s.commands[0].directImage == nil {
+	if s.commands[0].DirectImage == nil {
 		t.Error("command should have directImage set for filtered node")
 	}
 }
@@ -102,7 +102,7 @@ func TestSpecialNodeWithCacheEmitsDirectImage(t *testing.T) {
 	if len(s.commands) != 1 {
 		t.Fatalf("commands = %d, want 1", len(s.commands))
 	}
-	if s.commands[0].directImage == nil {
+	if s.commands[0].DirectImage == nil {
 		t.Error("command should have directImage set for cached node")
 	}
 }

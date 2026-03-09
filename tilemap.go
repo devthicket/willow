@@ -522,11 +522,11 @@ func (l *TileMapLayer) emitCommands(sAny any, treeOrder *int) {
 			Type:         CommandTilemap,
 			RenderLayer:  l.node.RenderLayer,
 			GlobalOrder:  l.node.GlobalOrder,
-			treeOrder:    *treeOrder,
+			TreeOrder:    *treeOrder,
 			BlendMode:    l.node.BlendMode_,
-			tilemapVerts: l.vertices[offset*4 : end*4],
-			tilemapInds:  l.indices[:batchTiles*6],
-			tilemapImage: l.atlasImage,
+			TilemapVerts: l.vertices[offset*4 : end*4],
+			TilemapInds:  l.indices[:batchTiles*6],
+			TilemapImage: l.atlasImage,
 		})
 	}
 }

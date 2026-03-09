@@ -113,65 +113,61 @@ Root called `s.submitBatchesCoalesced(target)` (unexported). Core calls
 
 ## Phase 9 — root facade (in progress)
 
-### Callback setter rename: `SetOn*` → `On*`
-Root public API uses `n.OnPointerDown(fn)`, `n.OnClick(fn)`, etc. Internal
-node/ originally used `SetOnPointerDown(fn)`, etc. Renamed all 10 setters
-to match root's API. No callers in internal/ were affected (only defined,
-never called from internal/).
+### [done] Callback setter rename: `SetOn*` → `On*`
+Renamed all 10 setters to match root's API (`OnPointerDown`, etc.).
 
-### Getter methods added for renamed fields
+### [done] Getter methods added for renamed fields
 Added `Visible()`, `Renderable()`, `CustomImage()`, `TextureRegion()`,
-`SkewX()`, `SkewY()`, `PivotX()`, `PivotY()` getters to match root API.
-Fields were renamed with underscore suffix in a prior sub-task.
+`SkewX()`, `SkewY()`, `PivotX()`, `PivotY()` getters.
 
-### `RenderLayer` / `GlobalOrder` — no getter methods
-Root has `RenderLayer()` and `GlobalOrder()` getter methods returning
-unexported fields. In internal/node, these are exported fields (`n.RenderLayer`,
-`n.GlobalOrder`), so adding a getter method with the same name would conflict.
-Users access them directly via the exported field. No issue for type alias.
+### [done] `RenderLayer` / `GlobalOrder` — no getter methods
+Exported fields accessed directly. No conflict with type alias.
 
-### `Scene()` method stays in root
-`n.Scene()` returns `*Scene`, which is defined in root. Can't live in node/
-since node/ doesn't know about Scene. Root facade will define this method
-(or it stays as-is in the root's existing `node.go`). Since `type Node = node.Node`
-is a type alias, methods can be defined on it in root only if root is the
-defining package — but it's NOT with a type alias. **This means `Scene()` must
-move to internal/node as `Scene() any` and root casts the return.** Or root
-keeps its own Node type (not alias). Needs resolution.
+### [done] `Scene()` method
+Added `Scene() any` to internal/node/methods.go. Root callers type-assert
+the return to `*Scene`.
 
-### `ToTexture(s *Scene)` stays in root
-Requires `*Scene` and calls `subtreeBounds`, `renderSubtree` — both reference
-root-level render logic. Cannot move to node/ or core/ without significant
-refactoring. Stays in root.
-
-### Mask/Cache/MeshAABB methods added to node/
-`SetMask`, `ClearMask`, `GetMask`, `SetCacheAsTexture`, `InvalidateCache`,
-`IsCacheEnabled`, `InvalidateMeshAABB` added to internal/node/methods.go.
-These use exported field names (`MaskNode`, `CacheEnabled`, `CacheTexture`,
-`CacheDirty`, `Mesh.AabbDirty`).
+### [done] `ToTexture` converted to free function
+`ToTexture(n *Node, s *Scene) *ebiten.Image` — free function in rendertarget.go.
 
 ### [done] Color alias
-`type Color = types.Color` in root. All `c.r` → `c.R()` conversions done.
-`types.ColorFieldPtrs(&c)` added for TweenColor field pointer access.
-`toRGBA()` method converted to `colorToRGBA()` free function.
+`type Color = types.Color`. All field accesses use getters/setters.
 
 ### [done] Foundation type aliases
 Vec2, Rect, Range, BlendMode, NodeType, EventType, MouseButton,
-KeyModifiers, TextAlign, TextureRegion, CacheTreeMode, HitShape aliased
-from internal/types. Constants re-exported.
+KeyModifiers, TextAlign, TextureRegion, CacheTreeMode, HitShape aliased.
+
+### [done] Sub-type aliases
+- `type ParticleEmitter = particle.Emitter`
+- `type EmitterConfig = particle.EmitterConfig`
+- `type TextBlock = text.TextBlock`
+- `type TextEffects = text.TextEffects`
+- `type Font = text.Font`
+- `type meshData = node.MeshData`
+
+### [done] Node field type conversions
+- `Scene_ *Scene` → `Scene_ any`
+- `cacheTree *cacheTreeData` → `CacheData any`
+- `CustomEmit func(*Scene, *int)` → `func(any, *int)`
+- `Filters []Filter` → `[]any`
+
+### [done] Node alias (`type Node = node.Node`)
+- Deleted root's Node struct, all ~118 methods, context types, nodeCallbacks
+- Added type aliases for Node, PointerContext, ClickContext, DragContext,
+  PinchContext, nodeCallbacks
+- Rewrote constructors to use `node.NewNode`
+- Wired 10 function pointers in `init()`
+- Deleted duplicate methods from transform.go, rendertarget.go, mesh.go, mask.go
+- Net: -1,273 lines in the atomic swap commit
 
 ### Root facade — remaining work
-- Alias Node (`type Node = node.Node`) — requires updating ~381 field
-  references from unexported to exported names across root .go files
-- Remove duplicate method implementations from root .go files
 - Delete root files fully replaced by internal/ (render.go, batch.go,
-  transform.go, mask.go, camera.go, input.go, text.go, particle.go,
-  filter.go, lightlayer.go, tilemap.go, atlas.go, etc.)
-- Wire all ~20 function pointers in root init or constructors
-- Handle `TileMapLayer.emitCommands` which casts `any` to `*Scene`
-  (must become `*render.Pipeline`)
+  camera.go, input.go, text.go, filter.go, lightlayer.go, tilemap.go,
+  atlas.go, etc.) — requires Scene to delegate to core.Scene
+- Wire remaining ~10 function pointers (render/, input/ packages)
+- Rewrite Scene to wrap core.Scene
 - Integration tests
-- Resolve `Scene()` method ownership (see above)
+- Phase 10: cleanup, benchmarks, docs
 
 ---
 

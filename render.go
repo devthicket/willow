@@ -4,88 +4,35 @@ import (
 	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/phanxgames/willow/internal/render"
 )
 
+// --- Render type aliases from internal/render ---
+
 // CommandType identifies the kind of render command.
-type CommandType uint8
+type CommandType = render.CommandType
 
 const (
-	CommandSprite     CommandType = iota // DrawImage
-	CommandMesh                          // DrawTriangles
-	CommandParticle                      // particle quads (batches as sprites)
-	CommandTilemap                       // DrawTriangles for tilemap layers
-	CommandSDF                           // DrawTrianglesShader for SDF text glyphs
-	CommandBitmapText                    // DrawTriangles for pixel-perfect bitmap font glyphs
+	CommandSprite     = render.CommandSprite
+	CommandMesh       = render.CommandMesh
+	CommandParticle   = render.CommandParticle
+	CommandTilemap    = render.CommandTilemap
+	CommandSDF        = render.CommandSDF
+	CommandBitmapText = render.CommandBitmapText
 )
 
 // color32 is a compact RGBA color using float32, for render commands only.
-type color32 struct {
-	R, G, B, A float32
-}
+type color32 = render.Color32
 
 // RenderCommand is a single draw instruction emitted during scene traversal.
-type RenderCommand struct {
-	Type          CommandType
-	Transform     [6]float32
-	TextureRegion TextureRegion
-	Color         color32
-	BlendMode     BlendMode
-	ShaderID      uint16
-	TargetID      uint16
-	RenderLayer   uint8
-	GlobalOrder   int
-	treeOrder     int // assigned during traversal for stable sort
-
-	// Mesh-only fields (slice headers, not copies of vertex data).
-	meshVerts []ebiten.Vertex
-	meshInds  []uint16
-	meshImage *ebiten.Image
-
-	// directImage, when non-nil, is drawn directly instead of looking up an
-	// atlas page. Used for cached/filtered/masked node output (Phase 09).
-	directImage *ebiten.Image
-
-	// emitter references the particle emitter for CommandParticle commands.
-	emitter            *ParticleEmitter
-	worldSpaceParticle bool // particles store world positions; Transform is view-only
-
-	// transientDirectImage is true when directImage points to a pooled RT
-	// that is released after the frame. Such commands cannot be static-cached
-	// because the image pointer becomes stale on replay.
-	transientDirectImage bool
-
-	// emittingNodeID is set during CacheAsTree builds to track which Node
-	// emitted this command. Only populated when building under a cached ancestor.
-	emittingNodeID uint32
-
-	// Tilemap fields (CommandTilemap only  -  slice headers, not copies).
-	tilemapVerts []ebiten.Vertex
-	tilemapInds  []uint16
-	tilemapImage *ebiten.Image
-
-	// SDF text fields (CommandSDF only  -  slice headers, not copies).
-	sdfVerts     []ebiten.Vertex // local-space glyph quads (from TextBlock cache)
-	sdfInds      []uint16        // glyph indices (from TextBlock cache)
-	sdfVertCount int             // active vertex count
-	sdfIndCount  int             // active index count
-	sdfShader    *ebiten.Shader  // SDF or MSDF shader
-	sdfAtlasImg  *ebiten.Image   // font's SDF atlas page
-	sdfUniforms  map[string]any  // shader uniforms (threshold, smoothing, effects)
-
-	// Bitmap text fields (CommandBitmapText only — slice headers, not copies).
-	bmpVerts     []ebiten.Vertex
-	bmpInds      []uint16
-	bmpVertCount int
-	bmpIndCount  int
-	bmpImage     *ebiten.Image
-}
+type RenderCommand = render.RenderCommand
 
 // identityTransform32 is the identity affine matrix as float32.
-var identityTransform32 = [6]float32{1, 0, 0, 1, 0, 0}
+var identityTransform32 = render.IdentityTransform32
 
 // affine32 converts a [6]float64 affine matrix to [6]float32.
 func affine32(m [6]float64) [6]float32 {
-	return [6]float32{float32(m[0]), float32(m[1]), float32(m[2]), float32(m[3]), float32(m[4]), float32(m[5])}
+	return render.Affine32(m)
 }
 
 // traverse walks the node tree depth-first, emitting render commands for
@@ -111,7 +58,7 @@ func (s *Scene) traverse(n *Node, treeOrder *int) {
 		containerAlpha := float32(n.WorldAlpha)
 		ct := getCacheTree(n)
 
-		if !ct.dirty && len(ct.commands) > 0 {
+		if !ct.Dirty && len(ct.Commands) > 0 {
 			// Cache hit  -  delta remap and replay.
 			s.replayCacheAsTree(n, containerTransform32, containerAlpha, treeOrder)
 			return
@@ -160,19 +107,19 @@ func (s *Scene) traverse(n *Node, treeOrder *int) {
 			cmd := RenderCommand{
 				Type:        CommandSprite,
 				Transform:   affine32(viewWorld),
-				Color:       color32{float32(n.Color_.R()), float32(n.Color_.G()), float32(n.Color_.B()), float32(n.Color_.A() * n.WorldAlpha)},
+				Color:       color32{R: float32(n.Color_.R()), G: float32(n.Color_.G()), B: float32(n.Color_.B()), A: float32(n.Color_.A() * n.WorldAlpha)},
 				BlendMode:   n.BlendMode_,
 				RenderLayer: n.RenderLayer,
 				GlobalOrder: n.GlobalOrder,
-				treeOrder:   *treeOrder,
+				TreeOrder:   *treeOrder,
 			}
 			if n.CustomImage_ != nil {
-				cmd.directImage = n.CustomImage_
+				cmd.DirectImage = n.CustomImage_
 			} else {
 				cmd.TextureRegion = n.TextureRegion_
 			}
 			if building {
-				cmd.emittingNodeID = n.ID
+				cmd.EmittingNodeID = n.ID
 			}
 			s.commands = append(s.commands, cmd)
 		case NodeTypeMesh:
@@ -189,10 +136,10 @@ func (s *Scene) traverse(n *Node, treeOrder *int) {
 				BlendMode:   n.BlendMode_,
 				RenderLayer: n.RenderLayer,
 				GlobalOrder: n.GlobalOrder,
-				treeOrder:   *treeOrder,
-				meshVerts:   dst,
-				meshInds:    n.Mesh.Indices,
-				meshImage:   n.Mesh.Image,
+				TreeOrder:   *treeOrder,
+				MeshVerts:   dst,
+				MeshInds:    n.Mesh.Indices,
+				MeshImage:   n.Mesh.Image,
 			})
 		case NodeTypeParticleEmitter:
 			if n.Emitter != nil && n.Emitter.Alive > 0 {
@@ -206,14 +153,14 @@ func (s *Scene) traverse(n *Node, treeOrder *int) {
 					Type:               CommandParticle,
 					Transform:          affine32(particleTransform),
 					TextureRegion:      n.TextureRegion_,
-					directImage:        n.CustomImage_,
-					Color:              color32{float32(n.Color_.R()), float32(n.Color_.G()), float32(n.Color_.B()), float32(n.Color_.A() * n.WorldAlpha)},
+					DirectImage:        n.CustomImage_,
+					Color:              color32{R: float32(n.Color_.R()), G: float32(n.Color_.G()), B: float32(n.Color_.B()), A: float32(n.Color_.A() * n.WorldAlpha)},
 					BlendMode:          n.BlendMode_,
 					RenderLayer:        n.RenderLayer,
 					GlobalOrder:        n.GlobalOrder,
-					treeOrder:          *treeOrder,
-					emitter:            n.Emitter,
-					worldSpaceParticle: ws,
+					TreeOrder:          *treeOrder,
+					Emitter:            n.Emitter,
+					WorldSpaceParticle: ws,
 				})
 			}
 		case NodeTypeText:
@@ -273,94 +220,14 @@ func (s *Scene) rebuildSortedChildren(n *Node) {
 
 // --- Merge sort ---
 
-// commandLessOrEqual returns true if a should sort before or at the same position as b.
-// Using <= for treeOrder ensures stability.
+// commandLessOrEqual delegates to render.CommandLessOrEqual.
 func commandLessOrEqual(a, b RenderCommand) bool {
-	if a.RenderLayer != b.RenderLayer {
-		return a.RenderLayer < b.RenderLayer
-	}
-	if a.GlobalOrder != b.GlobalOrder {
-		return a.GlobalOrder < b.GlobalOrder
-	}
-	return a.treeOrder <= b.treeOrder
+	return render.CommandLessOrEqual(a, b)
 }
 
 // mergeSort sorts s.commands in-place using s.sortBuf as scratch space.
-// Bottom-up merge sort: zero allocations after the sort buffer reaches high-water mark.
 func (s *Scene) mergeSort() {
-	n := len(s.commands)
-	if n <= 1 {
-		return
-	}
-
-	// Quick O(n) check: if commands are already sorted, skip the full sort.
-	// This is the common case for static scenes where traverse emits commands
-	// in the same order every frame (Pixi v8's structureDidChange pattern).
-	sorted := true
-	for i := 1; i < n; i++ {
-		if !commandLessOrEqual(s.commands[i-1], s.commands[i]) {
-			sorted = false
-			break
-		}
-	}
-	if sorted {
-		return
-	}
-
-	if cap(s.sortBuf) < n {
-		s.sortBuf = make([]RenderCommand, n)
-	}
-	s.sortBuf = s.sortBuf[:n]
-
-	a := s.commands
-	b := s.sortBuf
-	swapped := false
-
-	for width := 1; width < n; width *= 2 {
-		for i := 0; i < n; i += 2 * width {
-			lo := i
-			mid := lo + width
-			if mid > n {
-				mid = n
-			}
-			hi := lo + 2*width
-			if hi > n {
-				hi = n
-			}
-			mergeRun(a, b, lo, mid, hi)
-		}
-		a, b = b, a
-		swapped = !swapped
-	}
-
-	if swapped {
-		copy(s.commands, s.sortBuf)
-	}
-}
-
-// mergeRun merges two sorted runs [lo, mid) and [mid, hi) from src into dst.
-func mergeRun(src, dst []RenderCommand, lo, mid, hi int) {
-	i, j, k := lo, mid, lo
-	for i < mid && j < hi {
-		if commandLessOrEqual(src[i], src[j]) {
-			dst[k] = src[i]
-			i++
-		} else {
-			dst[k] = src[j]
-			j++
-		}
-		k++
-	}
-	for i < mid {
-		dst[k] = src[i]
-		i++
-		k++
-	}
-	for j < hi {
-		dst[k] = src[j]
-		j++
-		k++
-	}
+	render.MergeSort(s.commands, &s.sortBuf)
 }
 
 // --- Special node rendering (Phase 09) ---
@@ -395,12 +262,12 @@ func (s *Scene) renderSpecialNode(n *Node, treeOrder *int) {
 		s.commands = append(s.commands, RenderCommand{
 			Type:        CommandSprite,
 			Transform:   at32,
-			Color:       color32{1, 1, 1, float32(n.WorldAlpha)},
+			Color:       color32{R: 1, G: 1, B: 1, A: float32(n.WorldAlpha)},
 			BlendMode:   n.BlendMode_,
 			RenderLayer: n.RenderLayer,
 			GlobalOrder: n.GlobalOrder,
-			treeOrder:   *treeOrder,
-			directImage: n.CacheTexture,
+			TreeOrder:   *treeOrder,
+			DirectImage: n.CacheTexture,
 		})
 		return
 	}
@@ -460,12 +327,12 @@ func (s *Scene) renderSpecialNode(n *Node, treeOrder *int) {
 		s.commands = append(s.commands, RenderCommand{
 			Type:        CommandSprite,
 			Transform:   at32,
-			Color:       color32{1, 1, 1, float32(n.WorldAlpha)},
+			Color:       color32{R: 1, G: 1, B: 1, A: float32(n.WorldAlpha)},
 			BlendMode:   n.BlendMode_,
 			RenderLayer: n.RenderLayer,
 			GlobalOrder: n.GlobalOrder,
-			treeOrder:   *treeOrder,
-			directImage: n.CacheTexture,
+			TreeOrder:   *treeOrder,
+			DirectImage: n.CacheTexture,
 		})
 		return
 	}
@@ -477,78 +344,48 @@ func (s *Scene) renderSpecialNode(n *Node, treeOrder *int) {
 	s.commands = append(s.commands, RenderCommand{
 		Type:                 CommandSprite,
 		Transform:            at32,
-		Color:                color32{1, 1, 1, float32(n.WorldAlpha)},
+		Color:                color32{R: 1, G: 1, B: 1, A: float32(n.WorldAlpha)},
 		BlendMode:            n.BlendMode_,
 		RenderLayer:          n.RenderLayer,
 		GlobalOrder:          n.GlobalOrder,
-		treeOrder:            *treeOrder,
-		directImage:          result,
-		transientDirectImage: true,
+		TreeOrder:            *treeOrder,
+		DirectImage:          result,
+		TransientDirectImage: true,
 	})
 }
 
 // --- Subtree command caching (CacheAsTree) ---
 
-// cachedCmd is a render command with transform/color stored at cache time.
-// The two-tier source pointer supports animated tiles: nil = static (use
-// cmd.TextureRegion), non-nil = animated (read live TextureRegion from node).
-type cachedCmd struct {
-	cmd          RenderCommand // Transform/Color stored as-is at cache time
-	source       *Node         // nil = static, non-nil = animated (read live TextureRegion)
-	sourceNodeID uint32        // emitting node's ID, for deferred animated registration lookup
-}
-
-// multiplyAffine32 multiplies two 2D affine matrices stored as [6]float32.
-// Used on the replay hot path to avoid float64 conversions.
+// multiplyAffine32 delegates to render.MultiplyAffine32.
 func multiplyAffine32(p, c [6]float32) [6]float32 {
-	return [6]float32{
-		p[0]*c[0] + p[2]*c[1],
-		p[1]*c[0] + p[3]*c[1],
-		p[0]*c[2] + p[2]*c[3],
-		p[1]*c[2] + p[3]*c[3],
-		p[0]*c[4] + p[2]*c[5] + p[4],
-		p[1]*c[4] + p[3]*c[5] + p[5],
-	}
+	return render.MultiplyAffine32(p, c)
 }
 
-// invertAffine32 computes the inverse of a 2D affine matrix in float32.
+// invertAffine32 delegates to render.InvertAffine32.
 func invertAffine32(m [6]float32) [6]float32 {
-	det := m[0]*m[3] - m[2]*m[1]
-	if det > -1e-6 && det < 1e-6 {
-		return identityTransform32
-	}
-	invDet := 1.0 / det
-	a := m[3] * invDet
-	b := -m[1] * invDet
-	c := -m[2] * invDet
-	d := m[0] * invDet
-	return [6]float32{
-		a, b, c, d,
-		-(a*m[4] + c*m[5]),
-		-(b*m[4] + d*m[5]),
-	}
+	return render.InvertAffine32(m)
 }
 
 // replayCacheAsTree replays cached commands with delta remap for transform
 // and alpha changes. Animated tiles read live TextureRegion from source node.
 func (s *Scene) replayCacheAsTree(n *Node, containerTransform32 [6]float32, containerAlpha float32, treeOrder *int) {
 	ct := getCacheTree(n)
-	transformChanged := containerTransform32 != ct.parentTransform
-	alphaChanged := containerAlpha != ct.parentAlpha
+	transformChanged := containerTransform32 != ct.ParentTransform
+	alphaChanged := containerAlpha != ct.ParentAlpha
 
 	var delta [6]float32
 	if transformChanged {
-		inv := invertAffine32(ct.parentTransform)
+		inv := invertAffine32(ct.ParentTransform)
 		delta = multiplyAffine32(containerTransform32, inv)
 	}
 	var alphaRatio float32 = 1.0
-	if alphaChanged && ct.parentAlpha > 1e-6 {
-		alphaRatio = containerAlpha / ct.parentAlpha
+	if alphaChanged && ct.ParentAlpha > 1e-6 {
+		alphaRatio = containerAlpha / ct.ParentAlpha
 	}
 
-	for i := range ct.commands {
-		src := &ct.commands[i]
-		cmd := src.cmd // copy from cache
+	for i := range ct.Commands {
+		src := &ct.Commands[i]
+		cmd := src.Cmd // copy from cache
 		if transformChanged {
 			cmd.Transform = multiplyAffine32(delta, cmd.Transform)
 		}
@@ -559,11 +396,11 @@ func (s *Scene) replayCacheAsTree(n *Node, containerTransform32 [6]float32, cont
 			cmd.Color.A *= alphaRatio
 		}
 		// Two-tier texture: nil source = static, non-nil = animated
-		if src.source != nil {
-			cmd.TextureRegion = src.source.TextureRegion_
+		if src.Source != nil {
+			cmd.TextureRegion = src.Source.TextureRegion_
 		}
 		*treeOrder++
-		cmd.treeOrder = *treeOrder
+		cmd.TreeOrder = *treeOrder
 		s.commands = append(s.commands, cmd)
 	}
 
@@ -589,7 +426,7 @@ func (s *Scene) buildCacheAsTree(n *Node, containerTransform32 [6]float32, conta
 		s.emitNodeCommandInline(n, treeOrder)
 		// Tag the just-emitted command(s) with the node ID.
 		for i := startIdx; i < len(s.commands); i++ {
-			s.commands[i].emittingNodeID = n.ID
+			s.commands[i].EmittingNodeID = n.ID
 		}
 	}
 
@@ -619,7 +456,7 @@ func (s *Scene) buildCacheAsTree(n *Node, containerTransform32 [6]float32, conta
 	blocked := false
 	for i := range newCmds {
 		cmd := &newCmds[i]
-		if cmd.Type == CommandMesh || cmd.Type == CommandParticle || cmd.transientDirectImage {
+		if cmd.Type == CommandMesh || cmd.Type == CommandParticle || cmd.TransientDirectImage {
 			blocked = true
 			break
 		}
@@ -628,27 +465,27 @@ func (s *Scene) buildCacheAsTree(n *Node, containerTransform32 [6]float32, conta
 	ct := getCacheTree(n)
 	if blocked {
 		// Can't cache  -  disable and fall through. Commands are already emitted.
-		ct.dirty = true
+		ct.Dirty = true
 		return
 	}
 
 	// Store in cachedCommands.
-	if cap(ct.commands) < len(newCmds) {
-		ct.commands = make([]cachedCmd, len(newCmds))
+	if cap(ct.Commands) < len(newCmds) {
+		ct.Commands = make([]cachedCmd, len(newCmds))
 	}
-	ct.commands = ct.commands[:len(newCmds)]
+	ct.Commands = ct.Commands[:len(newCmds)]
 
 	for i := range newCmds {
-		ct.commands[i] = cachedCmd{
-			cmd:          newCmds[i],
-			source:       nil, // static by default (two-tier)
-			sourceNodeID: newCmds[i].emittingNodeID,
+		ct.Commands[i] = cachedCmd{
+			Cmd:          newCmds[i],
+			Source:       nil, // static by default (two-tier)
+			SourceNodeID: newCmds[i].EmittingNodeID,
 		}
 	}
 
-	ct.parentTransform = containerTransform32
-	ct.parentAlpha = containerAlpha
-	ct.dirty = false
+	ct.ParentTransform = containerTransform32
+	ct.ParentAlpha = containerAlpha
+	ct.Dirty = false
 }
 
 // emitNodeCommandInline emits a command for the node itself (used by buildCacheAsTree
@@ -661,14 +498,14 @@ func (s *Scene) emitNodeCommandInline(n *Node, treeOrder *int) {
 		cmd := RenderCommand{
 			Type:        CommandSprite,
 			Transform:   affine32(viewWorld),
-			Color:       color32{float32(n.Color_.R()), float32(n.Color_.G()), float32(n.Color_.B()), float32(n.Color_.A() * n.WorldAlpha)},
+			Color:       color32{R: float32(n.Color_.R()), G: float32(n.Color_.G()), B: float32(n.Color_.B()), A: float32(n.Color_.A() * n.WorldAlpha)},
 			BlendMode:   n.BlendMode_,
 			RenderLayer: n.RenderLayer,
 			GlobalOrder: n.GlobalOrder,
-			treeOrder:   *treeOrder,
+			TreeOrder:   *treeOrder,
 		}
 		if n.CustomImage_ != nil {
-			cmd.directImage = n.CustomImage_
+			cmd.DirectImage = n.CustomImage_
 		} else {
 			cmd.TextureRegion = n.TextureRegion_
 		}

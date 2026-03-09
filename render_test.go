@@ -111,9 +111,9 @@ func TestTreeOrderAssignment(t *testing.T) {
 		t.Fatalf("commands = %d, want 3", len(s.commands))
 	}
 	for i := 1; i < len(s.commands); i++ {
-		if s.commands[i].treeOrder <= s.commands[i-1].treeOrder {
+		if s.commands[i].TreeOrder <= s.commands[i-1].TreeOrder {
 			t.Errorf("treeOrder not strictly increasing: [%d]=%d, [%d]=%d",
-				i-1, s.commands[i-1].treeOrder, i, s.commands[i].treeOrder)
+				i-1, s.commands[i-1].TreeOrder, i, s.commands[i].TreeOrder)
 		}
 	}
 }
@@ -232,13 +232,13 @@ func TestMergeSortMatchesStdlib(t *testing.T) {
 	s := NewScene()
 	// Create commands with varied layers and orders
 	cmds := []RenderCommand{
-		{RenderLayer: 2, GlobalOrder: 0, treeOrder: 1},
-		{RenderLayer: 0, GlobalOrder: 3, treeOrder: 2},
-		{RenderLayer: 0, GlobalOrder: 1, treeOrder: 3},
-		{RenderLayer: 1, GlobalOrder: 0, treeOrder: 4},
-		{RenderLayer: 0, GlobalOrder: 1, treeOrder: 5},
-		{RenderLayer: 2, GlobalOrder: 0, treeOrder: 6},
-		{RenderLayer: 0, GlobalOrder: 0, treeOrder: 7},
+		{RenderLayer: 2, GlobalOrder: 0, TreeOrder: 1},
+		{RenderLayer: 0, GlobalOrder: 3, TreeOrder: 2},
+		{RenderLayer: 0, GlobalOrder: 1, TreeOrder: 3},
+		{RenderLayer: 1, GlobalOrder: 0, TreeOrder: 4},
+		{RenderLayer: 0, GlobalOrder: 1, TreeOrder: 5},
+		{RenderLayer: 2, GlobalOrder: 0, TreeOrder: 6},
+		{RenderLayer: 0, GlobalOrder: 0, TreeOrder: 7},
 	}
 
 	// Reference: stdlib stable sort
@@ -252,7 +252,7 @@ func TestMergeSortMatchesStdlib(t *testing.T) {
 		if a.GlobalOrder != b.GlobalOrder {
 			return a.GlobalOrder < b.GlobalOrder
 		}
-		return a.treeOrder < b.treeOrder
+		return a.TreeOrder < b.TreeOrder
 	})
 
 	// Our merge sort
@@ -262,10 +262,10 @@ func TestMergeSortMatchesStdlib(t *testing.T) {
 
 	for i := range s.commands {
 		a, b := s.commands[i], ref[i]
-		if a.RenderLayer != b.RenderLayer || a.GlobalOrder != b.GlobalOrder || a.treeOrder != b.treeOrder {
+		if a.RenderLayer != b.RenderLayer || a.GlobalOrder != b.GlobalOrder || a.TreeOrder != b.TreeOrder {
 			t.Errorf("index %d: mergeSort=(%d,%d,%d), stdlib=(%d,%d,%d)",
-				i, a.RenderLayer, a.GlobalOrder, a.treeOrder,
-				b.RenderLayer, b.GlobalOrder, b.treeOrder)
+				i, a.RenderLayer, a.GlobalOrder, a.TreeOrder,
+				b.RenderLayer, b.GlobalOrder, b.TreeOrder)
 		}
 	}
 }
@@ -275,14 +275,14 @@ func TestMergeSortStable(t *testing.T) {
 	// All same layer and GlobalOrder  -  treeOrder should be preserved
 	s.commands = make([]RenderCommand, 100)
 	for i := range s.commands {
-		s.commands[i] = RenderCommand{treeOrder: i}
+		s.commands[i] = RenderCommand{TreeOrder: i}
 	}
 
 	s.mergeSort()
 
 	for i := range s.commands {
-		if s.commands[i].treeOrder != i {
-			t.Fatalf("stability broken at index %d: treeOrder=%d", i, s.commands[i].treeOrder)
+		if s.commands[i].TreeOrder != i {
+			t.Fatalf("stability broken at index %d: treeOrder=%d", i, s.commands[i].TreeOrder)
 		}
 	}
 }
@@ -293,7 +293,7 @@ func TestMergeSortBufferReuse(t *testing.T) {
 	// First sort: allocates buffer
 	s.commands = make([]RenderCommand, 50)
 	for i := range s.commands {
-		s.commands[i] = RenderCommand{treeOrder: 50 - i}
+		s.commands[i] = RenderCommand{TreeOrder: 50 - i}
 	}
 	s.mergeSort()
 	bufCap := cap(s.sortBuf)
@@ -301,7 +301,7 @@ func TestMergeSortBufferReuse(t *testing.T) {
 	// Second sort with smaller input: should not reallocate
 	s.commands = make([]RenderCommand, 30)
 	for i := range s.commands {
-		s.commands[i] = RenderCommand{treeOrder: 30 - i}
+		s.commands[i] = RenderCommand{TreeOrder: 30 - i}
 	}
 	s.mergeSort()
 
@@ -318,9 +318,9 @@ func TestMergeSortEmpty(t *testing.T) {
 
 func TestMergeSortSingleElement(t *testing.T) {
 	s := NewScene()
-	s.commands = []RenderCommand{{treeOrder: 1}}
+	s.commands = []RenderCommand{{TreeOrder: 1}}
 	s.mergeSort() // should not panic
-	if s.commands[0].treeOrder != 1 {
+	if s.commands[0].TreeOrder != 1 {
 		t.Error("single element should remain unchanged")
 	}
 }
@@ -555,7 +555,7 @@ func TestCacheAsTree_TextureSwap_PageChange_Invalidates(t *testing.T) {
 	// Swap to a different page  -  should invalidate.
 	sp.SetTextureRegion(TextureRegion{Page: 1, Width: 32, Height: 32, OriginalW: 32, OriginalH: 32})
 
-	if !getCacheTree(container).dirty {
+	if !getCacheTree(container).Dirty {
 		t.Error("page change should have invalidated auto-mode cache")
 	}
 }
@@ -569,21 +569,21 @@ func TestCacheAsTree_TreeOps_Invalidate(t *testing.T) {
 	container.SetCacheAsTree(true, CacheTreeAuto)
 
 	traverseScene(s) // build
-	if getCacheTree(container).dirty {
+	if getCacheTree(container).Dirty {
 		t.Error("cache should be clean after build")
 	}
 
 	// AddChild should invalidate.
 	extra := NewSprite("extra", TextureRegion{Width: 16, Height: 16, OriginalW: 16, OriginalH: 16})
 	container.AddChild(extra)
-	if !getCacheTree(container).dirty {
+	if !getCacheTree(container).Dirty {
 		t.Error("AddChild should invalidate auto cache on self")
 	}
 
 	traverseScene(s) // rebuild
 	// RemoveChild should invalidate.
 	container.RemoveChild(extra)
-	if !getCacheTree(container).dirty {
+	if !getCacheTree(container).Dirty {
 		t.Error("RemoveChild should invalidate auto cache on self")
 	}
 }
@@ -599,7 +599,7 @@ func TestCacheAsTree_MeshBlocksCache(t *testing.T) {
 	traverseScene(s) // build attempt
 
 	// Mesh should block caching  -  cache stays dirty.
-	if !getCacheTree(container).dirty {
+	if !getCacheTree(container).Dirty {
 		t.Error("mesh subtree should block cache build")
 	}
 }
@@ -693,7 +693,7 @@ func BenchmarkCommandSort10000(b *testing.B) {
 		s.commands[i] = RenderCommand{
 			RenderLayer: uint8(i % 4),
 			GlobalOrder: i % 10,
-			treeOrder:   i,
+			TreeOrder:   i,
 		}
 	}
 	// Warmup to allocate sortBuf

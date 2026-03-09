@@ -166,7 +166,7 @@ func TestCountDrawCalls(t *testing.T) {
 		{Type: CommandSprite},
 		{Type: CommandSprite},
 		{Type: CommandMesh},
-		{Type: CommandParticle, emitter: &ParticleEmitter{Alive: 50}},
+		{Type: CommandParticle, Emitter: &ParticleEmitter{Alive: 50}},
 	}
 	got := countDrawCalls(cmds)
 	// 1 + 1 + 1 + 50 = 53

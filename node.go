@@ -2,7 +2,10 @@ package willow
 
 import (
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/phanxgames/willow/internal/input"
 	"github.com/phanxgames/willow/internal/node"
+	"github.com/phanxgames/willow/internal/render"
+	"github.com/phanxgames/willow/internal/types"
 )
 
 // --- Type aliases from internal/node ---
@@ -28,29 +31,23 @@ type nodeCallbacks = node.NodeCallbacks
 // meshData is an alias for the internal MeshData type.
 type meshData = node.MeshData
 
-// --- Extracted sub-structs (lazily allocated to reduce Node size) ---
+// --- Cache type aliases from internal/render ---
 
-// cacheTreeData holds subtree command cache state. Allocated on first
-// SetCacheAsTree(true) call. Only a handful of nodes ever use this.
-type cacheTreeData struct {
-	mode            CacheTreeMode
-	dirty           bool
-	commands        []cachedCmd
-	parentTransform [6]float32
-	parentAlpha     float32
-}
+// cacheTreeData holds subtree command cache state. Aliased from internal/render.
+type cacheTreeData = render.CacheTreeData
+
+// cachedCmd is a render command with cached transform/color. Aliased from internal/render.
+type cachedCmd = render.CachedCmd
 
 // getCacheTree returns the *cacheTreeData from n.CacheData, or nil if unset.
 func getCacheTree(n *Node) *cacheTreeData {
-	if n.CacheData == nil {
-		return nil
-	}
-	return n.CacheData.(*cacheTreeData)
+	return render.GetCacheTreeData(n)
 }
 
 // --- Function pointer wiring ---
 
 func init() {
+	// Node function pointers
 	node.InvalidateAncestorCacheFn = invalidateAncestorCache
 	node.PropagateSceneFn = propagateScene
 	node.SetCacheAsTreeFn = setCacheAsTreeImpl
@@ -61,6 +58,25 @@ func init() {
 	node.DebugCheckDisposed = debugCheckDisposed
 	node.DebugCheckTreeDepth = debugCheckTreeDepth
 	node.DebugCheckChildCount = debugCheckChildCount
+
+	// Render pipeline function pointers
+	render.AtlasPageFn = func(pageIdx int) *ebiten.Image {
+		return atlasManager().Page(pageIdx)
+	}
+	render.EnsureMagentaImageFn = ensureMagentaImage
+	render.ShouldCullFn = shouldCull
+	render.BlendMaskFn = func() types.BlendMode { return types.BlendMask }
+
+	// Render texture function pointers (rendertexture.go path)
+	render.PageFn = func(pageIdx int) *ebiten.Image {
+		return atlasManager().Page(pageIdx)
+	}
+	render.MagentaImageFn = ensureMagentaImage
+	render.NewSpriteFn = NewSprite
+
+	// Input function pointers
+	input.NodeDimensionsFn = nodeDimensions
+	input.RebuildSortedChildrenFn = render.RebuildSortedChildren
 }
 
 // setCacheAsTreeImpl enables or disables subtree command caching.
@@ -71,11 +87,11 @@ func setCacheAsTreeImpl(n *Node, enabled bool, mode ...CacheTreeMode) {
 		}
 		ct := getCacheTree(n)
 		if len(mode) > 0 {
-			ct.mode = mode[0]
+			ct.Mode = mode[0]
 		} else {
-			ct.mode = CacheTreeAuto
+			ct.Mode = CacheTreeAuto
 		}
-		ct.dirty = true
+		ct.Dirty = true
 	} else {
 		n.CacheData = nil
 	}
@@ -84,7 +100,7 @@ func setCacheAsTreeImpl(n *Node, enabled bool, mode ...CacheTreeMode) {
 // invalidateCacheTreeImpl marks the cache as stale. Next Draw() re-traverses.
 func invalidateCacheTreeImpl(n *Node) {
 	if n.CacheData != nil {
-		getCacheTree(n).dirty = true
+		getCacheTree(n).Dirty = true
 	}
 }
 
@@ -97,12 +113,12 @@ func registerAnimatedInCache(n *Node) {
 			continue
 		}
 		ct := getCacheTree(p)
-		if len(ct.commands) == 0 {
+		if len(ct.Commands) == 0 {
 			return // cache not built yet; source will be set on first build
 		}
-		for i := range ct.commands {
-			if ct.commands[i].source == n || ct.commands[i].sourceNodeID == n.ID {
-				ct.commands[i].source = n
+		for i := range ct.Commands {
+			if ct.Commands[i].Source == n || ct.Commands[i].SourceNodeID == n.ID {
+				ct.Commands[i].Source = n
 				return
 			}
 		}
@@ -119,15 +135,15 @@ func invalidateAncestorCache(n *Node) {
 	// or its children should mark the cache stale).
 	if n.CacheData != nil {
 		ct := getCacheTree(n)
-		if ct.mode == CacheTreeAuto {
-			ct.dirty = true
+		if ct.Mode == CacheTreeAuto {
+			ct.Dirty = true
 		}
 	}
 	for p := n.Parent; p != nil; p = p.Parent {
 		if p.CacheData != nil {
 			ct := getCacheTree(p)
-			if ct.mode == CacheTreeAuto {
-				ct.dirty = true
+			if ct.Mode == CacheTreeAuto {
+				ct.Dirty = true
 			}
 			return
 		}

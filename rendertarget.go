@@ -1,70 +1,19 @@
 package willow
 
 import (
-	"image"
 	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/phanxgames/willow/internal/render"
 )
 
-// --- Render texture pool ---
+// --- Render texture pool (aliased from internal/render) ---
 
-// renderTexturePool manages reusable offscreen ebiten.Images keyed by
-// power-of-two dimensions. After warmup, Acquire/Release are zero-alloc.
-type renderTexturePool struct {
-	buckets map[uint64][]*ebiten.Image
-}
+type renderTexturePool = render.RenderTexturePool
 
-// poolKey packs power-of-two width and height into a single uint64.
-func poolKey(w, h int) uint64 {
-	return uint64(w)<<32 | uint64(h)
-}
-
-// Acquire returns a cleared offscreen image with at least (w, h) pixels.
-// Dimensions are rounded up to the next power of two.
-func (p *renderTexturePool) Acquire(w, h int) *ebiten.Image {
-	pw := nextPowerOfTwo(w)
-	ph := nextPowerOfTwo(h)
-	key := poolKey(pw, ph)
-
-	if p.buckets != nil {
-		if stack := p.buckets[key]; len(stack) > 0 {
-			img := stack[len(stack)-1]
-			p.buckets[key] = stack[:len(stack)-1]
-			img.Clear()
-			return img
-		}
-	}
-
-	return ebiten.NewImageWithOptions(
-		image.Rect(0, 0, pw, ph),
-		&ebiten.NewImageOptions{Unmanaged: true},
-	)
-}
-
-// Release returns an image to the pool for reuse. The image is cleared on
-// next Acquire, not here (avoids redundant GPU work if released then
-// immediately re-acquired).
-func (p *renderTexturePool) Release(img *ebiten.Image) {
-	if img == nil {
-		return
-	}
-	b := img.Bounds()
-	key := poolKey(b.Dx(), b.Dy())
-
-	if p.buckets == nil {
-		p.buckets = make(map[uint64][]*ebiten.Image)
-	}
-	p.buckets[key] = append(p.buckets[key], img)
-}
-
-// nextPowerOfTwo returns the smallest power of two >= n (minimum 1).
+// nextPowerOfTwo delegates to render.NextPowerOfTwo.
 func nextPowerOfTwo(n int) int {
-	if n <= 1 {
-		return 1
-	}
-	// Use float64 log2 then ceil, convert back.
-	return 1 << int(math.Ceil(math.Log2(float64(n))))
+	return render.NextPowerOfTwo(n)
 }
 
 // ToTexture renders a node's subtree to a new offscreen image and returns it.
@@ -293,12 +242,12 @@ func renderSpecialSubtreeNode(s *Scene, n *Node, localTransform [6]float64, alph
 	s.commands = append(s.commands, RenderCommand{
 		Type:        CommandSprite,
 		Transform:   affine32(adjustedTransform),
-		Color:       color32{1, 1, 1, float32(alpha)},
+		Color:       color32{R: 1, G: 1, B: 1, A: float32(alpha)},
 		BlendMode:   n.BlendMode_,
 		RenderLayer: n.RenderLayer,
 		GlobalOrder: n.GlobalOrder,
-		treeOrder:   *treeOrder,
-		directImage: result,
+		TreeOrder:   *treeOrder,
+		DirectImage: result,
 	})
 }
 
@@ -314,14 +263,14 @@ func emitNodeCommand(s *Scene, n *Node, transform [6]float64, alpha float64, tre
 		cmd := RenderCommand{
 			Type:        CommandSprite,
 			Transform:   t32,
-			Color:       color32{float32(n.Color_.R()), float32(n.Color_.G()), float32(n.Color_.B()), float32(n.Color_.A() * alpha)},
+			Color:       color32{R: float32(n.Color_.R()), G: float32(n.Color_.G()), B: float32(n.Color_.B()), A: float32(n.Color_.A() * alpha)},
 			BlendMode:   n.BlendMode_,
 			RenderLayer: n.RenderLayer,
 			GlobalOrder: n.GlobalOrder,
-			treeOrder:   *treeOrder,
+			TreeOrder:   *treeOrder,
 		}
 		if n.CustomImage_ != nil {
-			cmd.directImage = n.CustomImage_
+			cmd.DirectImage = n.CustomImage_
 		} else {
 			cmd.TextureRegion = n.TextureRegion_
 		}
@@ -340,10 +289,10 @@ func emitNodeCommand(s *Scene, n *Node, transform [6]float64, alpha float64, tre
 			BlendMode:   n.BlendMode_,
 			RenderLayer: n.RenderLayer,
 			GlobalOrder: n.GlobalOrder,
-			treeOrder:   *treeOrder,
-			meshVerts:   dst,
-			meshInds:    n.Mesh.Indices,
-			meshImage:   n.Mesh.Image,
+			TreeOrder:   *treeOrder,
+			MeshVerts:   dst,
+			MeshInds:    n.Mesh.Indices,
+			MeshImage:   n.Mesh.Image,
 		})
 	case NodeTypeParticleEmitter:
 		if n.Emitter != nil && n.Emitter.Alive > 0 {
@@ -357,14 +306,14 @@ func emitNodeCommand(s *Scene, n *Node, transform [6]float64, alpha float64, tre
 				Type:               CommandParticle,
 				Transform:          affine32(particleTransform),
 				TextureRegion:      n.TextureRegion_,
-				directImage:        n.CustomImage_,
-				Color:              color32{float32(n.Color_.R()), float32(n.Color_.G()), float32(n.Color_.B()), float32(n.Color_.A() * alpha)},
+				DirectImage:        n.CustomImage_,
+				Color:              color32{R: float32(n.Color_.R()), G: float32(n.Color_.G()), B: float32(n.Color_.B()), A: float32(n.Color_.A() * alpha)},
 				BlendMode:          n.BlendMode_,
 				RenderLayer:        n.RenderLayer,
 				GlobalOrder:        n.GlobalOrder,
-				treeOrder:          *treeOrder,
-				emitter:            n.Emitter,
-				worldSpaceParticle: ws,
+				TreeOrder:          *treeOrder,
+				Emitter:            n.Emitter,
+				WorldSpaceParticle: ws,
 			})
 		}
 	case NodeTypeText:

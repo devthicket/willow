@@ -153,10 +153,10 @@ func TestLightLayerNodeEmitsDirectImage(t *testing.T) {
 		t.Fatalf("commands = %d, want 1", len(s.commands))
 	}
 	cmd := s.commands[0]
-	if cmd.directImage == nil {
+	if cmd.DirectImage == nil {
 		t.Error("LightLayer node should emit a directImage command")
 	}
-	if cmd.directImage != ll.RenderTexture().Image() {
+	if cmd.DirectImage != ll.RenderTexture().Image() {
 		t.Error("directImage should be the LightLayer's render texture image")
 	}
 }

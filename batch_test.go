@@ -215,7 +215,7 @@ func TestAppendSpriteQuad_ZeroColor(t *testing.T) {
 			Page: 0, Width: 10, Height: 10, OriginalW: 10, OriginalH: 10,
 		},
 		Transform: identityTransform32,
-		Color:     color32{0, 0, 0, 0}, // zero sentinel
+		Color:     color32{R: 0, G: 0, B: 0, A: 0}, // zero sentinel
 	}
 	s.appendSpriteQuad(cmd)
 
@@ -234,7 +234,7 @@ func TestAppendSpriteQuad_PremultipliedColor(t *testing.T) {
 			Page: 0, Width: 10, Height: 10, OriginalW: 10, OriginalH: 10,
 		},
 		Transform: identityTransform32,
-		Color:     color32{1.0, 0.5, 0.25, 0.5},
+		Color:     color32{R: 1.0, G: 0.5, B: 0.25, A: 0.5},
 	}
 	s.appendSpriteQuad(cmd)
 
@@ -294,7 +294,7 @@ func TestCoalescedDirectImageFallback(t *testing.T) {
 	directImg := ebiten.NewImage(1, 1)
 	cmds := []RenderCommand{
 		{Type: CommandSprite, BlendMode: BlendNormal, TextureRegion: TextureRegion{Page: 0}},
-		{Type: CommandSprite, BlendMode: BlendNormal, TextureRegion: TextureRegion{Page: 0}, directImage: directImg},
+		{Type: CommandSprite, BlendMode: BlendNormal, TextureRegion: TextureRegion{Page: 0}, DirectImage: directImg},
 		{Type: CommandSprite, BlendMode: BlendNormal, TextureRegion: TextureRegion{Page: 0}},
 	}
 	// Run 1 (atlas), direct image, run 2 (atlas) → 3 draw calls
@@ -306,7 +306,7 @@ func TestCoalescedDirectImageFallback(t *testing.T) {
 func TestCoalescedParticleCount(t *testing.T) {
 	e := &ParticleEmitter{Alive: 50}
 	cmds := []RenderCommand{
-		{Type: CommandParticle, emitter: e, BlendMode: BlendNormal},
+		{Type: CommandParticle, Emitter: e, BlendMode: BlendNormal},
 	}
 	// 1 emitter → 1 draw call
 	if got := countDrawCallsCoalesced(cmds); got != 1 {
@@ -319,7 +319,7 @@ func TestCoalescedMixed(t *testing.T) {
 	cmds := []RenderCommand{
 		{Type: CommandSprite, BlendMode: BlendNormal, TextureRegion: TextureRegion{Page: 0}},
 		{Type: CommandSprite, BlendMode: BlendNormal, TextureRegion: TextureRegion{Page: 0}},
-		{Type: CommandParticle, emitter: e, BlendMode: BlendNormal},
+		{Type: CommandParticle, Emitter: e, BlendMode: BlendNormal},
 		{Type: CommandSprite, BlendMode: BlendNormal, TextureRegion: TextureRegion{Page: 0}},
 	}
 	// sprite run (1) + particle (1) + sprite run (1) = 3

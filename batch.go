@@ -4,23 +4,14 @@ import (
 	"image"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/phanxgames/willow/internal/render"
 )
 
 // batchKey groups render commands that can be submitted in a single draw call.
-type batchKey struct {
-	targetID uint16
-	shaderID uint16
-	blend    BlendMode
-	page     uint16
-}
+type batchKey = render.BatchKey
 
 func commandBatchKey(cmd *RenderCommand) batchKey {
-	return batchKey{
-		targetID: cmd.TargetID,
-		shaderID: cmd.ShaderID,
-		blend:    cmd.BlendMode,
-		page:     cmd.TextureRegion.Page,
-	}
+	return render.CommandBatchKey(cmd)
 }
 
 // submitBatches iterates sorted commands, groups them by batch key, and submits
@@ -55,7 +46,7 @@ func (s *Scene) submitBatches(target *ebiten.Image) {
 // submitSprite draws a single sprite command using DrawImage.
 func (s *Scene) submitSprite(target *ebiten.Image, cmd *RenderCommand, op *ebiten.DrawImageOptions) {
 	// Direct image path: draw a pre-rendered offscreen texture directly.
-	if cmd.directImage != nil {
+	if cmd.DirectImage != nil {
 		op.GeoM.Reset()
 		op.GeoM.Concat(commandGeoM(cmd))
 		op.ColorScale.Reset()
@@ -68,7 +59,7 @@ func (s *Scene) submitSprite(target *ebiten.Image, cmd *RenderCommand, op *ebite
 		}
 		op.Blend = cmd.BlendMode.EbitenBlend()
 		op.Filter = ebiten.FilterNearest
-		target.DrawImage(cmd.directImage, op)
+		target.DrawImage(cmd.DirectImage, op)
 		return
 	}
 
@@ -129,7 +120,7 @@ func (s *Scene) submitSprite(target *ebiten.Image, cmd *RenderCommand, op *ebite
 
 // submitParticles draws all alive particles for a CommandParticle command.
 func (s *Scene) submitParticles(target *ebiten.Image, cmd *RenderCommand, op *ebiten.DrawImageOptions) {
-	e := cmd.emitter
+	e := cmd.Emitter
 	if e == nil || e.Alive == 0 {
 		return
 	}
@@ -139,8 +130,8 @@ func (s *Scene) submitParticles(target *ebiten.Image, cmd *RenderCommand, op *eb
 	// Resolve the particle texture. A directImage (e.g. WhitePixel) takes
 	// priority; otherwise fall back to an atlas page.
 	var subImg *ebiten.Image
-	if cmd.directImage != nil {
-		subImg = cmd.directImage
+	if cmd.DirectImage != nil {
+		subImg = cmd.DirectImage
 	} else {
 		var page *ebiten.Image
 		if r.Page == magentaPlaceholderPage {
@@ -208,19 +199,19 @@ func (s *Scene) submitParticles(target *ebiten.Image, cmd *RenderCommand, op *eb
 
 // submitTilemap draws a tilemap layer command using DrawTriangles.
 func (s *Scene) submitTilemap(target *ebiten.Image, cmd *RenderCommand) {
-	if cmd.tilemapImage == nil || len(cmd.tilemapVerts) == 0 || len(cmd.tilemapInds) == 0 {
+	if cmd.TilemapImage == nil || len(cmd.TilemapVerts) == 0 || len(cmd.TilemapInds) == 0 {
 		return
 	}
 	var triOp ebiten.DrawTrianglesOptions
 	triOp.Blend = cmd.BlendMode.EbitenBlend()
 	triOp.ColorScaleMode = ebiten.ColorScaleModePremultipliedAlpha
 	triOp.AntiAlias = s.AntiAlias
-	target.DrawTriangles(cmd.tilemapVerts, cmd.tilemapInds, cmd.tilemapImage, &triOp)
+	target.DrawTriangles(cmd.TilemapVerts, cmd.TilemapInds, cmd.TilemapImage, &triOp)
 }
 
 // submitMesh draws a mesh command using DrawTriangles.
 func (s *Scene) submitMesh(target *ebiten.Image, cmd *RenderCommand) {
-	if cmd.meshImage == nil || len(cmd.meshVerts) == 0 || len(cmd.meshInds) == 0 {
+	if cmd.MeshImage == nil || len(cmd.MeshVerts) == 0 || len(cmd.MeshInds) == 0 {
 		return
 	}
 
@@ -228,7 +219,7 @@ func (s *Scene) submitMesh(target *ebiten.Image, cmd *RenderCommand) {
 	triOp.Blend = cmd.BlendMode.EbitenBlend()
 	triOp.AntiAlias = s.AntiAlias
 
-	target.DrawTriangles(cmd.meshVerts, cmd.meshInds, cmd.meshImage, &triOp)
+	target.DrawTriangles(cmd.MeshVerts, cmd.MeshInds, cmd.MeshImage, &triOp)
 }
 
 // commandGeoM converts a command's [6]float64 transform into an ebiten.GeoM.
@@ -264,7 +255,7 @@ func (s *Scene) submitBatchesCoalesced(target *ebiten.Image) {
 
 		switch cmd.Type {
 		case CommandSprite:
-			if cmd.directImage != nil {
+			if cmd.DirectImage != nil {
 				// Direct-image sprites cannot be coalesced (different source images).
 				s.flushSpriteBatch(target, currentKey)
 				inRun = false
@@ -403,10 +394,10 @@ func (s *Scene) flushSpriteBatch(target *ebiten.Image, key batchKey) {
 	}
 
 	var page *ebiten.Image
-	if key.page == magentaPlaceholderPage {
+	if key.Page == magentaPlaceholderPage {
 		page = ensureMagentaImage()
 	} else {
-		page = atlasManager().Page(int(key.page))
+		page = atlasManager().Page(int(key.Page))
 	}
 	if page == nil {
 		s.batchVerts = s.batchVerts[:0]
@@ -415,7 +406,7 @@ func (s *Scene) flushSpriteBatch(target *ebiten.Image, key batchKey) {
 	}
 
 	var triOp ebiten.DrawTrianglesOptions
-	triOp.Blend = key.blend.EbitenBlend()
+	triOp.Blend = key.Blend.EbitenBlend()
 	triOp.ColorScaleMode = ebiten.ColorScaleModePremultipliedAlpha
 	triOp.AntiAlias = s.AntiAlias
 
@@ -429,7 +420,7 @@ func (s *Scene) flushSpriteBatch(target *ebiten.Image, key batchKey) {
 // space using the command's affine transform, then calling DrawTrianglesShader
 // with the SDF shader. This runs the SDF shader at display resolution.
 func (s *Scene) submitSDF(target *ebiten.Image, cmd *RenderCommand) {
-	if cmd.sdfAtlasImg == nil || cmd.sdfShader == nil || cmd.sdfVertCount == 0 || cmd.sdfIndCount == 0 {
+	if cmd.SdfAtlasImg == nil || cmd.SdfShader == nil || cmd.SdfVertCount == 0 || cmd.SdfIndCount == 0 {
 		return
 	}
 
@@ -447,8 +438,8 @@ func (s *Scene) submitSDF(target *ebiten.Image, cmd *RenderCommand) {
 		cb = cmd.Color.B * ca
 	}
 
-	vc := cmd.sdfVertCount
-	ic := cmd.sdfIndCount
+	vc := cmd.SdfVertCount
+	ic := cmd.SdfIndCount
 
 	// Ensure scratch buffers are large enough.
 	if cap(s.batchVerts) < vc {
@@ -458,7 +449,7 @@ func (s *Scene) submitSDF(target *ebiten.Image, cmd *RenderCommand) {
 
 	// Transform local-space Dst coords to screen space; keep Src unchanged.
 	for i := 0; i < vc; i++ {
-		sv := &cmd.sdfVerts[i]
+		sv := &cmd.SdfVerts[i]
 		dx := sv.DstX
 		dy := sv.DstY
 		s.batchVerts[i] = ebiten.Vertex{
@@ -474,11 +465,11 @@ func (s *Scene) submitSDF(target *ebiten.Image, cmd *RenderCommand) {
 	}
 
 	opts := &ebiten.DrawTrianglesShaderOptions{
-		Uniforms:  cmd.sdfUniforms,
-		Images:    [4]*ebiten.Image{cmd.sdfAtlasImg},
+		Uniforms:  cmd.SdfUniforms,
+		Images:    [4]*ebiten.Image{cmd.SdfAtlasImg},
 		AntiAlias: s.AntiAlias,
 	}
-	target.DrawTrianglesShader(s.batchVerts[:vc], cmd.sdfInds[:ic], cmd.sdfShader, opts)
+	target.DrawTrianglesShader(s.batchVerts[:vc], cmd.SdfInds[:ic], cmd.SdfShader, opts)
 
 	s.batchVerts = s.batchVerts[:0]
 }
@@ -486,7 +477,7 @@ func (s *Scene) submitSDF(target *ebiten.Image, cmd *RenderCommand) {
 // submitBitmapText draws pixel-perfect bitmap font glyphs by transforming
 // local-space vertices to screen space and calling DrawTriangles with FilterNearest.
 func (s *Scene) submitBitmapText(target *ebiten.Image, cmd *RenderCommand) {
-	if cmd.bmpImage == nil || cmd.bmpVertCount == 0 || cmd.bmpIndCount == 0 {
+	if cmd.BmpImage == nil || cmd.BmpVertCount == 0 || cmd.BmpIndCount == 0 {
 		return
 	}
 
@@ -504,8 +495,8 @@ func (s *Scene) submitBitmapText(target *ebiten.Image, cmd *RenderCommand) {
 		cb = cmd.Color.B * ca
 	}
 
-	vc := cmd.bmpVertCount
-	ic := cmd.bmpIndCount
+	vc := cmd.BmpVertCount
+	ic := cmd.BmpIndCount
 
 	if cap(s.batchVerts) < vc {
 		s.batchVerts = make([]ebiten.Vertex, vc)
@@ -513,7 +504,7 @@ func (s *Scene) submitBitmapText(target *ebiten.Image, cmd *RenderCommand) {
 	s.batchVerts = s.batchVerts[:vc]
 
 	for i := 0; i < vc; i++ {
-		sv := &cmd.bmpVerts[i]
+		sv := &cmd.BmpVerts[i]
 		dx := sv.DstX
 		dy := sv.DstY
 		s.batchVerts[i] = ebiten.Vertex{
@@ -532,14 +523,14 @@ func (s *Scene) submitBitmapText(target *ebiten.Image, cmd *RenderCommand) {
 	triOp.Blend = cmd.BlendMode.EbitenBlend()
 	triOp.ColorScaleMode = ebiten.ColorScaleModePremultipliedAlpha
 	triOp.Filter = ebiten.FilterNearest
-	target.DrawTriangles(s.batchVerts[:vc], cmd.bmpInds[:ic], cmd.bmpImage, &triOp)
+	target.DrawTriangles(s.batchVerts[:vc], cmd.BmpInds[:ic], cmd.BmpImage, &triOp)
 
 	s.batchVerts = s.batchVerts[:0]
 }
 
 // submitParticlesBatched draws all alive particles using a single DrawTriangles32 call.
 func (s *Scene) submitParticlesBatched(target *ebiten.Image, cmd *RenderCommand) {
-	e := cmd.emitter
+	e := cmd.Emitter
 	if e == nil || e.Alive == 0 {
 		return
 	}
@@ -550,8 +541,8 @@ func (s *Scene) submitParticlesBatched(target *ebiten.Image, cmd *RenderCommand)
 	var srcImg *ebiten.Image
 	var su0, sv0, su1, sv1 float32
 
-	if cmd.directImage != nil {
-		srcImg = cmd.directImage
+	if cmd.DirectImage != nil {
+		srcImg = cmd.DirectImage
 		b := srcImg.Bounds()
 		su0, sv0 = float32(b.Min.X), float32(b.Min.Y)
 		su1, sv1 = float32(b.Max.X), float32(b.Max.Y)
@@ -586,7 +577,7 @@ func (s *Scene) submitParticlesBatched(target *ebiten.Image, cmd *RenderCommand)
 
 	// Precompute emitter-constant UV coordinates and quad dimensions outside the particle loop.
 	var psx, psy [4]float32
-	if cmd.directImage != nil {
+	if cmd.DirectImage != nil {
 		psx = [4]float32{su0, su1, su0, su1}
 		psy = [4]float32{sv0, sv0, sv1, sv1}
 	} else if r.Rotated {
@@ -598,7 +589,7 @@ func (s *Scene) submitParticlesBatched(target *ebiten.Image, cmd *RenderCommand)
 	}
 
 	var qw, qh float64
-	if cmd.directImage != nil {
+	if cmd.DirectImage != nil {
 		qw = float64(su1 - su0)
 		qh = float64(sv1 - sv0)
 	} else {

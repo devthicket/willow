@@ -258,14 +258,14 @@ func TestMeshTraverseEmitsTransformedVerts(t *testing.T) {
 		t.Fatalf("Type = %d, want CommandMesh", cmd.Type)
 	}
 	// Vertices should be translated by (50, 100).
-	if !approxEqual(float64(cmd.meshVerts[0].DstX), 50, 0.01) {
-		t.Errorf("meshVerts[0].DstX = %f, want 50", cmd.meshVerts[0].DstX)
+	if !approxEqual(float64(cmd.MeshVerts[0].DstX), 50, 0.01) {
+		t.Errorf("meshVerts[0].DstX = %f, want 50", cmd.MeshVerts[0].DstX)
 	}
-	if !approxEqual(float64(cmd.meshVerts[0].DstY), 100, 0.01) {
-		t.Errorf("meshVerts[0].DstY = %f, want 100", cmd.meshVerts[0].DstY)
+	if !approxEqual(float64(cmd.MeshVerts[0].DstY), 100, 0.01) {
+		t.Errorf("meshVerts[0].DstY = %f, want 100", cmd.MeshVerts[0].DstY)
 	}
-	if !approxEqual(float64(cmd.meshVerts[1].DstX), 60, 0.01) {
-		t.Errorf("meshVerts[1].DstX = %f, want 60", cmd.meshVerts[1].DstX)
+	if !approxEqual(float64(cmd.MeshVerts[1].DstX), 60, 0.01) {
+		t.Errorf("meshVerts[1].DstX = %f, want 60", cmd.MeshVerts[1].DstX)
 	}
 }
 
@@ -297,7 +297,7 @@ func TestMeshTraverseColorTint(t *testing.T) {
 	if len(s.commands) != 1 {
 		t.Fatalf("commands = %d, want 1", len(s.commands))
 	}
-	v := &s.commands[0].meshVerts[0]
+	v := &s.commands[0].MeshVerts[0]
 	// worldAlpha = 1.0 * 0.5 = 0.5, tint = {0.5, 0.8, 1.0, 1.0*0.5=0.5}
 	// ColorR = 1.0 * 0.5 * 0.5 = 0.25
 	// ColorG = 1.0 * 0.8 * 0.5 = 0.40

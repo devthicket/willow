@@ -5,7 +5,9 @@ import (
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/phanxgames/willow/internal/input"
 	"github.com/phanxgames/willow/internal/node"
+	"github.com/phanxgames/willow/internal/render"
 )
 
 // EntityStore is the interface for optional ECS integration.
@@ -41,14 +43,11 @@ type InteractionEvent struct {
 }
 
 // BatchMode controls how the render pipeline submits draw calls.
-type BatchMode uint8
+type BatchMode = render.BatchMode
 
 const (
-	// BatchModeCoalesced accumulates vertices and submits one DrawTriangles32 per batch key run.
-	// This is the default mode.
-	BatchModeCoalesced BatchMode = iota
-	// BatchModeImmediate submits one DrawImage per sprite (legacy).
-	BatchModeImmediate
+	BatchModeCoalesced = render.BatchModeCoalesced
+	BatchModeImmediate = render.BatchModeImmediate
 )
 
 const defaultCommandCap = 4096
@@ -138,6 +137,14 @@ func NewScene() *Scene {
 		ScreenshotDir: "screenshots",
 	}
 	root.Scene_ = s
+
+	// Wire per-scene input function pointers.
+	input.ScreenToWorldFn = func(sx, sy float64) (float64, float64) {
+		if len(s.cameras) > 0 {
+			return s.cameras[0].ScreenToWorld(sx, sy)
+		}
+		return sx, sy
+	}
 	return s
 }
 
@@ -432,6 +439,14 @@ func (s *Scene) tickTweens(dt float32) {
 // SetEntityStore sets the optional ECS bridge.
 func (s *Scene) SetEntityStore(store EntityStore) {
 	s.store = store
+	if store != nil {
+		input.EmitInteractionEventFn = func(eventType EventType, n *Node, wx, wy, lx, ly float64,
+			button MouseButton, mods KeyModifiers, drag DragContext, pinch PinchContext) {
+			s.emitInteractionEvent(eventType, n, wx, wy, lx, ly, button, mods, drag, pinch)
+		}
+	} else {
+		input.EmitInteractionEventFn = nil
+	}
 }
 
 // SetDebugMode enables or disables debug mode. When enabled, disposed-node

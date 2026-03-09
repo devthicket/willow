@@ -231,10 +231,10 @@ func TestRenderCommandIncludesEmitter(t *testing.T) {
 	for _, cmd := range s.commands {
 		if cmd.Type == CommandParticle {
 			found = true
-			if cmd.emitter == nil {
+			if cmd.Emitter == nil {
 				t.Error("CommandParticle should have non-nil emitter")
 			}
-			if cmd.emitter != emitterNode.Emitter {
+			if cmd.Emitter != emitterNode.Emitter {
 				t.Error("CommandParticle emitter should match node's emitter")
 			}
 		}

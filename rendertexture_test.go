@@ -81,7 +81,7 @@ func TestCustomImageSpriteEmitsDirectImage(t *testing.T) {
 		t.Fatalf("commands = %d, want 1", len(s.commands))
 	}
 	cmd := s.commands[0]
-	if cmd.directImage != img {
+	if cmd.DirectImage != img {
 		t.Error("directImage should be the custom image")
 	}
 	if cmd.TextureRegion.Width != 0 || cmd.TextureRegion.Height != 0 {
@@ -114,7 +114,7 @@ func TestRegularSpriteNoDirectImage(t *testing.T) {
 		t.Fatalf("commands = %d, want 1", len(s.commands))
 	}
 	cmd := s.commands[0]
-	if cmd.directImage != nil {
+	if cmd.DirectImage != nil {
 		t.Error("directImage should be nil for regular sprites")
 	}
 	if cmd.TextureRegion.Width != 32 {
@@ -136,7 +136,7 @@ func TestCustomImageInEmitNodeCommand(t *testing.T) {
 	if len(s.commands) != 1 {
 		t.Fatalf("commands = %d, want 1", len(s.commands))
 	}
-	if s.commands[0].directImage != img {
+	if s.commands[0].DirectImage != img {
 		t.Error("emitNodeCommand should set directImage for customImage nodes")
 	}
 }
