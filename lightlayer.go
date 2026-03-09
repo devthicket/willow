@@ -37,5 +37,5 @@ func init() {
 		rt.(*render.RenderTexture).Dispose()
 	}
 	lighting.EnsureMagentaImageFn = ensureMagentaImage
-	lighting.Clamp01Fn = clamp01
+	lighting.Clamp01Fn = render.Clamp01
 }
