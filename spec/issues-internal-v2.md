@@ -181,13 +181,17 @@ KeyModifiers, TextAlign, TextureRegion, CacheTreeMode, HitShape aliased.
 ### [done] TileMapLayer CustomEmit accepts *Pipeline or *Scene
 Type switch in emitCommands for forward-compatibility with Pipeline.Traverse.
 
+### [done] Pipeline embedding in Scene
+Embedded `render.Pipeline` in Scene, replacing 14 duplicate render fields
+(commands, sortBuf, batchVerts, batchInds, rtPool, rtDeferred, offscreenCmds,
+cullBounds, cullActive, viewTransform, buildingCacheFor, commandsDirtyThisFrame,
+batchMode). Rewrote `drawWithCamera` to call `Pipeline.Traverse`, `Pipeline.Sort`,
+`Pipeline.SubmitBatches`, `Pipeline.ReleaseDeferred`. Deleted ~1,450 lines of
+duplicate traverse/sort/batch code from render.go, batch.go, and rendertarget.go.
+`ToTexture` now delegates to `Pipeline.RenderSubtree`. Net: -1,728 lines.
+
 ### Root facade — remaining work
-- Embed render.Pipeline in Scene, delegate traverse/sort/submit
-- Delete root's traverse, renderSpecialNode, replayCacheAsTree,
-  buildCacheAsTree, emitNodeCommandInline, rebuildSortedChildren
-- Delete root's submitBatches, submitBatchesCoalesced and batch helpers
-- Delete root's debug stats (countBatches, countDrawCalls, etc.)
-- Rewrite Scene.Draw/drawWithCamera to use Pipeline
+- Delete root's debug stats (countBatches, countDrawCalls, etc.) — move to render/
 - Delete remaining root duplicates (camera.go, input.go, text.go,
   filter.go, lightlayer.go, atlas.go, etc.)
 - Rewrite Scene to wrap core.Scene

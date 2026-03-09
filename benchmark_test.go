@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/phanxgames/willow/internal/render"
 )
 
 // setupBenchScene creates a Scene with n sprite nodes for benchmark use.
@@ -471,19 +472,19 @@ func BenchmarkCommandSort_10000(b *testing.B) {
 	s.Draw(screen)
 
 	// Save commands for reset.
-	saved := make([]RenderCommand, len(s.commands))
-	copy(saved, s.commands)
+	saved := make([]RenderCommand, len(s.pipeline.Commands))
+	copy(saved, s.pipeline.Commands)
 
 	// Warm up sortBuf to high-water mark.
-	s.mergeSort()
+	render.MergeSort(s.pipeline.Commands, &s.pipeline.SortBuf)
 
 	b.ResetTimer()
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		// Restore unsorted commands.
-		s.commands = s.commands[:len(saved)]
-		copy(s.commands, saved)
-		s.mergeSort()
+		s.pipeline.Commands = s.pipeline.Commands[:len(saved)]
+		copy(s.pipeline.Commands, saved)
+		render.MergeSort(s.pipeline.Commands, &s.pipeline.SortBuf)
 	}
 }
 

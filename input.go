@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/phanxgames/willow/internal/render"
 )
 
 // --- Constants ---
@@ -381,7 +382,7 @@ func (s *Scene) collectInteractable(n *Node, buf []*Node) []*Node {
 
 	children := n.Children_
 	if !n.ChildrenSorted {
-		s.rebuildSortedChildren(n)
+		render.RebuildSortedChildren(n)
 	}
 	if n.SortedChildren != nil {
 		children = n.SortedChildren

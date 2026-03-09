@@ -6,18 +6,19 @@ import (
 	"testing"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/phanxgames/willow/internal/render"
 )
 
 // helper to build a scene and run traverse without Draw (no ebiten.Image needed)
 func traverseScene(s *Scene) {
-	s.commands = s.commands[:0]
-	s.commandsDirtyThisFrame = false
+	s.pipeline.Commands = s.pipeline.Commands[:0]
+	s.pipeline.CommandsDirtyThisFrame = false
 	// Compute world transforms first (mirrors Scene.Update), then traverse
 	// read-only with identity view.
 	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
-	s.viewTransform = identityTransform
+	s.pipeline.ViewTransform = identityTransform
 	treeOrder := 0
-	s.traverse(s.root, &treeOrder)
+	s.pipeline.Traverse(s.root, &treeOrder)
 }
 
 // --- Command emission ---
@@ -29,11 +30,11 @@ func TestSingleSpriteEmitsOneCommand(t *testing.T) {
 
 	traverseScene(s)
 
-	if len(s.commands) != 1 {
-		t.Fatalf("commands = %d, want 1", len(s.commands))
+	if len(s.pipeline.Commands) != 1 {
+		t.Fatalf("commands = %d, want 1", len(s.pipeline.Commands))
 	}
-	if s.commands[0].Type != CommandSprite {
-		t.Errorf("Type = %d, want CommandSprite", s.commands[0].Type)
+	if s.pipeline.Commands[0].Type != CommandSprite {
+		t.Errorf("Type = %d, want CommandSprite", s.pipeline.Commands[0].Type)
 	}
 }
 
@@ -45,8 +46,8 @@ func TestInvisibleNodeNoCommands(t *testing.T) {
 
 	traverseScene(s)
 
-	if len(s.commands) != 0 {
-		t.Errorf("commands = %d, want 0 for invisible node", len(s.commands))
+	if len(s.pipeline.Commands) != 0 {
+		t.Errorf("commands = %d, want 0 for invisible node", len(s.pipeline.Commands))
 	}
 }
 
@@ -60,8 +61,8 @@ func TestInvisibleSubtreeSkipped(t *testing.T) {
 
 	traverseScene(s)
 
-	if len(s.commands) != 0 {
-		t.Errorf("commands = %d, want 0 for invisible subtree", len(s.commands))
+	if len(s.pipeline.Commands) != 0 {
+		t.Errorf("commands = %d, want 0 for invisible subtree", len(s.pipeline.Commands))
 	}
 }
 
@@ -77,10 +78,10 @@ func TestNonRenderableNodeSkipped(t *testing.T) {
 
 	// Parent not renderable → 0 commands from parent
 	// But child is renderable → 1 command
-	if len(s.commands) != 1 {
-		t.Fatalf("commands = %d, want 1", len(s.commands))
+	if len(s.pipeline.Commands) != 1 {
+		t.Fatalf("commands = %d, want 1", len(s.pipeline.Commands))
 	}
-	if s.commands[0].TextureRegion.Width != 16 {
+	if s.pipeline.Commands[0].TextureRegion.Width != 16 {
 		t.Error("command should be from child, not parent")
 	}
 }
@@ -91,8 +92,8 @@ func TestContainerNoCommand(t *testing.T) {
 
 	traverseScene(s)
 
-	if len(s.commands) != 0 {
-		t.Errorf("containers should not emit commands, got %d", len(s.commands))
+	if len(s.pipeline.Commands) != 0 {
+		t.Errorf("containers should not emit commands, got %d", len(s.pipeline.Commands))
 	}
 }
 
@@ -107,13 +108,13 @@ func TestTreeOrderAssignment(t *testing.T) {
 
 	traverseScene(s)
 
-	if len(s.commands) != 3 {
-		t.Fatalf("commands = %d, want 3", len(s.commands))
+	if len(s.pipeline.Commands) != 3 {
+		t.Fatalf("commands = %d, want 3", len(s.pipeline.Commands))
 	}
-	for i := 1; i < len(s.commands); i++ {
-		if s.commands[i].TreeOrder <= s.commands[i-1].TreeOrder {
+	for i := 1; i < len(s.pipeline.Commands); i++ {
+		if s.pipeline.Commands[i].TreeOrder <= s.pipeline.Commands[i-1].TreeOrder {
 			t.Errorf("treeOrder not strictly increasing: [%d]=%d, [%d]=%d",
-				i-1, s.commands[i-1].TreeOrder, i, s.commands[i].TreeOrder)
+				i-1, s.pipeline.Commands[i-1].TreeOrder, i, s.pipeline.Commands[i].TreeOrder)
 		}
 	}
 }
@@ -129,11 +130,11 @@ func TestWorldAlphaInCommand(t *testing.T) {
 
 	traverseScene(s)
 
-	if len(s.commands) != 1 {
-		t.Fatalf("commands = %d, want 1", len(s.commands))
+	if len(s.pipeline.Commands) != 1 {
+		t.Fatalf("commands = %d, want 1", len(s.pipeline.Commands))
 	}
 	// worldAlpha = 0.5 * 0.8 = 0.4, Color.A = 1.0 * 0.4 = 0.4
-	if got := float64(s.commands[0].Color.A); math.Abs(got-0.4) > 1e-6 {
+	if got := float64(s.pipeline.Commands[0].Color.A); math.Abs(got-0.4) > 1e-6 {
 		t.Errorf("cmd.Color.A = %v, want ~0.4", got)
 	}
 }
@@ -150,13 +151,13 @@ func TestRenderLayerSorting(t *testing.T) {
 	s.Root().AddChild(b)
 
 	traverseScene(s)
-	s.mergeSort()
+	render.MergeSort(s.pipeline.Commands, &s.pipeline.SortBuf)
 
-	if s.commands[0].RenderLayer != 0 {
-		t.Errorf("first command should be layer 0, got %d", s.commands[0].RenderLayer)
+	if s.pipeline.Commands[0].RenderLayer != 0 {
+		t.Errorf("first command should be layer 0, got %d", s.pipeline.Commands[0].RenderLayer)
 	}
-	if s.commands[1].RenderLayer != 1 {
-		t.Errorf("second command should be layer 1, got %d", s.commands[1].RenderLayer)
+	if s.pipeline.Commands[1].RenderLayer != 1 {
+		t.Errorf("second command should be layer 1, got %d", s.pipeline.Commands[1].RenderLayer)
 	}
 }
 
@@ -170,10 +171,10 @@ func TestGlobalOrderSorting(t *testing.T) {
 	s.Root().AddChild(b)
 
 	traverseScene(s)
-	s.mergeSort()
+	render.MergeSort(s.pipeline.Commands, &s.pipeline.SortBuf)
 
-	if s.commands[0].GlobalOrder != 5 {
-		t.Errorf("first command GlobalOrder = %d, want 5", s.commands[0].GlobalOrder)
+	if s.pipeline.Commands[0].GlobalOrder != 5 {
+		t.Errorf("first command GlobalOrder = %d, want 5", s.pipeline.Commands[0].GlobalOrder)
 	}
 }
 
@@ -186,11 +187,11 @@ func TestTreeOrderPreservedWithinLayer(t *testing.T) {
 	}
 
 	traverseScene(s)
-	s.mergeSort()
+	render.MergeSort(s.pipeline.Commands, &s.pipeline.SortBuf)
 
 	for i := 0; i < 5; i++ {
-		if s.commands[i].TextureRegion.Width != uint16(i+1) {
-			t.Errorf("commands[%d].Width = %d, want %d", i, s.commands[i].TextureRegion.Width, i+1)
+		if s.pipeline.Commands[i].TextureRegion.Width != uint16(i+1) {
+			t.Errorf("commands[%d].Width = %d, want %d", i, s.pipeline.Commands[i].TextureRegion.Width, i+1)
 		}
 	}
 }
@@ -212,17 +213,17 @@ func TestZIndexSorting(t *testing.T) {
 	traverseScene(s)
 
 	// b(z=0) should be first, then c(z=1), then a(z=2)
-	if len(s.commands) != 3 {
-		t.Fatalf("commands = %d, want 3", len(s.commands))
+	if len(s.pipeline.Commands) != 3 {
+		t.Fatalf("commands = %d, want 3", len(s.pipeline.Commands))
 	}
-	if s.commands[0].TextureRegion.Width != 2 {
-		t.Errorf("first should be b (width=2), got width=%d", s.commands[0].TextureRegion.Width)
+	if s.pipeline.Commands[0].TextureRegion.Width != 2 {
+		t.Errorf("first should be b (width=2), got width=%d", s.pipeline.Commands[0].TextureRegion.Width)
 	}
-	if s.commands[1].TextureRegion.Width != 3 {
-		t.Errorf("second should be c (width=3), got width=%d", s.commands[1].TextureRegion.Width)
+	if s.pipeline.Commands[1].TextureRegion.Width != 3 {
+		t.Errorf("second should be c (width=3), got width=%d", s.pipeline.Commands[1].TextureRegion.Width)
 	}
-	if s.commands[2].TextureRegion.Width != 1 {
-		t.Errorf("third should be a (width=1), got width=%d", s.commands[2].TextureRegion.Width)
+	if s.pipeline.Commands[2].TextureRegion.Width != 1 {
+		t.Errorf("third should be a (width=1), got width=%d", s.pipeline.Commands[2].TextureRegion.Width)
 	}
 }
 
@@ -256,12 +257,12 @@ func TestMergeSortMatchesStdlib(t *testing.T) {
 	})
 
 	// Our merge sort
-	s.commands = make([]RenderCommand, len(cmds))
-	copy(s.commands, cmds)
-	s.mergeSort()
+	s.pipeline.Commands = make([]RenderCommand, len(cmds))
+	copy(s.pipeline.Commands, cmds)
+	render.MergeSort(s.pipeline.Commands, &s.pipeline.SortBuf)
 
-	for i := range s.commands {
-		a, b := s.commands[i], ref[i]
+	for i := range s.pipeline.Commands {
+		a, b := s.pipeline.Commands[i], ref[i]
 		if a.RenderLayer != b.RenderLayer || a.GlobalOrder != b.GlobalOrder || a.TreeOrder != b.TreeOrder {
 			t.Errorf("index %d: mergeSort=(%d,%d,%d), stdlib=(%d,%d,%d)",
 				i, a.RenderLayer, a.GlobalOrder, a.TreeOrder,
@@ -273,16 +274,16 @@ func TestMergeSortMatchesStdlib(t *testing.T) {
 func TestMergeSortStable(t *testing.T) {
 	s := NewScene()
 	// All same layer and GlobalOrder  -  treeOrder should be preserved
-	s.commands = make([]RenderCommand, 100)
-	for i := range s.commands {
-		s.commands[i] = RenderCommand{TreeOrder: i}
+	s.pipeline.Commands = make([]RenderCommand, 100)
+	for i := range s.pipeline.Commands {
+		s.pipeline.Commands[i] = RenderCommand{TreeOrder: i}
 	}
 
-	s.mergeSort()
+	render.MergeSort(s.pipeline.Commands, &s.pipeline.SortBuf)
 
-	for i := range s.commands {
-		if s.commands[i].TreeOrder != i {
-			t.Fatalf("stability broken at index %d: treeOrder=%d", i, s.commands[i].TreeOrder)
+	for i := range s.pipeline.Commands {
+		if s.pipeline.Commands[i].TreeOrder != i {
+			t.Fatalf("stability broken at index %d: treeOrder=%d", i, s.pipeline.Commands[i].TreeOrder)
 		}
 	}
 }
@@ -291,36 +292,36 @@ func TestMergeSortBufferReuse(t *testing.T) {
 	s := NewScene()
 
 	// First sort: allocates buffer
-	s.commands = make([]RenderCommand, 50)
-	for i := range s.commands {
-		s.commands[i] = RenderCommand{TreeOrder: 50 - i}
+	s.pipeline.Commands = make([]RenderCommand, 50)
+	for i := range s.pipeline.Commands {
+		s.pipeline.Commands[i] = RenderCommand{TreeOrder: 50 - i}
 	}
-	s.mergeSort()
-	bufCap := cap(s.sortBuf)
+	render.MergeSort(s.pipeline.Commands, &s.pipeline.SortBuf)
+	bufCap := cap(s.pipeline.SortBuf)
 
 	// Second sort with smaller input: should not reallocate
-	s.commands = make([]RenderCommand, 30)
-	for i := range s.commands {
-		s.commands[i] = RenderCommand{TreeOrder: 30 - i}
+	s.pipeline.Commands = make([]RenderCommand, 30)
+	for i := range s.pipeline.Commands {
+		s.pipeline.Commands[i] = RenderCommand{TreeOrder: 30 - i}
 	}
-	s.mergeSort()
+	render.MergeSort(s.pipeline.Commands, &s.pipeline.SortBuf)
 
-	if cap(s.sortBuf) != bufCap {
-		t.Errorf("sortBuf reallocated: was %d, now %d", bufCap, cap(s.sortBuf))
+	if cap(s.pipeline.SortBuf) != bufCap {
+		t.Errorf("sortBuf reallocated: was %d, now %d", bufCap, cap(s.pipeline.SortBuf))
 	}
 }
 
 func TestMergeSortEmpty(t *testing.T) {
 	s := NewScene()
-	s.commands = nil
-	s.mergeSort() // should not panic
+	s.pipeline.Commands = nil
+	render.MergeSort(s.pipeline.Commands, &s.pipeline.SortBuf) // should not panic
 }
 
 func TestMergeSortSingleElement(t *testing.T) {
 	s := NewScene()
-	s.commands = []RenderCommand{{TreeOrder: 1}}
-	s.mergeSort() // should not panic
-	if s.commands[0].TreeOrder != 1 {
+	s.pipeline.Commands = []RenderCommand{{TreeOrder: 1}}
+	render.MergeSort(s.pipeline.Commands, &s.pipeline.SortBuf) // should not panic
+	if s.pipeline.Commands[0].TreeOrder != 1 {
 		t.Error("single element should remain unchanged")
 	}
 }
@@ -329,16 +330,16 @@ func TestMergeSortSingleElement(t *testing.T) {
 
 // traverseSceneWithCamera runs traverse with a camera's view transform.
 func traverseSceneWithCamera(s *Scene, cam *Camera) {
-	s.commands = s.commands[:0]
-	s.commandsDirtyThisFrame = false
+	s.pipeline.Commands = s.pipeline.Commands[:0]
+	s.pipeline.CommandsDirtyThisFrame = false
 	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
 	if cam != nil {
-		s.viewTransform = cam.computeViewMatrix()
+		s.pipeline.ViewTransform = cam.computeViewMatrix()
 	} else {
-		s.viewTransform = identityTransform
+		s.pipeline.ViewTransform = identityTransform
 	}
 	treeOrder := 0
-	s.traverse(s.root, &treeOrder)
+	s.pipeline.Traverse(s.root, &treeOrder)
 }
 
 func TestCacheAsTree_MatchesUncached(t *testing.T) {
@@ -369,11 +370,11 @@ func TestCacheAsTree_MatchesUncached(t *testing.T) {
 	// Second traverse replays from cache.
 	traverseScene(cached)
 
-	if len(cached.commands) != len(uncached.commands) {
-		t.Fatalf("command count: cached=%d, uncached=%d", len(cached.commands), len(uncached.commands))
+	if len(cached.pipeline.Commands) != len(uncached.pipeline.Commands) {
+		t.Fatalf("command count: cached=%d, uncached=%d", len(cached.pipeline.Commands), len(uncached.pipeline.Commands))
 	}
-	for i := range cached.commands {
-		a, b := cached.commands[i], uncached.commands[i]
+	for i := range cached.pipeline.Commands {
+		a, b := cached.pipeline.Commands[i], uncached.pipeline.Commands[i]
 		if a.Transform != b.Transform {
 			t.Errorf("cmd[%d] transform mismatch: %v vs %v", i, a.Transform, b.Transform)
 		}
@@ -403,20 +404,20 @@ func TestCacheAsTree_ManualModePersists(t *testing.T) {
 	traverseScene(s)
 	// Cache should still be valid (manual mode ignores setter bubbling).
 	// The command should have the OLD transform (from cache).
-	if len(s.commands) != 1 {
-		t.Fatalf("expected 1 command, got %d", len(s.commands))
+	if len(s.pipeline.Commands) != 1 {
+		t.Fatalf("expected 1 command, got %d", len(s.pipeline.Commands))
 	}
 	// Old position was X=0, so transform tx should be 0.
-	if s.commands[0].Transform[4] != 0 {
-		t.Errorf("manual mode: expected cached transform tx=0, got %v", s.commands[0].Transform[4])
+	if s.pipeline.Commands[0].Transform[4] != 0 {
+		t.Errorf("manual mode: expected cached transform tx=0, got %v", s.pipeline.Commands[0].Transform[4])
 	}
 
 	// Now manually invalidate.
 	container.InvalidateCacheTree()
 	traverseScene(s)
 	// Should have new position.
-	if s.commands[0].Transform[4] != 100 {
-		t.Errorf("after invalidate: expected tx=100, got %v", s.commands[0].Transform[4])
+	if s.pipeline.Commands[0].Transform[4] != 100 {
+		t.Errorf("after invalidate: expected tx=100, got %v", s.pipeline.Commands[0].Transform[4])
 	}
 }
 
@@ -434,11 +435,11 @@ func TestCacheAsTree_AutoModeBubblesOnSetter(t *testing.T) {
 	// Modify a child  -  auto mode should invalidate.
 	sp.SetPosition(50, 50)
 	traverseScene(s) // rebuild
-	if len(s.commands) != 1 {
-		t.Fatalf("expected 1 command, got %d", len(s.commands))
+	if len(s.pipeline.Commands) != 1 {
+		t.Fatalf("expected 1 command, got %d", len(s.pipeline.Commands))
 	}
-	if s.commands[0].Transform[4] != 50 {
-		t.Errorf("auto mode: expected tx=50 after setter, got %v", s.commands[0].Transform[4])
+	if s.pipeline.Commands[0].Transform[4] != 50 {
+		t.Errorf("auto mode: expected tx=50 after setter, got %v", s.pipeline.Commands[0].Transform[4])
 	}
 }
 
@@ -463,24 +464,24 @@ func TestCacheAsTree_DeltaRemap_CameraPan(t *testing.T) {
 	traverseScene(s)
 
 	// Apply a view transform (camera pan).
-	s.viewTransform = [6]float64{1, 0, 0, 1, -50, -30}
+	s.pipeline.ViewTransform = [6]float64{1, 0, 0, 1, -50, -30}
 	updateWorldTransform(s.root, identityTransform, 1.0, false, false)
-	s.commands = s.commands[:0]
-	s.commandsDirtyThisFrame = false
+	s.pipeline.Commands = s.pipeline.Commands[:0]
+	s.pipeline.CommandsDirtyThisFrame = false
 	treeOrder := 0
-	s.traverse(s.root, &treeOrder)
+	s.pipeline.Traverse(s.root, &treeOrder)
 
-	ref.viewTransform = [6]float64{1, 0, 0, 1, -50, -30}
+	ref.pipeline.ViewTransform = [6]float64{1, 0, 0, 1, -50, -30}
 	updateWorldTransform(ref.root, identityTransform, 1.0, false, false)
-	ref.commands = ref.commands[:0]
+	ref.pipeline.Commands = ref.pipeline.Commands[:0]
 	refTreeOrder := 0
-	ref.traverse(ref.root, &refTreeOrder)
+	ref.pipeline.Traverse(ref.root, &refTreeOrder)
 
-	if len(s.commands) != len(ref.commands) {
-		t.Fatalf("command count: cached=%d, ref=%d", len(s.commands), len(ref.commands))
+	if len(s.pipeline.Commands) != len(ref.pipeline.Commands) {
+		t.Fatalf("command count: cached=%d, ref=%d", len(s.pipeline.Commands), len(ref.pipeline.Commands))
 	}
-	for i := range s.commands {
-		a, b := s.commands[i], ref.commands[i]
+	for i := range s.pipeline.Commands {
+		a, b := s.pipeline.Commands[i], ref.pipeline.Commands[i]
 		for j := 0; j < 6; j++ {
 			diff := a.Transform[j] - b.Transform[j]
 			if diff > 0.01 || diff < -0.01 {
@@ -503,11 +504,11 @@ func TestCacheAsTree_AlphaRemap(t *testing.T) {
 
 	traverseScene(s) // build
 	// Parent alpha is 0.5, sprite alpha is 1.0, so worldAlpha = 0.5
-	if len(s.commands) != 1 {
-		t.Fatalf("expected 1 command, got %d", len(s.commands))
+	if len(s.pipeline.Commands) != 1 {
+		t.Fatalf("expected 1 command, got %d", len(s.pipeline.Commands))
 	}
-	if math.Abs(float64(s.commands[0].Color.A)-0.5) > 0.01 {
-		t.Errorf("initial alpha: expected ~0.5, got %v", s.commands[0].Color.A)
+	if math.Abs(float64(s.pipeline.Commands[0].Color.A)-0.5) > 0.01 {
+		t.Errorf("initial alpha: expected ~0.5, got %v", s.pipeline.Commands[0].Color.A)
 	}
 
 	// Change parent alpha.
@@ -515,8 +516,8 @@ func TestCacheAsTree_AlphaRemap(t *testing.T) {
 	parent.AlphaDirty = true
 	traverseScene(s) // replay with alpha remap
 	// New worldAlpha = 0.8 * 1.0 = 0.8
-	if math.Abs(float64(s.commands[0].Color.A)-0.8) > 0.01 {
-		t.Errorf("remapped alpha: expected ~0.8, got %v", s.commands[0].Color.A)
+	if math.Abs(float64(s.pipeline.Commands[0].Color.A)-0.8) > 0.01 {
+		t.Errorf("remapped alpha: expected ~0.8, got %v", s.pipeline.Commands[0].Color.A)
 	}
 }
 
@@ -534,11 +535,11 @@ func TestCacheAsTree_TextureSwap_SamePage_NoInvalidation(t *testing.T) {
 	sp.SetTextureRegion(TextureRegion{Page: 0, X: 32, Y: 0, Width: 32, Height: 32, OriginalW: 32, OriginalH: 32})
 
 	traverseScene(s) // should replay from cache with updated UVs
-	if len(s.commands) != 1 {
-		t.Fatalf("expected 1 command, got %d", len(s.commands))
+	if len(s.pipeline.Commands) != 1 {
+		t.Fatalf("expected 1 command, got %d", len(s.pipeline.Commands))
 	}
-	if s.commands[0].TextureRegion.X != 32 {
-		t.Errorf("expected updated UV X=32, got %d", s.commands[0].TextureRegion.X)
+	if s.pipeline.Commands[0].TextureRegion.X != 32 {
+		t.Errorf("expected updated UV X=32, got %d", s.pipeline.Commands[0].TextureRegion.X)
 	}
 }
 
@@ -615,12 +616,12 @@ func TestCacheAsTree_SortSkip(t *testing.T) {
 	container.SetCacheAsTree(true, CacheTreeManual)
 
 	traverseScene(s) // build (dirty)
-	if !s.commandsDirtyThisFrame {
+	if !s.pipeline.CommandsDirtyThisFrame {
 		t.Error("first traverse should be dirty")
 	}
 
 	traverseScene(s) // replay (clean)
-	if s.commandsDirtyThisFrame {
+	if s.pipeline.CommandsDirtyThisFrame {
 		t.Error("second traverse (all cache hits) should not be dirty")
 	}
 }
@@ -643,8 +644,8 @@ func TestCacheAsTree_Disable(t *testing.T) {
 	}
 
 	traverseScene(s) // normal traverse
-	if len(s.commands) != 1 {
-		t.Fatalf("expected 1 command after disable, got %d", len(s.commands))
+	if len(s.pipeline.Commands) != 1 {
+		t.Fatalf("expected 1 command after disable, got %d", len(s.pipeline.Commands))
 	}
 }
 
@@ -667,9 +668,9 @@ func BenchmarkTraverse1000(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for b.Loop() {
-		s.commands = s.commands[:0]
+		s.pipeline.Commands = s.pipeline.Commands[:0]
 		treeOrder := 0
-		s.traverse(s.root, &treeOrder)
+		s.pipeline.Traverse(s.root, &treeOrder)
 	}
 }
 
@@ -680,32 +681,32 @@ func BenchmarkTraverse10000(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for b.Loop() {
-		s.commands = s.commands[:0]
+		s.pipeline.Commands = s.pipeline.Commands[:0]
 		treeOrder := 0
-		s.traverse(s.root, &treeOrder)
+		s.pipeline.Traverse(s.root, &treeOrder)
 	}
 }
 
 func BenchmarkCommandSort10000(b *testing.B) {
 	s := NewScene()
-	s.commands = make([]RenderCommand, 10000)
-	for i := range s.commands {
-		s.commands[i] = RenderCommand{
+	s.pipeline.Commands = make([]RenderCommand, 10000)
+	for i := range s.pipeline.Commands {
+		s.pipeline.Commands[i] = RenderCommand{
 			RenderLayer: uint8(i % 4),
 			GlobalOrder: i % 10,
 			TreeOrder:   i,
 		}
 	}
 	// Warmup to allocate sortBuf
-	s.mergeSort()
+	render.MergeSort(s.pipeline.Commands, &s.pipeline.SortBuf)
 
 	b.ReportAllocs()
 	b.ResetTimer()
 	for b.Loop() {
 		// Reverse to force work
-		for i, j := 0, len(s.commands)-1; i < j; i, j = i+1, j-1 {
-			s.commands[i], s.commands[j] = s.commands[j], s.commands[i]
+		for i, j := 0, len(s.pipeline.Commands)-1; i < j; i, j = i+1, j-1 {
+			s.pipeline.Commands[i], s.pipeline.Commands[j] = s.pipeline.Commands[j], s.pipeline.Commands[i]
 		}
-		s.mergeSort()
+		render.MergeSort(s.pipeline.Commands, &s.pipeline.SortBuf)
 	}
 }

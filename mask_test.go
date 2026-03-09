@@ -83,10 +83,10 @@ func TestSpecialNodeWithFilterSkipsNormalEmission(t *testing.T) {
 	traverseScene(s)
 
 	// Should emit exactly 1 command (the directImage command from renderSpecialNode).
-	if len(s.commands) != 1 {
-		t.Fatalf("commands = %d, want 1", len(s.commands))
+	if len(s.pipeline.Commands) != 1 {
+		t.Fatalf("commands = %d, want 1", len(s.pipeline.Commands))
 	}
-	if s.commands[0].DirectImage == nil {
+	if s.pipeline.Commands[0].DirectImage == nil {
 		t.Error("command should have directImage set for filtered node")
 	}
 }
@@ -99,10 +99,10 @@ func TestSpecialNodeWithCacheEmitsDirectImage(t *testing.T) {
 
 	traverseScene(s)
 
-	if len(s.commands) != 1 {
-		t.Fatalf("commands = %d, want 1", len(s.commands))
+	if len(s.pipeline.Commands) != 1 {
+		t.Fatalf("commands = %d, want 1", len(s.pipeline.Commands))
 	}
-	if s.commands[0].DirectImage == nil {
+	if s.pipeline.Commands[0].DirectImage == nil {
 		t.Error("command should have directImage set for cached node")
 	}
 }

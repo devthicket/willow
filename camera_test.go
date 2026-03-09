@@ -362,8 +362,8 @@ func TestCulling_IntegrationWithScene(t *testing.T) {
 	scene.Draw(screen)
 
 	// Only the visible sprite should produce a command
-	if len(scene.commands) != 1 {
-		t.Errorf("command count = %d, want 1 (visible only)", len(scene.commands))
+	if len(scene.pipeline.Commands) != 1 {
+		t.Errorf("command count = %d, want 1 (visible only)", len(scene.pipeline.Commands))
 	}
 }
 
@@ -389,8 +389,8 @@ func TestCulling_DisabledShowsAll(t *testing.T) {
 	updateWorldTransform(scene.root, identityTransform, 1.0, false, false)
 	scene.Draw(screen)
 
-	if len(scene.commands) != 2 {
-		t.Errorf("culling disabled: command count = %d, want 2", len(scene.commands))
+	if len(scene.pipeline.Commands) != 2 {
+		t.Errorf("culling disabled: command count = %d, want 2", len(scene.pipeline.Commands))
 	}
 }
 

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/phanxgames/willow/internal/render"
 )
 
 func TestNewRenderTextureDimensions(t *testing.T) {
@@ -77,10 +78,10 @@ func TestCustomImageSpriteEmitsDirectImage(t *testing.T) {
 
 	traverseScene(s)
 
-	if len(s.commands) != 1 {
-		t.Fatalf("commands = %d, want 1", len(s.commands))
+	if len(s.pipeline.Commands) != 1 {
+		t.Fatalf("commands = %d, want 1", len(s.pipeline.Commands))
 	}
-	cmd := s.commands[0]
+	cmd := s.pipeline.Commands[0]
 	if cmd.DirectImage != img {
 		t.Error("directImage should be the custom image")
 	}
@@ -110,10 +111,10 @@ func TestRegularSpriteNoDirectImage(t *testing.T) {
 
 	traverseScene(s)
 
-	if len(s.commands) != 1 {
-		t.Fatalf("commands = %d, want 1", len(s.commands))
+	if len(s.pipeline.Commands) != 1 {
+		t.Fatalf("commands = %d, want 1", len(s.pipeline.Commands))
 	}
-	cmd := s.commands[0]
+	cmd := s.pipeline.Commands[0]
 	if cmd.DirectImage != nil {
 		t.Error("directImage should be nil for regular sprites")
 	}
@@ -131,12 +132,12 @@ func TestCustomImageInEmitNodeCommand(t *testing.T) {
 	n.SetCustomImage(img)
 
 	treeOrder := 0
-	emitNodeCommand(s, n, identityTransform, 1.0, &treeOrder)
+	render.EmitNodeCommand(&s.pipeline, n, identityTransform, 1.0, &treeOrder)
 
-	if len(s.commands) != 1 {
-		t.Fatalf("commands = %d, want 1", len(s.commands))
+	if len(s.pipeline.Commands) != 1 {
+		t.Fatalf("commands = %d, want 1", len(s.pipeline.Commands))
 	}
-	if s.commands[0].DirectImage != img {
+	if s.pipeline.Commands[0].DirectImage != img {
 		t.Error("emitNodeCommand should set directImage for customImage nodes")
 	}
 }

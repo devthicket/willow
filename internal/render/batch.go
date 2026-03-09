@@ -202,7 +202,7 @@ func (p *Pipeline) SubmitBatchesCoalesced(target *ebiten.Image) {
 			}
 			currentKey = key
 			inRun = true
-			p.appendSpriteQuad(cmd)
+			p.AppendSpriteQuad(cmd)
 
 		case CommandParticle:
 			p.flushSpriteBatch(target, currentKey)
@@ -234,8 +234,8 @@ func (p *Pipeline) SubmitBatchesCoalesced(target *ebiten.Image) {
 	p.flushSpriteBatch(target, currentKey)
 }
 
-// appendSpriteQuad appends 4 vertices and 6 indices for a single atlas sprite.
-func (p *Pipeline) appendSpriteQuad(cmd *RenderCommand) {
+// AppendSpriteQuad appends 4 vertices and 6 indices for a single atlas sprite.
+func (p *Pipeline) AppendSpriteQuad(cmd *RenderCommand) {
 	r := &cmd.TextureRegion
 	t := &cmd.Transform
 

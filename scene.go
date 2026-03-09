@@ -74,26 +74,10 @@ type Scene struct {
 	// Cameras
 	cameras []*Camera
 
-	// Batch mode
-	batchMode  BatchMode
-	batchVerts []ebiten.Vertex // preallocated vertex accumulation buffer
-	batchInds  []uint32        // preallocated index accumulation buffer
-
-	// Render state
-	commands      []RenderCommand
-	sortBuf       []RenderCommand
-	cullBounds    Rect       // current camera cull bounds (set per-camera during Draw)
-	cullActive    bool       // whether culling is active for the current camera
-	viewTransform [6]float64 // current camera view matrix for world-space particles
-
-	// CacheAsTree state (Phase 15)
-	buildingCacheFor       *Node // non-nil when traversing under a cache-miss node
-	commandsDirtyThisFrame bool  // true when any cache miss or uncached nodes emitted
-
-	// Render target pool and offscreen buffers (Phase 09)
-	rtPool        renderTexturePool
-	rtDeferred    []*ebiten.Image
-	offscreenCmds []RenderCommand
+	// Render pipeline — owns command buffer, sort/batch buffers, RT pool,
+	// culling state, and batch submission. Replaces the per-field render state
+	// that was previously defined directly on Scene.
+	pipeline render.Pipeline
 
 	// Input state (Phase 08)
 	handlers     handlerRegistry
@@ -130,10 +114,12 @@ func NewScene() *Scene {
 	root := NewContainer("root")
 	root.Interactable = true
 	s := &Scene{
-		root:          root,
-		commands:      make([]RenderCommand, 0, defaultCommandCap),
-		sortBuf:       make([]RenderCommand, 0, defaultCommandCap),
-		dragDeadZone:  defaultDragDeadZone,
+		root:         root,
+		dragDeadZone: defaultDragDeadZone,
+		pipeline: render.Pipeline{
+			Commands: make([]RenderCommand, 0, defaultCommandCap),
+			SortBuf:  make([]RenderCommand, 0, defaultCommandCap),
+		},
 		ScreenshotDir: "screenshots",
 	}
 	root.Scene_ = s
@@ -329,18 +315,20 @@ func (s *Scene) drawWithCamera(target *ebiten.Image, cam *Camera) {
 		s.transformsReady = true
 	}
 
-	s.commands = s.commands[:0]
-	s.commandsDirtyThisFrame = false
+	p := &s.pipeline
+	p.Commands = p.Commands[:0]
+	p.CommandsDirtyThisFrame = false
+	p.AntiAlias = s.AntiAlias
 
 	if cam != nil {
-		s.viewTransform = cam.computeViewMatrix()
-		s.cullActive = cam.CullEnabled
+		p.ViewTransform = cam.computeViewMatrix()
+		p.CullActive = cam.CullEnabled
 		if cam.CullEnabled {
-			s.cullBounds = cam.Viewport
+			p.CullBounds = cam.Viewport
 		}
 	} else {
-		s.viewTransform = identityTransform
-		s.cullActive = false
+		p.ViewTransform = identityTransform
+		p.CullActive = false
 	}
 
 	var stats debugStats
@@ -351,45 +339,37 @@ func (s *Scene) drawWithCamera(target *ebiten.Image, cam *Camera) {
 	}
 
 	treeOrder := 0
-	s.traverse(s.root, &treeOrder)
+	p.Traverse(s.root, &treeOrder)
 
 	if s.debug {
 		stats.traverseTime = time.Since(t0)
 		t0 = time.Now()
 	}
 
-	if s.commandsDirtyThisFrame {
-		s.mergeSort()
+	if p.CommandsDirtyThisFrame {
+		p.Sort()
 	}
 
 	if s.debug {
 		stats.sortTime = time.Since(t0)
-		stats.commandCount = len(s.commands)
+		stats.commandCount = len(p.Commands)
 		t0 = time.Now()
 	}
 
-	if s.batchMode == BatchModeCoalesced {
-		s.submitBatchesCoalesced(target)
-	} else {
-		s.submitBatches(target)
-	}
+	p.SubmitBatches(target)
 
 	if s.debug {
 		stats.submitTime = time.Since(t0)
-		stats.batchCount = countBatches(s.commands)
-		if s.batchMode == BatchModeCoalesced {
-			stats.drawCallCount = countDrawCallsCoalesced(s.commands)
+		stats.batchCount = countBatches(p.Commands)
+		if p.BatchMode == BatchModeCoalesced {
+			stats.drawCallCount = countDrawCallsCoalesced(p.Commands)
 		} else {
-			stats.drawCallCount = countDrawCalls(s.commands)
+			stats.drawCallCount = countDrawCalls(p.Commands)
 		}
 		s.debugLog(stats)
 	}
 
-	// Release deferred pooled textures used as directImage during this frame.
-	for _, img := range s.rtDeferred {
-		s.rtPool.Release(img)
-	}
-	s.rtDeferred = s.rtDeferred[:0]
+	p.ReleaseDeferred()
 }
 
 // NewCamera creates a camera with the given viewport and adds it to the scene.
@@ -459,10 +439,10 @@ func (s *Scene) SetDebugMode(enabled bool) {
 }
 
 // SetBatchMode sets the draw-call batching strategy.
-func (s *Scene) SetBatchMode(mode BatchMode) { s.batchMode = mode }
+func (s *Scene) SetBatchMode(mode BatchMode) { s.pipeline.BatchMode = mode }
 
 // BatchMode returns the current draw-call batching strategy.
-func (s *Scene) GetBatchMode() BatchMode { return s.batchMode }
+func (s *Scene) GetBatchMode() BatchMode { return s.pipeline.BatchMode }
 
 // globalDebug mirrors the most recently set Scene debug flag so that node
 // operations (which lack a Scene pointer) can check it cheaply. Only valid

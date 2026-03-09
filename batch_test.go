@@ -103,44 +103,44 @@ func TestAppendSpriteQuad_NonRotated(t *testing.T) {
 		},
 		Transform: identityTransform32,
 	}
-	s.appendSpriteQuad(cmd)
+	s.pipeline.AppendSpriteQuad(cmd)
 
-	if len(s.batchVerts) != 4 {
-		t.Fatalf("verts = %d, want 4", len(s.batchVerts))
+	if len(s.pipeline.BatchVerts) != 4 {
+		t.Fatalf("verts = %d, want 4", len(s.pipeline.BatchVerts))
 	}
-	if len(s.batchInds) != 6 {
-		t.Fatalf("inds = %d, want 6", len(s.batchInds))
+	if len(s.pipeline.BatchInds) != 6 {
+		t.Fatalf("inds = %d, want 6", len(s.pipeline.BatchInds))
 	}
 
 	// TL should be at (0,0) with src (10,20)
-	assertVertexNear(t, "TL.DstX", s.batchVerts[0].DstX, 0)
-	assertVertexNear(t, "TL.DstY", s.batchVerts[0].DstY, 0)
-	assertVertexNear(t, "TL.SrcX", s.batchVerts[0].SrcX, 10)
-	assertVertexNear(t, "TL.SrcY", s.batchVerts[0].SrcY, 20)
+	assertVertexNear(t, "TL.DstX", s.pipeline.BatchVerts[0].DstX, 0)
+	assertVertexNear(t, "TL.DstY", s.pipeline.BatchVerts[0].DstY, 0)
+	assertVertexNear(t, "TL.SrcX", s.pipeline.BatchVerts[0].SrcX, 10)
+	assertVertexNear(t, "TL.SrcY", s.pipeline.BatchVerts[0].SrcY, 20)
 
 	// TR should be at (32,0) with src (42,20)
-	assertVertexNear(t, "TR.DstX", s.batchVerts[1].DstX, 32)
-	assertVertexNear(t, "TR.DstY", s.batchVerts[1].DstY, 0)
-	assertVertexNear(t, "TR.SrcX", s.batchVerts[1].SrcX, 42)
-	assertVertexNear(t, "TR.SrcY", s.batchVerts[1].SrcY, 20)
+	assertVertexNear(t, "TR.DstX", s.pipeline.BatchVerts[1].DstX, 32)
+	assertVertexNear(t, "TR.DstY", s.pipeline.BatchVerts[1].DstY, 0)
+	assertVertexNear(t, "TR.SrcX", s.pipeline.BatchVerts[1].SrcX, 42)
+	assertVertexNear(t, "TR.SrcY", s.pipeline.BatchVerts[1].SrcY, 20)
 
 	// BL should be at (0,16) with src (10,36)
-	assertVertexNear(t, "BL.DstX", s.batchVerts[2].DstX, 0)
-	assertVertexNear(t, "BL.DstY", s.batchVerts[2].DstY, 16)
-	assertVertexNear(t, "BL.SrcX", s.batchVerts[2].SrcX, 10)
-	assertVertexNear(t, "BL.SrcY", s.batchVerts[2].SrcY, 36)
+	assertVertexNear(t, "BL.DstX", s.pipeline.BatchVerts[2].DstX, 0)
+	assertVertexNear(t, "BL.DstY", s.pipeline.BatchVerts[2].DstY, 16)
+	assertVertexNear(t, "BL.SrcX", s.pipeline.BatchVerts[2].SrcX, 10)
+	assertVertexNear(t, "BL.SrcY", s.pipeline.BatchVerts[2].SrcY, 36)
 
 	// BR should be at (32,16) with src (42,36)
-	assertVertexNear(t, "BR.DstX", s.batchVerts[3].DstX, 32)
-	assertVertexNear(t, "BR.DstY", s.batchVerts[3].DstY, 16)
-	assertVertexNear(t, "BR.SrcX", s.batchVerts[3].SrcX, 42)
-	assertVertexNear(t, "BR.SrcY", s.batchVerts[3].SrcY, 36)
+	assertVertexNear(t, "BR.DstX", s.pipeline.BatchVerts[3].DstX, 32)
+	assertVertexNear(t, "BR.DstY", s.pipeline.BatchVerts[3].DstY, 16)
+	assertVertexNear(t, "BR.SrcX", s.pipeline.BatchVerts[3].SrcX, 42)
+	assertVertexNear(t, "BR.SrcY", s.pipeline.BatchVerts[3].SrcY, 36)
 
 	// Check index winding
 	wantInds := []uint32{0, 1, 2, 1, 3, 2}
 	for i, w := range wantInds {
-		if s.batchInds[i] != w {
-			t.Errorf("ind[%d] = %d, want %d", i, s.batchInds[i], w)
+		if s.pipeline.BatchInds[i] != w {
+			t.Errorf("ind[%d] = %d, want %d", i, s.pipeline.BatchInds[i], w)
 		}
 	}
 }
@@ -160,30 +160,30 @@ func TestAppendSpriteQuad_Rotated(t *testing.T) {
 		},
 		Transform: identityTransform32,
 	}
-	s.appendSpriteQuad(cmd)
+	s.pipeline.AppendSpriteQuad(cmd)
 
-	if len(s.batchVerts) != 4 {
-		t.Fatalf("verts = %d, want 4", len(s.batchVerts))
+	if len(s.pipeline.BatchVerts) != 4 {
+		t.Fatalf("verts = %d, want 4", len(s.pipeline.BatchVerts))
 	}
 
 	// Visual dimensions should be the same (32×16), placed at identity.
-	assertVertexNear(t, "TL.DstX", s.batchVerts[0].DstX, 0)
-	assertVertexNear(t, "TL.DstY", s.batchVerts[0].DstY, 0)
-	assertVertexNear(t, "TR.DstX", s.batchVerts[1].DstX, 32)
-	assertVertexNear(t, "BR.DstY", s.batchVerts[3].DstY, 16)
+	assertVertexNear(t, "TL.DstX", s.pipeline.BatchVerts[0].DstX, 0)
+	assertVertexNear(t, "TL.DstY", s.pipeline.BatchVerts[0].DstY, 0)
+	assertVertexNear(t, "TR.DstX", s.pipeline.BatchVerts[1].DstX, 32)
+	assertVertexNear(t, "BR.DstY", s.pipeline.BatchVerts[3].DstY, 16)
 
 	// Rotated UVs: TL → atlas (X+Height, Y) = (26, 20)
-	assertVertexNear(t, "TL.SrcX", s.batchVerts[0].SrcX, 26)
-	assertVertexNear(t, "TL.SrcY", s.batchVerts[0].SrcY, 20)
+	assertVertexNear(t, "TL.SrcX", s.pipeline.BatchVerts[0].SrcX, 26)
+	assertVertexNear(t, "TL.SrcY", s.pipeline.BatchVerts[0].SrcY, 20)
 	// TR → atlas (X+Height, Y+Width) = (26, 52)
-	assertVertexNear(t, "TR.SrcX", s.batchVerts[1].SrcX, 26)
-	assertVertexNear(t, "TR.SrcY", s.batchVerts[1].SrcY, 52)
+	assertVertexNear(t, "TR.SrcX", s.pipeline.BatchVerts[1].SrcX, 26)
+	assertVertexNear(t, "TR.SrcY", s.pipeline.BatchVerts[1].SrcY, 52)
 	// BL → atlas (X, Y) = (10, 20)
-	assertVertexNear(t, "BL.SrcX", s.batchVerts[2].SrcX, 10)
-	assertVertexNear(t, "BL.SrcY", s.batchVerts[2].SrcY, 20)
+	assertVertexNear(t, "BL.SrcX", s.pipeline.BatchVerts[2].SrcX, 10)
+	assertVertexNear(t, "BL.SrcY", s.pipeline.BatchVerts[2].SrcY, 20)
 	// BR → atlas (X, Y+Width) = (10, 52)
-	assertVertexNear(t, "BR.SrcX", s.batchVerts[3].SrcX, 10)
-	assertVertexNear(t, "BR.SrcY", s.batchVerts[3].SrcY, 52)
+	assertVertexNear(t, "BR.SrcX", s.pipeline.BatchVerts[3].SrcX, 10)
+	assertVertexNear(t, "BR.SrcY", s.pipeline.BatchVerts[3].SrcY, 52)
 }
 
 func TestAppendSpriteQuad_TrimOffset(t *testing.T) {
@@ -197,14 +197,14 @@ func TestAppendSpriteQuad_TrimOffset(t *testing.T) {
 		},
 		Transform: identityTransform32,
 	}
-	s.appendSpriteQuad(cmd)
+	s.pipeline.AppendSpriteQuad(cmd)
 
 	// TL should be offset by (5, 3)
-	assertVertexNear(t, "TL.DstX", s.batchVerts[0].DstX, 5)
-	assertVertexNear(t, "TL.DstY", s.batchVerts[0].DstY, 3)
+	assertVertexNear(t, "TL.DstX", s.pipeline.BatchVerts[0].DstX, 5)
+	assertVertexNear(t, "TL.DstY", s.pipeline.BatchVerts[0].DstY, 3)
 	// BR at (5+10, 3+10) = (15, 13)
-	assertVertexNear(t, "BR.DstX", s.batchVerts[3].DstX, 15)
-	assertVertexNear(t, "BR.DstY", s.batchVerts[3].DstY, 13)
+	assertVertexNear(t, "BR.DstX", s.pipeline.BatchVerts[3].DstX, 15)
+	assertVertexNear(t, "BR.DstY", s.pipeline.BatchVerts[3].DstY, 13)
 }
 
 func TestAppendSpriteQuad_ZeroColor(t *testing.T) {
@@ -217,13 +217,13 @@ func TestAppendSpriteQuad_ZeroColor(t *testing.T) {
 		Transform: identityTransform32,
 		Color:     color32{R: 0, G: 0, B: 0, A: 0}, // zero sentinel
 	}
-	s.appendSpriteQuad(cmd)
+	s.pipeline.AppendSpriteQuad(cmd)
 
 	// Should be treated as opaque white
-	assertVertexNear(t, "ColorR", s.batchVerts[0].ColorR, 1)
-	assertVertexNear(t, "ColorG", s.batchVerts[0].ColorG, 1)
-	assertVertexNear(t, "ColorB", s.batchVerts[0].ColorB, 1)
-	assertVertexNear(t, "ColorA", s.batchVerts[0].ColorA, 1)
+	assertVertexNear(t, "ColorR", s.pipeline.BatchVerts[0].ColorR, 1)
+	assertVertexNear(t, "ColorG", s.pipeline.BatchVerts[0].ColorG, 1)
+	assertVertexNear(t, "ColorB", s.pipeline.BatchVerts[0].ColorB, 1)
+	assertVertexNear(t, "ColorA", s.pipeline.BatchVerts[0].ColorA, 1)
 }
 
 func TestAppendSpriteQuad_PremultipliedColor(t *testing.T) {
@@ -236,13 +236,13 @@ func TestAppendSpriteQuad_PremultipliedColor(t *testing.T) {
 		Transform: identityTransform32,
 		Color:     color32{R: 1.0, G: 0.5, B: 0.25, A: 0.5},
 	}
-	s.appendSpriteQuad(cmd)
+	s.pipeline.AppendSpriteQuad(cmd)
 
 	// Premultiplied: R*A, G*A, B*A, A
-	assertVertexNear(t, "ColorR", s.batchVerts[0].ColorR, 0.5)
-	assertVertexNear(t, "ColorG", s.batchVerts[0].ColorG, 0.25)
-	assertVertexNear(t, "ColorB", s.batchVerts[0].ColorB, 0.125)
-	assertVertexNear(t, "ColorA", s.batchVerts[0].ColorA, 0.5)
+	assertVertexNear(t, "ColorR", s.pipeline.BatchVerts[0].ColorR, 0.5)
+	assertVertexNear(t, "ColorG", s.pipeline.BatchVerts[0].ColorG, 0.25)
+	assertVertexNear(t, "ColorB", s.pipeline.BatchVerts[0].ColorB, 0.125)
+	assertVertexNear(t, "ColorA", s.pipeline.BatchVerts[0].ColorA, 0.5)
 }
 
 func TestAppendSpriteQuad_Transform(t *testing.T) {
@@ -255,14 +255,14 @@ func TestAppendSpriteQuad_Transform(t *testing.T) {
 		},
 		Transform: [6]float32{2, 0, 0, 2, 100, 200},
 	}
-	s.appendSpriteQuad(cmd)
+	s.pipeline.AppendSpriteQuad(cmd)
 
 	// TL at (100, 200)
-	assertVertexNear(t, "TL.DstX", s.batchVerts[0].DstX, 100)
-	assertVertexNear(t, "TL.DstY", s.batchVerts[0].DstY, 200)
+	assertVertexNear(t, "TL.DstX", s.pipeline.BatchVerts[0].DstX, 100)
+	assertVertexNear(t, "TL.DstY", s.pipeline.BatchVerts[0].DstY, 200)
 	// BR at (2*10+100, 2*10+200) = (120, 220)
-	assertVertexNear(t, "BR.DstX", s.batchVerts[3].DstX, 120)
-	assertVertexNear(t, "BR.DstY", s.batchVerts[3].DstY, 220)
+	assertVertexNear(t, "BR.DstX", s.pipeline.BatchVerts[3].DstX, 120)
+	assertVertexNear(t, "BR.DstY", s.pipeline.BatchVerts[3].DstY, 220)
 }
 
 func TestCoalescedBatchCount(t *testing.T) {

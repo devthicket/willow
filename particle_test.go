@@ -228,7 +228,7 @@ func TestRenderCommandIncludesEmitter(t *testing.T) {
 	traverseScene(s)
 
 	found := false
-	for _, cmd := range s.commands {
+	for _, cmd := range s.pipeline.Commands {
 		if cmd.Type == CommandParticle {
 			found = true
 			if cmd.Emitter == nil {
@@ -253,7 +253,7 @@ func TestNoCommandWhenNoAliveParticles(t *testing.T) {
 
 	traverseScene(s)
 
-	for _, cmd := range s.commands {
+	for _, cmd := range s.pipeline.Commands {
 		if cmd.Type == CommandParticle {
 			t.Error("should not emit CommandParticle when no particles alive")
 		}
@@ -413,8 +413,8 @@ func BenchmarkParticleRender_1000(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for b.Loop() {
-		s.commands = s.commands[:0]
+		s.pipeline.Commands = s.pipeline.Commands[:0]
 		treeOrder := 0
-		s.traverse(s.root, &treeOrder)
+		s.pipeline.Traverse(s.root, &treeOrder)
 	}
 }

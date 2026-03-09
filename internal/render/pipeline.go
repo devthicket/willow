@@ -416,12 +416,12 @@ func (p *Pipeline) renderSpecialNode(n *node.Node, treeOrder *int) {
 	}
 
 	rt := p.RtPool.Acquire(w, h)
-	p.renderSubtree(n, rt, bounds)
+	p.RenderSubtree(n, rt, bounds)
 	result := rt
 
 	if n.MaskNode != nil {
 		maskRT := p.RtPool.Acquire(w, h)
-		p.renderSubtree(n.MaskNode, maskRT, bounds)
+		p.RenderSubtree(n.MaskNode, maskRT, bounds)
 		var op ebiten.DrawImageOptions
 		if BlendMaskFn != nil {
 			op.Blend = BlendMaskFn().EbitenBlend()
@@ -479,7 +479,7 @@ func (p *Pipeline) renderSpecialNode(n *node.Node, treeOrder *int) {
 
 // --- Subtree rendering ---
 
-func (p *Pipeline) renderSubtree(n *node.Node, target *ebiten.Image, bounds types.Rect) {
+func (p *Pipeline) RenderSubtree(n *node.Node, target *ebiten.Image, bounds types.Rect) {
 	savedCmds := p.Commands
 	p.Commands = p.OffscreenCmds[:0]
 
@@ -555,12 +555,12 @@ func (p *Pipeline) renderSpecialSubtreeNode(n *node.Node, localTransform [6]floa
 	}
 
 	rt := p.RtPool.Acquire(w, h)
-	p.renderSubtree(n, rt, bounds)
+	p.RenderSubtree(n, rt, bounds)
 	result := rt
 
 	if n.MaskNode != nil {
 		maskRT := p.RtPool.Acquire(w, h)
-		p.renderSubtree(n.MaskNode, maskRT, bounds)
+		p.RenderSubtree(n.MaskNode, maskRT, bounds)
 		var op ebiten.DrawImageOptions
 		if BlendMaskFn != nil {
 			op.Blend = BlendMaskFn().EbitenBlend()

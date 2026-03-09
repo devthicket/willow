@@ -149,10 +149,10 @@ func TestLightLayerNodeEmitsDirectImage(t *testing.T) {
 
 	traverseScene(s)
 
-	if len(s.commands) != 1 {
-		t.Fatalf("commands = %d, want 1", len(s.commands))
+	if len(s.pipeline.Commands) != 1 {
+		t.Fatalf("commands = %d, want 1", len(s.pipeline.Commands))
 	}
-	cmd := s.commands[0]
+	cmd := s.pipeline.Commands[0]
 	if cmd.DirectImage == nil {
 		t.Error("LightLayer node should emit a directImage command")
 	}
