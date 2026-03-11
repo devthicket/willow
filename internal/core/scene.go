@@ -64,9 +64,10 @@ type Scene struct {
 	InjectedChars []rune       // synthetic characters consumed by AppendInjectedChars
 	InjectedKeys  []ebiten.Key // synthetic key presses consumed by IsInjectedKeyPressed
 
-	// User callbacks set via SetUpdateFunc / SetPostDrawFunc.
+	// User callbacks set via SetUpdateFunc / SetPostDrawFunc / SetOnResize.
 	UpdateFunc   func() error
 	PostDrawFunc func(screen *ebiten.Image)
+	OnResize     func(w, h int)
 
 	// ECS bridge
 	store EntityStore
@@ -177,6 +178,12 @@ func (s *Scene) SetUpdateFunc(fn func() error) {
 // SetPostDrawFunc registers a callback that is called after Scene.Draw.
 func (s *Scene) SetPostDrawFunc(fn func(*ebiten.Image)) {
 	s.PostDrawFunc = fn
+}
+
+// SetOnResize registers a callback that is called when the window is resized.
+// The callback receives the new logical width and height in pixels.
+func (s *Scene) SetOnResize(fn func(w, h int)) {
+	s.OnResize = fn
 }
 
 // --- Atlas / page registration (delegated via function pointers) ---

@@ -405,18 +405,18 @@ var (
 var (
 	LoadDistanceFieldFont        = text.LoadDistanceFieldFont
 	LoadDistanceFieldFontFromTTF = text.LoadDistanceFieldFontFromTTF
-	GenerateSDFFromBitmaps = text.GenerateSDFFromBitmaps
+	GenerateSDFFromBitmaps       = text.GenerateSDFFromBitmaps
 )
 
 // Filter constructors.
 var (
-	NewColorMatrixFilter        = filter.NewColorMatrixFilter
-	NewBlurFilter               = filter.NewBlurFilter
-	NewOutlineFilter            = filter.NewOutlineFilter
+	NewColorMatrixFilter         = filter.NewColorMatrixFilter
+	NewBlurFilter                = filter.NewBlurFilter
+	NewOutlineFilter             = filter.NewOutlineFilter
 	NewPixelPerfectOutlineFilter = filter.NewPixelPerfectOutlineFilter
 	NewPixelPerfectInlineFilter  = filter.NewPixelPerfectInlineFilter
-	NewPaletteFilter            = filter.NewPaletteFilter
-	NewCustomShaderFilter       = filter.NewCustomShaderFilter
+	NewPaletteFilter             = filter.NewPaletteFilter
+	NewCustomShaderFilter        = filter.NewCustomShaderFilter
 )
 
 // Mesh constructors.
@@ -822,5 +822,11 @@ func (g *gameShell) Draw(screen *ebiten.Image) {
 }
 
 func (g *gameShell) Layout(outsideWidth, outsideHeight int) (int, int) {
+	if outsideWidth != g.w || outsideHeight != g.h {
+		g.w, g.h = outsideWidth, outsideHeight
+		if g.scene.OnResize != nil {
+			g.scene.OnResize(outsideWidth, outsideHeight)
+		}
+	}
 	return g.w, g.h
 }
