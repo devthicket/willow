@@ -351,6 +351,12 @@ func (s *Scene) InjectRelease(x, y float64) {
 	s.Input.InjectRelease(x, y)
 }
 
+// InjectHover queues a free pointer move (no button held) to trigger
+// OnPointerEnter / OnPointerLeave without pressing a button.
+func (s *Scene) InjectHover(x, y float64) {
+	s.Input.InjectHover(x, y)
+}
+
 // InjectClick queues a press followed by a release at the given coordinates.
 func (s *Scene) InjectClick(x, y float64) {
 	s.Input.InjectClick(x, y)
@@ -417,6 +423,7 @@ func (s *Scene) Update() {
 			Screenshot:  s.Screenshot,
 			InjectClick: s.Input.InjectClick,
 			InjectDrag:  s.Input.InjectDrag,
+			InjectMove:  s.Input.InjectHover,
 			InjectText:  s.InjectText,
 			InjectKey:   func(key string) { s.InjectKey(KeyFromName(key)) },
 			QueueLen: func() int {

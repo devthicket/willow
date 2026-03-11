@@ -55,6 +55,7 @@ type StepAction struct {
 	Screenshot  func(label string)
 	InjectClick func(x, y float64)
 	InjectDrag  func(fromX, fromY, toX, toY float64, frames int)
+	InjectMove  func(x, y float64)
 	InjectText  func(text string)
 	InjectKey   func(key string)
 	QueueLen    func() int
@@ -91,6 +92,10 @@ func (r *TestRunner) Step(a StepAction) {
 			frames = 2
 		}
 		a.InjectDrag(st.FromX, st.FromY, st.ToX, st.ToY, frames)
+	case "move":
+		if a.InjectMove != nil {
+			a.InjectMove(st.X, st.Y)
+		}
 	case "type":
 		if a.InjectText != nil {
 			a.InjectText(st.Text)

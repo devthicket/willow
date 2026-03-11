@@ -43,6 +43,16 @@ func (m *Manager) InjectRelease(x, y float64) {
 	})
 }
 
+// InjectHover queues a free pointer move (no button held) at the given
+// screen coordinates. Use this to trigger OnPointerEnter / OnPointerLeave
+// callbacks without pressing a button.
+func (m *Manager) InjectHover(x, y float64) {
+	m.InjectQueue = append(m.InjectQueue, SyntheticPointerEvent{
+		ScreenX: x, ScreenY: y,
+		Pressed: false,
+	})
+}
+
 // InjectClick is a convenience that queues a press followed by a release
 // at the same screen coordinates. Consumes two frames.
 func (m *Manager) InjectClick(x, y float64) {
