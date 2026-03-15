@@ -160,7 +160,6 @@ func (p *Pipeline) submitTilemap(target *ebiten.Image, cmd *RenderCommand) {
 	var triOp ebiten.DrawTrianglesOptions
 	triOp.Blend = cmd.BlendMode.EbitenBlend()
 	triOp.ColorScaleMode = ebiten.ColorScaleModePremultipliedAlpha
-	triOp.AntiAlias = p.AntiAlias
 	target.DrawTriangles(cmd.TilemapVerts, cmd.TilemapInds, cmd.TilemapImage, &triOp)
 }
 
@@ -171,7 +170,6 @@ func (p *Pipeline) submitMesh(target *ebiten.Image, cmd *RenderCommand) {
 	}
 	var triOp ebiten.DrawTrianglesOptions
 	triOp.Blend = cmd.BlendMode.EbitenBlend()
-	triOp.AntiAlias = p.AntiAlias
 	target.DrawTriangles(cmd.MeshVerts, cmd.MeshInds, cmd.MeshImage, &triOp)
 }
 
@@ -329,7 +327,6 @@ func (p *Pipeline) flushSpriteBatch(target *ebiten.Image, key BatchKey) {
 	var triOp ebiten.DrawTrianglesOptions
 	triOp.Blend = key.Blend.EbitenBlend()
 	triOp.ColorScaleMode = ebiten.ColorScaleModePremultipliedAlpha
-	triOp.AntiAlias = p.AntiAlias
 
 	target.DrawTriangles32(p.BatchVerts, p.BatchInds, page, &triOp)
 
@@ -382,9 +379,8 @@ func (p *Pipeline) submitSDF(target *ebiten.Image, cmd *RenderCommand) {
 	}
 
 	opts := &ebiten.DrawTrianglesShaderOptions{
-		Uniforms:  cmd.SdfUniforms,
-		Images:    [4]*ebiten.Image{cmd.SdfAtlasImg},
-		AntiAlias: p.AntiAlias,
+		Uniforms: cmd.SdfUniforms,
+		Images:   [4]*ebiten.Image{cmd.SdfAtlasImg},
 	}
 	target.DrawTrianglesShader(p.BatchVerts[:vc], cmd.SdfInds[:ic], cmd.SdfShader, opts)
 
@@ -565,7 +561,6 @@ func (p *Pipeline) submitParticlesBatched(target *ebiten.Image, cmd *RenderComma
 	var triOp ebiten.DrawTrianglesOptions
 	triOp.Blend = cmd.BlendMode.EbitenBlend()
 	triOp.ColorScaleMode = ebiten.ColorScaleModePremultipliedAlpha
-	triOp.AntiAlias = p.AntiAlias
 
 	target.DrawTriangles32(p.BatchVerts, p.BatchInds, srcImg, &triOp)
 

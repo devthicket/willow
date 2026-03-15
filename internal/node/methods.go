@@ -8,23 +8,23 @@ import (
 
 // --- Getters ---
 
-func (n *Node) X() float64              { return n.X_ }
-func (n *Node) Y() float64              { return n.Y_ }
-func (n *Node) ScaleX() float64         { return n.ScaleX_ }
-func (n *Node) ScaleY() float64         { return n.ScaleY_ }
-func (n *Node) Rotation() float64       { return n.Rotation_ }
-func (n *Node) Alpha() float64          { return n.Alpha_ }
-func (n *Node) Color() types.Color      { return n.Color_ }
-func (n *Node) BlendMode() types.BlendMode { return n.BlendMode_ }
-func (n *Node) ZIndex() int             { return n.ZIndex_ }
-func (n *Node) Visible() bool           { return n.Visible_ }
-func (n *Node) Renderable() bool        { return n.Renderable_ }
-func (n *Node) CustomImage() *ebiten.Image { return n.CustomImage_ }
+func (n *Node) X() float64                         { return n.X_ }
+func (n *Node) Y() float64                         { return n.Y_ }
+func (n *Node) ScaleX() float64                    { return n.ScaleX_ }
+func (n *Node) ScaleY() float64                    { return n.ScaleY_ }
+func (n *Node) Rotation() float64                  { return n.Rotation_ }
+func (n *Node) Alpha() float64                     { return n.Alpha_ }
+func (n *Node) Color() types.Color                 { return n.Color_ }
+func (n *Node) BlendMode() types.BlendMode         { return n.BlendMode_ }
+func (n *Node) ZIndex() int                        { return n.ZIndex_ }
+func (n *Node) Visible() bool                      { return n.Visible_ }
+func (n *Node) Renderable() bool                   { return n.Renderable_ }
+func (n *Node) CustomImage() *ebiten.Image         { return n.CustomImage_ }
 func (n *Node) TextureRegion() types.TextureRegion { return n.TextureRegion_ }
-func (n *Node) SkewX() float64          { return n.SkewX_ }
-func (n *Node) SkewY() float64          { return n.SkewY_ }
-func (n *Node) PivotX() float64         { return n.PivotX_ }
-func (n *Node) PivotY() float64         { return n.PivotY_ }
+func (n *Node) SkewX() float64                     { return n.SkewX_ }
+func (n *Node) SkewY() float64                     { return n.SkewY_ }
+func (n *Node) PivotX() float64                    { return n.PivotX_ }
+func (n *Node) PivotY() float64                    { return n.PivotY_ }
 
 // --- Visual property setters ---
 
@@ -78,7 +78,10 @@ func (n *Node) SetContent(s string) {
 	invalidateAncestorCache(n)
 }
 
-func (n *Node) SetFont(f interface{ MeasureString(string) (float64, float64); LineHeight() float64 }) {
+func (n *Node) SetFont(f interface {
+	MeasureString(string) (float64, float64)
+	LineHeight() float64
+}) {
 	n.TextBlock.Font = f
 	n.TextBlock.LayoutDirty = true
 	invalidateAncestorCache(n)
@@ -215,10 +218,8 @@ func (n *Node) Height() float64 {
 }
 
 func (n *Node) SetSize(w, h float64) {
-	if n.CustomImage_ == WhitePixelImage || n.TextureRegion_ == (types.TextureRegion{}) {
-		n.ScaleX_ = w
-		n.ScaleY_ = h
-	} else if n.CustomImage_ != nil {
+	if n.CustomImage_ != nil && n.CustomImage_ != WhitePixelImage {
+		// Custom image: divide by native dimensions to convert desired pixel size → scale.
 		b := n.CustomImage_.Bounds()
 		if b.Dx() > 0 {
 			n.ScaleX_ = w / float64(b.Dx())
@@ -226,6 +227,10 @@ func (n *Node) SetSize(w, h float64) {
 		if b.Dy() > 0 {
 			n.ScaleY_ = h / float64(b.Dy())
 		}
+	} else if n.CustomImage_ == WhitePixelImage || n.TextureRegion_ == (types.TextureRegion{}) {
+		// White pixel or blank texture region: scale = absolute pixel size.
+		n.ScaleX_ = w
+		n.ScaleY_ = h
 	} else if n.TextureRegion_.OriginalW > 0 && n.TextureRegion_.OriginalH > 0 {
 		n.ScaleX_ = w / float64(n.TextureRegion_.OriginalW)
 		n.ScaleY_ = h / float64(n.TextureRegion_.OriginalH)

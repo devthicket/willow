@@ -31,7 +31,7 @@ type SDFGenOptions struct {
 	AtlasWidth int
 	// PageIndex is the atlas page index for the generated font. Default 0.
 	PageIndex uint16
-	// MSDF enables multi-channel SDF generation (not yet implemented).
+	// MSDF enables multi-channel SDF generation.
 	MSDF bool
 }
 
@@ -160,8 +160,14 @@ func GenerateSDFFromBitmaps(glyphs []GlyphBitmap, opts SDFGenOptions) (*image.NR
 					ay := g.atlasY + y
 					if ax < atlasW && ay < atlasH {
 						d := sdf[y*g.pw+x]
-						// Encode as alpha (white pixel, distance in alpha)
-						atlas.SetNRGBA(ax, ay, color.NRGBA{R: 255, G: 255, B: 255, A: d})
+						// MSDF mode: encode distance in RGB (A=255) so median(R,G,B) in
+						// the MSDF shader reads the correct SDF value.
+						// SDF mode: encode distance in alpha (white pixel).
+						if opts.MSDF {
+							atlas.SetNRGBA(ax, ay, color.NRGBA{R: d, G: d, B: d, A: 255})
+						} else {
+							atlas.SetNRGBA(ax, ay, color.NRGBA{R: 255, G: 255, B: 255, A: d})
+						}
 					}
 				}
 			}

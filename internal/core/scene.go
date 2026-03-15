@@ -57,9 +57,6 @@ type Scene struct {
 	// Test runner
 	TestRunnerRef *TestRunner
 
-	// AntiAlias enables anti-aliased edges on DrawTriangles calls.
-	AntiAlias bool
-
 	// Injected keyboard input for test automation.
 	InjectedChars []rune       // synthetic characters consumed by AppendInjectedChars
 	InjectedKeys  []ebiten.Key // synthetic key presses consumed by IsInjectedKeyPressed
@@ -475,8 +472,6 @@ func (s *Scene) drawWithCamera(target *ebiten.Image, cam *camera.Camera) {
 	p := &s.Pipeline
 	p.Commands = p.Commands[:0]
 	p.CommandsDirtyThisFrame = false
-	p.AntiAlias = s.AntiAlias
-
 	if cam != nil {
 		p.ViewTransform = cam.ComputeViewMatrix()
 		p.CullActive = cam.CullEnabled

@@ -15,20 +15,19 @@ import (
 // command buffer, sort buffer, batch vertex/index buffers, RT pool,
 // deferred RT list, offscreen commands, culling, and batch mode.
 type Pipeline struct {
-	Commands              []RenderCommand
-	SortBuf               []RenderCommand
-	BatchVerts            []ebiten.Vertex
-	BatchInds             []uint32
-	RtPool                RenderTexturePool
-	RtDeferred            []*ebiten.Image
-	OffscreenCmds         []RenderCommand
-	CullBounds            types.Rect
-	CullActive            bool
-	ViewTransform         [6]float64
-	BuildingCacheFor      *node.Node
+	Commands               []RenderCommand
+	SortBuf                []RenderCommand
+	BatchVerts             []ebiten.Vertex
+	BatchInds              []uint32
+	RtPool                 RenderTexturePool
+	RtDeferred             []*ebiten.Image
+	OffscreenCmds          []RenderCommand
+	CullBounds             types.Rect
+	CullActive             bool
+	ViewTransform          [6]float64
+	BuildingCacheFor       *node.Node
 	CommandsDirtyThisFrame bool
-	AntiAlias             bool
-	BatchMode             BatchMode
+	BatchMode              BatchMode
 }
 
 // --- Function pointers (wired by root/core) ---

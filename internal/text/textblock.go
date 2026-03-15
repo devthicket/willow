@@ -27,6 +27,10 @@ type TextBlock struct {
 	Color types.Color
 	// LineHeight overrides the font's default line height. Zero uses Font.LineHeight().
 	LineHeight float64
+	// Sharpness tightens the SDF edge smoothstep window. 0.0 = default rendering,
+	// 1.0 = sharpest (half the default smoothing width). Values around 0.5–0.7
+	// give crisp edges without aliasing on most display densities.
+	Sharpness float64
 
 	// Cached layout (unexported)
 	LayoutDirty bool

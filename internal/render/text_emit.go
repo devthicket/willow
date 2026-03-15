@@ -59,11 +59,17 @@ func Fragment(dst vec4, src vec2, color vec4) vec4 {
 }
 `
 
+// MsdfShaderSrc is the MSDF fragment shader.
+//
+// EXPERIMENTAL — This shader is used when IsMultiChannel() is true. MSDF font
+// generation currently produces inconsistent quality (see msdf.go). The SDF
+// shader (SdfShaderSrc) is recommended for production use.
 const MsdfShaderSrc = `//kage:unit pixels
 package main
 
 var Threshold float
 var Smoothing float
+var ScreenPxRange float
 var OutlineWidth float
 var OutlineColor vec4
 var GlowWidth float
@@ -82,34 +88,78 @@ func sampleDist(pos vec2) float {
 	return median3(s.r, s.g, s.b)
 }
 
+// screenPxDist converts a distance-field value to screen-pixel distance
+// using the msdfgen-recommended approach. This avoids computing fwidth()
+// on the median (which is noisy at channel crossings) and instead uses
+// the known pixel range of the distance field.
+func screenPxDist(dist float) float {
+	return ScreenPxRange * (dist - Threshold)
+}
+
 func Fragment(dst vec4, src vec2, color vec4) vec4 {
 	dist := sampleDist(src)
 
-	sm := max(fwidth(dist), Smoothing)
+	// Convert to screen pixels for anti-aliasing.
+	// screenPxDist = 0 at the edge, positive inside, negative outside.
+	// The 1-pixel transition band gives clean anti-aliasing.
+	spd := screenPxDist(dist)
+
+	// Fallback: if ScreenPxRange is not set, use fwidth-based smoothing.
+	sm := Smoothing
+	if ScreenPxRange <= 0 {
+		sm = max(fwidth(dist), Smoothing)
+	}
 
 	var result vec4
 	if ShadowColor.a > 0 && (ShadowOffset.x != 0 || ShadowOffset.y != 0 || ShadowSoftness > 0) {
 		shadowDist := sampleDist(src - ShadowOffset)
-		shadowAlpha := smoothstep(Threshold - ShadowSoftness - sm, Threshold - ShadowSoftness + sm, shadowDist)
-		result = ShadowColor * shadowAlpha
+		if ScreenPxRange > 0 {
+			shadowSpd := screenPxDist(shadowDist) + ScreenPxRange*ShadowSoftness
+			shadowAlpha := smoothstep(-0.75, 0.75, shadowSpd)
+			result = ShadowColor * shadowAlpha
+		} else {
+			shadowAlpha := smoothstep(Threshold - ShadowSoftness - sm, Threshold - ShadowSoftness + sm, shadowDist)
+			result = ShadowColor * shadowAlpha
+		}
 	}
 
 	if GlowColor.a > 0 && GlowWidth > 0 {
 		glowEdge := Threshold - OutlineWidth - GlowWidth
-		glowAlpha := smoothstep(glowEdge - sm, glowEdge + sm, dist)
-		result = mix(result, GlowColor, GlowColor.a * glowAlpha)
+		if ScreenPxRange > 0 {
+			glowSpd := ScreenPxRange * (dist - glowEdge)
+			glowAlpha := smoothstep(-0.75, 0.75, glowSpd)
+			result = mix(result, GlowColor, GlowColor.a * glowAlpha)
+		} else {
+			glowAlpha := smoothstep(glowEdge - sm, glowEdge + sm, dist)
+			result = mix(result, GlowColor, GlowColor.a * glowAlpha)
+		}
 	}
 
 	if OutlineColor.a > 0 && OutlineWidth > 0 {
 		outerEdge := Threshold - OutlineWidth
-		outlineAlpha := smoothstep(outerEdge - sm, outerEdge + sm, dist)
-		result = mix(result, OutlineColor, OutlineColor.a * outlineAlpha)
+		if ScreenPxRange > 0 {
+			outSpd := ScreenPxRange * (dist - outerEdge)
+			outAlpha := smoothstep(-0.75, 0.75, outSpd)
+			result = mix(result, OutlineColor, OutlineColor.a * outAlpha)
+		} else {
+			outlineAlpha := smoothstep(outerEdge - sm, outerEdge + sm, dist)
+			result = mix(result, OutlineColor, OutlineColor.a * outlineAlpha)
+		}
 	}
 
-	fillAlpha := smoothstep(Threshold - sm, Threshold + sm, dist)
-	result = mix(result, FillColor, FillColor.a * fillAlpha)
-
-	result *= smoothstep(0, Smoothing*2, dist)
+	if ScreenPxRange > 0 {
+		// Use smoothstep for a wider, smoother anti-aliased transition
+		// (S-curve over 1.5 screen pixels instead of linear 1px clamp).
+		// This prevents round glyphs like "0" from looking hard-edged.
+		fillAlpha := smoothstep(-0.75, 0.75, spd)
+		result = mix(result, FillColor, FillColor.a * fillAlpha)
+		// Outer fade: suppress channel-crossing noise outside the shape.
+		result *= clamp(spd*0.667 + 1.0, 0.0, 1.0)
+	} else {
+		fillAlpha := smoothstep(Threshold - sm, Threshold + sm, dist)
+		result = mix(result, FillColor, FillColor.a * fillAlpha)
+		result *= smoothstep(0, Smoothing*2, dist)
+	}
 
 	result *= color
 
@@ -137,6 +187,8 @@ func EnsureSDFShader() *ebiten.Shader {
 }
 
 // EnsureMSDFShader lazily compiles and returns the multi-channel SDF shader.
+// EnsureMSDFShader lazily compiles the multi-channel SDF shader.
+// EXPERIMENTAL — see MsdfShaderSrc comment.
 func EnsureMSDFShader() *ebiten.Shader {
 	if msdfShader == nil {
 		s, err := ebiten.NewShader([]byte(MsdfShaderSrc))
@@ -150,10 +202,24 @@ func EnsureMSDFShader() *ebiten.Shader {
 
 // EnsureUniforms builds or updates the cached uniform map for the SDF shader.
 func EnsureUniforms(tb *text.TextBlock, f *text.DistanceFieldFont, displayScale float64) {
-	smoothing := float32(1.5 / (f.DistanceRange() * displayScale))
+	smoothMult := 1.5
+	if tb.Sharpness > 0 {
+		s := tb.Sharpness
+		if s > 1 {
+			s = 1
+		}
+		smoothMult = 1.5 - s*1.0 // 1.5 at Sharpness=0, 0.5 at Sharpness=1
+		if smoothMult < 0.5 {
+			smoothMult = 0.5
+		}
+	}
+	smoothing := float32(smoothMult / (f.DistanceRange() * displayScale))
 
 	threshold := float32(0.5)
-	if tb.FontSize > 0 && tb.FontSize < 24 {
+	if !f.IsMultiChannel() && tb.FontSize > 0 && tb.FontSize < 24 {
+		// SDF-only: shift threshold for small sizes to compensate for
+		// distance field precision loss. MSDF uses screenPxRange instead,
+		// which handles small sizes via its minimum clamp of 1.0.
 		t := tb.FontSize / 24
 		threshold = float32(0.30 + 0.20*t)
 	}
@@ -172,6 +238,22 @@ func EnsureUniforms(tb *text.TextBlock, f *text.DistanceFieldFont, displayScale 
 	}
 
 	tb.SdfUniforms["Smoothing"] = smoothing
+
+	// Compute ScreenPxRange for MSDF (msdfgen-recommended approach).
+	// screenPxRange = distanceRange * displayScale * fontScale
+	// This converts distance-field values to screen-pixel distances.
+	var screenPxRange float32
+	if f.IsMultiChannel() {
+		fontScale := float64(1.0)
+		if tb.FontSize > 0 && f.FontSize() > 0 {
+			fontScale = tb.FontSize / f.FontSize()
+		}
+		screenPxRange = float32(f.DistanceRange() * displayScale * fontScale)
+		if screenPxRange < 1.0 {
+			screenPxRange = 1.0
+		}
+	}
+	tb.SdfUniforms["ScreenPxRange"] = screenPxRange
 
 	if !tb.UniformsDirty {
 		return
@@ -269,12 +351,12 @@ func EmitSDFTextCommand(tb *text.TextBlock, n *node.Node, worldTransform [6]floa
 			float32(n.Color_.B()),
 			float32(n.Color_.A() * n.WorldAlpha),
 		},
-		BlendMode:   n.BlendMode_,
-		RenderLayer: n.RenderLayer,
-		GlobalOrder: n.GlobalOrder,
-		TreeOrder:   *treeOrder,
-		SdfVerts:    tb.SdfVerts,
-		SdfInds:     tb.SdfInds,
+		BlendMode:    n.BlendMode_,
+		RenderLayer:  n.RenderLayer,
+		GlobalOrder:  n.GlobalOrder,
+		TreeOrder:    *treeOrder,
+		SdfVerts:     tb.SdfVerts,
+		SdfInds:      tb.SdfInds,
 		SdfVertCount: tb.SdfVertCount,
 		SdfIndCount:  tb.SdfIndCount,
 		SdfShader:    tb.SdfShader,
@@ -336,4 +418,3 @@ func EmitPixelTextCommand(tb *text.TextBlock, n *node.Node, worldTransform [6]fl
 
 	return commands
 }
-

@@ -2,6 +2,7 @@ package willow
 
 import (
 	"image/color"
+	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/phanxgames/willow/internal/atlas"
@@ -120,12 +121,22 @@ type TestRunner = core.TestRunner
 // BatchMode controls how the render pipeline submits draw calls.
 type BatchMode = render.BatchMode
 
+// FXAAConfig holds tunable parameters for the FXAA post-process pass.
+// Use DefaultFXAAConfig for sensible defaults.
+type FXAAConfig = render.FXAAConfig
+
+// DefaultFXAAConfig returns an FXAAConfig with FXAA 3.11 quality-15 defaults.
+var DefaultFXAAConfig = render.DefaultFXAAConfig
+
 // RunConfig holds optional configuration for [Run].
 type RunConfig struct {
 	Title         string
 	Width, Height int
+	Background    Color
 	ShowFPS       bool
-	AntiAlias     bool
+	// FXAA enables full-screen fast approximate anti-aliasing as a post-process
+	// pass. Nil disables FXAA. Use DefaultFXAAConfig() for sensible defaults.
+	FXAA *FXAAConfig
 }
 
 // ---------------------------------------------------------------------------
@@ -648,6 +659,46 @@ func NewRect(name string, w, h float64, c Color) *Node {
 	return n
 }
 
+// NewTriangle creates a solid-color triangle node from three points.
+func NewTriangle(name string, p1, p2, p3 Vec2, c Color) *Node {
+	n := NewPolygon(name, []Vec2{p1, p2, p3})
+	n.Color_ = c
+	return n
+}
+
+// NewCircle creates a solid-color circle node with the given radius.
+// The circle is approximated with 32 segments.
+func NewCircle(name string, radius float64, c Color) *Node {
+	const segments = 32
+	pts := make([]Vec2, segments)
+	for i := range pts {
+		angle := float64(i) * 2 * math.Pi / segments
+		pts[i] = Vec2{
+			X: math.Cos(angle) * radius,
+			Y: math.Sin(angle) * radius,
+		}
+	}
+	n := NewPolygon(name, pts)
+	n.Color_ = c
+	return n
+}
+
+// NewLine creates a solid-color line node between two points with a given thickness.
+// The line is built as a thin rotated rectangle sprite for efficient batching.
+func NewLine(name string, x1, y1, x2, y2, thickness float64, c Color) *Node {
+	dx := x2 - x1
+	dy := y2 - y1
+	length := math.Sqrt(dx*dx + dy*dy)
+	angle := math.Atan2(dy, dx)
+	n := NewSprite(name, TextureRegion{})
+	n.SetSize(length, thickness)
+	n.SetPivot(0, thickness/2)
+	n.SetPosition(x1, y1)
+	n.SetRotation(angle)
+	n.Color_ = c
+	return n
+}
+
 // NewMesh creates a mesh node that uses DrawTriangles for rendering.
 func NewMesh(name string, img *ebiten.Image, vertices []ebiten.Vertex, indices []uint16) *Node {
 	n := node.NewNode(name, NodeTypeMesh)
@@ -715,6 +766,11 @@ func NewFontFromTTF(ttfData []byte, size float64) (*DistanceFieldFont, error) {
 	return text.NewFontFromTTF(ttfData, size)
 }
 
+// NewFontFromTTFOpts generates an SDF font using explicit SDFGenOptions.
+func NewFontFromTTFOpts(ttfData []byte, opts SDFGenOptions) (*DistanceFieldFont, error) {
+	return text.NewFontFromTTFOpts(ttfData, opts)
+}
+
 // LoadFontFromPathAsTtf reads a TTF/OTF file from disk.
 func LoadFontFromPathAsTtf(path string) ([]byte, error) {
 	return text.LoadFontFromPath(path)
@@ -778,8 +834,15 @@ func Run(scene *Scene, cfg RunConfig) error {
 	if cfg.Title != "" {
 		ebiten.SetWindowTitle(cfg.Title)
 	}
-	scene.AntiAlias = cfg.AntiAlias
-	g := &gameShell{scene: scene, w: w, h: h}
+	if cfg.Background.A() > 0 {
+		scene.ClearColor = cfg.Background
+	} else if scene.ClearColor.A() == 0 {
+		scene.ClearColor = types.RGBA(0.18, 0.20, 0.25, 1)
+	}
+	g := &gameShell{scene: scene, w: w, h: h, fxaa: cfg.FXAA}
+	if cfg.FXAA != nil {
+		render.EnsureFXAAShader() // compile eagerly so first frame has no stall
+	}
 	if cfg.ShowFPS {
 		g.fpsWid = core.NewFPSWidget()
 		g.fpsWid.X_, g.fpsWid.Y_ = 8, 8
@@ -791,6 +854,7 @@ type gameShell struct {
 	scene  *Scene
 	w, h   int
 	fpsWid *Node
+	fxaa   *FXAAConfig
 }
 
 func (g *gameShell) Update() error {
@@ -829,4 +893,12 @@ func (g *gameShell) Layout(outsideWidth, outsideHeight int) (int, int) {
 		}
 	}
 	return g.w, g.h
+}
+
+func (g *gameShell) DrawFinalScreen(screen ebiten.FinalScreen, offscreen *ebiten.Image, geoM ebiten.GeoM) {
+	if g.fxaa != nil {
+		render.DrawFinalScreenFXAA(screen, offscreen, geoM, *g.fxaa)
+		return
+	}
+	ebiten.DefaultDrawFinalScreen(screen, offscreen, geoM)
 }
