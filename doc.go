@@ -20,7 +20,7 @@
 //
 // Full documentation, tutorials, and examples are available at:
 //
-// https://devthicket.org/willow
+// https://www.devthicket.org/willow
 //
 // # Quick start
 //
@@ -93,7 +93,7 @@
 // without an extra import.
 //
 // See the full docs for guides on each feature:
-// https://devthicket.org/willow
+// https://www.devthicket.org/willow
 //
 // [Ebitengine]: https://ebitengine.org
 // [Starling]: https://gamua.com/starling/

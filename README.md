@@ -10,13 +10,12 @@ Inspired by [Starling](https://gamua.com/starling/), Flash display lists, and [P
 **Status:** Functional and actively developed. Core systems are working and used across all included examples. API may change before `v1.0.0`.
 
 <p align="center">
-  <img src="https://devthicket.org/willow/docs/gif/shapes.gif" alt="Shapes demo" width="400">
-  <img src="https://devthicket.org/willow/docs/gif/masks.gif" alt="Masks demo" width="400">
-  <img src="https://devthicket.org/willow/docs/gif/shaders.gif" alt="Shaders demo" width="400">
-  <img src="https://devthicket.org/willow/docs/gif/watermesh.gif" alt="Watermesh demo" width="400">
+  <img src="https://www.devthicket.org/willow/gif/shapes.gif" alt="Shapes" width="250">
+  <img src="https://www.devthicket.org/willow/gif/watermesh.gif" alt="Watermesh" width="250">
+  <img src="https://www.devthicket.org/willow/gif/particles.gif" alt="Particles" width="250">
 </p>
 
-> **New here?** Check out the [Willow homepage](https://devthicket.org/willow) for tutorials, examples, and everything you need to start building with Willow.
+> **New here?** Check out the [Willow website](https://www.devthicket.org/willow) for tutorials, examples, and everything you need to start building with Willow.
 
 ---
 
@@ -119,7 +118,7 @@ func main() {
 
 ## Examples
 
-20+ runnable examples are included in the [willow-examples](https://github.com/devthicket/willow-examples) repository, covering everything from basic sprites to full scenes combining lighting, meshes, particles, and masks. Several are also available as [live WASM demos](https://devthicket.org/willow/docs?page=examples) in the docs.
+20+ runnable examples are included in the [willow-examples](https://github.com/devthicket/willow-examples) repository, covering everything from basic sprites to full scenes combining lighting, meshes, particles, and masks. Several are also available as [live WASM demos](https://www.devthicket.org/willow/examples) to play directly in your browser.
 
 ```bash
 git clone https://github.com/devthicket/willow-examples.git
@@ -133,9 +132,9 @@ go run ./examples/lighting # dungeon scene with torches and wisps
 
 ## Documentation
 
-- **[Willow](https://devthicket.org/willow)** - Homepage, guides, tutorials, and reference
-- **[Documentation](https://devthicket.org/willow/docs)** - In-depth guides and tutorials
-- **[API Reference](https://devthicket.org/willow/api)** - Full API documentation
+- **[Willow](https://www.devthicket.org/willow)** - Homepage, guides, tutorials, and reference
+- **[Documentation](https://www.devthicket.org/willow/docs)** - In-depth guides and tutorials
+- **[API Reference](https://www.devthicket.org/willow/api)** - Full API documentation
 
 ---
 
