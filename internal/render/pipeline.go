@@ -28,6 +28,8 @@ type Pipeline struct {
 	BuildingCacheFor       *node.Node
 	CommandsDirtyThisFrame bool
 	BatchMode              BatchMode
+	SortKeys               []sortEntry
+	SortKeysBuf            []sortEntry
 }
 
 // --- Function pointers (wired by root/core) ---
@@ -199,9 +201,9 @@ func (p *Pipeline) emitNodeInline(n *node.Node, viewWorld [6]float64, treeOrder 
 	}
 }
 
-// Sort sorts the command buffer using merge sort.
+// Sort sorts the command buffer using radix sort.
 func (p *Pipeline) Sort() {
-	MergeSort(p.Commands, &p.SortBuf)
+	RadixSort(p.Commands, &p.SortBuf, &p.SortKeys, &p.SortKeysBuf)
 }
 
 // ReleaseDeferred releases all deferred render targets back to the pool.

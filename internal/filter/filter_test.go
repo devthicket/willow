@@ -4,6 +4,7 @@ import (
 	"math"
 	"testing"
 
+	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/phanxgames/willow/internal/types"
 )
 
@@ -127,5 +128,146 @@ func TestChainPadding(t *testing.T) {
 	pad := ChainPadding(filters)
 	if pad != 8 {
 		t.Errorf("chain padding = %d, want 8", pad)
+	}
+}
+
+// --- Apply tests (require ebiten image context) ---
+
+func newTestImage(w, h int) *ebiten.Image {
+	return ebiten.NewImage(w, h)
+}
+
+func TestBlurFilter_Apply_ZeroRadius(t *testing.T) {
+	f := NewBlurFilter(0)
+	src := newTestImage(32, 32)
+	dst := newTestImage(32, 32)
+	f.Apply(src, dst) // should not panic, just copies
+}
+
+func TestBlurFilter_Apply_Positive(t *testing.T) {
+	f := NewBlurFilter(4)
+	src := newTestImage(64, 64)
+	dst := newTestImage(64, 64)
+	f.Apply(src, dst) // should not panic
+
+	// Verify temp images were allocated
+	if len(f.temps) == 0 {
+		t.Error("expected temp images to be allocated for blur passes")
+	}
+}
+
+func TestBlurFilter_Apply_LargeRadius(t *testing.T) {
+	f := NewBlurFilter(32)
+	src := newTestImage(64, 64)
+	dst := newTestImage(64, 64)
+	f.Apply(src, dst) // should not panic with large radius
+}
+
+func TestBlurFilter_Apply_Reuse(t *testing.T) {
+	f := NewBlurFilter(4)
+	src := newTestImage(64, 64)
+	dst := newTestImage(64, 64)
+	f.Apply(src, dst)
+	tempCount := len(f.temps)
+	// Apply again — should reuse temp images
+	dst.Clear()
+	f.Apply(src, dst)
+	if len(f.temps) != tempCount {
+		t.Errorf("temp count changed on reuse: %d → %d", tempCount, len(f.temps))
+	}
+}
+
+func TestOutlineFilter_Apply(t *testing.T) {
+	f := NewOutlineFilter(2, types.RGBA(1, 0, 0, 1))
+	src := newTestImage(32, 32)
+	dst := newTestImage(36, 36) // padded
+	f.Apply(src, dst)           // should not panic
+}
+
+func TestColorMatrixFilter_Apply(t *testing.T) {
+	f := NewColorMatrixFilter()
+	src := newTestImage(32, 32)
+	dst := newTestImage(32, 32)
+	f.Apply(src, dst) // identity — should not panic
+}
+
+func TestColorMatrixFilter_Apply_Invert(t *testing.T) {
+	f := NewColorMatrixFilter()
+	f.SetInvert()
+	src := newTestImage(32, 32)
+	dst := newTestImage(32, 32)
+	f.Apply(src, dst) // should not panic
+}
+
+func TestPixelPerfectOutlineFilter_Apply(t *testing.T) {
+	f := NewPixelPerfectOutlineFilter(types.RGBA(0, 1, 0, 1))
+	src := newTestImage(32, 32)
+	dst := newTestImage(34, 34) // 1px padding
+	f.Apply(src, dst)           // should not panic
+}
+
+func TestPixelPerfectInlineFilter_Apply(t *testing.T) {
+	f := NewPixelPerfectInlineFilter(types.RGBA(0, 0, 1, 1))
+	src := newTestImage(32, 32)
+	dst := newTestImage(32, 32)
+	f.Apply(src, dst) // should not panic
+}
+
+func TestPaletteFilter_Apply(t *testing.T) {
+	f := NewPaletteFilter()
+	src := newTestImage(32, 32)
+	dst := newTestImage(32, 32)
+	f.Apply(src, dst) // should not panic
+}
+
+func TestPaletteFilter_SetPalette(t *testing.T) {
+	f := NewPaletteFilter()
+	var pal [256]types.Color
+	for i := range pal {
+		pal[i] = types.RGBA(1, 0, 0, 1) // all red
+	}
+	f.SetPalette(pal)
+	if !f.paletteDirty {
+		t.Error("expected palette to be marked dirty after SetPalette")
+	}
+	src := newTestImage(32, 32)
+	dst := newTestImage(32, 32)
+	f.Apply(src, dst) // should rebuild palette texture
+	if f.paletteDirty {
+		t.Error("expected palette dirty to be cleared after Apply")
+	}
+}
+
+func TestPaletteFilter_CycleOffset(t *testing.T) {
+	f := NewPaletteFilter()
+	f.CycleOffset = 128.0
+	src := newTestImage(32, 32)
+	dst := newTestImage(32, 32)
+	f.Apply(src, dst) // should not panic with offset
+}
+
+func TestInitShaders(t *testing.T) {
+	// Should not panic — shaders compile successfully
+	InitShaders()
+}
+
+func TestColorMatrixFilter_SetGrayscale(t *testing.T) {
+	f := NewColorMatrixFilter()
+	f.SetGrayscale()
+	// Should be same as SetSaturation(0)
+	if f.Matrix[0] != 0.299 {
+		t.Errorf("grayscale R weight = %f, want 0.299", f.Matrix[0])
+	}
+}
+
+func TestColorMatrixFilter_Chaining(t *testing.T) {
+	f := NewColorMatrixFilter()
+	result := f.SetBrightness(0.5)
+	if result != f {
+		t.Error("SetBrightness should return the same filter for chaining")
+	}
+	result = f.SetContrast(2.0)
+	if result != f {
+		t.Error("SetContrast should return the same filter for chaining")
 	}
 }

@@ -1,6 +1,7 @@
 package core
 
 import (
+	"math"
 	"testing"
 
 	"github.com/phanxgames/willow/internal/node"
@@ -253,5 +254,382 @@ func TestTestRunner_Step(t *testing.T) {
 	}
 	if !runner.IsDone {
 		t.Error("should be done after all steps")
+	}
+}
+
+// --- PropagateScene tests ---
+
+func TestPropagateScene_SetsSceneOnRoot(t *testing.T) {
+	root := node.NewNode("root", types.NodeTypeContainer)
+	s := NewScene(root)
+	PropagateScene(root, s)
+	if root.Scene_ != s {
+		t.Error("root.Scene_ should be set to the scene")
+	}
+}
+
+func TestPropagateScene_SetsSceneOnChildren(t *testing.T) {
+	root := node.NewNode("root", types.NodeTypeContainer)
+	child := node.NewNode("child", types.NodeTypeContainer)
+	grandchild := node.NewNode("grandchild", types.NodeTypeSprite)
+	root.AddChild(child)
+	child.AddChild(grandchild)
+
+	s := NewScene(root)
+	PropagateScene(root, s)
+
+	if child.Scene_ != s {
+		t.Error("child.Scene_ should be set to the scene")
+	}
+	if grandchild.Scene_ != s {
+		t.Error("grandchild.Scene_ should be set to the scene")
+	}
+}
+
+func TestPropagateScene_NilClearsScene(t *testing.T) {
+	root := node.NewNode("root", types.NodeTypeContainer)
+	child := node.NewNode("child", types.NodeTypeSprite)
+	root.AddChild(child)
+
+	s := NewScene(root)
+	PropagateScene(root, s)
+	PropagateScene(root, nil)
+
+	if root.Scene_ != nil {
+		t.Error("root.Scene_ should be nil after clearing")
+	}
+	if child.Scene_ != nil {
+		t.Error("child.Scene_ should be nil after clearing")
+	}
+}
+
+func TestPropagateScene_ShortCircuitsWhenAlreadySet(t *testing.T) {
+	root := node.NewNode("root", types.NodeTypeContainer)
+	child := node.NewNode("child", types.NodeTypeSprite)
+	root.AddChild(child)
+
+	s := NewScene(root)
+	PropagateScene(root, s)
+
+	// Set child to a different scene marker to detect if propagation recurses
+	child.Scene_ = nil
+	// Re-propagate — root already has s, so it should short-circuit and NOT update child
+	PropagateScene(root, s)
+
+	if child.Scene_ != nil {
+		t.Error("PropagateScene should short-circuit when scene already matches")
+	}
+}
+
+// --- Tween constructor tests ---
+
+func approx(a, b, tol float64) bool {
+	return math.Abs(a-b) < tol
+}
+
+func TestTweenPosition_MovesNode(t *testing.T) {
+	n := node.NewNode("test", types.NodeTypeSprite)
+	n.X_ = 0
+	n.Y_ = 0
+	g := TweenPosition(n, 100, 200, types.TweenConfig{Duration: 1.0})
+
+	if g.Count != 2 {
+		t.Fatalf("expected 2 sub-tweens, got %d", g.Count)
+	}
+
+	// Tick halfway
+	g.Tick(0.5)
+	if g.Done {
+		t.Error("tween should not be done at halfway")
+	}
+	if !approx(n.X_, 50, 1) {
+		t.Errorf("X_ at 0.5s = %f, want ~50", n.X_)
+	}
+	if !approx(n.Y_, 100, 1) {
+		t.Errorf("Y_ at 0.5s = %f, want ~100", n.Y_)
+	}
+
+	// Tick to completion
+	g.Tick(0.5)
+	if !g.Done {
+		t.Error("tween should be done after full duration")
+	}
+	if !approx(n.X_, 100, 0.01) {
+		t.Errorf("X_ at end = %f, want 100", n.X_)
+	}
+	if !approx(n.Y_, 200, 0.01) {
+		t.Errorf("Y_ at end = %f, want 200", n.Y_)
+	}
+}
+
+func TestTweenScale_ScalesNode(t *testing.T) {
+	n := node.NewNode("test", types.NodeTypeSprite)
+	n.ScaleX_ = 1
+	n.ScaleY_ = 1
+	g := TweenScale(n, 2, 3, types.TweenConfig{Duration: 1.0})
+
+	if g.Count != 2 {
+		t.Fatalf("expected 2 sub-tweens, got %d", g.Count)
+	}
+
+	g.Tick(1.0)
+	if !g.Done {
+		t.Error("tween should be done")
+	}
+	if !approx(n.ScaleX_, 2, 0.01) {
+		t.Errorf("ScaleX_ = %f, want 2", n.ScaleX_)
+	}
+	if !approx(n.ScaleY_, 3, 0.01) {
+		t.Errorf("ScaleY_ = %f, want 3", n.ScaleY_)
+	}
+}
+
+func TestTweenAlpha_AnimatesAlpha(t *testing.T) {
+	n := node.NewNode("test", types.NodeTypeSprite)
+	n.Alpha_ = 1.0
+	g := TweenAlpha(n, 0, types.TweenConfig{Duration: 1.0})
+
+	if g.Count != 1 {
+		t.Fatalf("expected 1 sub-tween, got %d", g.Count)
+	}
+
+	g.Tick(0.5)
+	if !approx(n.Alpha_, 0.5, 0.05) {
+		t.Errorf("Alpha_ at 0.5s = %f, want ~0.5", n.Alpha_)
+	}
+
+	g.Tick(0.5)
+	if !g.Done {
+		t.Error("tween should be done")
+	}
+	if !approx(n.Alpha_, 0, 0.01) {
+		t.Errorf("Alpha_ at end = %f, want 0", n.Alpha_)
+	}
+}
+
+func TestTweenRotation_AnimatesRotation(t *testing.T) {
+	n := node.NewNode("test", types.NodeTypeSprite)
+	n.Rotation_ = 0
+	g := TweenRotation(n, math.Pi, types.TweenConfig{Duration: 1.0})
+
+	if g.Count != 1 {
+		t.Fatalf("expected 1 sub-tween, got %d", g.Count)
+	}
+
+	g.Tick(1.0)
+	if !g.Done {
+		t.Error("tween should be done")
+	}
+	if !approx(n.Rotation_, math.Pi, 0.01) {
+		t.Errorf("Rotation_ = %f, want %f", n.Rotation_, math.Pi)
+	}
+}
+
+func TestTweenColor_AnimatesColor(t *testing.T) {
+	n := node.NewNode("test", types.NodeTypeSprite)
+	n.Color_ = types.RGBA(1, 0, 0, 1) // red
+	target := types.RGBA(0, 0, 1, 1)   // blue
+	g := TweenColor(n, target, types.TweenConfig{Duration: 1.0})
+
+	if g.Count != 4 {
+		t.Fatalf("expected 4 sub-tweens, got %d", g.Count)
+	}
+
+	g.Tick(1.0)
+	if !g.Done {
+		t.Error("tween should be done")
+	}
+	if !approx(n.Color_.R(), 0, 0.01) {
+		t.Errorf("R = %f, want 0", n.Color_.R())
+	}
+	if !approx(n.Color_.B(), 1, 0.01) {
+		t.Errorf("B = %f, want 1", n.Color_.B())
+	}
+}
+
+// --- Multiple tweens on same node ---
+
+func TestMultipleTweensOnSameNode(t *testing.T) {
+	n := node.NewNode("test", types.NodeTypeSprite)
+	n.X_ = 0
+	n.Y_ = 0
+	n.Alpha_ = 1.0
+
+	gPos := TweenPosition(n, 100, 200, types.TweenConfig{Duration: 1.0})
+	gAlpha := TweenAlpha(n, 0, types.TweenConfig{Duration: 1.0})
+
+	// Tick both halfway
+	gPos.Tick(0.5)
+	gAlpha.Tick(0.5)
+
+	if !approx(n.X_, 50, 1) {
+		t.Errorf("X_ = %f, want ~50", n.X_)
+	}
+	if !approx(n.Alpha_, 0.5, 0.05) {
+		t.Errorf("Alpha_ = %f, want ~0.5", n.Alpha_)
+	}
+
+	// Tick both to completion
+	gPos.Tick(0.5)
+	gAlpha.Tick(0.5)
+
+	if !gPos.Done || !gAlpha.Done {
+		t.Error("both tweens should be done")
+	}
+	if !approx(n.X_, 100, 0.01) {
+		t.Errorf("X_ = %f, want 100", n.X_)
+	}
+	if !approx(n.Alpha_, 0, 0.01) {
+		t.Errorf("Alpha_ = %f, want 0", n.Alpha_)
+	}
+}
+
+// --- Tween completion and removal from scene ---
+
+func TestTweenCompletion_RemovedFromScene(t *testing.T) {
+	root := node.NewNode("root", types.NodeTypeContainer)
+	s := NewScene(root)
+
+	n := node.NewNode("test", types.NodeTypeSprite)
+	n.Scene_ = s
+	n.X_ = 0
+
+	g := TweenPosition(n, 100, 0, types.TweenConfig{Duration: 0.5})
+
+	if !g.Managed {
+		t.Error("tween should be managed when node has a scene")
+	}
+	if len(s.Tweens) != 1 {
+		t.Fatalf("expected 1 tween, got %d", len(s.Tweens))
+	}
+
+	// Tick the scene until tween completes
+	s.TickTweens(0.5)
+
+	if len(s.Tweens) != 0 {
+		t.Errorf("expected 0 tweens after completion, got %d", len(s.Tweens))
+	}
+}
+
+func TestTweenAutoRegister_NoScene(t *testing.T) {
+	n := node.NewNode("test", types.NodeTypeSprite)
+	// n.Scene_ is nil by default
+	g := TweenPosition(n, 10, 20, types.TweenConfig{Duration: 1.0})
+
+	if g.Managed {
+		t.Error("tween should not be managed when node has no scene")
+	}
+}
+
+// --- UpdateNodesAndParticles tests ---
+
+func TestUpdateNodesAndParticles_CorrectDt(t *testing.T) {
+	root := node.NewNode("root", types.NodeTypeContainer)
+	var receivedDt float64
+	root.OnUpdate = func(dt float64) { receivedDt = dt }
+	UpdateNodesAndParticles(root, 0.033)
+	if !approx(receivedDt, 0.033, 0.0001) {
+		t.Errorf("dt = %f, want 0.033", receivedDt)
+	}
+}
+
+func TestUpdateNodesAndParticles_RecursesChildren(t *testing.T) {
+	root := node.NewNode("root", types.NodeTypeContainer)
+	child := node.NewNode("child", types.NodeTypeContainer)
+	grandchild := node.NewNode("grandchild", types.NodeTypeSprite)
+	root.AddChild(child)
+	child.AddChild(grandchild)
+
+	var callOrder []string
+	root.OnUpdate = func(dt float64) { callOrder = append(callOrder, "root") }
+	child.OnUpdate = func(dt float64) { callOrder = append(callOrder, "child") }
+	grandchild.OnUpdate = func(dt float64) { callOrder = append(callOrder, "grandchild") }
+
+	UpdateNodesAndParticles(root, 0.016)
+
+	if len(callOrder) != 3 {
+		t.Fatalf("expected 3 calls, got %d: %v", len(callOrder), callOrder)
+	}
+	if callOrder[0] != "root" || callOrder[1] != "child" || callOrder[2] != "grandchild" {
+		t.Errorf("call order = %v, want [root child grandchild]", callOrder)
+	}
+}
+
+func TestUpdateNodesAndParticles_InvisibleChildBlocksSubtree(t *testing.T) {
+	root := node.NewNode("root", types.NodeTypeContainer)
+	child := node.NewNode("child", types.NodeTypeContainer)
+	child.Visible_ = false
+	grandchild := node.NewNode("grandchild", types.NodeTypeSprite)
+	root.AddChild(child)
+	child.AddChild(grandchild)
+
+	rootCalled := false
+	grandchildCalled := false
+	root.OnUpdate = func(dt float64) { rootCalled = true }
+	grandchild.OnUpdate = func(dt float64) { grandchildCalled = true }
+
+	UpdateNodesAndParticles(root, 0.016)
+
+	if !rootCalled {
+		t.Error("root OnUpdate should have been called")
+	}
+	if grandchildCalled {
+		t.Error("grandchild OnUpdate should not be called when parent is invisible")
+	}
+}
+
+// --- Scene accessor tests ---
+
+func TestPrimaryCamera_NoCameras(t *testing.T) {
+	root := node.NewNode("root", types.NodeTypeContainer)
+	s := NewScene(root)
+	if s.PrimaryCamera() != nil {
+		t.Error("PrimaryCamera should return nil when no cameras exist")
+	}
+}
+
+func TestPrimaryCamera_ReturnsFirst(t *testing.T) {
+	root := node.NewNode("root", types.NodeTypeContainer)
+	s := NewScene(root)
+	cam1 := s.NewCamera(types.Rect{Width: 800, Height: 600})
+	s.NewCamera(types.Rect{Width: 400, Height: 300})
+	if s.PrimaryCamera() != cam1 {
+		t.Error("PrimaryCamera should return the first camera")
+	}
+}
+
+// --- TweenGroup.Update for unmanaged tweens ---
+
+func TestTweenGroup_Update_Unmanaged(t *testing.T) {
+	n := node.NewNode("test", types.NodeTypeSprite)
+	n.X_ = 0
+	g := TweenPosition(n, 100, 0, types.TweenConfig{Duration: 1.0})
+	// Not managed since no scene
+	g.Update(1.0)
+	if !g.Done {
+		t.Error("unmanaged tween should tick via Update")
+	}
+	if !approx(n.X_, 100, 0.01) {
+		t.Errorf("X_ = %f, want 100", n.X_)
+	}
+}
+
+// --- TweenGroup.Tick is no-op after Done ---
+
+func TestTweenGroup_Tick_NoOpAfterDone(t *testing.T) {
+	n := node.NewNode("test", types.NodeTypeSprite)
+	n.X_ = 0
+	g := TweenPosition(n, 100, 0, types.TweenConfig{Duration: 0.5})
+
+	g.Tick(0.5) // completes
+	if !g.Done {
+		t.Fatal("should be done")
+	}
+
+	// Manually change X_ to verify Tick does nothing further
+	n.X_ = 999
+	g.Tick(0.5)
+	if n.X_ != 999 {
+		t.Errorf("X_ changed after tween was done: %f", n.X_)
 	}
 }
