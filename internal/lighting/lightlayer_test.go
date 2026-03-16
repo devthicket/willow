@@ -4,6 +4,8 @@ import (
 	"math"
 	"testing"
 
+	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/phanxgames/willow/internal/node"
 	"github.com/phanxgames/willow/internal/types"
 )
 
@@ -123,4 +125,260 @@ func TestLight_Rotation(t *testing.T) {
 	if l.Rotation != math.Pi/4 {
 		t.Error("rotation mismatch")
 	}
+}
+
+// --- helpers for full LightLayer tests ---
+
+func setupLightingFns() func() {
+	oldNew := NewRenderTextureFn
+	oldImg := RenderTextureImageFn
+	oldSprite := RenderTextureNewSpriteFn
+	oldDispose := RenderTextureDisposeFn
+	oldMagenta := EnsureMagentaImageFn
+	oldClamp := Clamp01Fn
+
+	NewRenderTextureFn = func(w, h int) any {
+		return ebiten.NewImage(w, h)
+	}
+	RenderTextureImageFn = func(rt any) *ebiten.Image {
+		return rt.(*ebiten.Image)
+	}
+	RenderTextureNewSpriteFn = func(rt any, name string) *node.Node {
+		n := node.NewNode(name, types.NodeTypeSprite)
+		n.CustomImage_ = rt.(*ebiten.Image)
+		return n
+	}
+	RenderTextureDisposeFn = func(rt any) {
+		rt.(*ebiten.Image).Deallocate()
+	}
+	EnsureMagentaImageFn = func() *ebiten.Image {
+		return ebiten.NewImage(1, 1)
+	}
+	Clamp01Fn = func(v float64) float64 {
+		if v < 0 {
+			return 0
+		}
+		if v > 1 {
+			return 1
+		}
+		return v
+	}
+
+	return func() {
+		NewRenderTextureFn = oldNew
+		RenderTextureImageFn = oldImg
+		RenderTextureNewSpriteFn = oldSprite
+		RenderTextureDisposeFn = oldDispose
+		EnsureMagentaImageFn = oldMagenta
+		Clamp01Fn = oldClamp
+	}
+}
+
+func TestNewLightLayer(t *testing.T) {
+	cleanup := setupLightingFns()
+	defer cleanup()
+
+	ll := NewLightLayer(128, 128, 0.7)
+	if ll.node_ == nil {
+		t.Fatal("node should not be nil")
+	}
+	if ll.AmbientAlpha() != 0.7 {
+		t.Errorf("ambient = %f, want 0.7", ll.AmbientAlpha())
+	}
+	if ll.rt == nil {
+		t.Fatal("render texture should not be nil")
+	}
+}
+
+func TestLightLayer_Node(t *testing.T) {
+	cleanup := setupLightingFns()
+	defer cleanup()
+
+	ll := NewLightLayer(64, 64, 0.5)
+	if ll.Node() == nil {
+		t.Error("Node() should not be nil")
+	}
+	if ll.Node().Name != "light_layer" {
+		t.Errorf("node name = %q, want light_layer", ll.Node().Name)
+	}
+}
+
+func TestLightLayer_RenderTextureImage(t *testing.T) {
+	cleanup := setupLightingFns()
+	defer cleanup()
+
+	ll := NewLightLayer(64, 64, 0.5)
+	img := ll.RenderTextureImage()
+	if img == nil {
+		t.Error("RenderTextureImage should not be nil")
+	}
+}
+
+func TestLightLayer_RenderTextureImage_NilRT(t *testing.T) {
+	ll := &LightLayer{rt: nil}
+	if ll.RenderTextureImage() != nil {
+		t.Error("should return nil when rt is nil")
+	}
+}
+
+func TestLightLayer_Redraw_NoLights(t *testing.T) {
+	cleanup := setupLightingFns()
+	defer cleanup()
+
+	ll := NewLightLayer(64, 64, 0.5)
+	ll.Redraw() // should not panic with no lights
+}
+
+func TestLightLayer_Redraw_WithLight(t *testing.T) {
+	cleanup := setupLightingFns()
+	defer cleanup()
+
+	ll := NewLightLayer(64, 64, 0.5)
+	l := &Light{
+		X: 32, Y: 32, Radius: 20, Intensity: 1.0, Enabled: true,
+	}
+	ll.AddLight(l)
+	ll.Redraw() // should not panic
+}
+
+func TestLightLayer_Redraw_DisabledLight(t *testing.T) {
+	cleanup := setupLightingFns()
+	defer cleanup()
+
+	ll := NewLightLayer(64, 64, 0.5)
+	l := &Light{
+		X: 32, Y: 32, Radius: 20, Intensity: 1.0, Enabled: false,
+	}
+	ll.AddLight(l)
+	ll.Redraw() // disabled light should be skipped
+}
+
+func TestLightLayer_Redraw_ZeroRadius(t *testing.T) {
+	cleanup := setupLightingFns()
+	defer cleanup()
+
+	ll := NewLightLayer(64, 64, 0.5)
+	l := &Light{
+		X: 32, Y: 32, Radius: 0, Intensity: 1.0, Enabled: true,
+	}
+	ll.AddLight(l)
+	ll.Redraw() // zero radius should be skipped
+}
+
+func TestLightLayer_Redraw_ColoredLight(t *testing.T) {
+	cleanup := setupLightingFns()
+	defer cleanup()
+
+	ll := NewLightLayer(64, 64, 0.5)
+	l := &Light{
+		X: 32, Y: 32, Radius: 20, Intensity: 0.8, Enabled: true,
+		Color: types.RGBA(1, 0, 0, 1),
+	}
+	ll.AddLight(l)
+	ll.Redraw() // should do both erase and tint passes
+}
+
+func TestLightLayer_Redraw_WithTarget(t *testing.T) {
+	cleanup := setupLightingFns()
+	defer cleanup()
+
+	ll := NewLightLayer(128, 128, 0.5)
+	target := node.NewNode("target", types.NodeTypeSprite)
+	target.TransformDirty = true
+	node.UpdateWorldTransform(target, node.IdentityTransform, 1.0, true, false)
+
+	l := &Light{
+		X: 0, Y: 0, Radius: 20, Intensity: 1.0, Enabled: true,
+		Target: target, OffsetX: 5, OffsetY: -3,
+	}
+	ll.AddLight(l)
+	ll.Redraw() // should follow target position
+}
+
+func TestLightLayer_CircleCache(t *testing.T) {
+	cleanup := setupLightingFns()
+	defer cleanup()
+
+	ll := NewLightLayer(64, 64, 0.5)
+	ll.SetCircleRadius(10)
+	ll.SetCircleRadius(10) // second call should use cache
+
+	if ll.circleCache == nil || len(ll.circleCache) != 1 {
+		t.Errorf("circle cache should have 1 entry, got %d", len(ll.circleCache))
+	}
+
+	ll.SetCircleRadius(20) // different radius
+	if len(ll.circleCache) != 2 {
+		t.Errorf("circle cache should have 2 entries, got %d", len(ll.circleCache))
+	}
+}
+
+func TestLightLayer_Dispose(t *testing.T) {
+	cleanup := setupLightingFns()
+	defer cleanup()
+
+	ll := NewLightLayer(64, 64, 0.5)
+	ll.AddLight(&Light{Enabled: true, Radius: 10})
+	ll.SetCircleRadius(10)
+	ll.Dispose()
+
+	if ll.rt != nil {
+		t.Error("rt should be nil after Dispose")
+	}
+	if ll.node_ != nil {
+		t.Error("node should be nil after Dispose")
+	}
+	if ll.lights != nil {
+		t.Error("lights should be nil after Dispose")
+	}
+	if ll.circleCache != nil {
+		t.Error("circleCache should be nil after Dispose")
+	}
+}
+
+func TestLightLayer_SetPages(t *testing.T) {
+	ll := &LightLayer{}
+	pages := []*ebiten.Image{ebiten.NewImage(32, 32)}
+	ll.SetPages(pages)
+	if len(ll.pages) != 1 {
+		t.Errorf("pages = %d, want 1", len(ll.pages))
+	}
+}
+
+func TestLightLayer_RemoveNonexistent(t *testing.T) {
+	ll := &LightLayer{}
+	l1 := &Light{}
+	l2 := &Light{}
+	ll.AddLight(l1)
+	ll.RemoveLight(l2) // removing non-existent should not panic
+	if len(ll.Lights()) != 1 {
+		t.Errorf("lights = %d, want 1", len(ll.Lights()))
+	}
+}
+
+func TestLightLayer_Redraw_MultipleLights(t *testing.T) {
+	cleanup := setupLightingFns()
+	defer cleanup()
+
+	ll := NewLightLayer(128, 128, 0.3)
+	for i := 0; i < 5; i++ {
+		ll.AddLight(&Light{
+			X: float64(i * 20), Y: 64,
+			Radius: 15, Intensity: 0.5 + float64(i)*0.1, Enabled: true,
+		})
+	}
+	ll.Redraw() // should not panic with multiple lights
+}
+
+func TestLightLayer_Redraw_WithRotatedLight(t *testing.T) {
+	cleanup := setupLightingFns()
+	defer cleanup()
+
+	ll := NewLightLayer(64, 64, 0.5)
+	l := &Light{
+		X: 32, Y: 32, Radius: 20, Intensity: 1.0, Enabled: true,
+		Rotation: math.Pi / 4,
+	}
+	ll.AddLight(l)
+	ll.Redraw() // should apply rotation GeoM
 }
