@@ -50,7 +50,6 @@ func submitSprite(target *ebiten.Image, cmd *RenderCommand, op *ebiten.DrawImage
 		op.ColorScale.Reset()
 		a := cmd.Color.A
 		if a == 0 && cmd.Color.R == 0 && cmd.Color.G == 0 && cmd.Color.B == 0 {
-			a = 1
 			op.ColorScale.Scale(1, 1, 1, 1)
 		} else {
 			op.ColorScale.Scale(cmd.Color.R*a, cmd.Color.G*a, cmd.Color.B*a, a)
@@ -88,7 +87,6 @@ func submitSprite(target *ebiten.Image, cmd *RenderCommand, op *ebiten.DrawImage
 	op.ColorScale.Reset()
 	a := cmd.Color.A
 	if a == 0 && cmd.Color.R == 0 && cmd.Color.G == 0 && cmd.Color.B == 0 {
-		a = 1
 		op.ColorScale.Scale(1, 1, 1, 1)
 	} else {
 		op.ColorScale.Scale(cmd.Color.R*a, cmd.Color.G*a, cmd.Color.B*a, a)

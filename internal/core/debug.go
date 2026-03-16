@@ -180,7 +180,7 @@ func writePNG(path string, img *image.NRGBA) error {
 		return fmt.Errorf("create %s: %w", path, err)
 	}
 	if err := png.Encode(f, img); err != nil {
-		f.Close()
+		_ = f.Close()
 		return fmt.Errorf("encode %s: %w", path, err)
 	}
 	return f.Close()

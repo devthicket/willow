@@ -396,7 +396,7 @@ func LoadDistanceFieldFontFromTTF(ttfData []byte, opts SDFGenOptions) (*Distance
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("text: failed to create font face: %w", err)
 	}
-	defer face.Close()
+	defer func() { _ = face.Close() }()
 
 	faceMetrics := face.Metrics()
 	ascent := fixedToFloat64(faceMetrics.Ascent)

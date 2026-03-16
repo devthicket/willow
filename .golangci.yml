@@ -1,0 +1,43 @@
+version: "2"
+
+linters:
+  default: none
+  enable:
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+
+  settings:
+    staticcheck:
+      checks:
+        - "all"
+        - "-ST1000" # package comments — not enforced yet
+        - "-ST1003" # underscore naming — existing convention in benchmarks
+        - "-ST1022" # exported var comment form — too pedantic for re-export wrappers
+        - "-ST1023" # omit type from declaration
+        - "-QF1001" # De Morgan's law — readability preference
+        - "-QF1003" # tagged switch — readability preference
+        - "-QF1011" # omit type — same as ST1023
+        - "-S1016"  # struct conversion — sometimes explicit fields are clearer
+
+  exclusions:
+    paths:
+      - examples
+      - testbed
+      - cmd
+
+    rules:
+      # Test files: unchecked errors, unused helpers, and intentional
+      # patterns (deprecated API coverage, empty branches) are expected.
+      - path: _test\.go
+        linters:
+          - errcheck
+          - unused
+          - staticcheck
+
+      # MSDF error correction functions are staged for future use.
+      - path: internal/text/msdf\.go
+        linters:
+          - unused

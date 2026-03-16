@@ -520,9 +520,6 @@ var (
 // WhitePixel is a 1x1 white image used by default for solid color sprites.
 var WhitePixel *ebiten.Image
 
-// eventBgClick is the internal background click event type.
-var eventBgClick = types.EventBgClick
-
 // ---------------------------------------------------------------------------
 // init — function pointer wiring
 // ---------------------------------------------------------------------------

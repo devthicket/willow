@@ -939,6 +939,84 @@ func BenchmarkDraw_RealWorldAtlas_Coalesced(b *testing.B) {
 	}
 }
 
+// --- Tween Tick Benchmarks ---
+
+func BenchmarkTweenTick_100(b *testing.B) {
+	benchmarkTweenTick(b, 100)
+}
+
+func BenchmarkTweenTick_1000(b *testing.B) {
+	benchmarkTweenTick(b, 1000)
+}
+
+func benchmarkTweenTick(b *testing.B, count int) {
+	b.Helper()
+	tweens := make([]*TweenGroup, count)
+	for i := range tweens {
+		n := NewSprite("t", TextureRegion{OriginalW: 8, OriginalH: 8})
+		tweens[i] = TweenPosition(n, 100, 200, TweenConfig{Duration: 2.0})
+		tweens[i].Managed = false // tick manually
+	}
+
+	b.ResetTimer()
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		for _, tw := range tweens {
+			tw.Tick(1.0 / 60.0)
+		}
+	}
+}
+
+// --- UpdateNodesAndParticles Benchmarks ---
+
+func BenchmarkUpdateNodes_10000_NoCallbacks(b *testing.B) {
+	s := setupBenchScene(10000)
+	// Pre-compute transforms so the tree is ready.
+	node.UpdateWorldTransform(s.Root, node.IdentityTransform, 1.0, true, true)
+
+	b.ResetTimer()
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		updateNodesAndParticles(s.Root, 1.0/60.0)
+	}
+}
+
+func BenchmarkUpdateNodes_10000_WithCallbacks(b *testing.B) {
+	s := setupBenchScene(10000)
+	node.UpdateWorldTransform(s.Root, node.IdentityTransform, 1.0, true, true)
+
+	// Attach a lightweight OnUpdate to every sprite.
+	for _, child := range s.Root.Children() {
+		child.OnUpdate = func(dt float64) {}
+	}
+
+	b.ResetTimer()
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		updateNodesAndParticles(s.Root, 1.0/60.0)
+	}
+}
+
+// --- Command Sort: Already-Sorted Fast Path ---
+
+func BenchmarkCommandSort_10000_PreSorted(b *testing.B) {
+	s := setupBenchScene(10000)
+	screen := ebiten.NewImage(1280, 720)
+	s.Draw(screen) // generate and sort commands
+
+	// Commands are now sorted from the Draw call above.
+	sorted := make([]RenderCommand, len(s.Pipeline.Commands))
+	copy(sorted, s.Pipeline.Commands)
+
+	b.ResetTimer()
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		s.Pipeline.Commands = s.Pipeline.Commands[:len(sorted)]
+		copy(s.Pipeline.Commands, sorted)
+		render.MergeSort(s.Pipeline.Commands, &s.Pipeline.SortBuf)
+	}
+}
+
 // =============================================================================
 // Raw Ebitengine baselines
 // =============================================================================
