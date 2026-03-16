@@ -613,6 +613,10 @@ func init() {
 	text.AllocPageFn = func() int {
 		return atlas.GlobalManager().AllocPage()
 	}
+
+	// Eagerly compile all built-in shaders so failures panic at startup.
+	render.InitShaders()
+	filter.InitShaders()
 }
 
 // ---------------------------------------------------------------------------

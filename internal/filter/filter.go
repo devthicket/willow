@@ -11,6 +11,15 @@ type Filter interface {
 	Padding() int
 }
 
+// InitShaders eagerly compiles all built-in filter shaders so that any
+// compilation failure panics at startup rather than at an unpredictable frame.
+func InitShaders() {
+	ensureColorMatrixShader()
+	ensurePPOutlineShader()
+	ensurePPInlineShader()
+	ensurePaletteShader()
+}
+
 // ChainPadding returns the cumulative padding required by a slice of filters.
 func ChainPadding(filters []Filter) int {
 	pad := 0

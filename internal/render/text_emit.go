@@ -167,6 +167,14 @@ func Fragment(dst vec4, src vec2, color vec4) vec4 {
 }
 `
 
+// InitShaders eagerly compiles all built-in render shaders so that any
+// compilation failure panics at startup rather than at an unpredictable frame.
+func InitShaders() {
+	EnsureSDFShader()
+	EnsureMSDFShader()
+	EnsureFXAAShader()
+}
+
 // --- Lazy shader compilation ---
 
 var (
