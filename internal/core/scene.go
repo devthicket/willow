@@ -415,6 +415,7 @@ func (s *Scene) Update() {
 
 	node.UpdateWorldTransform(s.Root, node.IdentityTransform, 1.0, false, false)
 	s.TransformsReady = true
+	node.AnyTransformDirty = false
 
 	for _, cam := range s.Cameras {
 		cam.Update(dt)
@@ -438,7 +439,9 @@ func (s *Scene) Update() {
 
 	s.Input.ProcessInput(s.Root)
 
-	node.UpdateWorldTransform(s.Root, node.IdentityTransform, 1.0, false, false)
+	if node.AnyTransformDirty {
+		node.UpdateWorldTransform(s.Root, node.IdentityTransform, 1.0, false, false)
+	}
 }
 
 // --- Draw ---

@@ -529,6 +529,7 @@ func (n *Node) Scene() any {
 // --- Helpers ---
 
 func invalidateAncestorCache(n *Node) {
+	AnyTransformDirty = true
 	if InvalidateAncestorCacheFn != nil {
 		InvalidateAncestorCacheFn(n)
 	}

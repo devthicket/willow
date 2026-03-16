@@ -5,6 +5,11 @@ import "math"
 // IdentityTransform is the identity affine matrix.
 var IdentityTransform = [6]float64{1, 0, 0, 1, 0, 0}
 
+// AnyTransformDirty is set when any node's transform or alpha is dirtied.
+// The scene resets this after the first UpdateWorldTransform pass and checks
+// it before the second pass to skip a redundant full tree walk.
+var AnyTransformDirty bool
+
 // ComputeLocalTransform computes the local affine matrix from the node's
 // transform properties. Returns [a, b, c, d, tx, ty].
 func ComputeLocalTransform(n *Node) [6]float64 {

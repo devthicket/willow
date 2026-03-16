@@ -172,44 +172,38 @@ type Node struct {
 	// ---- COLD: hierarchy, identity, metadata ----
 	Parent   *Node
 	Scene_   any // opaque *Scene — node/ never inspects
-	ID       uint32
-	ZIndex_  int
-	EntityID uint32
 	Name     string
 	UserData any
 
-	// ---- COLD: mesh data ----
-	Mesh *MeshData
+	// ---- COLD: pointers ----
+	Mesh         *MeshData
+	Emitter      *particle.Emitter
+	TextBlock    *text.TextBlock
+	Callbacks    *NodeCallbacks
+	MaskNode     *Node
+	CacheTexture *ebiten.Image
 
-	// ---- COLD: particle and text ----
-	Emitter   *particle.Emitter
-	TextBlock *text.TextBlock
+	// ---- COLD: interfaces and slices ----
+	HitShape types.HitShape
+	Filters  []any // opaque []filter.Filter — node/ never inspects
 
-	// ---- COLD: update callback ----
+	// ---- COLD: functions ----
 	OnUpdate   func(dt float64)
 	CustomEmit func(s any, treeOrder *int)
+	EmitFn     EmitFn
 
-	// ---- COLD: hit testing ----
+	// ---- COLD: int-sized ----
+	ZIndex_ int
+	ID      uint32
+	EntityID uint32
+
+	// ---- COLD: bools (packed) ----
 	Interactable bool
-	HitShape     types.HitShape
 	Draggable    bool
 	Pinchable    bool
-
-	// ---- COLD: filters, cache, mask ----
-	Filters      []any // opaque []filter.Filter — node/ never inspects
 	CacheEnabled bool
-	CacheTexture *ebiten.Image
 	CacheDirty   bool
-	MaskNode     *Node
-
-	// ---- COLD: per-node pointer callbacks (lazily allocated) ----
-	Callbacks *NodeCallbacks
-
-	// ---- COLD: render integration ----
-	EmitFn EmitFn
-
-	// ---- COLD: internal ----
-	Disposed bool
+	Disposed     bool
 }
 
 // NewNode creates a Node with default field values.
