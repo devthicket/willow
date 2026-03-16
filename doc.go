@@ -1,17 +1,26 @@
-// Package willow is a retained-mode 2D game framework for [Ebitengine].
+// Package willow is a display-tree 2D rendering layer for [Ebitengine],
+// including scene management, batching, cameras, culling, hit detection,
+// and special effects. Inspired by [Starling], Flash display lists, and
+// [PixiJS], adapted for Go's strengths.
 //
 // Ebitengine is immediate-mode: every frame you issue draw commands from
-// scratch, and nothing persists. Willow adds a retained-mode layer on top -
-// you build a persistent scene graph of nodes, and Willow traverses it each
-// frame to produce draw commands for Ebitengine.
+// scratch, and nothing persists. Willow adds a retained-mode-inspired layer
+// on top - you create a tree of nodes representing your game objects, and
+// Willow traverses that tree each frame to produce draw commands for
+// Ebitengine. You describe what exists in your scene, not how to render it
+// each frame. This is the same pattern used by engines like Unity, Godot,
+// and PixiJS: a persistent scene graph (display tree) driving an
+// immediate-mode renderer.
 //
-// Willow provides the scene graph, transform hierarchy, sprite batching, input
-// handling, camera viewports, text rendering, particle systems, and more that
-// every non-trivial 2D game needs.
+// It sits between Ebitengine and your game:
+//
+//	Your Game             - gameplay, content, logic
+//	Willow                - scene graph, rendering, interaction
+//	Ebitengine            - GPU backend, window, audio, platform
 //
 // Full documentation, tutorials, and examples are available at:
 //
-// https://devthicket.github.io/willow/
+// https://devthicket.org/willow
 //
 // # Quick start
 //
@@ -84,8 +93,10 @@
 // without an extra import.
 //
 // See the full docs for guides on each feature:
-// https://devthicket.github.io/willow/
+// https://devthicket.org/willow
 //
 // [Ebitengine]: https://ebitengine.org
+// [Starling]: https://gamua.com/starling/
+// [PixiJS]: https://pixijs.com/
 // [gween]: https://github.com/tanema/gween
 package willow
