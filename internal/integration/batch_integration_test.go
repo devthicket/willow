@@ -4,8 +4,8 @@ import (
 	"math"
 	"testing"
 
+	. "github.com/devthicket/willow"
 	"github.com/hajimehoshi/ebiten/v2"
-	. "github.com/phanxgames/willow"
 )
 
 func TestBatchKeySameAtlasSameBlend(t *testing.T) {

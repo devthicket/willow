@@ -3,7 +3,7 @@ package particle
 import (
 	"math"
 
-	"github.com/phanxgames/willow/internal/types"
+	"github.com/devthicket/willow/internal/types"
 )
 
 // particle holds per-particle simulation state.

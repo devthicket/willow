@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"image/color"
 
+	"github.com/devthicket/willow/internal/node"
+	"github.com/devthicket/willow/internal/types"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
-	"github.com/phanxgames/willow/internal/node"
-	"github.com/phanxgames/willow/internal/types"
 )
 
 // NewFPSWidget creates a Node that displays FPS and TPS as a screen overlay.

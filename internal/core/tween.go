@@ -1,7 +1,7 @@
 package core
 
 import (
-	"github.com/phanxgames/willow/internal/node"
+	"github.com/devthicket/willow/internal/node"
 	"github.com/tanema/gween"
 	"github.com/tanema/gween/ease"
 )

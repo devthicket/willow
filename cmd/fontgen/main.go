@@ -36,7 +36,7 @@ import (
 	"os"
 	"unicode/utf8"
 
-	"github.com/phanxgames/willow"
+	"github.com/devthicket/willow"
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/opentype"
 	"golang.org/x/image/math/fixed"

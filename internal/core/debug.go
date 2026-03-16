@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/devthicket/willow/internal/render"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/phanxgames/willow/internal/render"
 )
 
 // DebugStats holds per-frame timing and draw-call metrics.

@@ -5,7 +5,7 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 
-	. "github.com/phanxgames/willow"
+	. "github.com/devthicket/willow"
 )
 
 func TestSetMask(t *testing.T) {

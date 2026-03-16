@@ -1,6 +1,6 @@
 package particle
 
-import "github.com/phanxgames/willow/internal/types"
+import "github.com/devthicket/willow/internal/types"
 
 // EmitterConfig controls how particles are spawned and behave.
 type EmitterConfig struct {

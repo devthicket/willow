@@ -7,8 +7,8 @@ import (
 	"image/color"
 	"log"
 
+	"github.com/devthicket/willow/internal/types"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/phanxgames/willow/internal/types"
 )
 
 // Debug enables debug logging (e.g. missing region warnings).

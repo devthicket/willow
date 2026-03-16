@@ -3,9 +3,9 @@ package tilemap
 import (
 	"math"
 
+	"github.com/devthicket/willow/internal/node"
+	"github.com/devthicket/willow/internal/types"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/phanxgames/willow/internal/node"
-	"github.com/phanxgames/willow/internal/types"
 )
 
 // Function pointers wired by root to break dependency on Camera, Scene, etc.
@@ -78,16 +78,16 @@ type Viewport struct {
 
 // Layer is a single layer of tile data.
 type Layer struct {
-	Node_      *node.Node
-	Data       []uint32
-	Width      int
-	Height     int
-	Vertices   []ebiten.Vertex
-	Indices    []uint16
-	TileCount  int
-	WorldX     []float32
-	WorldY     []float32
-	Regions    []types.TextureRegion
+	Node_       *node.Node
+	Data        []uint32
+	Width       int
+	Height      int
+	Vertices    []ebiten.Vertex
+	Indices     []uint16
+	TileCount   int
+	WorldX      []float32
+	WorldY      []float32
+	Regions     []types.TextureRegion
 	BufStartCol int
 	BufStartRow int
 	BufCols     int

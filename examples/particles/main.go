@@ -9,8 +9,8 @@ import (
 	"log"
 	"math"
 
+	"github.com/devthicket/willow"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/phanxgames/willow"
 )
 
 const (

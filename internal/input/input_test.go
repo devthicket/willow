@@ -3,8 +3,8 @@ package input
 import (
 	"testing"
 
-	"github.com/phanxgames/willow/internal/node"
-	"github.com/phanxgames/willow/internal/types"
+	"github.com/devthicket/willow/internal/node"
+	"github.com/devthicket/willow/internal/types"
 )
 
 func TestNewManager(t *testing.T) {

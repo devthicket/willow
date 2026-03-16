@@ -3,9 +3,9 @@ package render
 import (
 	"image"
 
+	"github.com/devthicket/willow/internal/node"
+	"github.com/devthicket/willow/internal/types"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/phanxgames/willow/internal/node"
-	"github.com/phanxgames/willow/internal/types"
 )
 
 // --- Function pointers for atlas page resolution (wired by root) ---

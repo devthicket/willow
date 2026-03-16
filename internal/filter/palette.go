@@ -1,8 +1,8 @@
 package filter
 
 import (
+	"github.com/devthicket/willow/internal/types"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/phanxgames/willow/internal/types"
 )
 
 const paletteShaderSrc = `//kage:unit pixels

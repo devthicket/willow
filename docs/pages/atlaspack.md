@@ -5,7 +5,7 @@
 ## Installation
 
 ```bash
-go install github.com/phanxgames/willow/cmd/atlaspack@latest
+go install github.com/devthicket/willow/cmd/atlaspack@latest
 ```
 
 Or run directly from the repo:

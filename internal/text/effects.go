@@ -1,6 +1,6 @@
 package text
 
-import "github.com/phanxgames/willow/internal/types"
+import "github.com/devthicket/willow/internal/types"
 
 // TextEffects configures text effects (outline, glow, shadow) rendered in a
 // single shader pass. All widths are in distance-field units (relative to the

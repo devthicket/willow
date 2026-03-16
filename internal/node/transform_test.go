@@ -4,7 +4,7 @@ import (
 	"math"
 	"testing"
 
-	"github.com/phanxgames/willow/internal/types"
+	"github.com/devthicket/willow/internal/types"
 )
 
 const epsilon = 1e-9

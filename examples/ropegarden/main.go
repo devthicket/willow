@@ -14,8 +14,8 @@ import (
 	"math"
 	"math/rand/v2"
 
+	"github.com/devthicket/willow"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/phanxgames/willow"
 )
 
 // ---- configuration --------------------------------------------------------

@@ -3,12 +3,12 @@
 Willow ships with 20+ runnable examples covering everything from basic sprites to full scenes combining lighting, meshes, particles, and masks. Each one is a self-contained `main.go`.
 
 ```bash
-git clone https://github.com/phanxgames/willow.git
+git clone https://github.com/devthicket/willow.git
 cd willow
 go run ./examples/<name>
 ```
 
-Browse the [examples/ directory on GitHub](https://github.com/phanxgames/willow/tree/main/examples) for full source.
+Browse the [examples/ directory on GitHub](https://github.com/devthicket/willow/tree/main/examples) for full source.
 
 ---
 
@@ -21,41 +21,41 @@ Try these directly  -  no install required. Click a thumbnail to launch.
 <td align="center" width="33%"><a id="10k-sprites"></a>
 <a href="demos/sprites10k/" target="_blank"><img src="demos/sprites10k/thumbnail.png" alt="10k Sprites" width="240"></a><br>
 <strong>10k Sprites</strong><br>
-<a href="demos/sprites10k/" target="_blank">Launch</a> · <a href="https://github.com/phanxgames/willow/tree/main/examples/sprites10k" target="_blank">Source</a>
+<a href="demos/sprites10k/" target="_blank">Launch</a> · <a href="https://github.com/devthicket/willow/tree/main/examples/sprites10k" target="_blank">Source</a>
 </td>
 <td align="center" width="33%"><a id="physics-shapes"></a>
 <a href="demos/physics/" target="_blank"><img src="demos/physics/thumbnail.png" alt="Physics Shapes" width="240"></a><br>
 <strong>Physics Shapes</strong><br>
-<a href="demos/physics/" target="_blank">Launch</a> · <a href="https://github.com/phanxgames/willow/tree/main/examples/physics" target="_blank">Source</a>
+<a href="demos/physics/" target="_blank">Launch</a> · <a href="https://github.com/devthicket/willow/tree/main/examples/physics" target="_blank">Source</a>
 </td>
 <td align="center" width="33%"><a id="rope-garden"></a>
 <a href="demos/ropegarden/" target="_blank"><img src="demos/ropegarden/thumbnail.png" alt="Rope Garden" width="240"></a><br>
 <strong>Rope Garden</strong><br>
-<a href="demos/ropegarden/" target="_blank">Launch</a> · <a href="https://github.com/phanxgames/willow/tree/main/examples/ropegarden" target="_blank">Source</a>
+<a href="demos/ropegarden/" target="_blank">Launch</a> · <a href="https://github.com/devthicket/willow/tree/main/examples/ropegarden" target="_blank">Source</a>
 </td>
 </tr>
 <tr>
 <td align="center"><a id="tween-gallery"></a>
 <a href="demos/tweengallery/" target="_blank"><img src="demos/tweengallery/thumbnail.png" alt="Tween Gallery" width="240"></a><br>
 <strong>Tween Gallery</strong><br>
-<a href="demos/tweengallery/" target="_blank">Launch</a> · <a href="https://github.com/phanxgames/willow/tree/main/examples/tweengallery" target="_blank">Source</a>
+<a href="demos/tweengallery/" target="_blank">Launch</a> · <a href="https://github.com/devthicket/willow/tree/main/examples/tweengallery" target="_blank">Source</a>
 </td>
 <td align="center"><a id="filter-gallery"></a>
 <a href="demos/filtergallery/" target="_blank"><img src="demos/filtergallery/thumbnail.png" alt="Filter Gallery" width="240"></a><br>
 <strong>Filter Gallery</strong><br>
-<a href="demos/filtergallery/" target="_blank">Launch</a> · <a href="https://github.com/phanxgames/willow/tree/main/examples/filtergallery" target="_blank">Source</a>
+<a href="demos/filtergallery/" target="_blank">Launch</a> · <a href="https://github.com/devthicket/willow/tree/main/examples/filtergallery" target="_blank">Source</a>
 </td>
 <td align="center"><a id="lighting-demo"></a>
 <a href="demos/lighting/" target="_blank"><img src="demos/lighting/thumbnail.png" alt="Lighting" width="240"></a><br>
 <strong>Lighting</strong><br>
-<a href="demos/lighting/" target="_blank">Launch</a> · <a href="https://github.com/phanxgames/willow/tree/main/examples/lighting" target="_blank">Source</a>
+<a href="demos/lighting/" target="_blank">Launch</a> · <a href="https://github.com/devthicket/willow/tree/main/examples/lighting" target="_blank">Source</a>
 </td>
 </tr>
 <tr>
 <td align="center"><a id="underwater"></a>
 <a href="demos/underwater/" target="_blank"><img src="demos/underwater/thumbnail.png" alt="Underwater" width="240"></a><br>
 <strong>Underwater</strong><br>
-<a href="demos/underwater/" target="_blank">Launch</a> · <a href="https://github.com/phanxgames/willow/tree/main/examples/underwater" target="_blank">Source</a>
+<a href="demos/underwater/" target="_blank">Launch</a> · <a href="https://github.com/devthicket/willow/tree/main/examples/underwater" target="_blank">Source</a>
 </td>
 <td></td>
 <td></td>

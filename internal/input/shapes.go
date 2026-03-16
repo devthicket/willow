@@ -1,6 +1,6 @@
 package input
 
-import "github.com/phanxgames/willow/internal/types"
+import "github.com/devthicket/willow/internal/types"
 
 // HitRect is an axis-aligned rectangular hit area in local coordinates.
 type HitRect struct {

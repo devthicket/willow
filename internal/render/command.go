@@ -1,9 +1,9 @@
 package render
 
 import (
+	"github.com/devthicket/willow/internal/particle"
+	"github.com/devthicket/willow/internal/types"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/phanxgames/willow/internal/particle"
-	"github.com/phanxgames/willow/internal/types"
 )
 
 // CommandType identifies the kind of render command.

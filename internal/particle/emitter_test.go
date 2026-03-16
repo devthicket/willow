@@ -3,7 +3,7 @@ package particle
 import (
 	"testing"
 
-	"github.com/phanxgames/willow/internal/types"
+	"github.com/devthicket/willow/internal/types"
 )
 
 func TestNewEmitter_DefaultPool(t *testing.T) {

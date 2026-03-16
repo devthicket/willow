@@ -3,7 +3,7 @@
 ## Installation
 
 ```bash
-go get github.com/phanxgames/willow@latest
+go get github.com/devthicket/willow@latest
 ```
 
 Willow requires **Go 1.24+** and [Ebitengine](https://ebitengine.org/) v2.
@@ -22,7 +22,7 @@ package main
 import (
     "log"
 
-    "github.com/phanxgames/willow"
+    "github.com/devthicket/willow"
 )
 
 func main() {
@@ -64,7 +64,7 @@ package main
 
 import (
     "github.com/hajimehoshi/ebiten/v2"
-    "github.com/phanxgames/willow"
+    "github.com/devthicket/willow"
 )
 
 type Game struct {

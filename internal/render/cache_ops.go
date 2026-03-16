@@ -1,8 +1,8 @@
 package render
 
 import (
-	"github.com/phanxgames/willow/internal/node"
-	"github.com/phanxgames/willow/internal/types"
+	"github.com/devthicket/willow/internal/node"
+	"github.com/devthicket/willow/internal/types"
 )
 
 // SetCacheAsTree enables or disables subtree command caching on a node.

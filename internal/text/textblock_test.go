@@ -3,7 +3,7 @@ package text
 import (
 	"testing"
 
-	"github.com/phanxgames/willow/internal/types"
+	"github.com/devthicket/willow/internal/types"
 )
 
 func TestTextBlock_Invalidate(t *testing.T) {

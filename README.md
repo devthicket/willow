@@ -1,7 +1,7 @@
 # Willow
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/phanxgames/willow.svg)](https://pkg.go.dev/github.com/phanxgames/willow)
-[![Go Report Card](https://goreportcard.com/badge/github.com/phanxgames/willow)](https://goreportcard.com/report/github.com/phanxgames/willow)
+[![Go Reference](https://pkg.go.dev/badge/github.com/devthicket/willow.svg)](https://pkg.go.dev/github.com/devthicket/willow)
+[![Go Report Card](https://goreportcard.com/badge/github.com/devthicket/willow)](https://goreportcard.com/report/github.com/devthicket/willow)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 A retained-mode 2D game framework for [Ebitengine](https://ebitengine.org)  -  scene graph, batching, cameras, interaction, and effects.
@@ -16,7 +16,7 @@ Inspired by [Starling](https://gamua.com/starling/), Flash display lists, and [P
   <img src="docs/gif/watermesh.gif" alt="Watermesh demo" width="400">
 </p>
 
-> **New here?** Check out the [Getting Started Guide](https://phanxgames.github.io/willow/)  -  tutorials, examples, and everything you need to start building with Willow.
+> **New here?** Check out the [Getting Started Guide](https://devthicket.github.io/willow/)  -  tutorials, examples, and everything you need to start building with Willow.
 
 ---
 
@@ -81,7 +81,7 @@ Willow is well suited for:
 ## Quick start
 
 ```bash
-go get github.com/phanxgames/willow@latest
+go get github.com/devthicket/willow@latest
 ```
 
 For quick setup, call `willow.Run(scene, config)` and Willow handles the window and game loop. For full control, implement `ebiten.Game` yourself and call `scene.Update()` and `scene.Draw(screen)` directly  -  both paths are first-class.
@@ -92,7 +92,7 @@ package main
 import (
 	"log"
 
-	"github.com/phanxgames/willow"
+	"github.com/devthicket/willow"
 )
 
 func main() {
@@ -118,7 +118,7 @@ func main() {
 
 ## Examples
 
-20+ runnable examples are included in the [examples/](examples/) directory, covering everything from basic sprites to full scenes combining lighting, meshes, particles, and masks. Several are also available as [live WASM demos](https://phanxgames.github.io/willow/?page=examples) in the docs.
+20+ runnable examples are included in the [examples/](examples/) directory, covering everything from basic sprites to full scenes combining lighting, meshes, particles, and masks. Several are also available as [live WASM demos](https://devthicket.github.io/willow/?page=examples) in the docs.
 
 ```bash
 go run ./examples/basic    # simplest possible Willow app
@@ -130,8 +130,8 @@ go run ./examples/lighting # dungeon scene with torches and wisps
 
 ## Documentation
 
-- **[Willow Docs](https://phanxgames.github.io/willow/)** - Guides, tutorials, and reference
-- **[API Reference](https://pkg.go.dev/github.com/phanxgames/willow)** - Full API documentation on pkg.go.dev
+- **[Willow Docs](https://devthicket.github.io/willow/)** - Guides, tutorials, and reference
+- **[API Reference](https://pkg.go.dev/github.com/devthicket/willow)** - Full API documentation on pkg.go.dev
 
 ---
 

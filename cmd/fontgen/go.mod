@@ -1,9 +1,9 @@
-module github.com/phanxgames/willow/cmd/fontgen
+module github.com/devthicket/willow/cmd/fontgen
 
 go 1.24.0
 
 require (
-	github.com/phanxgames/willow v0.0.0
+	github.com/devthicket/willow v0.0.0
 	golang.org/x/image v0.31.0
 )
 
@@ -21,4 +21,4 @@ require (
 	golang.org/x/text v0.29.0 // indirect
 )
 
-replace github.com/phanxgames/willow => ../..
+replace github.com/devthicket/willow => ../..

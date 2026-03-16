@@ -4,16 +4,16 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/devthicket/willow/internal/atlas"
+	"github.com/devthicket/willow/internal/camera"
+	"github.com/devthicket/willow/internal/core"
+	"github.com/devthicket/willow/internal/mesh"
+	"github.com/devthicket/willow/internal/particle"
+	"github.com/devthicket/willow/internal/render"
+	"github.com/devthicket/willow/internal/types"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/phanxgames/willow/internal/atlas"
-	"github.com/phanxgames/willow/internal/camera"
-	"github.com/phanxgames/willow/internal/core"
-	"github.com/phanxgames/willow/internal/mesh"
-	"github.com/phanxgames/willow/internal/particle"
-	"github.com/phanxgames/willow/internal/render"
-	"github.com/phanxgames/willow/internal/types"
 
-	. "github.com/phanxgames/willow"
+	. "github.com/devthicket/willow"
 )
 
 // ---------------------------------------------------------------------------

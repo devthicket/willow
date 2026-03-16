@@ -11,7 +11,7 @@
 //
 // Full documentation, tutorials, and examples are available at:
 //
-// https://phanxgames.github.io/willow/
+// https://devthicket.github.io/willow/
 //
 // # Quick start
 //
@@ -84,7 +84,7 @@
 // without an extra import.
 //
 // See the full docs for guides on each feature:
-// https://phanxgames.github.io/willow/
+// https://devthicket.github.io/willow/
 //
 // [Ebitengine]: https://ebitengine.org
 // [gween]: https://github.com/tanema/gween

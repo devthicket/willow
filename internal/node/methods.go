@@ -1,9 +1,9 @@
 package node
 
 import (
+	"github.com/devthicket/willow/internal/text"
+	"github.com/devthicket/willow/internal/types"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/phanxgames/willow/internal/text"
-	"github.com/phanxgames/willow/internal/types"
 )
 
 // --- Getters ---

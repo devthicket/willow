@@ -1,9 +1,9 @@
 package mesh
 
 import (
+	"github.com/devthicket/willow/internal/node"
+	"github.com/devthicket/willow/internal/types"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/phanxgames/willow/internal/node"
-	"github.com/phanxgames/willow/internal/types"
 )
 
 // DistortionGrid provides a grid mesh that can be deformed per-vertex.

@@ -3,9 +3,9 @@ package tilemap
 import (
 	"testing"
 
+	"github.com/devthicket/willow/internal/node"
+	"github.com/devthicket/willow/internal/types"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/phanxgames/willow/internal/node"
-	"github.com/phanxgames/willow/internal/types"
 )
 
 func TestTileFlags(t *testing.T) {
@@ -712,7 +712,7 @@ func TestLayer_SetAnimations_Nil(t *testing.T) {
 
 func TestViewport_UpdateAnimations_AdvancesFrame(t *testing.T) {
 	regions := []types.TextureRegion{
-		{},                                    // GID 0
+		{},                                   // GID 0
 		{X: 0, Y: 0, Width: 16, Height: 16},  // GID 1
 		{X: 16, Y: 0, Width: 16, Height: 16}, // GID 2
 		{X: 32, Y: 0, Width: 16, Height: 16}, // GID 3
@@ -973,8 +973,8 @@ type mockBoundsProvider struct {
 }
 
 func (m *mockBoundsProvider) VisibleBounds() types.Rect { return m.bounds }
-func (m *mockBoundsProvider) ViewportWidth() float64     { return m.viewportWidth }
-func (m *mockBoundsProvider) ViewportHeight() float64    { return m.viewportHeight }
+func (m *mockBoundsProvider) ViewportWidth() float64    { return m.viewportWidth }
+func (m *mockBoundsProvider) ViewportHeight() float64   { return m.viewportHeight }
 
 func TestLayer_LateRebuildCheck_NoRebuildWhenMatching(t *testing.T) {
 	mock := &mockBoundsProvider{

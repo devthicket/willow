@@ -1,6 +1,6 @@
 package core
 
-import "github.com/phanxgames/willow/internal/node"
+import "github.com/devthicket/willow/internal/node"
 
 // PropagateScene recursively sets the scene back-pointer on n and all descendants.
 func PropagateScene(n *node.Node, s any) {

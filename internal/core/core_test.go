@@ -4,9 +4,9 @@ import (
 	"math"
 	"testing"
 
-	"github.com/phanxgames/willow/internal/node"
-	"github.com/phanxgames/willow/internal/render"
-	"github.com/phanxgames/willow/internal/types"
+	"github.com/devthicket/willow/internal/node"
+	"github.com/devthicket/willow/internal/render"
+	"github.com/devthicket/willow/internal/types"
 )
 
 func TestNewScene(t *testing.T) {
@@ -428,7 +428,7 @@ func TestTweenRotation_AnimatesRotation(t *testing.T) {
 func TestTweenColor_AnimatesColor(t *testing.T) {
 	n := node.NewNode("test", types.NodeTypeSprite)
 	n.Color_ = types.RGBA(1, 0, 0, 1) // red
-	target := types.RGBA(0, 0, 1, 1)   // blue
+	target := types.RGBA(0, 0, 1, 1)  // blue
 	g := TweenColor(n, target, types.TweenConfig{Duration: 1.0})
 
 	if g.Count != 4 {

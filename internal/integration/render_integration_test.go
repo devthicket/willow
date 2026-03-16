@@ -5,11 +5,11 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/devthicket/willow/internal/node"
+	"github.com/devthicket/willow/internal/render"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/phanxgames/willow/internal/node"
-	"github.com/phanxgames/willow/internal/render"
 
-	. "github.com/phanxgames/willow"
+	. "github.com/devthicket/willow"
 )
 
 // --- Command emission ---

@@ -5,8 +5,8 @@ import (
 
 	"github.com/tanema/gween"
 
-	"github.com/phanxgames/willow/internal/node"
-	"github.com/phanxgames/willow/internal/types"
+	"github.com/devthicket/willow/internal/node"
+	"github.com/devthicket/willow/internal/types"
 )
 
 // scrollAnim holds active scroll-to tweens for camera X and Y.

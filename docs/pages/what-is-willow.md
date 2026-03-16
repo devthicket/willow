@@ -7,7 +7,7 @@
   <img src="gif/watermesh.gif" alt="Watermesh demo" width="300">
 </p>
 
-**[GitHub](https://github.com/phanxgames/willow)** | **[API Reference](https://pkg.go.dev/github.com/phanxgames/willow)**
+**[GitHub](https://github.com/devthicket/willow)** | **[API Reference](https://pkg.go.dev/github.com/devthicket/willow)**
 
 Willow is a **retained-mode-inspired** 2D game framework built on [Ebitengine](https://ebitengine.org/) for Go. You build a tree of nodes  -  sprites, text, particles, meshes  -  and Willow traverses that tree each frame to produce optimized render commands for Ebitengine. You describe *what* to render by building a scene tree, not *how* to render by issuing draw commands yourself.
 

@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/phanxgames/willow/internal/node"
-	. "github.com/phanxgames/willow"
+	. "github.com/devthicket/willow"
+	"github.com/devthicket/willow/internal/node"
 )
 
 // ---- Debug mode tests ------------------------------------------------------

@@ -1,8 +1,8 @@
 // Willow Documentation  -  Navigation Data & Sidebar Logic
 
 const REFERENCE_ITEMS = [
-    { label: "API Reference", href: "https://pkg.go.dev/github.com/phanxgames/willow" },
-    { label: "GitHub", href: "https://github.com/phanxgames/willow" },
+    { label: "API Reference", href: "https://pkg.go.dev/github.com/devthicket/willow" },
+    { label: "GitHub", href: "https://github.com/devthicket/willow" },
     { label: "Donate", page: "donate" },
 ];
 

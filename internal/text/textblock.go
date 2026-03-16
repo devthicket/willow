@@ -4,8 +4,8 @@ import (
 	"math"
 	"unicode/utf8"
 
+	"github.com/devthicket/willow/internal/types"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/phanxgames/willow/internal/types"
 )
 
 // TextBlock holds text content, formatting, and cached layout state.

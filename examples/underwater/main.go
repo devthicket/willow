@@ -11,9 +11,9 @@ import (
 	"math"
 	"os"
 
+	"github.com/devthicket/willow"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
-	"github.com/phanxgames/willow"
 )
 
 const (

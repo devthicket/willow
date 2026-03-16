@@ -77,7 +77,7 @@ Willow targets **10,000+ sprites at 120+ FPS** on desktop and **60+ FPS** on mob
 
 ## Package Structure
 
-Willow's public API is a single import (`github.com/phanxgames/willow`). The root `willow.go` file is a thin facade of type aliases, constructors, and re-exports. All implementation lives in `internal/` sub-packages:
+Willow's public API is a single import (`github.com/devthicket/willow`). The root `willow.go` file is a thin facade of type aliases, constructors, and re-exports. All implementation lives in `internal/` sub-packages:
 
 ```
 willow.go              ← public API facade (type aliases, constructors, init() wiring)

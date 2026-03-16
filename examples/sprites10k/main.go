@@ -9,8 +9,8 @@ import (
 	"math/rand/v2"
 	"os"
 
+	"github.com/devthicket/willow"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
-	"github.com/phanxgames/willow"
 )
 
 const (

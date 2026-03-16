@@ -6,7 +6,7 @@ import (
 
 	"github.com/tanema/gween/ease"
 
-	. "github.com/phanxgames/willow"
+	. "github.com/devthicket/willow"
 )
 
 func TestTweenPositionReachesTarget(t *testing.T) {

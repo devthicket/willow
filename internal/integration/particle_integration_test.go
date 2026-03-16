@@ -4,7 +4,7 @@ import (
 	"math"
 	"testing"
 
-	. "github.com/phanxgames/willow"
+	. "github.com/devthicket/willow"
 )
 
 func defaultTestConfig(max int) EmitterConfig {

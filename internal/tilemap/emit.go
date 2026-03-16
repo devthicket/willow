@@ -1,9 +1,9 @@
 package tilemap
 
 import (
-	"github.com/phanxgames/willow/internal/camera"
-	"github.com/phanxgames/willow/internal/render"
-	"github.com/phanxgames/willow/internal/types"
+	"github.com/devthicket/willow/internal/camera"
+	"github.com/devthicket/willow/internal/render"
+	"github.com/devthicket/willow/internal/types"
 )
 
 // EmitTilemapCommands transforms tile vertices into screen space and appends

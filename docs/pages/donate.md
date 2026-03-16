@@ -12,4 +12,4 @@ One-time support to say thanks.
 
 Recurring support through GitHub.
 
-[Sponsor on GitHub](https://github.com/sponsors/phanxgames)
+[Sponsor on GitHub](https://github.com/sponsors/devthicket)

@@ -3,9 +3,9 @@ package core
 import (
 	"math"
 
+	"github.com/devthicket/willow/internal/node"
+	"github.com/devthicket/willow/internal/render"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/phanxgames/willow/internal/node"
-	"github.com/phanxgames/willow/internal/render"
 )
 
 // ToTexture renders a node's subtree to a new offscreen image and returns it.

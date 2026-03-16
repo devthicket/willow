@@ -3,8 +3,8 @@ package integration
 import (
 	"testing"
 
+	. "github.com/devthicket/willow"
 	"github.com/hajimehoshi/ebiten/v2"
-	. "github.com/phanxgames/willow"
 )
 
 // --- Constructor defaults ---

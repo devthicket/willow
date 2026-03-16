@@ -3,9 +3,9 @@ package camera
 import (
 	"math"
 
-	"github.com/phanxgames/willow/internal/mesh"
-	"github.com/phanxgames/willow/internal/node"
-	"github.com/phanxgames/willow/internal/types"
+	"github.com/devthicket/willow/internal/mesh"
+	"github.com/devthicket/willow/internal/node"
+	"github.com/devthicket/willow/internal/types"
 )
 
 // WorldAABB computes the axis-aligned bounding box for a rectangle of size (w, h)

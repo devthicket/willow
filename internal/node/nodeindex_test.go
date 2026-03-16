@@ -3,7 +3,7 @@ package node
 import (
 	"testing"
 
-	"github.com/phanxgames/willow/internal/types"
+	"github.com/devthicket/willow/internal/types"
 )
 
 func TestNodeIndex_AddAndFind(t *testing.T) {

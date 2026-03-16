@@ -3,9 +3,9 @@ package mesh
 import (
 	"math"
 
+	"github.com/devthicket/willow/internal/node"
+	"github.com/devthicket/willow/internal/types"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/phanxgames/willow/internal/node"
-	"github.com/phanxgames/willow/internal/types"
 )
 
 // RopeJoinMode controls how segments join in a Rope mesh.
@@ -20,7 +20,7 @@ const (
 type RopeCurveMode uint8
 
 const (
-	RopeCurveLine        RopeCurveMode = iota
+	RopeCurveLine RopeCurveMode = iota
 	RopeCurveCatenary
 	RopeCurveQuadBezier
 	RopeCurveCubicBezier

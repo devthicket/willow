@@ -3,8 +3,8 @@ package mesh
 import (
 	"testing"
 
+	"github.com/devthicket/willow/internal/types"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/phanxgames/willow/internal/types"
 )
 
 func TestComputeMeshAABB_Empty(t *testing.T) {

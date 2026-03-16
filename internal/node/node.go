@@ -1,10 +1,10 @@
 package node
 
 import (
+	"github.com/devthicket/willow/internal/particle"
+	"github.com/devthicket/willow/internal/text"
+	"github.com/devthicket/willow/internal/types"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/phanxgames/willow/internal/particle"
-	"github.com/phanxgames/willow/internal/text"
-	"github.com/phanxgames/willow/internal/types"
 )
 
 // --- Package-level hooks (wired by root/core init) ---
@@ -124,7 +124,7 @@ type DragContext struct {
 
 // PinchContext carries two-finger pinch/rotate gesture data.
 type PinchContext struct {
-	CenterX, CenterY  float64 // midpoint between the two touch points in world coordinates
+	CenterX, CenterY   float64 // midpoint between the two touch points in world coordinates
 	Scale, ScaleDelta  float64 // cumulative scale factor and frame-to-frame change
 	Rotation, RotDelta float64 // cumulative rotation (radians) and frame-to-frame change
 }
@@ -154,17 +154,17 @@ type Node struct {
 	SortedChildren []*Node
 
 	// ---- HOT: render command fields ----
-	CustomImage_  *ebiten.Image
-	CacheData     any // opaque *render.CacheTreeData — node/ never inspects
-	GlobalOrder   int
+	CustomImage_   *ebiten.Image
+	CacheData      any // opaque *render.CacheTreeData — node/ never inspects
+	GlobalOrder    int
 	TextureRegion_ types.TextureRegion
-	Color_        types.Color
+	Color_         types.Color
 
 	// ---- WARM: local transform ----
-	X_, Y_       float64
-	ScaleX_      float64
-	ScaleY_      float64
-	Rotation_    float64
+	X_, Y_         float64
+	ScaleX_        float64
+	ScaleY_        float64
+	Rotation_      float64
 	SkewX_, SkewY_ float64
 	PivotX_        float64
 	PivotY_        float64
@@ -193,8 +193,8 @@ type Node struct {
 	EmitFn     EmitFn
 
 	// ---- COLD: int-sized ----
-	ZIndex_ int
-	ID      uint32
+	ZIndex_  int
+	ID       uint32
 	EntityID uint32
 
 	// ---- COLD: bools (packed) ----

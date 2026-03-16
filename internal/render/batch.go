@@ -3,12 +3,12 @@ package render
 import (
 	"image"
 
+	"github.com/devthicket/willow/internal/mesh"
+	"github.com/devthicket/willow/internal/node"
+	"github.com/devthicket/willow/internal/particle"
+	"github.com/devthicket/willow/internal/text"
+	"github.com/devthicket/willow/internal/types"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/phanxgames/willow/internal/mesh"
-	"github.com/phanxgames/willow/internal/node"
-	"github.com/phanxgames/willow/internal/particle"
-	"github.com/phanxgames/willow/internal/text"
-	"github.com/phanxgames/willow/internal/types"
 )
 
 // SubmitBatches iterates sorted commands and submits draw calls to the target.

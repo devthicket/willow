@@ -1,8 +1,8 @@
 package input
 
 import (
-	"github.com/phanxgames/willow/internal/node"
-	"github.com/phanxgames/willow/internal/types"
+	"github.com/devthicket/willow/internal/node"
+	"github.com/devthicket/willow/internal/types"
 )
 
 // SyntheticPointerEvent represents a single injected pointer event.

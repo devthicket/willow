@@ -1,6 +1,6 @@
 package core
 
-import "github.com/phanxgames/willow/internal/types"
+import "github.com/devthicket/willow/internal/types"
 
 // EntityStore is the interface for optional ECS integration.
 // When set on a Scene via SetEntityStore, interaction events on nodes with

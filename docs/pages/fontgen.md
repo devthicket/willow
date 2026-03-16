@@ -5,7 +5,7 @@
 ## Installation
 
 ```bash
-go install github.com/phanxgames/willow/cmd/fontgen@latest
+go install github.com/devthicket/willow/cmd/fontgen@latest
 ```
 
 Or run directly from the repo:

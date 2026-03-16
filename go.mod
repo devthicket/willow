@@ -1,4 +1,4 @@
-module github.com/phanxgames/willow
+module github.com/devthicket/willow
 
 go 1.24.0
 
