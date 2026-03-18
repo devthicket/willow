@@ -169,14 +169,18 @@ type PackerConfig = atlas.PackerConfig
 // Text (internal/text)
 // ---------------------------------------------------------------------------
 
-// Font is the interface for text measurement and layout.
-type Font = text.Font
+// FontFamily holds SDF atlases for multiple styles and bake sizes, or wraps a pixel font.
+// It is the only public font type in willow.
+type FontFamily = text.FontFamily
 
-// DistanceFieldFont renders text from a pre-generated SDF or MSDF atlas.
-type DistanceFieldFont = text.DistanceFieldFont
+// FontFamilyConfig configures a FontFamily created from TTF/OTF data.
+type FontFamilyConfig = text.FontFamilyConfig
 
-// PixelFont is a pixel-perfect bitmap font renderer.
-type PixelFont = text.PixelFont
+// FontStyle identifies a typographic style variant.
+type FontStyle = text.FontStyle
+
+// AtlasEntry holds the raw PNG and JSON bytes for one baked font atlas.
+type AtlasEntry = text.AtlasEntry
 
 // TextEffects configures text effects (outline, glow, shadow).
 type TextEffects = text.TextEffects
@@ -187,11 +191,14 @@ type TextBlock = text.TextBlock
 // Glyph holds glyph metrics and atlas position.
 type Glyph = text.Glyph
 
-// SDFGenOptions configures SDF atlas generation.
+// SDFGenOptions configures SDF atlas generation (used by fontgen CLI).
 type SDFGenOptions = text.SDFGenOptions
 
-// GlyphBitmap holds a rasterized glyph and its metrics for atlas packing.
+// GlyphBitmap holds a rasterized glyph and its metrics for atlas packing (used by fontgen CLI).
 type GlyphBitmap = text.GlyphBitmap
+
+// GenerateSDFFromBitmaps creates an SDF atlas from pre-rasterized glyph bitmaps (used by fontgen CLI).
+var GenerateSDFFromBitmaps = text.GenerateSDFFromBitmaps
 
 // ---------------------------------------------------------------------------
 // Particle (internal/particle)
@@ -412,11 +419,12 @@ var (
 	LoadAtlas     = atlas.LoadAtlas
 )
 
-// Text / Font constructors.
-var (
-	LoadDistanceFieldFont        = text.LoadDistanceFieldFont
-	LoadDistanceFieldFontFromTTF = text.LoadDistanceFieldFontFromTTF
-	GenerateSDFFromBitmaps       = text.GenerateSDFFromBitmaps
+// Font style constants.
+const (
+	FontStyleRegular    = text.FontStyleRegular
+	FontStyleBold       = text.FontStyleBold
+	FontStyleItalic     = text.FontStyleItalic
+	FontStyleBoldItalic = text.FontStyleBoldItalic
 )
 
 // Filter constructors.
@@ -725,7 +733,7 @@ func NewParticleEmitter(name string, cfg EmitterConfig) *Node {
 }
 
 // NewText creates a text node that renders the given string using font.
-func NewText(name string, content string, font Font) *Node {
+func NewText(name string, content string, font *FontFamily) *Node {
 	n := node.NewNode(name, NodeTypeText)
 	n.TextBlock = &TextBlock{
 		Content:       content,
@@ -756,30 +764,20 @@ func NewTileMapViewport(name string, tileWidth, tileHeight int) *TileMapViewport
 	return v
 }
 
-// NewPixelFont creates a pixel font from a spritesheet image.
-func NewPixelFont(img *ebiten.Image, cellW, cellH int, chars string) *PixelFont {
-	return text.NewPixelFont(img, cellW, cellH, chars)
+// NewFontFamilyFromTTF creates a FontFamily from TTF/OTF data.
+// All style variants are provided in the config struct. BakeSizes defaults to [64, 256].
+func NewFontFamilyFromTTF(cfg FontFamilyConfig) (*FontFamily, error) {
+	return text.NewFontFamilyFromTTF(cfg)
 }
 
-// NewFontFromTTF generates an SDF font from TTF/OTF data, registers the atlas
-// page, and returns the font ready to use.
-func NewFontFromTTF(ttfData []byte, size float64) (*DistanceFieldFont, error) {
-	return text.NewFontFromTTF(ttfData, size)
+// NewFontFamilyFromPixelFont wraps a pixel spritesheet into a FontFamily.
+func NewFontFamilyFromPixelFont(img *ebiten.Image, cellW, cellH int, chars string) *FontFamily {
+	return text.NewFontFamilyFromPixelFont(img, cellW, cellH, chars)
 }
 
-// NewFontFromTTFOpts generates an SDF font using explicit SDFGenOptions.
-func NewFontFromTTFOpts(ttfData []byte, opts SDFGenOptions) (*DistanceFieldFont, error) {
-	return text.NewFontFromTTFOpts(ttfData, opts)
-}
-
-// LoadFontFromPathAsTtf reads a TTF/OTF file from disk.
-func LoadFontFromPathAsTtf(path string) ([]byte, error) {
-	return text.LoadFontFromPath(path)
-}
-
-// LoadFontFromSystemAsTtf searches OS system font directories for a font by name.
-func LoadFontFromSystemAsTtf(name string) ([]byte, error) {
-	return text.LoadFontFromSystem(name)
+// NewFontFamilyFromFontBundle loads a pre-baked .fontbundle archive and returns a FontFamily.
+func NewFontFamilyFromFontBundle(data []byte) (*FontFamily, error) {
+	return text.NewFontFamilyFromFontBundle(data)
 }
 
 // ---------------------------------------------------------------------------

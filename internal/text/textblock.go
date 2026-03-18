@@ -12,12 +12,16 @@ import (
 type TextBlock struct {
 	// Content is the text string to render. Supports embedded newlines.
 	Content string
-	// Font is the font used for measurement and rendering.
-	Font Font
+	// Font is the font family used for measurement and rendering.
+	Font *FontFamily
 	// FontSize is the desired display size in pixels. Applied at render time as a
 	// scale factor (FontSize / Font.LineHeight()), independent of ScaleX/ScaleY.
 	// Defaults to 16. Set to 0 or negative to use the font's native atlas size.
 	FontSize float64
+	// Bold selects the bold variant when resolving the font.
+	Bold bool
+	// Italic selects the italic variant when resolving the font.
+	Italic bool
 	// Align controls horizontal alignment within the wrap width or measured bounds.
 	Align types.TextAlign
 	// WrapWidth is the maximum line width in screen pixels before word wrapping.
@@ -25,7 +29,7 @@ type TextBlock struct {
 	WrapWidth float64
 	// Color is the fill color for the text glyphs.
 	Color types.Color
-	// LineHeight overrides the font's default line height. Zero uses Font.LineHeight().
+	// LineHeight overrides the font's default line height. Zero uses the font's native value.
 	LineHeight float64
 	// Sharpness tightens the SDF edge smoothstep window. 0.0 = default rendering,
 	// 1.0 = sharpest (half the default smoothing width). Values around 0.5–0.7
@@ -76,23 +80,22 @@ func (tb *TextBlock) EffectiveLineHeight() float64 {
 		return tb.LineHeight
 	}
 	if tb.Font != nil {
-		return tb.Font.LineHeight()
+		return tb.Font.lineHeight(tb.FontSize, tb.Bold, tb.Italic)
 	}
 	return 0
 }
 
 // FontScale returns the scale factor that maps native atlas pixels to display pixels.
 // Returns 1.0 when FontSize is zero/negative or Font is nil.
-// pixelFont should be true if the font is a PixelFont (integer scaling).
 func (tb *TextBlock) FontScale() float64 {
 	if tb.Font == nil {
 		return 1.0
 	}
-	if IsPixelFont(tb.Font) {
+	if tb.Font.isPixelMode() {
 		if tb.FontSize <= 0 {
 			return 1.0
 		}
-		native := tb.Font.LineHeight()
+		native := tb.Font.lineHeight(tb.FontSize, tb.Bold, tb.Italic)
 		if native <= 0 {
 			return 1.0
 		}
@@ -105,7 +108,7 @@ func (tb *TextBlock) FontScale() float64 {
 	if tb.FontSize <= 0 {
 		return 1.0
 	}
-	native := tb.Font.LineHeight()
+	native := tb.Font.lineHeight(tb.FontSize, tb.Bold, tb.Italic)
 	if native <= 0 {
 		return 1.0
 	}
@@ -118,13 +121,12 @@ func (tb *TextBlock) MeasureDisplay(text string) (width, height float64) {
 	if tb.Font == nil {
 		return 0, 0
 	}
-	w, h := tb.Font.MeasureString(text)
+	w, h := tb.Font.measureString(text, tb.FontSize, tb.Bold, tb.Italic)
 	fs := tb.FontScale()
 	return w * fs, h * fs
 }
 
 // Layout recomputes glyph positions if dirty. Returns the cached lines.
-// Dispatches to LayoutSDF or LayoutPixel based on font type.
 func (tb *TextBlock) Layout() []TextLine {
 	if !tb.LayoutDirty {
 		return tb.Lines
@@ -138,20 +140,23 @@ func (tb *TextBlock) Layout() []TextLine {
 		return tb.Lines
 	}
 
-	switch f := tb.Font.(type) {
-	case *DistanceFieldFont:
-		tb.LayoutSDF(f.GlyphLookup, f.Kern, f.Page())
-	case *PixelFont:
-		advW := f.CellW - f.PadLeft - f.PadRight
-		advH := f.CellH - f.PadTop - f.PadBottom
-		tb.LayoutPixel(f.GlyphLookup, f.Page, f.CellW, f.CellH, f.PadLeft, f.PadTop, advW, advH)
+	if tb.Font.isPixelMode() {
+		pf := tb.Font.resolvePixel()
+		advW := pf.CellW - pf.PadLeft - pf.PadRight
+		advH := pf.CellH - pf.PadTop - pf.PadBottom
+		tb.LayoutPixel(pf.GlyphLookup, pf.Page, pf.CellW, pf.CellH, pf.PadLeft, pf.PadTop, advW, advH)
+	} else {
+		df := tb.Font.resolveDF(tb.FontSize, tb.Bold, tb.Italic)
+		if df != nil {
+			tb.LayoutSDF(df.GlyphLookup, df.Kern, df.Page())
+		}
 	}
 	tb.LayoutDirty = false
 
 	return tb.Lines
 }
 
-// LayoutSDF computes glyph positions for an SDF font (DistanceFieldFont).
+// LayoutSDF computes glyph positions for an SDF font.
 func (tb *TextBlock) LayoutSDF(glyphLookup func(r rune) *Glyph, kernLookup func(first, second rune) int16, page uint16) {
 	lh := tb.EffectiveLineHeight()
 	content := tb.Content
@@ -494,15 +499,4 @@ func (tb *TextBlock) RebuildLocalVerts(lineHeight float64) {
 	}
 	tb.SdfVertCount = vi
 	tb.SdfIndCount = ii
-}
-
-// pixelFontMarker is used to identify PixelFont without importing.
-type pixelFontMarker interface {
-	isPixelFont()
-}
-
-// IsPixelFont returns true if the font implements the pixelFontMarker interface.
-func IsPixelFont(f Font) bool {
-	_, ok := f.(pixelFontMarker)
-	return ok
 }

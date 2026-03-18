@@ -78,10 +78,7 @@ func (n *Node) SetContent(s string) {
 	invalidateAncestorCache(n)
 }
 
-func (n *Node) SetFont(f interface {
-	MeasureString(string) (float64, float64)
-	LineHeight() float64
-}) {
+func (n *Node) SetFont(f *text.FontFamily) {
 	n.TextBlock.Font = f
 	n.TextBlock.LayoutDirty = true
 	invalidateAncestorCache(n)

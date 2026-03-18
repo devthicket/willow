@@ -19,9 +19,9 @@ func TestLoadDistanceFieldFont_Basic(t *testing.T) {
 	}
 	data, _ := json.Marshal(metrics)
 
-	f, err := LoadDistanceFieldFont(data, 0)
+	f, err := loadDistanceFieldFont(data, 0)
 	if err != nil {
-		t.Fatalf("LoadDistanceFieldFont: %v", err)
+		t.Fatalf("loadDistanceFieldFont: %v", err)
 	}
 
 	if f.LineHeight() != 96 {
@@ -45,7 +45,7 @@ func TestLoadDistanceFieldFont_MissingLineHeight(t *testing.T) {
 	}
 	data, _ := json.Marshal(metrics)
 
-	_, err := LoadDistanceFieldFont(data, 0)
+	_, err := loadDistanceFieldFont(data, 0)
 	if err == nil {
 		t.Error("expected error for missing lineHeight")
 	}
@@ -65,9 +65,9 @@ func TestDistanceFieldFont_MeasureString(t *testing.T) {
 	}
 	data, _ := json.Marshal(metrics)
 
-	f, err := LoadDistanceFieldFont(data, 0)
+	f, err := loadDistanceFieldFont(data, 0)
 	if err != nil {
-		t.Fatalf("LoadDistanceFieldFont: %v", err)
+		t.Fatalf("loadDistanceFieldFont: %v", err)
 	}
 
 	w, h := f.MeasureString("Hi")
@@ -80,7 +80,7 @@ func TestDistanceFieldFont_MeasureString(t *testing.T) {
 }
 
 func TestDistanceFieldFont_Kern(t *testing.T) {
-	f := &DistanceFieldFont{}
+	f := &distanceFieldFont{}
 	if f.Kern('A', 'V') != 0 {
 		t.Error("kern with nil map should be 0")
 	}

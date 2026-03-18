@@ -1,6 +1,12 @@
 package integration
 
 import (
+	"archive/zip"
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"image"
+	"image/png"
 	"math"
 	"testing"
 
@@ -65,30 +71,28 @@ func TestFontScale_NilFont(t *testing.T) {
 }
 
 func TestFontScale_ZeroFontSize(t *testing.T) {
-	sf := &DistanceFieldFont{}
-	sf.SetLineHeight(80)
-	tb := &TextBlock{FontSize: 0, Font: sf}
+	ff := testFontFamily(t, 80)
+	tb := &TextBlock{FontSize: 0, Font: ff}
 	if textBlockFontScale(tb) != 1.0 {
 		t.Errorf("textBlockFontScale with FontSize 0 = %f, want 1.0", textBlockFontScale(tb))
 	}
 }
 
 func TestFontScale_NegativeFontSize(t *testing.T) {
-	sf := &DistanceFieldFont{}
-	sf.SetLineHeight(80)
-	tb := &TextBlock{FontSize: -1, Font: sf}
+	ff := testFontFamily(t, 80)
+	tb := &TextBlock{FontSize: -1, Font: ff}
 	if textBlockFontScale(tb) != 1.0 {
 		t.Errorf("textBlockFontScale with negative FontSize = %f, want 1.0", textBlockFontScale(tb))
 	}
 }
 
 func TestFontScale_Computed(t *testing.T) {
-	sf := &DistanceFieldFont{}
-	sf.SetLineHeight(80)
-	tb := &TextBlock{FontSize: 24, Font: sf}
-	expected := 24.0 / 80.0
-	if math.Abs(textBlockFontScale(tb)-expected) > 1e-10 {
-		t.Errorf("textBlockFontScale = %f, want %f", textBlockFontScale(tb), expected)
+	ff := testFontFamily(t, 80)
+	tb := &TextBlock{FontSize: 24, Font: ff}
+	expected := 24.0 / (80 * 1.2) // lineHeight = size * 1.2 from minAtlasJSON
+	got := textBlockFontScale(tb)
+	if math.Abs(got-expected) > 1e-6 {
+		t.Errorf("textBlockFontScale = %f, want %f", got, expected)
 	}
 }
 
@@ -118,4 +122,55 @@ func TestComposeGlyphTransform_Scaled(t *testing.T) {
 	if math.Abs(result[5]-140) > 0.01 {
 		t.Errorf("ty = %f, want 140", result[5])
 	}
+}
+
+// testFontFamily creates a minimal FontFamily from a font bundle for testing.
+func testFontFamily(t *testing.T, size float64) *FontFamily {
+	t.Helper()
+	bundle := testBundle(t, size)
+	ff, err := NewFontFamilyFromFontBundle(bundle)
+	if err != nil {
+		t.Fatalf("testFontFamily: %v", err)
+	}
+	return ff
+}
+
+func testBundle(t *testing.T, size float64) []byte {
+	t.Helper()
+	type sdfGlyphEntry struct {
+		ID       int `json:"id"`
+		Width    int `json:"width"`
+		Height   int `json:"height"`
+		XAdvance int `json:"xAdvance"`
+	}
+	type sdfMetrics struct {
+		Type          string          `json:"type"`
+		Size          float64         `json:"size"`
+		DistanceRange float64         `json:"distanceRange"`
+		LineHeight    float64         `json:"lineHeight"`
+		Base          float64         `json:"base"`
+		Glyphs        []sdfGlyphEntry `json:"glyphs"`
+	}
+	m := sdfMetrics{
+		Type:          "sdf",
+		Size:          size,
+		DistanceRange: size * 0.125,
+		LineHeight:    size * 1.2,
+		Base:          size,
+		Glyphs:        []sdfGlyphEntry{{ID: 65, Width: 8, Height: 10, XAdvance: 9}},
+	}
+	jsonData, _ := json.Marshal(m)
+	img := image.NewNRGBA(image.Rect(0, 0, 2, 2))
+	var pngBuf bytes.Buffer
+	png.Encode(&pngBuf, img)
+
+	var buf bytes.Buffer
+	zw := zip.NewWriter(&buf)
+	base := fmt.Sprintf("regular_%.0f", size)
+	w, _ := zw.Create(base + ".json")
+	w.Write(jsonData)
+	w2, _ := zw.Create(base + ".png")
+	w2.Write(pngBuf.Bytes())
+	zw.Close()
+	return buf.Bytes()
 }

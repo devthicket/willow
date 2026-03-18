@@ -376,16 +376,16 @@ func fixedToFloat64(f fixed.Int26_6) float64 {
 
 // LoadDistanceFieldFontFromTTF generates an SDF font atlas at runtime from TTF/OTF data.
 // Uses pure-Go rasterization (golang.org/x/image/font/opentype) so it can be
-// called before the Ebitengine game loop starts. Returns the DistanceFieldFont, the atlas
+// called before the Ebitengine game loop starts. Returns the font, the atlas
 // as an ebiten.Image (caller must register via Scene.RegisterPage), the raw
 // atlas as an *image.NRGBA (for saving to disk), and any error.
-func LoadDistanceFieldFontFromTTF(ttfData []byte, opts SDFGenOptions) (*DistanceFieldFont, *ebiten.Image, *image.NRGBA, error) {
+func LoadDistanceFieldFontFromTTF(ttfData []byte, opts SDFGenOptions) (*distanceFieldFont, *ebiten.Image, *image.NRGBA, []byte, error) {
 	opts.Defaults()
 
 	// Parse font with golang.org/x/image/font/opentype (pure Go, no GPU needed).
 	otFont, err := opentype.Parse(ttfData)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("text: failed to parse TTF data: %w", err)
+		return nil, nil, nil, nil, fmt.Errorf("text: failed to parse TTF data: %w", err)
 	}
 
 	face, err := opentype.NewFace(otFont, &opentype.FaceOptions{
@@ -394,7 +394,7 @@ func LoadDistanceFieldFontFromTTF(ttfData []byte, opts SDFGenOptions) (*Distance
 		Hinting: font.HintingFull,
 	})
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("text: failed to create font face: %w", err)
+		return nil, nil, nil, nil, fmt.Errorf("text: failed to create font face: %w", err)
 	}
 	defer func() { _ = face.Close() }()
 
@@ -466,7 +466,7 @@ func LoadDistanceFieldFontFromTTF(ttfData []byte, opts SDFGenOptions) (*Distance
 
 	atlas, metricsJSON, err := GenerateSDFFromBitmaps(glyphs, opts)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("text: SDF generation failed: %w", err)
+		return nil, nil, nil, nil, fmt.Errorf("text: SDF generation failed: %w", err)
 	}
 
 	// Override lineHeight and base with actual font metrics.
@@ -476,14 +476,14 @@ func LoadDistanceFieldFontFromTTF(ttfData []byte, opts SDFGenOptions) (*Distance
 	m.Base = ascent
 	metricsJSON, _ = json.Marshal(m)
 
-	sdfFont, err := LoadDistanceFieldFont(metricsJSON, opts.PageIndex)
+	sdfFont, err := loadDistanceFieldFont(metricsJSON, opts.PageIndex)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("text: failed to load generated SDF font: %w", err)
+		return nil, nil, nil, nil, fmt.Errorf("text: failed to load generated SDF font: %w", err)
 	}
 
 	// Convert image.NRGBA → ebiten.Image (WritePixels works before game start).
 	atlasImg := ebiten.NewImage(atlas.Bounds().Dx(), atlas.Bounds().Dy())
 	atlasImg.WritePixels(atlas.Pix)
 
-	return sdfFont, atlasImg, atlas, nil
+	return sdfFont, atlasImg, atlas, metricsJSON, nil
 }

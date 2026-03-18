@@ -1685,7 +1685,7 @@ func isEdgeZeroLength(e mEdge) bool {
 // architecturally complete (edge coloring, contour combiner, error correction)
 // but the output quality does not match the reference msdfgen implementation.
 // Use LoadDistanceFieldFontFromTTF (single-channel SDF) for production use.
-func LoadDistanceFieldFontFromTTFMSDF(ttfData []byte, opts SDFGenOptions) (*DistanceFieldFont, *ebiten.Image, *image.NRGBA, error) {
+func LoadDistanceFieldFontFromTTFMSDF(ttfData []byte, opts SDFGenOptions) (*distanceFieldFont, *ebiten.Image, *image.NRGBA, error) {
 	opts.MSDF = true
 	// MSDF benefits from a wider distance range than SDF. More range gives
 	// more texel precision for channel transitions, reducing visible noise
@@ -1836,7 +1836,7 @@ func LoadDistanceFieldFontFromTTFMSDF(ttfData []byte, opts SDFGenOptions) (*Dist
 	m.Base = ascent
 	metricsJSON, _ = json.Marshal(m)
 
-	sdfFont, err := LoadDistanceFieldFont(metricsJSON, opts.PageIndex)
+	sdfFont, err := loadDistanceFieldFont(metricsJSON, opts.PageIndex)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("text: failed to load generated MSDF font: %w", err)
 	}

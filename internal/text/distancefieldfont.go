@@ -6,9 +6,8 @@ import (
 	"unicode/utf8"
 )
 
-// DistanceFieldFont renders text from a pre-generated SDF or MSDF atlas.
-// It implements the Font interface for measurement and layout.
-type DistanceFieldFont struct {
+// distanceFieldFont renders text from a pre-generated SDF or MSDF atlas.
+type distanceFieldFont struct {
 	lineHeight    float64
 	base          float64
 	fontSize      float64 // design size SDF was generated at
@@ -17,7 +16,7 @@ type DistanceFieldFont struct {
 	page          uint16  // atlas page index
 
 	asciiGlyphs [AsciiGlyphCount]Glyph // fixed array for ASCII, zero-alloc lookup
-	asciiSet    [AsciiGlyphCount]bool   // which ASCII entries are populated
+	asciiSet    [AsciiGlyphCount]bool  // which ASCII entries are populated
 	extGlyphs   map[rune]*Glyph        // extended Unicode
 
 	kernings map[[2]rune]int16
@@ -27,7 +26,7 @@ type DistanceFieldFont struct {
 
 // MeasureString returns the pixel width and height of the rendered text
 // in native atlas pixels.
-func (f *DistanceFieldFont) MeasureString(s string) (width, height float64) {
+func (f *distanceFieldFont) MeasureString(s string) (width, height float64) {
 	var maxW float64
 	var cursorX float64
 	var prevRune rune
@@ -69,48 +68,43 @@ func (f *DistanceFieldFont) MeasureString(s string) (width, height float64) {
 }
 
 // LineHeight returns the vertical distance between baselines in native atlas pixels.
-func (f *DistanceFieldFont) LineHeight() float64 {
+func (f *distanceFieldFont) LineHeight() float64 {
 	return f.lineHeight
 }
 
-// SetLineHeight sets the line height. Intended for test setup only.
-func (f *DistanceFieldFont) SetLineHeight(h float64) {
-	f.lineHeight = h
-}
-
 // DistanceRange returns the pixel range of the distance field.
-func (f *DistanceFieldFont) DistanceRange() float64 {
+func (f *distanceFieldFont) DistanceRange() float64 {
 	return f.distanceRange
 }
 
 // IsMultiChannel returns true if this is an MSDF font (multi-channel SDF).
-func (f *DistanceFieldFont) IsMultiChannel() bool {
+func (f *distanceFieldFont) IsMultiChannel() bool {
 	return f.multiChannel
 }
 
 // TTFData returns the original TTF/OTF byte data, or nil if the font was not
 // created from TTF.
-func (f *DistanceFieldFont) TTFData() []byte {
+func (f *distanceFieldFont) TTFData() []byte {
 	return f.ttfData
 }
 
 // SetTTFData sets the TTF data on the font.
-func (f *DistanceFieldFont) SetTTFData(data []byte) {
+func (f *distanceFieldFont) SetTTFData(data []byte) {
 	f.ttfData = data
 }
 
 // FontSize returns the design size (in pixels) that the SDF was generated at.
-func (f *DistanceFieldFont) FontSize() float64 {
+func (f *distanceFieldFont) FontSize() float64 {
 	return f.fontSize
 }
 
 // Page returns the atlas page index for this font.
-func (f *DistanceFieldFont) Page() uint16 {
+func (f *distanceFieldFont) Page() uint16 {
 	return f.page
 }
 
 // GlyphLookup returns the glyph for the given rune, or nil if not found.
-func (f *DistanceFieldFont) GlyphLookup(r rune) *Glyph {
+func (f *distanceFieldFont) GlyphLookup(r rune) *Glyph {
 	if r >= 0 && r < AsciiGlyphCount {
 		if f.asciiSet[r] {
 			return &f.asciiGlyphs[r]
@@ -124,7 +118,7 @@ func (f *DistanceFieldFont) GlyphLookup(r rune) *Glyph {
 }
 
 // Kern returns the kerning amount for the given rune pair.
-func (f *DistanceFieldFont) Kern(first, second rune) int16 {
+func (f *distanceFieldFont) Kern(first, second rune) int16 {
 	if f.kernings == nil {
 		return 0
 	}
@@ -160,9 +154,9 @@ type sdfKernEntry struct {
 	Amount int16 `json:"amount"`
 }
 
-// LoadDistanceFieldFont parses SDF font metrics JSON and returns a DistanceFieldFont.
+// loadDistanceFieldFont parses SDF font metrics JSON and returns a distanceFieldFont.
 // The pageIndex specifies which atlas page the SDF glyphs are on.
-func LoadDistanceFieldFont(jsonData []byte, pageIndex uint16) (*DistanceFieldFont, error) {
+func loadDistanceFieldFont(jsonData []byte, pageIndex uint16) (*distanceFieldFont, error) {
 	var m sdfMetrics
 	if err := json.Unmarshal(jsonData, &m); err != nil {
 		return nil, fmt.Errorf("text: failed to parse SDF metrics JSON: %w", err)
@@ -178,7 +172,7 @@ func LoadDistanceFieldFont(jsonData []byte, pageIndex uint16) (*DistanceFieldFon
 		m.DistanceRange = 6
 	}
 
-	f := &DistanceFieldFont{
+	f := &distanceFieldFont{
 		lineHeight:    m.LineHeight,
 		base:          m.Base,
 		fontSize:      m.Size,

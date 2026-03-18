@@ -194,9 +194,7 @@ func EnsureSDFShader() *ebiten.Shader {
 	return sdfShader
 }
 
-// EnsureMSDFShader lazily compiles and returns the multi-channel SDF shader.
 // EnsureMSDFShader lazily compiles the multi-channel SDF shader.
-// EXPERIMENTAL — see MsdfShaderSrc comment.
 func EnsureMSDFShader() *ebiten.Shader {
 	if msdfShader == nil {
 		s, err := ebiten.NewShader([]byte(MsdfShaderSrc))
@@ -209,25 +207,31 @@ func EnsureMSDFShader() *ebiten.Shader {
 }
 
 // EnsureUniforms builds or updates the cached uniform map for the SDF shader.
-func EnsureUniforms(tb *text.TextBlock, f *text.DistanceFieldFont, displayScale float64) {
+func EnsureUniforms(tb *text.TextBlock, displayScale float64) {
+	ff := tb.Font
+	if ff == nil {
+		return
+	}
+
+	distRange := ff.SDFDistanceRange(tb.FontSize, tb.Bold, tb.Italic)
+	isMultiChannel := ff.SDFIsMultiChannel(tb.FontSize, tb.Bold, tb.Italic)
+	sdfFontSize := ff.SDFFontSize(tb.FontSize, tb.Bold, tb.Italic)
+
 	smoothMult := 1.5
 	if tb.Sharpness > 0 {
 		s := tb.Sharpness
 		if s > 1 {
 			s = 1
 		}
-		smoothMult = 1.5 - s*1.0 // 1.5 at Sharpness=0, 0.5 at Sharpness=1
+		smoothMult = 1.5 - s*1.0
 		if smoothMult < 0.5 {
 			smoothMult = 0.5
 		}
 	}
-	smoothing := float32(smoothMult / (f.DistanceRange() * displayScale))
+	smoothing := float32(smoothMult / (distRange * displayScale))
 
 	threshold := float32(0.5)
-	if !f.IsMultiChannel() && tb.FontSize > 0 && tb.FontSize < 24 {
-		// SDF-only: shift threshold for small sizes to compensate for
-		// distance field precision loss. MSDF uses screenPxRange instead,
-		// which handles small sizes via its minimum clamp of 1.0.
+	if !isMultiChannel && tb.FontSize > 0 && tb.FontSize < 24 {
 		t := tb.FontSize / 24
 		threshold = float32(0.30 + 0.20*t)
 	}
@@ -247,16 +251,13 @@ func EnsureUniforms(tb *text.TextBlock, f *text.DistanceFieldFont, displayScale 
 
 	tb.SdfUniforms["Smoothing"] = smoothing
 
-	// Compute ScreenPxRange for MSDF (msdfgen-recommended approach).
-	// screenPxRange = distanceRange * displayScale * fontScale
-	// This converts distance-field values to screen-pixel distances.
 	var screenPxRange float32
-	if f.IsMultiChannel() {
+	if isMultiChannel {
 		fontScale := float64(1.0)
-		if tb.FontSize > 0 && f.FontSize() > 0 {
-			fontScale = tb.FontSize / f.FontSize()
+		if tb.FontSize > 0 && sdfFontSize > 0 {
+			fontScale = tb.FontSize / sdfFontSize
 		}
-		screenPxRange = float32(f.DistanceRange() * displayScale * fontScale)
+		screenPxRange = float32(distRange * displayScale * fontScale)
 		if screenPxRange < 1.0 {
 			screenPxRange = 1.0
 		}
@@ -280,7 +281,6 @@ func EnsureUniforms(tb *text.TextBlock, f *text.DistanceFieldFont, displayScale 
 
 	if tb.TextEffects != nil {
 		e := tb.TextEffects
-		distRange := f.DistanceRange()
 		tb.SdfUniforms["OutlineWidth"] = float32(e.OutlineWidth / distRange)
 		tb.SdfUniforms["OutlineColor"] = []float32{
 			float32(e.OutlineColor.R() * e.OutlineColor.A()),
@@ -308,7 +308,7 @@ func EnsureUniforms(tb *text.TextBlock, f *text.DistanceFieldFont, displayScale 
 		tb.SdfUniforms["ShadowSoftness"] = float32(e.ShadowSoftness / distRange)
 	}
 
-	if f.IsMultiChannel() {
+	if isMultiChannel {
 		tb.SdfShader = EnsureMSDFShader()
 	} else {
 		tb.SdfShader = EnsureSDFShader()
@@ -317,18 +317,18 @@ func EnsureUniforms(tb *text.TextBlock, f *text.DistanceFieldFont, displayScale 
 
 // EmitSDFTextCommand emits a CommandSDF carrying local-space glyph quads.
 func EmitSDFTextCommand(tb *text.TextBlock, n *node.Node, worldTransform [6]float64, commands []RenderCommand, treeOrder *int) []RenderCommand {
+	if tb.Font == nil || tb.Font.IsPixelMode() {
+		return commands
+	}
+
 	tb.Layout()
 	if tb.MeasuredW == 0 || tb.MeasuredH == 0 {
 		return commands
 	}
 
-	f, ok := tb.Font.(*text.DistanceFieldFont)
-	if !ok {
-		return commands
-	}
-
 	if tb.SdfVertCount == 0 || len(tb.SdfVerts) == 0 {
-		tb.RebuildLocalVerts(f.LineHeight())
+		lineH := tb.Font.SDFLineHeight(tb.FontSize, tb.Bold, tb.Italic)
+		tb.RebuildLocalVerts(lineH)
 	}
 	if tb.SdfVertCount == 0 {
 		return commands
@@ -338,7 +338,8 @@ func EmitSDFTextCommand(tb *text.TextBlock, n *node.Node, worldTransform [6]floa
 	fst := [6]float64{fontScale, 0, 0, fontScale, 0, 0}
 	scaledWT := node.MultiplyAffine(worldTransform, fst)
 
-	atlasImg := resolveAtlasPage(f.Page())
+	page := tb.Font.SDFPage(tb.FontSize, tb.Bold, tb.Italic)
+	atlasImg := resolveAtlasPage(page)
 	if atlasImg == nil {
 		return commands
 	}
@@ -347,7 +348,7 @@ func EmitSDFTextCommand(tb *text.TextBlock, n *node.Node, worldTransform [6]floa
 	if displayScale < 0.05 {
 		displayScale = 0.05
 	}
-	EnsureUniforms(tb, f, displayScale)
+	EnsureUniforms(tb, displayScale)
 
 	*treeOrder++
 	commands = append(commands, RenderCommand{
@@ -377,18 +378,18 @@ func EmitSDFTextCommand(tb *text.TextBlock, n *node.Node, worldTransform [6]floa
 
 // EmitPixelTextCommand emits a CommandBitmapText for pixel-perfect bitmap font rendering.
 func EmitPixelTextCommand(tb *text.TextBlock, n *node.Node, worldTransform [6]float64, commands []RenderCommand, treeOrder *int) []RenderCommand {
+	if tb.Font == nil || !tb.Font.IsPixelMode() {
+		return commands
+	}
+
 	tb.Layout()
 	if tb.MeasuredW == 0 || tb.MeasuredH == 0 {
 		return commands
 	}
 
-	f, ok := tb.Font.(*text.PixelFont)
-	if !ok {
-		return commands
-	}
-
 	if tb.SdfVertCount == 0 || len(tb.SdfVerts) == 0 {
-		tb.RebuildLocalVerts(float64(f.CellH))
+		_, cellH := tb.Font.PixelCellSize()
+		tb.RebuildLocalVerts(float64(cellH))
 	}
 	if tb.SdfVertCount == 0 {
 		return commands
@@ -398,7 +399,7 @@ func EmitPixelTextCommand(tb *text.TextBlock, n *node.Node, worldTransform [6]fl
 	fst := [6]float64{s, 0, 0, s, 0, 0}
 	scaledWT := node.MultiplyAffine(worldTransform, fst)
 
-	atlasImg := resolveAtlasPage(f.Page)
+	atlasImg := resolveAtlasPage(tb.Font.PixelPage())
 	if atlasImg == nil {
 		return commands
 	}

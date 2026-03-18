@@ -6,7 +6,7 @@ import (
 	"github.com/devthicket/willow/internal/mesh"
 	"github.com/devthicket/willow/internal/node"
 	"github.com/devthicket/willow/internal/particle"
-	"github.com/devthicket/willow/internal/text"
+
 	"github.com/devthicket/willow/internal/types"
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -653,7 +653,7 @@ func EmitNodeCommand(p *Pipeline, n *node.Node, transform [6]float64, alpha floa
 
 	case types.NodeTypeText:
 		if n.TextBlock != nil && n.TextBlock.Font != nil {
-			if text.IsPixelFont(n.TextBlock.Font) {
+			if n.TextBlock.Font.IsPixelMode() {
 				p.Commands = EmitPixelTextCommand(n.TextBlock, n, transform, p.Commands, treeOrder)
 			} else {
 				p.Commands = EmitSDFTextCommand(n.TextBlock, n, transform, p.Commands, treeOrder)

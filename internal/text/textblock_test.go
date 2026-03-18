@@ -37,7 +37,6 @@ func TestTextBlock_EffectiveLineHeight_Override(t *testing.T) {
 }
 
 func TestTextBlock_LayoutSDF_Simple(t *testing.T) {
-	// Create a simple glyph lookup for 'A' and 'B'
 	glyphs := map[rune]*Glyph{
 		'A': {ID: 'A', X: 0, Y: 0, Width: 10, Height: 12, XAdvance: 11},
 		'B': {ID: 'B', X: 10, Y: 0, Width: 10, Height: 12, XAdvance: 11},
@@ -46,10 +45,10 @@ func TestTextBlock_LayoutSDF_Simple(t *testing.T) {
 	kern := func(a, b rune) int16 { return 0 }
 
 	tb := &TextBlock{
-		Content:  "AB",
-		FontSize: 12,
-		Font:     &mockFont{lineHeight: 12},
-		Color:    types.RGB(1, 1, 1),
+		Content:    "AB",
+		FontSize:   12,
+		LineHeight: 12,
+		Color:      types.RGB(1, 1, 1),
 	}
 	tb.LayoutSDF(lookup, kern, 0)
 
@@ -69,10 +68,10 @@ func TestTextBlock_LayoutSDF_Newline(t *testing.T) {
 	kern := func(a, b rune) int16 { return 0 }
 
 	tb := &TextBlock{
-		Content:  "A\nA",
-		FontSize: 12,
-		Font:     &mockFont{lineHeight: 12},
-		Color:    types.RGB(1, 1, 1),
+		Content:    "A\nA",
+		FontSize:   12,
+		LineHeight: 12,
+		Color:      types.RGB(1, 1, 1),
 	}
 	tb.LayoutSDF(lookup, kern, 0)
 
@@ -95,21 +94,10 @@ func TestTextBlock_RebuildLocalVerts(t *testing.T) {
 	}
 	tb.RebuildLocalVerts(12)
 
-	if tb.SdfVertCount != 8 { // 2 glyphs * 4 verts
+	if tb.SdfVertCount != 8 {
 		t.Errorf("SdfVertCount = %d, want 8", tb.SdfVertCount)
 	}
-	if tb.SdfIndCount != 12 { // 2 glyphs * 6 indices
+	if tb.SdfIndCount != 12 {
 		t.Errorf("SdfIndCount = %d, want 12", tb.SdfIndCount)
 	}
 }
-
-// mockFont implements Font for testing.
-type mockFont struct {
-	lineHeight float64
-}
-
-func (f *mockFont) MeasureString(text string) (float64, float64) {
-	return float64(len(text)) * 10, f.lineHeight
-}
-
-func (f *mockFont) LineHeight() float64 { return f.lineHeight }
