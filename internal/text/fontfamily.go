@@ -57,9 +57,11 @@ type fontEntry struct {
 // resolve returns the best distanceFieldFont for the given display size.
 // Picks the smallest bake where bake >= displaySize*4; falls back to the largest.
 func (s *fontStyleSlot) resolve(displaySize float64) *distanceFieldFont {
-	threshold := displaySize * 4
+	// Pick the smallest bake that is at least as large as the display size so
+	// the SDF atlas is never scaled up (which blurs edges). If every bake is
+	// smaller than the display size, fall back to the largest available.
 	for _, e := range s.entries {
-		if e.bake >= threshold {
+		if e.bake >= displaySize {
 			return e.font
 		}
 	}
@@ -131,6 +133,18 @@ func (ff *FontFamily) measureString(text string, displaySize float64, bold, ital
 		return 0, 0
 	}
 	return f.MeasureString(text)
+}
+
+// --- Exported measurement methods ---
+
+// LineHeight returns the font's native line height in atlas pixels for the resolved style.
+func (ff *FontFamily) LineHeight(displaySize float64, bold, italic bool) float64 {
+	return ff.lineHeight(displaySize, bold, italic)
+}
+
+// MeasureString returns the width and height of text in atlas pixels for the resolved style.
+func (ff *FontFamily) MeasureString(text string, displaySize float64, bold, italic bool) (w, h float64) {
+	return ff.measureString(text, displaySize, bold, italic)
 }
 
 // --- Exported render accessors (used by internal/render) ---
@@ -431,6 +445,14 @@ func NewFontFamilyFromFontBundle(data []byte) (*FontFamily, error) {
 		sortSlot(ff.boldItalic)
 	}
 	return ff, nil
+}
+
+// TrimCell trims pixels from each side of every pixel-font cell.
+// No-op if this FontFamily was not created from a pixel font.
+func (ff *FontFamily) TrimCell(top, right, bottom, left int) {
+	if ff.pixel != nil {
+		ff.pixel.TrimCell(top, right, bottom, left)
+	}
 }
 
 // Atlases returns all retained raw PNG+JSON atlas entries (for fontgen CLI).
