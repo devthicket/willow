@@ -55,13 +55,22 @@ type fontEntry struct {
 }
 
 // resolve returns the best distanceFieldFont for the given display size.
-// Picks the smallest bake where bake >= displaySize*4; falls back to the largest.
+//
+// SDF quality depends on the ratio of atlas pixels to display pixels at the
+// glyph edge. Each SDF pixel encodes a distance sample; more samples per
+// display pixel lets the shader interpolate the edge position with sub-pixel
+// precision, producing smoother anti-aliasing. At a 1:1 ratio the shader has
+// only one distance sample per pixel, so edge transitions are coarse.
+//
+// A 4:1 ratio (bake >= displaySize*4) gives 16 samples per display pixel,
+// which is enough for visually smooth curves at all common font sizes. Below
+// that threshold quality degrades noticeably, especially on diagonal strokes.
+//
+// Falls back to the largest available bake when no bake meets the threshold.
 func (s *fontStyleSlot) resolve(displaySize float64) *distanceFieldFont {
-	// Pick the smallest bake that is at least as large as the display size so
-	// the SDF atlas is never scaled up (which blurs edges). If every bake is
-	// smaller than the display size, fall back to the largest available.
+	threshold := displaySize * 4
 	for _, e := range s.entries {
-		if e.bake >= displaySize {
+		if e.bake >= threshold {
 			return e.font
 		}
 	}
@@ -145,6 +154,21 @@ func (ff *FontFamily) LineHeight(displaySize float64, bold, italic bool) float64
 // MeasureString returns the width and height of text in atlas pixels for the resolved style.
 func (ff *FontFamily) MeasureString(text string, displaySize float64, bold, italic bool) (w, h float64) {
 	return ff.measureString(text, displaySize, bold, italic)
+}
+
+// TTFData returns the original TTF/OTF byte data for the resolved style variant.
+// Returns nil for pixel fonts or if no TTF data was retained.
+func (ff *FontFamily) TTFData(bold, italic bool) []byte {
+	if ff.isPixelMode() {
+		return nil
+	}
+	// Use a large displaySize so we always get a font (doesn't matter which bake
+	// since they all share the same TTF data).
+	f := ff.resolveDF(256, bold, italic)
+	if f == nil {
+		return nil
+	}
+	return f.TTFData()
 }
 
 // --- Exported render accessors (used by internal/render) ---
@@ -344,6 +368,7 @@ func NewFontFamilyFromFontBundle(data []byte) (*FontFamily, error) {
 
 	pngs := make(map[string][]byte)
 	jsons := make(map[string][]byte)
+	ttfs := make(map[string][]byte) // {style}.ttf entries
 	for _, f := range zr.File {
 		rc, err := f.Open()
 		if err != nil {
@@ -360,6 +385,8 @@ func NewFontFamilyFromFontBundle(data []byte) (*FontFamily, error) {
 			pngs[strings.TrimSuffix(f.Name, ".png")] = buf.Bytes()
 		case strings.HasSuffix(f.Name, ".json"):
 			jsons[strings.TrimSuffix(f.Name, ".json")] = buf.Bytes()
+		case strings.HasSuffix(f.Name, ".ttf"):
+			ttfs[strings.TrimSuffix(f.Name, ".ttf")] = buf.Bytes()
 		}
 	}
 
@@ -391,6 +418,11 @@ func NewFontFamilyFromFontBundle(data []byte) (*FontFamily, error) {
 		f, err := loadDistanceFieldFont(jsonData, pageIndex)
 		if err != nil {
 			return nil, fmt.Errorf("fontbundle: load font %s: %w", base, err)
+		}
+
+		// Set TTF data if the bundle includes it (for offscreen rendering).
+		if ttfData, ok := ttfs[style]; ok {
+			f.SetTTFData(ttfData)
 		}
 
 		fsStyle := FontStyleRegular

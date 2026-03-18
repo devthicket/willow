@@ -86,6 +86,19 @@ func Bundle(styles []StyleData, opts Options) ([]byte, error) {
 	zw := zip.NewWriter(&buf)
 
 	for _, style := range styles {
+		// Include raw TTF data (deflate-compressed) so fontbundles can be used
+		// for offscreen text rendering (e.g. RichText GoTextFace path).
+		ttfW, err := zw.CreateHeader(&zip.FileHeader{
+			Name:   style.Label + ".ttf",
+			Method: zip.Deflate,
+		})
+		if err != nil {
+			return nil, err
+		}
+		if _, err := ttfW.Write(style.TTFData); err != nil {
+			return nil, err
+		}
+
 		for _, size := range opts.BakeSizes {
 			distRange := size * 0.125
 			if opts.DistanceRange > 0 {
