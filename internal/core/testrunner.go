@@ -43,6 +43,14 @@ type TestRunner struct {
 	Cursor    int
 	WaitCount int
 	IsDone    bool
+
+	// Auto-release keys: key action does key_down + auto key_up after 2 frames.
+	pendingUps []pendingKeyUp
+}
+
+type pendingKeyUp struct {
+	key    string
+	frames int
 }
 
 // LoadTestScript parses a JSON test script and returns a TestRunner.
@@ -73,11 +81,24 @@ type StepAction struct {
 	InjectMove  func(x, y float64)
 	InjectText  func(text string)
 	InjectKey   func(key string)
+	KeyDown     func(key string)
+	KeyUp       func(key string)
 	QueueLen    func() int
 }
 
 // Step advances the test runner by one frame.
 func (r *TestRunner) Step(a StepAction) {
+	// Tick pending auto-release keys.
+	for i := len(r.pendingUps) - 1; i >= 0; i-- {
+		r.pendingUps[i].frames--
+		if r.pendingUps[i].frames <= 0 {
+			if a.KeyUp != nil {
+				a.KeyUp(r.pendingUps[i].key)
+			}
+			r.pendingUps = append(r.pendingUps[:i], r.pendingUps[i+1:]...)
+		}
+	}
+
 	if r.IsDone {
 		return
 	}
@@ -116,8 +137,17 @@ func (r *TestRunner) Step(a StepAction) {
 			a.InjectText(st.Text)
 		}
 	case "key":
-		if a.InjectKey != nil {
-			a.InjectKey(st.Key)
+		if a.KeyDown != nil {
+			a.KeyDown(st.Key)
+			r.pendingUps = append(r.pendingUps, pendingKeyUp{key: st.Key, frames: 2})
+		}
+	case "key_down":
+		if a.KeyDown != nil {
+			a.KeyDown(st.Key)
+		}
+	case "key_up":
+		if a.KeyUp != nil {
+			a.KeyUp(st.Key)
 		}
 	case "start_gif":
 		if a.StartGif != nil {

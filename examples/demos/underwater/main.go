@@ -6,6 +6,8 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"image"
 	"log"
 	"math"
@@ -36,8 +38,9 @@ const (
 )
 
 type demo struct {
-	scene *willow.Scene
-	time  float64
+	scene    *willow.Scene
+	time     float64
+	autoAnim bool // when true, orbit porthole automatically instead of following cursor
 
 	// Porthole tracking  -  move together with the cursor
 	maskChild         *willow.Node // circle inside underwater mask container
@@ -69,8 +72,15 @@ func (d *demo) update() error {
 	d.time += dt
 	t := d.time
 	// --- Track cursor for porthole + surface hole + ring ---
-	mx, my := ebiten.CursorPosition()
-	cx, cy := float64(mx), float64(my)
+	var cx, cy float64
+	if d.autoAnim {
+		// Auto-orbit the porthole around center for GIF recording.
+		cx = screenW/2 + 120*math.Cos(t*0.4)
+		cy = screenH/2 + 80*math.Sin(t*0.35)
+	} else {
+		mx, my := ebiten.CursorPosition()
+		cx, cy = float64(mx), float64(my)
+	}
 	d.maskChild.SetPosition(cx, cy)
 	d.surfaceEraseChild.SetPosition(cx, cy)
 	d.surfaceEraseHole2.SetPosition(cx, cy)
@@ -162,6 +172,9 @@ func (d *demo) update() error {
 }
 
 func main() {
+	autotest := flag.String("autotest", "", "path to test script JSON (run and exit)")
+	flag.Parse()
+
 	// --- Load assets ---
 	tf, err := os.Open("examples/_assets/tileset.png")
 	if err != nil {
@@ -234,7 +247,7 @@ func main() {
 	cam.Y = screenH / 2
 	cam.Invalidate()
 
-	d := &demo{scene: scene}
+	d := &demo{scene: scene, autoAnim: *autotest != ""}
 
 	// --- Underwater container (masked by porthole circle) ---
 	underwaterContainer := willow.NewContainer("underwater")
@@ -422,7 +435,30 @@ func main() {
 	hint.SetZIndex(70)
 	scene.Root.AddChild(hint)
 
-	scene.SetUpdateFunc(d.update)
+	if *autotest != "" {
+		scriptData, err := os.ReadFile(*autotest)
+		if err != nil {
+			log.Fatalf("read test script: %v", err)
+		}
+		runner, err := willow.LoadTestScript(scriptData)
+		if err != nil {
+			log.Fatalf("parse test script: %v", err)
+		}
+		scene.SetTestRunner(runner)
+		scene.ScreenshotDir = "screenshots"
+		scene.SetUpdateFunc(func() error {
+			if err := d.update(); err != nil {
+				return err
+			}
+			if runner.Done() {
+				fmt.Println("Autotest complete.")
+				return ebiten.Termination
+			}
+			return nil
+		})
+	} else {
+		scene.SetUpdateFunc(d.update)
+	}
 
 	if err := willow.Run(scene, willow.RunConfig{
 		Title:   windowTitle,

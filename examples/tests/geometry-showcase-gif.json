@@ -1,0 +1,8 @@
+{
+  "steps": [
+    {"action": "wait", "frames": 10},
+    {"action": "start_gif", "label": "geometry-showcase", "fps": 24, "maxColors": 128, "maxWidth": 320, "maxHeight": 320, "x": 500, "y": 60, "width": 240, "height": 240},
+    {"action": "wait", "frames": 360},
+    {"action": "stop_gif"}
+  ]
+}

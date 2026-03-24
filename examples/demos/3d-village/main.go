@@ -8,10 +8,11 @@
 // down at it. The low angle makes buildings feel tall and dramatic.
 //
 // Controls:
-//   W/S or ↑/↓  – move forward/back
-//   A/D          – strafe left/right
-//   Q/E or ←/→  – turn left/right
-//   R/F          – pitch up/down
+//
+//	W/S or ↑/↓  – move forward/back
+//	A/D          – strafe left/right
+//	Q/E or ←/→  – turn left/right
+//	R/F          – pitch up/down
 package main
 
 import (
@@ -27,8 +28,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/devthicket/willow"
+	"github.com/hajimehoshi/ebiten/v2"
 )
 
 // runtimeCaller is an alias so dumpCamera can call runtime.Caller without
@@ -55,13 +56,14 @@ type col3 struct{ r, g, b uint8 }
 
 func c(r, g, b uint8) col3 { return col3{r, g, b} }
 
-
 // ── Geometry types ────────────────────────────────────────────────────────────
 
 type vec3 struct{ x, y, z float64 }
 
-func (a vec3) sub(b vec3) vec3   { return vec3{a.x - b.x, a.y - b.y, a.z - b.z} }
-func (a vec3) cross(b vec3) vec3 { return vec3{a.y*b.z - a.z*b.y, a.z*b.x - a.x*b.z, a.x*b.y - a.y*b.x} }
+func (a vec3) sub(b vec3) vec3 { return vec3{a.x - b.x, a.y - b.y, a.z - b.z} }
+func (a vec3) cross(b vec3) vec3 {
+	return vec3{a.y*b.z - a.z*b.y, a.z*b.x - a.x*b.z, a.x*b.y - a.y*b.x}
+}
 func (a vec3) dot(b vec3) float64 { return a.x*b.x + a.y*b.y + a.z*b.z }
 
 // A triangle with a flat colour.
@@ -334,16 +336,12 @@ type game struct {
 	tabWasDown bool
 
 	// Mouse camera control
-	mouseLastX  int
-	mouseLastY  int
-	mouseDrag   bool
+	mouseLastX int
+	mouseLastY int
+	mouseDrag  bool
 
 	// F5 dump
 	f5WasDown bool
-
-	// Autotest autopilot
-	autopilot    bool
-	autopilotTick int
 }
 
 func newGame() *game {
@@ -390,46 +388,20 @@ func (g *game) update() error {
 	const moveSpeed = 0.1
 
 	// ── Tab: toggle scene ────────────────────────────────────────────────────
-	if ebiten.IsKeyPressed(ebiten.KeyTab) && !g.tabWasDown {
+	if g.willow.IsKeyPressed(ebiten.KeyTab) && !g.tabWasDown {
 		next := "tavern.scene"
 		if g.sceneName == "tavern.scene" {
 			next = "village.scene"
 		}
 		g.loadNamedScene(next)
 	}
-	g.tabWasDown = ebiten.IsKeyPressed(ebiten.KeyTab)
+	g.tabWasDown = g.willow.IsKeyPressed(ebiten.KeyTab)
 
 	// ── F5: dump camera ──────────────────────────────────────────────────────
 	if ebiten.IsKeyPressed(ebiten.KeyF5) && !g.f5WasDown {
 		g.dumpCamera()
 	}
 	g.f5WasDown = ebiten.IsKeyPressed(ebiten.KeyF5)
-
-	// ── Autopilot: walk forward, switch scene at 1 second ────────────────────
-	if g.autopilot {
-		g.autopilotTick++
-
-		// Walk forward continuously
-		cp, sp := math.Cos(g.camPitch), math.Sin(g.camPitch)
-		sy, cy := math.Sin(g.camYaw), math.Cos(g.camYaw)
-		g.camPos.x += sy * cp * moveSpeed
-		g.camPos.y += sp * moveSpeed
-		g.camPos.z += cy * cp * moveSpeed
-
-		// Switch to village scene at ~1 second
-		if g.autopilotTick == 60 {
-			g.loadNamedScene("village.scene")
-		}
-
-		// Exit after ~3 seconds
-		if g.autopilotTick >= 180 {
-			g.willow.StopGif()
-			return ebiten.Termination
-		}
-
-		g.render()
-		return nil
-	}
 
 	// ── Right-click drag: look (WoW style) ───────────────────────────────────
 	mx, my := ebiten.CursorPosition()
@@ -439,7 +411,6 @@ func (g *game) update() error {
 			dy := my - g.mouseLastY
 			g.camYaw += float64(dx) * 0.005
 			g.camPitch += float64(dy) * 0.004
-			// clamp pitch so we don't flip over
 			g.camPitch = math.Max(-math.Pi/2+0.05, math.Min(math.Pi/2-0.05, g.camPitch))
 		}
 		g.mouseDrag = true
@@ -462,30 +433,30 @@ func (g *game) update() error {
 	// ── WASD: move along full look vector (pitch included) ──────────────────
 	cp, sp := math.Cos(g.camPitch), math.Sin(g.camPitch)
 	sy, cy := math.Sin(g.camYaw), math.Cos(g.camYaw)
-	if ebiten.IsKeyPressed(ebiten.KeyW) {
+	if g.willow.IsKeyPressed(ebiten.KeyW) {
 		g.camPos.x += sy * cp * moveSpeed
 		g.camPos.y += sp * moveSpeed
 		g.camPos.z += cy * cp * moveSpeed
 	}
-	if ebiten.IsKeyPressed(ebiten.KeyS) {
+	if g.willow.IsKeyPressed(ebiten.KeyS) {
 		g.camPos.x -= sy * cp * moveSpeed
 		g.camPos.y -= sp * moveSpeed
 		g.camPos.z -= cy * cp * moveSpeed
 	}
-	if ebiten.IsKeyPressed(ebiten.KeyA) {
+	if g.willow.IsKeyPressed(ebiten.KeyA) {
 		g.camPos.x -= cy * moveSpeed
 		g.camPos.z += sy * moveSpeed
 	}
-	if ebiten.IsKeyPressed(ebiten.KeyD) {
+	if g.willow.IsKeyPressed(ebiten.KeyD) {
 		g.camPos.x += cy * moveSpeed
 		g.camPos.z -= sy * moveSpeed
 	}
 
 	// ── Space / Shift: fly up / down ─────────────────────────────────────────
-	if ebiten.IsKeyPressed(ebiten.KeySpace) {
+	if g.willow.IsKeyPressed(ebiten.KeySpace) {
 		g.camPos.y += moveSpeed
 	}
-	if ebiten.IsKeyPressed(ebiten.KeyShiftLeft) || ebiten.IsKeyPressed(ebiten.KeyShiftRight) {
+	if g.willow.IsKeyPressed(ebiten.KeyShiftLeft) || g.willow.IsKeyPressed(ebiten.KeyShiftRight) {
 		g.camPos.y -= moveSpeed
 	}
 
@@ -1026,7 +997,6 @@ func main() {
 	g := newGame()
 
 	if *autotest != "" {
-		g.autopilot = true
 		scriptData, err := os.ReadFile(*autotest)
 		if err != nil {
 			log.Fatalf("read test script: %v", err)
