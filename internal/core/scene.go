@@ -1,7 +1,9 @@
 package core
 
 import (
+	"fmt"
 	"image"
+	"os"
 	"time"
 
 	"github.com/devthicket/willow/internal/camera"
@@ -53,6 +55,9 @@ type Scene struct {
 	// Screenshot capture
 	ScreenshotQueue []string
 	ScreenshotDir   string
+
+	// GIF recording
+	GifRecorder *GifRecorder
 
 	// Test runner
 	TestRunnerRef *TestRunner
@@ -211,6 +216,33 @@ func (s *Scene) RegisterPage(index int, img *ebiten.Image) {
 // Screenshot queues a labeled screenshot to be captured at the end of Draw.
 func (s *Scene) Screenshot(label string) {
 	s.ScreenshotQueue = append(s.ScreenshotQueue, label)
+}
+
+// --- GIF recording ---
+
+// StartGif begins recording frames as an animated GIF.
+func (s *Scene) StartGif(label string) {
+	s.StartGifWithConfig(label, GifConfig{})
+}
+
+// StartGifWithConfig begins recording with custom settings.
+func (s *Scene) StartGifWithConfig(label string, cfg GifConfig) {
+	if s.GifRecorder != nil {
+		return // already recording
+	}
+	dir := s.ScreenshotDir
+	s.GifRecorder = NewGifRecorder(label, dir, cfg)
+}
+
+// StopGif ends recording and writes the GIF file.
+func (s *Scene) StopGif() {
+	if s.GifRecorder == nil {
+		return
+	}
+	if err := s.GifRecorder.Finish(); err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "[willow] gif: %v\n", err)
+	}
+	s.GifRecorder = nil
 }
 
 // --- Test runner ---
@@ -452,6 +484,8 @@ func (s *Scene) Update() {
 	if s.TestRunnerRef != nil {
 		s.TestRunnerRef.Step(StepAction{
 			Screenshot:  s.Screenshot,
+			StartGif:    s.StartGif,
+			StopGif:     s.StopGif,
 			InjectClick: s.Input.InjectClick,
 			InjectDrag:  s.Input.InjectDrag,
 			InjectMove:  s.Input.InjectHover,
@@ -486,6 +520,10 @@ func (s *Scene) Draw(screen *ebiten.Image) {
 			)).(*ebiten.Image)
 			s.drawWithCamera(viewportImg, cam)
 		}
+	}
+
+	if s.GifRecorder != nil {
+		s.GifRecorder.CaptureFrame(screen)
 	}
 
 	FlushScreenshots(screen, s.ScreenshotQueue, s.ScreenshotDir)

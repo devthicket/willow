@@ -29,6 +29,43 @@ const (
 // MaxTilesPerDraw is the maximum number of tiles per DrawTriangles call.
 const MaxTilesPerDraw = 16383
 
+// RegionsFromGrid builds a TextureRegion slice from a regular grid tileset.
+// Index 0 is a zero region (empty tile); indices 1..count map to tiles in
+// row-major order.  Margin is the outer border; spacing is the gap between tiles.
+func RegionsFromGrid(columns, tileW, tileH, margin, spacing, count int) []types.TextureRegion {
+	regions := make([]types.TextureRegion, count+1)
+	for i := 0; i < count; i++ {
+		col := i % columns
+		row := i / columns
+		x := margin + col*(tileW+spacing)
+		y := margin + row*(tileH+spacing)
+		regions[i+1] = types.TextureRegion{
+			X:         uint16(x),
+			Y:         uint16(y),
+			Width:     uint16(tileW),
+			Height:    uint16(tileH),
+			OriginalW: uint16(tileW),
+			OriginalH: uint16(tileH),
+		}
+	}
+	return regions
+}
+
+// EncodeGID combines a tile ID with flip flags into a single uint32 GID.
+func EncodeGID(tileID uint32, flipH, flipV, flipD bool) uint32 {
+	gid := tileID
+	if flipH {
+		gid |= TileFlipH
+	}
+	if flipV {
+		gid |= TileFlipV
+	}
+	if flipD {
+		gid |= TileFlipD
+	}
+	return gid
+}
+
 // AnimFrame describes a single frame in a tile animation sequence.
 type AnimFrame struct {
 	GID      uint32 // tile GID for this frame (no flag bits)

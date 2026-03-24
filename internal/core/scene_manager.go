@@ -196,11 +196,11 @@ func (sm *SceneManager) doReplace(scene *Scene) {
 
 // FadeTransition fades through a solid color (typically black).
 type FadeTransition struct {
-	dur     float32
-	elapsed float32
-	col     color.Color
-	done    bool
-	overlay *ebiten.Image // lazily allocated, reused across frames
+	dur                float32
+	elapsed            float32
+	col                color.Color
+	done               bool
+	overlay            *ebiten.Image // lazily allocated, reused across frames
 	overlayW, overlayH int
 }
 

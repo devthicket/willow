@@ -1,0 +1,6 @@
+{
+  "steps": [
+    {"action": "wait", "frames": 30},
+    {"action": "screenshot", "label": "tiled-full-map"}
+  ]
+}

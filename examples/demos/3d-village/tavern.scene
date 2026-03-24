@@ -1,0 +1,215 @@
+# Tavern Interior — Willow testbed scene
+# Diorama / top-down RPG view: south wall and east wall removed, no ceiling.
+# Camera sits elevated outside the open corner looking in.
+# Room: X=0..10, Z=0..8, Y=0..2.6  (Z=0 = entrance, Z=8 = bar wall)
+# ─────────────────────────────────────────────────────────────────────────────
+
+camera  pos=14.529,7.994,-4.852  yaw=-0.7050  pitch=-0.5420
+
+# ── Palette ───────────────────────────────────────────────────────────────────
+
+sky          = #120e08
+
+# Floor
+floor_a      = #5c3e1e
+floor_b      = #4a3016
+
+# Ceiling
+ceil_dk      = #1a1008
+
+# Beams
+beam         = #3c2a12
+beam_dk      = #2e2008
+
+# Walls — stone lower, wood upper
+wall_stone   = #7a7060
+wall_stone_l = #6a6050
+wall_stone_r = #5c5448
+wall_wood    = #8a6438
+wall_wood_l  = #7a5630
+wall_wood_r  = #6c4a28
+
+# Bar
+bar_face     = #3e2810
+bar_side     = #4e3418
+bar_top      = #6c4e2c
+shelf_col    = #4a3418
+
+# Stools
+stool_col    = #5e4020
+stool_top    = #7a5430
+
+# Tables
+table_col    = #6c4c28
+table_top    = #7e5c34
+
+# Fireplace
+fire_stone   = #807060
+fire_stone_s = #6c6050
+fire_open    = #180a04
+ember        = #e04810
+ember_lo     = #903010
+
+# Rug
+rug_main     = #8c2418
+rug_brd      = #641a10
+
+# Barrels
+barrel       = #5c3e1c
+barrel_dk    = #4a3014
+barrel_band  = #2e1e0c
+
+# Bottles
+bottle_g     = #2e5a1e
+bottle_b     = #1e3c6e
+bottle_a     = #7a4018
+
+# Chandelier
+chain_col    = #6a5830
+lantern_col  = #c89028
+
+# ── Shape definitions ─────────────────────────────────────────────────────────
+
+def barrel  r=0.32  h=0.9 {
+  ngon  cx=0,0  r=$r       y=0..$h      sides=8  col=barrel
+  disk  cx=0,0  r=$r       y=$h         sides=8  col=barrel_dk
+  ngon  cx=0,0  r=$r+0.02  y=0.15..0.2  sides=8  col=barrel_band
+  ngon  cx=0,0  r=$r+0.02  y=$h*0.5-0.02..$h*0.5+0.02  sides=8  col=barrel_band
+  ngon  cx=0,0  r=$r+0.02  y=$h-0.2..$h-0.15  sides=8  col=barrel_band
+}
+
+def stool  r=0.22  h=0.65 {
+  ngon  cx=0,0  r=$r  y=0..$h  sides=6  col=stool_col
+  disk  cx=0,0  r=$r  y=$h     sides=6  col=stool_top
+}
+
+def bottle_g  r=0.055  h=0.52 {
+  ngon  cx=0,0  r=$r       y=0..$h*0.75   sides=6  col=bottle_g
+  ngon  cx=0,0  r=$r*0.55  y=$h*0.75..$h  sides=6  col=bottle_g
+}
+
+def bottle_b  r=0.055  h=0.52 {
+  ngon  cx=0,0  r=$r       y=0..$h*0.75   sides=6  col=bottle_b
+  ngon  cx=0,0  r=$r*0.55  y=$h*0.75..$h  sides=6  col=bottle_b
+}
+
+def bottle_a  r=0.055  h=0.52 {
+  ngon  cx=0,0  r=$r       y=0..$h*0.75   sides=6  col=bottle_a
+  ngon  cx=0,0  r=$r*0.55  y=$h*0.75..$h  sides=6  col=bottle_a
+}
+
+# ── Floor ─────────────────────────────────────────────────────────────────────
+
+quad  x=0,0  to=10,8  y=0       col=floor_a
+fill  x=0,0  to=10,8  y=0.004   col=floor_b  cell=2.5,0.4  pattern=checker
+
+# ── Ceiling removed — diorama/open-top view ──────────────────────────────────
+# Beams remain as exposed structural elements visible from above.
+
+# Beams trimmed to 20% stub from each wall — clear sightlines into the room.
+# Z-direction beams: stub from north wall only (Z=6.4..8)
+box  x=1.7,6.4  to=2.0,8   y=2.25..2.6  col=beam
+box  x=8.0,6.4  to=8.3,8   y=2.25..2.6  col=beam
+
+# Cross beam: stub from west wall only (X=0..2)
+box  x=0,3.9  to=2.0,4.15  y=2.1..2.4  col=beam_dk
+
+# ── Walls — stone lower (y=0..1.2), wood upper (y=1.2..2.6) ──────────────────
+
+# South wall removed — open face toward camera for diorama view
+
+# North wall (bar side, Z=7.75..8)
+box  x=0,7.75  to=10,8    y=0..1.2   col=wall_stone
+box  x=0,7.75  to=10,8    y=1.2..2.6 col=wall_wood
+
+# West wall (left/fireplace side, X=0..0.25)
+box  x=0,0   to=0.25,8   y=0..1.2   col=wall_stone
+box  x=0,0   to=0.25,8   y=1.2..2.6 col=wall_wood
+
+# East wall removed — second open face for diorama corner
+
+# ── Fireplace (west wall, Z=2.4..4.2) ─────────────────────────────────────────
+
+# Stone surround — juts out from west wall
+box   x=0.25,2.2  to=2.0,4.4  y=0..2.1   col=fire_stone,fire_stone,fire_stone_s,fire_stone_s,fire_stone
+# Mantel shelf on top
+box   x=0.2,2.1   to=2.1,4.5  y=2.0..2.2  col=fire_stone
+# Dark opening — recessed into the surround
+box   x=0.2,2.5   to=1.55,4.1  y=0..1.45  col=fire_open
+# Embers floor inside opening
+quad  x=0.25,2.55  to=1.5,4.05  y=0.02   col=ember_lo
+quad  x=0.5,2.8    to=1.3,3.8   y=0.04   col=ember
+
+# ── Rug (centre of room) ──────────────────────────────────────────────────────
+
+# Y offsets to avoid z-fighting with floor at 0 and checker at 0.004
+quad  x=2.8,2.8   to=7.2,5.8  y=0.008  col=rug_main
+quad  x=3.1,3.1   to=6.9,5.5  y=0.012  col=rug_brd
+
+# ── Tables & stools ───────────────────────────────────────────────────────────
+
+# Table 1 (left of room)
+box   x=2.4,3.6   to=4.0,5.1  y=0..0.8  col=table_col
+quad  x=2.2,3.4   to=4.2,5.3  y=0.82    col=table_top
+
+stool  cx=2.0,4.35  r=0.22  h=0.65
+stool  cx=4.4,4.35  r=0.22  h=0.65
+stool  cx=3.2,3.1   r=0.22  h=0.65
+stool  cx=3.2,5.6   r=0.22  h=0.65
+
+# Table 2 (right of room)
+box   x=6.0,3.6   to=7.6,5.1  y=0..0.8  col=table_col
+quad  x=5.8,3.4   to=7.8,5.3  y=0.82    col=table_top
+
+stool  cx=5.6,4.35  r=0.22  h=0.65
+stool  cx=8.0,4.35  r=0.22  h=0.65
+stool  cx=6.8,3.1   r=0.22  h=0.65
+stool  cx=6.8,5.6   r=0.22  h=0.65
+
+# ── Bar counter (along north wall) ────────────────────────────────────────────
+
+# Counter body
+box   x=1.5,6.8   to=8.5,7.55  y=0..1.05  col=bar_face,bar_face,bar_side,bar_side,bar_top
+# Overhang top slab
+box   x=1.3,6.65  to=8.7,7.55  y=1.0..1.12  col=bar_top
+
+# Back shelf — lower run
+box   x=1.8,7.55  to=8.2,7.78  y=1.4..1.7  col=shelf_col
+# Back shelf — upper run
+box   x=2.0,7.55  to=8.0,7.78  y=2.0..2.25  col=shelf_col
+
+# Bottles on lower shelf
+bottle_g  cx=2.4,7.65
+bottle_b  cx=3.0,7.65
+bottle_a  cx=3.6,7.65
+bottle_g  cx=4.3,7.65
+bottle_b  cx=5.0,7.65
+bottle_a  cx=5.7,7.65
+bottle_g  cx=6.4,7.65
+bottle_b  cx=7.1,7.65
+bottle_a  cx=7.7,7.65
+
+# ── Bar stools (facing bar) ───────────────────────────────────────────────────
+
+stool  cx=2.5,6.1  r=0.22  h=0.65
+stool  cx=3.8,6.1  r=0.22  h=0.65
+stool  cx=5.0,6.1  r=0.22  h=0.65
+stool  cx=6.2,6.1  r=0.22  h=0.65
+stool  cx=7.5,6.1  r=0.22  h=0.65
+
+# ── Barrels (east wall alcove) ────────────────────────────────────────────────
+
+barrel  cx=9.3,1.2  r=0.35  h=1.0
+barrel  cx=9.3,2.2  r=0.30  h=0.85
+barrel  cx=9.3,3.1  r=0.35  h=1.0
+# Small barrel stacked on top of the second
+barrel  cx=9.3,2.2  r=0.22  h=0.65
+
+# ── Chandelier (hanging from centre ceiling) ──────────────────────────────────
+
+# Chain (thin column hanging down)
+box   x=4.9,3.9  to=5.1,4.1  y=1.6..2.6  col=chain_col
+# Lantern body
+box   x=4.6,3.6  to=5.4,4.4  y=1.3..1.6  col=lantern_col
+# Lantern roof cap
+roof  cx=5.0,4.0  hw=0.5  hd=0.5  y=1.6..1.9  col=chain_col,chain_col,chain_col,chain_col

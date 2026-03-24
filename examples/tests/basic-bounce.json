@@ -1,0 +1,8 @@
+{
+  "steps": [
+    {"action": "wait", "frames": 5},
+    {"action": "start_gif", "label": "basic-bounce"},
+    {"action": "wait", "frames": 120},
+    {"action": "stop_gif"}
+  ]
+}

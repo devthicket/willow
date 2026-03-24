@@ -1,0 +1,130 @@
+# Village — Willow testbed scene
+# ─────────────────────────────────────────────────────────────────────────────
+
+camera  pos=8.200,4.267,14.913  yaw=3.4500  pitch=-0.4600
+
+# ── Palette ───────────────────────────────────────────────────────────────────
+
+sky          = #12102a
+grass        = #486e30
+grass_dk     = #3a5a26
+road         = #846c4e
+road_dk      = #6c583e
+water        = #346cbe
+water_dk     = #245094
+bridge       = #a28454
+bridge_side  = #806842
+stone        = #8c8476
+
+wall_warm    = #d69c5c
+wall_warm_l  = #ae7e4a
+wall_warm_r  = #946c3e
+wall_warm_bk = #826038
+
+wall_cream   = #d2c094
+wall_cream_l = #b2a27c
+wall_cream_r = #988a6a
+wall_cream_bk = #867a5e
+
+wall_blue    = #7ea0c8
+wall_blue_l  = #6682a2
+wall_blue_r  = #566e8a
+wall_blue_bk = #4c6078
+
+wall_grey    = #6c6860
+wall_grey_l  = #58544e
+wall_grey_r  = #4a4642
+wall_grey_bk = #403e3a
+
+roof_slate   = #4e5e76
+roof_slate_dk = #3a4658
+roof_slate_t = #607292
+roof_red     = #a83e36
+roof_red_dk  = #782c26
+roof_red_t   = #c64e44
+roof_brown   = #76542e
+roof_brown_dk = #583f22
+roof_brown_t = #92683a
+roof_dark    = #343434
+roof_dark_dk = #292929
+roof_dark_t  = #444444
+
+leaf         = #2e7026
+leaf_dk      = #22541c
+trunk        = #604424
+trunk_dk     = #48341c
+well_stone   = #90887a
+
+# ── Shape definitions ─────────────────────────────────────────────────────────
+
+def tree  trunkH=1.0  canopy=1.5  r=0.6 {
+    box   x=-0.18,-0.18  to=0.18,0.18  y=0..$trunkH   col=trunk,trunk_dk,trunk_dk,trunk,trunk
+    roof  cx=0,0  hw=$r  hd=$r  y=$trunkH..$trunkH+$canopy  col=leaf,leaf_dk,leaf_dk,leaf
+}
+
+def well  r=0.35  h=0.55 {
+    ngon  cx=0,0  r=$r  y=0..$h  sides=6  col=well_stone
+}
+
+# ── Ground ────────────────────────────────────────────────────────────────────
+
+quad  x=0,0  to=12,12  y=0  col=grass
+fill  x=0,0  to=12,12  y=0.004  col=grass_dk  cell=1,1  pattern=checker
+
+quad  x=5,0  to=7,12  y=0.012  col=road
+quad  x=0,5  to=12,7  y=0.014  col=road_dk
+
+# ── Water & bridge ────────────────────────────────────────────────────────────
+
+quad  x=0,9    to=12,10    y=0.008  col=water
+quad  x=1,9.15  to=11,9.85  y=0.016  col=water_dk
+
+quad  x=5,9  to=7,10  y=0.22  col=bridge
+box   x=5,9   to=5.3,10  y=0..0.22  col=bridge_side,bridge_side,bridge_side,bridge_side,bridge
+box   x=6.7,9  to=7,10   y=0..0.22  col=bridge_side,bridge_side,bridge_side,bridge_side,bridge
+
+# ── Buildings ─────────────────────────────────────────────────────────────────
+
+# Tavern
+box   x=1,1.5  to=4.5,4.5  y=0..2.2  col=wall_cream,wall_cream_bk,wall_cream_l,wall_cream_r,wall_cream
+roof  cx=2.75,3  hw=2  hd=1.8  y=2.2..3.4  col=roof_slate,roof_slate_dk,roof_slate,roof_slate_t
+
+# Cottage A
+box   x=7.5,1  to=9.5,3  y=0..1.5  col=wall_warm,wall_warm_bk,wall_warm_l,wall_warm_r,wall_warm
+roof  cx=8.5,2  hw=1.2  hd=1.2  y=1.5..2.5  col=roof_red,roof_red_dk,roof_red,roof_red_t
+
+# Cottage B
+box   x=10,1  to=12,3.5  y=0..1.6  col=wall_blue,wall_blue_bk,wall_blue_l,wall_blue_r,wall_blue
+roof  cx=11,2.25  hw=1.2  hd=1.4  y=1.6..2.7  col=roof_brown,roof_brown_dk,roof_brown,roof_brown_t
+
+# Cottage C
+box   x=1,8  to=3,10  y=0..1.5  col=wall_warm,wall_warm_bk,wall_warm_l,wall_warm_r,wall_warm
+roof  cx=2,9  hw=1.1  hd=1.1  y=1.5..2.4  col=roof_red,roof_red_dk,roof_red,roof_red_t
+
+# Blacksmith
+box   x=8,7.5  to=11,10  y=0..1.8  col=wall_grey,wall_grey_bk,wall_grey_l,wall_grey_r,wall_grey
+box   x=8,7.5  to=11,10  y=1.8..2.0  col=roof_dark,roof_dark,roof_dark,roof_dark,roof_dark_t
+
+# Shed
+box   x=1,4.8  to=2.5,5  y=0..1.0  col=wall_grey,wall_grey_bk,wall_grey_l,wall_grey_r,wall_grey
+roof  cx=1.75,4.9  hw=0.85  hd=0.2  y=1.0..1.6  col=roof_dark,roof_dark_dk,roof_dark,roof_dark_t
+
+# ── Trees ─────────────────────────────────────────────────────────────────────
+
+tree  cx=0.5,0.5    trunkH=0.5   canopy=1.8  r=0.6
+tree  cx=11.5,0.5   trunkH=0.6   canopy=1.6  r=0.55
+tree  cx=0.5,11.5   trunkH=0.5   canopy=1.9  r=0.65
+tree  cx=11.5,11.5  trunkH=0.6   canopy=1.7  r=0.6
+tree  cx=4.2,0.4    trunkH=0.45  canopy=1.5  r=0.5
+tree  cx=0.4,4.5    trunkH=0.5   canopy=1.7  r=0.58
+tree  cx=0.5,7.5    trunkH=0.45  canopy=1.6  r=0.52
+tree  cx=11.5,4.5   trunkH=0.5   canopy=1.8  r=0.6
+tree  cx=11.5,7.5   trunkH=0.55  canopy=1.6  r=0.55
+tree  cx=4.3,11.5   trunkH=0.5   canopy=1.7  r=0.58
+tree  cx=8.5,11.5   trunkH=0.5   canopy=1.5  r=0.5
+
+# ── Well & plaza ──────────────────────────────────────────────────────────────
+
+quad  x=5.2,5.2  to=6.8,6.8  y=0.016  col=stone
+
+well  cx=6,6
