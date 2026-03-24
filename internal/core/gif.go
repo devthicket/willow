@@ -13,11 +13,40 @@ import (
 	"golang.org/x/image/draw"
 )
 
-// GifConfig controls GIF recording behaviour.
+// GifConfig controls GIF recording behaviour.  All optimisations are enabled
+// by default; set the corresponding No* flag to disable one.
 type GifConfig struct {
-	FrameSkip int // capture every Nth frame; 0 defaults to 2
-	MaxWidth  int // downscale target width; 0 defaults to 480
-	MaxHeight int // downscale target height; 0 defaults to 360
+	// Recording region.  Zero values capture the full window.
+	X, Y          int // top-left of capture region (pixels)
+	Width, Height int // size of capture region; 0 = full axis
+
+	// Inset shrinks the capture region inward from all four edges.
+	// Applied after X/Y/Width/Height (which default to full window).
+	Inset int
+
+	// Output resolution.  The captured region is downscaled to fit within
+	// MaxWidth × MaxHeight while preserving aspect ratio.
+	// 0 defaults to 480 and 360 respectively.
+	MaxWidth  int
+	MaxHeight int
+
+	// FPS sets the recording frame rate.  0 defaults to 30.
+	// The recorder skips engine ticks to match this rate.
+	FPS int
+
+	// MaxColors limits the palette size (2–256).  0 defaults to 256.
+	// Fewer colors = smaller file but lower quality.
+	MaxColors int
+
+	// DropEvery removes every Nth captured frame from the output, merging
+	// its delay into the previous frame.  0 defaults to 4 (drop every 4th).
+	// Set to 1 to disable.
+	DropEvery int
+
+	// Optimisation toggles (all on by default).
+	NoDedup     bool // disable similar-frame deduplication
+	NoDiff      bool // disable transparent diff frames
+	NoDownscale bool // disable resolution downscaling
 }
 
 // GifRecorder accumulates frames from the ebiten screen and writes an
@@ -27,6 +56,7 @@ type GifRecorder struct {
 	dir    string
 	config GifConfig
 
+	frameSkip int // derived: capture every Nth tick
 	tick      int // frame counter for skip logic
 	frames    []*image.NRGBA
 	delays    []int // centiseconds per accumulated frame
@@ -34,46 +64,67 @@ type GifRecorder struct {
 	scaledW   int
 	scaledH   int
 
+	// Capture region (resolved on first frame).
+	cropRect image.Rectangle
+
 	// Reusable buffers.
-	pixBuf []byte
-	fullBuf *image.NRGBA // full-resolution capture buffer
+	pixBuf  []byte
+	fullBuf *image.NRGBA
 }
 
-// NewGifRecorder creates a recorder.  Frames are captured every config.FrameSkip
-// ticks and downscaled to fit within MaxWidth × MaxHeight.
+// NewGifRecorder creates a recorder.
 func NewGifRecorder(label, dir string, cfg GifConfig) *GifRecorder {
-	if cfg.FrameSkip <= 0 {
-		cfg.FrameSkip = 2
+	fps := cfg.FPS
+	if fps <= 0 {
+		fps = 30
 	}
-	if cfg.MaxWidth <= 0 {
-		cfg.MaxWidth = 480
+	tps := int(ebiten.TPS())
+	if tps <= 0 {
+		tps = 60
 	}
-	if cfg.MaxHeight <= 0 {
-		cfg.MaxHeight = 360
+	frameSkip := tps / fps
+	if frameSkip < 1 {
+		frameSkip = 1
 	}
-	return &GifRecorder{label: label, dir: dir, config: cfg}
+
+	if !cfg.NoDownscale {
+		if cfg.MaxWidth <= 0 {
+			cfg.MaxWidth = 480
+		}
+		if cfg.MaxHeight <= 0 {
+			cfg.MaxHeight = 360
+		}
+	}
+
+	return &GifRecorder{
+		label:     label,
+		dir:       dir,
+		config:    cfg,
+		frameSkip: frameSkip,
+	}
 }
 
 // CaptureFrame is called every Draw().  It decides whether to sample this
-// frame based on FrameSkip, reads pixels, downscales, and stores the result.
+// frame based on the recording FPS, reads pixels, crops, downscales, and
+// stores the result.
 func (g *GifRecorder) CaptureFrame(screen *ebiten.Image) {
-	csPerTick := 100 / int(ebiten.TPS()) // centiseconds per engine tick
+	csPerTick := 100 / int(ebiten.TPS())
 	if csPerTick < 1 {
 		csPerTick = 1
 	}
 	g.pendingCS += csPerTick
 
 	g.tick++
-	if g.tick%g.config.FrameSkip != 0 {
+	if g.tick%g.frameSkip != 0 {
 		return
 	}
 
 	bounds := screen.Bounds()
 	srcW, srcH := bounds.Dx(), bounds.Dy()
 
-	// Compute scaled size on first capture.
-	if g.scaledW == 0 {
-		g.scaledW, g.scaledH = fitDimensions(srcW, srcH, g.config.MaxWidth, g.config.MaxHeight)
+	// Resolve capture region on first frame.
+	if g.cropRect.Empty() {
+		g.cropRect = g.resolveCropRect(srcW, srcH)
 	}
 
 	// Read pixels from the ebiten screen.
@@ -89,21 +140,35 @@ func (g *GifRecorder) CaptureFrame(screen *ebiten.Image) {
 	}
 	depremultiply(g.pixBuf, g.fullBuf.Pix)
 
-	// Downscale.
-	scaled := image.NewNRGBA(image.Rect(0, 0, g.scaledW, g.scaledH))
-	draw.ApproxBiLinear.Scale(scaled, scaled.Bounds(), g.fullBuf, g.fullBuf.Bounds(), draw.Over, nil)
+	// Crop to capture region.
+	cropped := g.fullBuf.SubImage(g.cropRect).(*image.NRGBA)
+	cropW, cropH := g.cropRect.Dx(), g.cropRect.Dy()
+
+	// Downscale (unless disabled).
+	var frame *image.NRGBA
+	if g.config.NoDownscale {
+		// Copy so we don't alias the reusable buffer.
+		frame = image.NewNRGBA(image.Rect(0, 0, cropW, cropH))
+		draw.Copy(frame, image.Point{}, cropped, g.cropRect, draw.Src, nil)
+	} else {
+		if g.scaledW == 0 {
+			g.scaledW, g.scaledH = fitDimensions(cropW, cropH, g.config.MaxWidth, g.config.MaxHeight)
+		}
+		frame = image.NewNRGBA(image.Rect(0, 0, g.scaledW, g.scaledH))
+		draw.ApproxBiLinear.Scale(frame, frame.Bounds(), cropped, g.cropRect, draw.Over, nil)
+	}
 
 	// Dedup: if this frame is nearly identical to the previous one, merge delay.
-	if len(g.frames) > 0 {
+	if !g.config.NoDedup && len(g.frames) > 0 {
 		prev := g.frames[len(g.frames)-1]
-		if frameSimilar(prev, scaled, 0.01) {
+		if frameSimilar(prev, frame, 0.01) {
 			g.delays[len(g.delays)-1] += g.pendingCS
 			g.pendingCS = 0
 			return
 		}
 	}
 
-	g.frames = append(g.frames, scaled)
+	g.frames = append(g.frames, frame)
 	g.delays = append(g.delays, g.pendingCS)
 	g.pendingCS = 0
 }
@@ -118,8 +183,33 @@ func (g *GifRecorder) Finish() error {
 		return fmt.Errorf("gif mkdir: %w", err)
 	}
 
+	// Drop every Nth frame to reduce total count.
+	dropEvery := g.config.DropEvery
+	if dropEvery <= 0 {
+		dropEvery = 4
+	}
+	if dropEvery > 1 {
+		kept := make([]*image.NRGBA, 0, len(g.frames))
+		keptDelays := make([]int, 0, len(g.frames))
+		for i, frame := range g.frames {
+			if (i+1)%dropEvery == 0 && len(kept) > 0 {
+				// Merge this frame's delay into the previous kept frame.
+				keptDelays[len(keptDelays)-1] += g.delays[i]
+			} else {
+				kept = append(kept, frame)
+				keptDelays = append(keptDelays, g.delays[i])
+			}
+		}
+		g.frames = kept
+		g.delays = keptDelays
+	}
+
 	// Build a global palette from all frames.
-	palette := buildGlobalPalette(g.frames, 255)
+	maxColors := g.config.MaxColors
+	if maxColors <= 0 || maxColors > 255 {
+		maxColors = 255
+	}
+	palette := buildGlobalPalette(g.frames, maxColors)
 	// Index 0 is reserved for transparent.
 	palette[0] = color.NRGBA{0, 0, 0, 0}
 
@@ -130,13 +220,11 @@ func (g *GifRecorder) Finish() error {
 	for i, frame := range g.frames {
 		paletted := quantizeFrame(frame, palette)
 
-		if i == 0 {
-			// First frame: full image.
+		if i == 0 || g.config.NoDiff {
 			anim.Image = append(anim.Image, paletted)
 			anim.Delay = append(anim.Delay, g.delays[i])
 			anim.Disposal = append(anim.Disposal, gif.DisposalNone)
 		} else {
-			// Diff frame: only encode changed pixels.
 			diff, rect := diffFrame(prevPaletted, paletted, 0)
 			sub := image.NewPaletted(rect, palette)
 			for y := rect.Min.Y; y < rect.Max.Y; y++ {
@@ -176,6 +264,49 @@ func (g *GifRecorder) Finish() error {
 	g.pixBuf = nil
 	g.fullBuf = nil
 	return nil
+}
+
+// resolveCropRect computes the pixel rectangle to capture based on config.
+func (g *GifRecorder) resolveCropRect(screenW, screenH int) image.Rectangle {
+	x, y := g.config.X, g.config.Y
+	w, h := g.config.Width, g.config.Height
+	if w <= 0 {
+		w = screenW - x
+	}
+	if h <= 0 {
+		h = screenH - y
+	}
+
+	// Apply inset.
+	p := g.config.Inset
+	if p > 0 {
+		x += p
+		y += p
+		w -= 2 * p
+		h -= 2 * p
+	}
+
+	// Clamp to screen bounds.
+	if x < 0 {
+		x = 0
+	}
+	if y < 0 {
+		y = 0
+	}
+	if w < 1 {
+		w = 1
+	}
+	if h < 1 {
+		h = 1
+	}
+	if x+w > screenW {
+		w = screenW - x
+	}
+	if y+h > screenH {
+		h = screenH - y
+	}
+
+	return image.Rect(x, y, x+w, y+h)
 }
 
 // ---------------------------------------------------------------------------
@@ -301,16 +432,14 @@ func (b *colorBox) average() color.NRGBA {
 
 // buildGlobalPalette samples all frames and produces a median-cut palette.
 func buildGlobalPalette(frames []*image.NRGBA, maxColors int) color.Palette {
-	// Sample pixels from all frames.
 	seen := make(map[[3]uint8]struct{})
 	for _, frame := range frames {
-		step := 4 // sample every 4th pixel
+		step := 4
 		if len(frame.Pix)/4 > 100000 {
 			step = 8
 		}
 		for i := 0; i < len(frame.Pix); i += step * 4 {
 			r, g, b := frame.Pix[i], frame.Pix[i+1], frame.Pix[i+2]
-			// Quantize to 6-bit to reduce unique count.
 			key := [3]uint8{r & 0xFC, g & 0xFC, b & 0xFC}
 			seen[key] = struct{}{}
 		}
@@ -323,7 +452,7 @@ func buildGlobalPalette(frames []*image.NRGBA, maxColors int) color.Palette {
 
 	if len(colors) <= maxColors {
 		pal := make(color.Palette, len(colors)+1)
-		pal[0] = color.NRGBA{} // transparent at index 0
+		pal[0] = color.NRGBA{}
 		for i, c := range colors {
 			pal[i+1] = color.NRGBA{c[0], c[1], c[2], 255}
 		}
@@ -333,7 +462,6 @@ func buildGlobalPalette(frames []*image.NRGBA, maxColors int) color.Palette {
 	// Median-cut.
 	boxes := []colorBox{{colors: colors}}
 	for len(boxes) < maxColors {
-		// Find the largest box.
 		bestIdx := 0
 		bestLen := 0
 		for i, bx := range boxes {
@@ -357,7 +485,7 @@ func buildGlobalPalette(frames []*image.NRGBA, maxColors int) color.Palette {
 	}
 
 	pal := make(color.Palette, len(boxes)+1)
-	pal[0] = color.NRGBA{} // transparent
+	pal[0] = color.NRGBA{}
 	for i, bx := range boxes {
 		pal[i+1] = bx.average()
 	}
@@ -367,7 +495,6 @@ func buildGlobalPalette(frames []*image.NRGBA, maxColors int) color.Palette {
 // quantizeFrame maps an NRGBA image to a paletted image using nearest-colour.
 func quantizeFrame(src *image.NRGBA, pal color.Palette) *image.Paletted {
 	dst := image.NewPaletted(src.Rect, pal)
-	// Build a small cache to avoid repeated palette lookups.
 	cache := make(map[[3]uint8]uint8, 256)
 	for y := src.Rect.Min.Y; y < src.Rect.Max.Y; y++ {
 		for x := src.Rect.Min.X; x < src.Rect.Max.X; x++ {
@@ -377,7 +504,6 @@ func quantizeFrame(src *image.NRGBA, pal color.Palette) *image.Paletted {
 			idx, ok := cache[key]
 			if !ok {
 				idx = uint8(pal.Index(color.NRGBA{r, g, b, 255}))
-				// Never map to index 0 (transparent) for opaque pixels.
 				if idx == 0 && src.Pix[off+3] > 0 {
 					idx = 1
 				}
@@ -425,7 +551,6 @@ func diffFrame(prev, cur *image.Paletted, transparentIdx uint8) (*image.Paletted
 	}
 
 	if !hasChange {
-		// Entirely identical — return a 1×1 transparent frame.
 		tiny := image.NewPaletted(image.Rect(0, 0, 1, 1), cur.Palette)
 		tiny.Pix[0] = transparentIdx
 		return tiny, tiny.Rect

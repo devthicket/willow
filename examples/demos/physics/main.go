@@ -3,11 +3,15 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"log"
 	"math"
 	"math/rand/v2"
+	"os"
 
 	"github.com/devthicket/willow"
+	"github.com/hajimehoshi/ebiten/v2"
 )
 
 const (
@@ -40,6 +44,9 @@ type body struct {
 }
 
 func main() {
+	autotest := flag.String("autotest", "", "path to test script JSON (run and exit)")
+	flag.Parse()
+
 	scene := willow.NewScene()
 	scene.ClearColor = willow.RGB(0.06, 0.06, 0.09)
 

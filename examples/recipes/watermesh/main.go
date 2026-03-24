@@ -3,6 +3,8 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"image"
 	"log"
 	"math"
@@ -53,6 +55,9 @@ func (g *game) update() error {
 }
 
 func main() {
+	autotest := flag.String("autotest", "", "path to test script JSON (run and exit)")
+	flag.Parse()
+
 	f, err := os.Open("examples/_assets/tileset.png")
 	if err != nil {
 		log.Fatalf("open tileset: %v", err)
@@ -95,7 +100,31 @@ func main() {
 	scene.Root.AddChild(grid.Node())
 
 	g := &game{grid: grid}
-	scene.SetUpdateFunc(g.update)
+
+	if *autotest != "" {
+		scriptData, err := os.ReadFile(*autotest)
+		if err != nil {
+			log.Fatalf("read test script: %v", err)
+		}
+		runner, err := willow.LoadTestScript(scriptData)
+		if err != nil {
+			log.Fatalf("parse test script: %v", err)
+		}
+		scene.SetTestRunner(runner)
+		scene.ScreenshotDir = "screenshots"
+		scene.SetUpdateFunc(func() error {
+			if err := g.update(); err != nil {
+				return err
+			}
+			if runner.Done() {
+				fmt.Println("Autotest complete.")
+				return ebiten.Termination
+			}
+			return nil
+		})
+	} else {
+		scene.SetUpdateFunc(g.update)
+	}
 
 	if err := willow.Run(scene, willow.RunConfig{
 		Title:   windowTitle,

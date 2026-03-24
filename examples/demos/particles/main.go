@@ -6,8 +6,11 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"log"
 	"math"
+	"os"
 
 	"github.com/devthicket/willow"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -26,6 +29,9 @@ type demo struct {
 }
 
 func main() {
+	autotest := flag.String("autotest", "", "path to test script JSON (run and exit)")
+	flag.Parse()
+
 	scene := willow.NewScene()
 	scene.ClearColor = willow.RGB(0.04, 0.04, 0.07)
 
@@ -151,7 +157,28 @@ func main() {
 		d.burstTimer = 0.08 // emit for ~5 frames then stop
 	})
 
-	scene.SetUpdateFunc(d.update)
+	if *autotest != "" {
+		scriptData, err := os.ReadFile(*autotest)
+		if err != nil {
+			log.Fatalf("read test script: %v", err)
+		}
+		runner, err := willow.LoadTestScript(scriptData)
+		if err != nil {
+			log.Fatalf("parse test script: %v", err)
+		}
+		scene.SetTestRunner(runner)
+		scene.ScreenshotDir = "screenshots"
+		scene.SetUpdateFunc(func() error {
+			d.update()
+			if runner.Done() {
+				fmt.Println("Autotest complete.")
+				return ebiten.Termination
+			}
+			return nil
+		})
+	} else {
+		scene.SetUpdateFunc(d.update)
+	}
 
 	if err := willow.Run(scene, willow.RunConfig{
 		Title:   windowTitle,

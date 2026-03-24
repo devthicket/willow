@@ -18,6 +18,19 @@ type TestStep struct {
 	ToX    float64 `json:"toX,omitempty"`
 	ToY    float64 `json:"toY,omitempty"`
 	Frames int     `json:"frames,omitempty"`
+
+	// GIF config fields (start_gif action only).
+	Inset       int  `json:"inset,omitempty"`
+	Width       int  `json:"width,omitempty"`
+	Height      int  `json:"height,omitempty"`
+	FPS         int  `json:"fps,omitempty"`
+	MaxWidth    int  `json:"maxWidth,omitempty"`
+	MaxHeight   int  `json:"maxHeight,omitempty"`
+	MaxColors   int  `json:"maxColors,omitempty"`
+	DropEvery   int  `json:"dropEvery,omitempty"`
+	NoDedup     bool `json:"noDedup,omitempty"`
+	NoDiff      bool `json:"noDiff,omitempty"`
+	NoDownscale bool `json:"noDownscale,omitempty"`
 }
 
 type testScript struct {
@@ -53,7 +66,7 @@ func (r *TestRunner) Done() bool {
 // The Scene provides screenshot, inject, and queue access.
 type StepAction struct {
 	Screenshot  func(label string)
-	StartGif    func(label string)
+	StartGif    func(label string, cfg GifConfig)
 	StopGif     func()
 	InjectClick func(x, y float64)
 	InjectDrag  func(fromX, fromY, toX, toY float64, frames int)
@@ -108,7 +121,19 @@ func (r *TestRunner) Step(a StepAction) {
 		}
 	case "start_gif":
 		if a.StartGif != nil {
-			a.StartGif(st.Label)
+			a.StartGif(st.Label, GifConfig{
+				X: int(st.X), Y: int(st.Y),
+				Width: st.Width, Height: st.Height,
+				Inset:       st.Inset,
+				FPS:         st.FPS,
+				MaxWidth:    st.MaxWidth,
+				MaxHeight:   st.MaxHeight,
+				MaxColors:   st.MaxColors,
+				DropEvery:   st.DropEvery,
+				NoDedup:     st.NoDedup,
+				NoDiff:      st.NoDiff,
+				NoDownscale: st.NoDownscale,
+			})
 		}
 	case "stop_gif":
 		if a.StopGif != nil {
