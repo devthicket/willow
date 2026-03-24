@@ -124,6 +124,15 @@ type CallbackHandle = input.CallbackHandle
 // TestRunner sequences injected input events and screenshots across frames.
 type TestRunner = core.TestRunner
 
+// SceneManager manages a stack of scenes with optional transitions.
+type SceneManager = core.SceneManager
+
+// Transition controls the visual effect between scene changes.
+type Transition = core.Transition
+
+// FadeTransition fades through a solid color between scene changes.
+type FadeTransition = core.FadeTransition
+
 // BatchMode controls how the render pipeline submits draw calls.
 type BatchMode = render.BatchMode
 
@@ -470,6 +479,12 @@ var NewNodeIndex = node.NewNodeIndex
 // Animation player.
 var NewAnimationPlayer = node.NewAnimationPlayer
 
+// Spatial queries.
+var (
+	DistanceBetween  = node.DistanceBetween
+	DirectionBetween = node.DirectionBetween
+)
+
 // Tweens.
 var (
 	TweenPosition = core.TweenPosition
@@ -477,6 +492,12 @@ var (
 	TweenColor    = core.TweenColor
 	TweenAlpha    = core.TweenAlpha
 	TweenRotation = core.TweenRotation
+)
+
+// Scene manager.
+var (
+	NewSceneManager   = core.NewSceneManager
+	NewFadeTransition = core.NewFadeTransition
 )
 
 // Test runner.
@@ -907,6 +928,83 @@ func (g *gameShell) Layout(outsideWidth, outsideHeight int) (int, int) {
 }
 
 func (g *gameShell) DrawFinalScreen(screen ebiten.FinalScreen, offscreen *ebiten.Image, geoM ebiten.GeoM) {
+	if g.fxaa != nil {
+		render.DrawFinalScreenFXAA(screen, offscreen, geoM, *g.fxaa)
+		return
+	}
+	ebiten.DefaultDrawFinalScreen(screen, offscreen, geoM)
+}
+
+// ---------------------------------------------------------------------------
+// RunWithManager (SceneManager-based game loop)
+// ---------------------------------------------------------------------------
+
+// RunWithManager is a convenience entry point that runs a SceneManager.
+func RunWithManager(sm *SceneManager, cfg RunConfig) error {
+	w, h := cfg.Width, cfg.Height
+	if w == 0 {
+		w = 640
+	}
+	if h == 0 {
+		h = 480
+	}
+	ebiten.SetWindowSize(w, h)
+	if cfg.Title != "" {
+		ebiten.SetWindowTitle(cfg.Title)
+	}
+	cur := sm.Current()
+	if cfg.Background.A() > 0 {
+		cur.ClearColor = cfg.Background
+	} else if cur.ClearColor.A() == 0 {
+		cur.ClearColor = types.RGBA(0.18, 0.20, 0.25, 1)
+	}
+	g := &managerShell{sm: sm, w: w, h: h, fxaa: cfg.FXAA}
+	if cfg.FXAA != nil {
+		render.EnsureFXAAShader()
+	}
+	if cfg.ShowFPS {
+		g.fpsWid = core.NewFPSWidget()
+		g.fpsWid.X_, g.fpsWid.Y_ = 8, 8
+	}
+	return ebiten.RunGame(g)
+}
+
+type managerShell struct {
+	sm     *SceneManager
+	w, h   int
+	fpsWid *Node
+	fxaa   *FXAAConfig
+}
+
+func (g *managerShell) Update() error {
+	g.sm.Update()
+	if g.fpsWid != nil && g.fpsWid.OnUpdate != nil {
+		g.fpsWid.OnUpdate(1.0 / float64(ebiten.TPS()))
+	}
+	return nil
+}
+
+func (g *managerShell) Draw(screen *ebiten.Image) {
+	cur := g.sm.Current()
+	if cur != nil && cur.ClearColor.A() > 0 {
+		screen.Fill(render.ColorToRGBA(cur.ClearColor))
+	}
+	g.sm.Draw(screen)
+	if g.fpsWid != nil && g.fpsWid.CustomImage() != nil {
+		var op ebiten.DrawImageOptions
+		op.GeoM.Translate(g.fpsWid.X_, g.fpsWid.Y_)
+		screen.DrawImage(g.fpsWid.CustomImage(), &op)
+	}
+}
+
+func (g *managerShell) Layout(outsideWidth, outsideHeight int) (int, int) {
+	if outsideWidth != g.w || outsideHeight != g.h {
+		g.w, g.h = outsideWidth, outsideHeight
+	}
+	return g.w, g.h
+}
+
+func (g *managerShell) DrawFinalScreen(screen ebiten.FinalScreen, offscreen *ebiten.Image, geoM ebiten.GeoM) {
 	if g.fxaa != nil {
 		render.DrawFinalScreenFXAA(screen, offscreen, geoM, *g.fxaa)
 		return

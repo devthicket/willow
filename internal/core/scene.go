@@ -66,6 +66,10 @@ type Scene struct {
 	PostDrawFunc func(screen *ebiten.Image)
 	OnResize     func(w, h int)
 
+	// Scene lifecycle hooks for SceneManager.
+	OnEnterFn func()
+	OnExitFn  func()
+
 	// ECS bridge
 	store EntityStore
 }
@@ -183,6 +187,16 @@ func (s *Scene) SetOnResize(fn func(w, h int)) {
 	s.OnResize = fn
 }
 
+// SetOnEnter registers a callback called when this scene becomes active.
+func (s *Scene) SetOnEnter(fn func()) {
+	s.OnEnterFn = fn
+}
+
+// SetOnExit registers a callback called when this scene is being left.
+func (s *Scene) SetOnExit(fn func()) {
+	s.OnExitFn = fn
+}
+
 // --- Atlas / page registration (delegated via function pointers) ---
 
 // RegisterPage stores an atlas page image at the given index.
@@ -259,6 +273,18 @@ func (s *Scene) emitInteractionEvent(
 		Rotation:     pinch.Rotation,
 		RotDelta:     pinch.RotDelta,
 	})
+}
+
+// --- Input: state queries ---
+
+// PointerPosition returns the current pointer position in screen space.
+func (s *Scene) PointerPosition() (x, y float64) {
+	return s.Input.PointerPosition()
+}
+
+// IsPointerDown reports whether the given mouse button is currently pressed.
+func (s *Scene) IsPointerDown(button types.MouseButton) bool {
+	return s.Input.IsPointerDown(button)
 }
 
 // --- Input: pointer capture ---
