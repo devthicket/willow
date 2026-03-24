@@ -7,12 +7,13 @@
 // the raycaster owns the pixel work.
 //
 // Controls:
-//   W / Up    – move forward
-//   S / Down  – move back
-//   A / D     – strafe
-//   Q / Left  – turn left
-//   E / Right – turn right
-//   Space     – fire (weapon recoil + damage flash)
+//
+//	W / Up    – move forward
+//	S / Down  – move back
+//	A / D     – strafe
+//	Q / Left  – turn left
+//	E / Right – turn right
+//	Space     – fire (weapon recoil + damage flash)
 package main
 
 import (
@@ -23,9 +24,9 @@ import (
 	"math"
 	"os"
 
+	"github.com/devthicket/willow"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
-	"github.com/devthicket/willow"
 	"github.com/tanema/gween/ease"
 )
 
@@ -77,11 +78,11 @@ var worldMap = [mapH][mapW]int{
 type rgb struct{ r, g, b uint8 }
 
 var wallColors = [5][2]rgb{
-	{},                                         // 0: unused
-	{{110, 110, 110}, {75, 75, 75}},            // 1: stone grey
-	{{130, 70, 50}, {90, 50, 35}},              // 2: brick red-brown
-	{{50, 80, 50}, {35, 55, 35}},               // 3: dungeon moss-green
-	{{150, 140, 80}, {100, 95, 55}},            // 4: iron door frame
+	{},                              // 0: unused
+	{{110, 110, 110}, {75, 75, 75}}, // 1: stone grey
+	{{130, 70, 50}, {90, 50, 35}},   // 2: brick red-brown
+	{{50, 80, 50}, {35, 55, 35}},    // 3: dungeon moss-green
+	{{150, 140, 80}, {100, 95, 55}}, // 4: iron door frame
 }
 
 // ── Game struct ───────────────────────────────────────────────────────────────
@@ -94,7 +95,7 @@ type game struct {
 
 	// Health / ammo
 	health, ammo int
-	fired        bool // did we fire this frame?
+	fired        bool               // did we fire this frame?
 	kickTween    *willow.TweenGroup // tracks weapon recoil so we can chain the return
 
 	// Pixel buffer for the raycaster view
@@ -108,10 +109,6 @@ type game struct {
 	healthText  *willow.Node
 	ammoText    *willow.Node
 	damageFlash *willow.Node // full-screen red overlay, alpha-tweened on hit
-
-	// Autotest autopilot
-	autopilot     bool
-	autopilotTick int
 }
 
 // ── Constructor ───────────────────────────────────────────────────────────────
@@ -207,24 +204,6 @@ func newGame() *game {
 // ── Update ────────────────────────────────────────────────────────────────────
 
 func (g *game) update() error {
-	if g.autopilot {
-		g.autopilotTick++
-		g.rotate(rotSpeed * 0.3)
-		g.tryMove(g.dirX, g.dirY, moveSpeed*0.5)
-		// Fire occasionally
-		if g.autopilotTick%40 == 0 && g.ammo > 0 {
-			g.ammo--
-			g.triggerShot()
-		}
-		g.checkWeaponReturn()
-		g.renderFrame()
-		g.updateHUD()
-		if g.autopilotTick >= 180 {
-			g.scene.StopGif()
-			return ebiten.Termination
-		}
-		return nil
-	}
 	g.handleInput()
 	g.checkWeaponReturn()
 	g.renderFrame()
@@ -246,28 +225,28 @@ func (g *game) checkWeaponReturn() {
 func (g *game) handleInput() {
 	g.fired = false
 
-	if ebiten.IsKeyPressed(ebiten.KeyLeft) || ebiten.IsKeyPressed(ebiten.KeyQ) {
+	if g.scene.IsKeyPressed(ebiten.KeyLeft) || g.scene.IsKeyPressed(ebiten.KeyQ) {
 		g.rotate(-rotSpeed)
 	}
-	if ebiten.IsKeyPressed(ebiten.KeyRight) || ebiten.IsKeyPressed(ebiten.KeyE) {
+	if g.scene.IsKeyPressed(ebiten.KeyRight) || g.scene.IsKeyPressed(ebiten.KeyE) {
 		g.rotate(rotSpeed)
 	}
-	if ebiten.IsKeyPressed(ebiten.KeyW) || ebiten.IsKeyPressed(ebiten.KeyArrowUp) {
+	if g.scene.IsKeyPressed(ebiten.KeyW) || g.scene.IsKeyPressed(ebiten.KeyArrowUp) {
 		g.tryMove(g.dirX, g.dirY, moveSpeed)
 	}
-	if ebiten.IsKeyPressed(ebiten.KeyS) || ebiten.IsKeyPressed(ebiten.KeyArrowDown) {
+	if g.scene.IsKeyPressed(ebiten.KeyS) || g.scene.IsKeyPressed(ebiten.KeyArrowDown) {
 		g.tryMove(g.dirX, g.dirY, -moveSpeed)
 	}
-	if ebiten.IsKeyPressed(ebiten.KeyA) {
+	if g.scene.IsKeyPressed(ebiten.KeyA) {
 		// strafe: perpendicular = (-dirY, dirX)
 		g.tryMove(-g.dirY, g.dirX, moveSpeed*0.75)
 	}
-	if ebiten.IsKeyPressed(ebiten.KeyD) {
+	if g.scene.IsKeyPressed(ebiten.KeyD) {
 		g.tryMove(g.dirY, -g.dirX, moveSpeed*0.75)
 	}
 
 	// Fire: trigger recoil tween on weapon node + flash on damage overlay.
-	if ebiten.IsKeyPressed(ebiten.KeySpace) && !g.fired {
+	if g.scene.IsKeyPressed(ebiten.KeySpace) && !g.fired {
 		g.fired = true
 		if g.ammo > 0 {
 			g.ammo--
@@ -528,7 +507,6 @@ func main() {
 	g := newGame()
 
 	if *autotest != "" {
-		g.autopilot = true
 		scriptData, err := os.ReadFile(*autotest)
 		if err != nil {
 			log.Fatalf("read test script: %v", err)

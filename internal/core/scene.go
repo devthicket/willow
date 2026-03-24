@@ -66,6 +66,9 @@ type Scene struct {
 	InjectedChars []rune       // synthetic characters consumed by AppendInjectedChars
 	InjectedKeys  []ebiten.Key // synthetic key presses consumed by IsInjectedKeyPressed
 
+	// Held keys for data-driven autotest (key_down / key_up actions).
+	HeldKeys map[ebiten.Key]struct{}
+
 	// User callbacks set via SetUpdateFunc / SetPostDrawFunc / SetOnResize.
 	UpdateFunc   func() error
 	PostDrawFunc func(screen *ebiten.Image)
@@ -465,6 +468,34 @@ func (s *Scene) HasInjectedInput() bool {
 	return len(s.InjectedChars) > 0 || len(s.InjectedKeys) > 0
 }
 
+// KeyDown marks a key as held.  Used by test runner key_down actions.
+func (s *Scene) KeyDown(key ebiten.Key) {
+	if s.HeldKeys == nil {
+		s.HeldKeys = make(map[ebiten.Key]struct{})
+	}
+	s.HeldKeys[key] = struct{}{}
+}
+
+// KeyUp releases a held key.  Used by test runner key_up actions.
+func (s *Scene) KeyUp(key ebiten.Key) {
+	delete(s.HeldKeys, key)
+}
+
+// IsKeyPressed returns true if a key is pressed on the real keyboard or
+// held via the test runner (key_down/key_up).  Demos should use this
+// instead of ebiten.IsKeyPressed to support data-driven autotests.
+func (s *Scene) IsKeyPressed(key ebiten.Key) bool {
+	if _, ok := s.HeldKeys[key]; ok {
+		return true
+	}
+	for _, k := range s.InjectedKeys {
+		if k == key {
+			return true
+		}
+	}
+	return ebiten.IsKeyPressed(key)
+}
+
 // --- Update ---
 
 // Update processes input, advances animations, and simulates particles.
@@ -491,6 +522,8 @@ func (s *Scene) Update() {
 			InjectMove:  s.Input.InjectHover,
 			InjectText:  s.InjectText,
 			InjectKey:   func(key string) { s.InjectKey(KeyFromName(key)) },
+			KeyDown:     func(key string) { s.KeyDown(KeyFromName(key)) },
+			KeyUp:       func(key string) { s.KeyUp(KeyFromName(key)) },
 			QueueLen: func() int {
 				return len(s.Input.InjectQueue) + len(s.InjectedChars) + len(s.InjectedKeys)
 			},

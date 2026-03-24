@@ -1,8 +1,18 @@
 {
   "steps": [
-    {"action": "wait", "frames": 10},
+    {"action": "wait", "frames": 5},
     {"action": "start_gif", "label": "3d-raycaster", "fps": 20, "maxColors": 64, "maxWidth": 320, "maxHeight": 240},
-    {"action": "wait", "frames": 180},
+    {"action": "key_down", "key": "W"},
+    {"action": "key_down", "key": "E"},
+    {"action": "wait", "frames": 60},
+    {"action": "key_up", "key": "E"},
+    {"action": "wait", "frames": 30},
+    {"action": "key_down", "key": "Q"},
+    {"action": "wait", "frames": 40},
+    {"action": "key_up", "key": "Q"},
+    {"action": "key", "key": "Space"},
+    {"action": "wait", "frames": 30},
+    {"action": "key_up", "key": "W"},
     {"action": "stop_gif"}
   ]
 }

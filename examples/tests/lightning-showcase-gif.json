@@ -1,0 +1,8 @@
+{
+  "steps": [
+    {"action": "wait", "frames": 5},
+    {"action": "start_gif", "label": "lightning-showcase", "fps": 30, "maxColors": 256, "maxWidth": 320, "maxHeight": 240, "noDedup": true},
+    {"action": "wait", "frames": 300},
+    {"action": "stop_gif"}
+  ]
+}

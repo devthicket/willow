@@ -1,8 +1,12 @@
 {
   "steps": [
     {"action": "wait", "frames": 5},
-    {"action": "start_gif", "label": "3d-village", "fps": 20, "maxColors": 64, "maxWidth": 320, "maxHeight": 240},
-    {"action": "wait", "frames": 120},
+    {"action": "start_gif", "label": "3d-village", "fps": 20, "maxColors": 64, "maxWidth": 320, "maxHeight": 240, "noDedup": true},
+    {"action": "key_down", "key": "W"},
+    {"action": "wait", "frames": 60},
+    {"action": "key", "key": "Tab"},
+    {"action": "wait", "frames": 90},
+    {"action": "key_up", "key": "W"},
     {"action": "stop_gif"}
   ]
 }
