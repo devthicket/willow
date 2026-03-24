@@ -977,6 +977,12 @@ type managerShell struct {
 }
 
 func (g *managerShell) Update() error {
+	cur := g.sm.Current()
+	if cur != nil && cur.UpdateFunc != nil {
+		if err := cur.UpdateFunc(); err != nil {
+			return err
+		}
+	}
 	g.sm.Update()
 	if g.fpsWid != nil && g.fpsWid.OnUpdate != nil {
 		g.fpsWid.OnUpdate(1.0 / float64(ebiten.TPS()))
@@ -995,11 +1001,18 @@ func (g *managerShell) Draw(screen *ebiten.Image) {
 		op.GeoM.Translate(g.fpsWid.X_, g.fpsWid.Y_)
 		screen.DrawImage(g.fpsWid.CustomImage(), &op)
 	}
+	if cur != nil && cur.PostDrawFunc != nil {
+		cur.PostDrawFunc(screen)
+	}
 }
 
 func (g *managerShell) Layout(outsideWidth, outsideHeight int) (int, int) {
 	if outsideWidth != g.w || outsideHeight != g.h {
 		g.w, g.h = outsideWidth, outsideHeight
+		cur := g.sm.Current()
+		if cur != nil && cur.OnResize != nil {
+			cur.OnResize(outsideWidth, outsideHeight)
+		}
 	}
 	return g.w, g.h
 }

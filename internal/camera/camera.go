@@ -182,7 +182,8 @@ func (c *Camera) Update(dt float32) {
 		c.clampToBounds()
 	}
 
-	if c.X != prevX || c.Y != prevY || c.Zoom != prevZoom || c.Rotation != prevRot {
+	if c.X != prevX || c.Y != prevY || c.Zoom != prevZoom || c.Rotation != prevRot ||
+		c.shakeOffsetX != 0 || c.shakeOffsetY != 0 {
 		c.dirty = true
 	}
 }
