@@ -53,6 +53,8 @@ func (r *TestRunner) Done() bool {
 // The Scene provides screenshot, inject, and queue access.
 type StepAction struct {
 	Screenshot  func(label string)
+	StartGif    func(label string)
+	StopGif     func()
 	InjectClick func(x, y float64)
 	InjectDrag  func(fromX, fromY, toX, toY float64, frames int)
 	InjectMove  func(x, y float64)
@@ -103,6 +105,14 @@ func (r *TestRunner) Step(a StepAction) {
 	case "key":
 		if a.InjectKey != nil {
 			a.InjectKey(st.Key)
+		}
+	case "start_gif":
+		if a.StartGif != nil {
+			a.StartGif(st.Label)
+		}
+	case "stop_gif":
+		if a.StopGif != nil {
+			a.StopGif()
 		}
 	case "wait":
 		if st.Frames > 0 {

@@ -1,0 +1,9 @@
+{
+  "steps": [
+    {"action": "wait", "frames": 10},
+    {"action": "start_gif", "label": "tiled-demo"},
+    {"action": "wait", "frames": 60},
+    {"action": "stop_gif"},
+    {"action": "screenshot", "label": "after-gif"}
+  ]
+}

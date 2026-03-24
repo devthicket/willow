@@ -124,6 +124,9 @@ type CallbackHandle = input.CallbackHandle
 // TestRunner sequences injected input events and screenshots across frames.
 type TestRunner = core.TestRunner
 
+// GifConfig controls GIF recording behaviour.
+type GifConfig = core.GifConfig
+
 // SceneManager manages a stack of scenes with optional transitions.
 type SceneManager = core.SceneManager
 
@@ -271,6 +274,22 @@ type AnimFrame = tilemap.AnimFrame
 
 // TileQuery provides a read-only view of tilemap data for external systems.
 type TileQuery = tilemap.TileQuery
+
+// Tile GID flip flags (same convention as Tiled TMX format).
+const (
+	TileFlipH    = tilemap.TileFlipH    // Horizontal flip (bit 31)
+	TileFlipV    = tilemap.TileFlipV    // Vertical flip (bit 30)
+	TileFlipD    = tilemap.TileFlipD    // Diagonal flip (bit 29)
+	TileFlagMask = tilemap.TileFlagMask // All three flags combined
+)
+
+// RegionsFromGrid builds a TextureRegion slice from a regular grid tileset.
+// Index 0 is a zero region (empty tile); indices 1..count map to tiles in
+// row-major order.  Margin is the outer border; spacing is the gap between tiles.
+var RegionsFromGrid = tilemap.RegionsFromGrid
+
+// EncodeGID combines a tile ID with flip flags into a single uint32 GID.
+var EncodeGID = tilemap.EncodeGID
 
 // ---------------------------------------------------------------------------
 // Mesh (internal/mesh)
@@ -626,13 +645,12 @@ func init() {
 		return NewContainer(name)
 	}
 	tilemap.NewLayerEmitFn = func(layer *tilemap.Layer) {
-		layer.EmitFn = func(l *tilemap.Layer, sAny any, treeOrder *int) {
-			// Extract Pipeline — sAny is *core.Scene which has Pipeline field
-			s, ok := sAny.(*core.Scene)
+		layer.EmitFn = func(l *tilemap.Layer, pAny any, treeOrder *int) {
+			p, ok := pAny.(*render.Pipeline)
 			if !ok {
 				return
 			}
-			tilemap.EmitTilemapCommands(l, &s.Pipeline.Commands, s.Pipeline.ViewTransform, treeOrder)
+			tilemap.EmitTilemapCommands(l, &p.Commands, p.ViewTransform, treeOrder)
 		}
 	}
 
