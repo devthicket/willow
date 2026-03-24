@@ -484,7 +484,7 @@ func (s *Scene) Update() {
 	if s.TestRunnerRef != nil {
 		s.TestRunnerRef.Step(StepAction{
 			Screenshot:  s.Screenshot,
-			StartGif:    s.StartGif,
+			StartGif:    s.StartGifWithConfig,
 			StopGif:     s.StopGif,
 			InjectClick: s.Input.InjectClick,
 			InjectDrag:  s.Input.InjectDrag,
