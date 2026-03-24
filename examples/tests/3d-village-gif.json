@@ -1,0 +1,8 @@
+{
+  "steps": [
+    {"action": "wait", "frames": 5},
+    {"action": "start_gif", "label": "3d-village", "fps": 20, "maxColors": 64, "maxWidth": 320, "maxHeight": 240},
+    {"action": "wait", "frames": 120},
+    {"action": "stop_gif"}
+  ]
+}

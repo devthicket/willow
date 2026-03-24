@@ -1,0 +1,8 @@
+{
+  "steps": [
+    {"action": "wait", "frames": 10},
+    {"action": "start_gif", "label": "lighting", "fps": 20, "maxColors": 64, "maxWidth": 320, "maxHeight": 240},
+    {"action": "wait", "frames": 180},
+    {"action": "stop_gif"}
+  ]
+}

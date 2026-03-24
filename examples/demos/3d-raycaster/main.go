@@ -16,10 +16,12 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"image/color"
 	"log"
 	"math"
+	"os"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -106,6 +108,10 @@ type game struct {
 	healthText  *willow.Node
 	ammoText    *willow.Node
 	damageFlash *willow.Node // full-screen red overlay, alpha-tweened on hit
+
+	// Autotest autopilot
+	autopilot     bool
+	autopilotTick int
 }
 
 // ── Constructor ───────────────────────────────────────────────────────────────
@@ -201,6 +207,24 @@ func newGame() *game {
 // ── Update ────────────────────────────────────────────────────────────────────
 
 func (g *game) update() error {
+	if g.autopilot {
+		g.autopilotTick++
+		g.rotate(rotSpeed * 0.3)
+		g.tryMove(g.dirX, g.dirY, moveSpeed*0.5)
+		// Fire occasionally
+		if g.autopilotTick%40 == 0 && g.ammo > 0 {
+			g.ammo--
+			g.triggerShot()
+		}
+		g.checkWeaponReturn()
+		g.renderFrame()
+		g.updateHUD()
+		if g.autopilotTick >= 180 {
+			g.scene.StopGif()
+			return ebiten.Termination
+		}
+		return nil
+	}
 	g.handleInput()
 	g.checkWeaponReturn()
 	g.renderFrame()
@@ -498,7 +522,36 @@ func (g *game) drawMinimap(screen *ebiten.Image) {
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 func main() {
+	autotest := flag.String("autotest", "", "path to test script JSON (run and exit)")
+	flag.Parse()
+
 	g := newGame()
+
+	if *autotest != "" {
+		g.autopilot = true
+		scriptData, err := os.ReadFile(*autotest)
+		if err != nil {
+			log.Fatalf("read test script: %v", err)
+		}
+		runner, err := willow.LoadTestScript(scriptData)
+		if err != nil {
+			log.Fatalf("parse test script: %v", err)
+		}
+		g.scene.SetTestRunner(runner)
+		g.scene.ScreenshotDir = "screenshots"
+		origUpdate := g.update
+		g.scene.SetUpdateFunc(func() error {
+			if err := origUpdate(); err != nil {
+				return err
+			}
+			if runner.Done() {
+				fmt.Println("Autotest complete.")
+				return ebiten.Termination
+			}
+			return nil
+		})
+	}
+
 	if err := willow.Run(g.scene, willow.RunConfig{
 		Title:   "Dungeon Crawler — Willow Testbed",
 		Width:   screenW,

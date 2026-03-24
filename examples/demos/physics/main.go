@@ -105,7 +105,7 @@ func main() {
 		}
 	}
 
-	scene.SetUpdateFunc(func() error {
+	updateFunc := func() error {
 		// Apply gravity and damping
 		for i := range bodies {
 			b := &bodies[i]
@@ -215,7 +215,32 @@ func main() {
 		}
 
 		return nil
-	})
+	}
+
+	if *autotest != "" {
+		scriptData, err := os.ReadFile(*autotest)
+		if err != nil {
+			log.Fatalf("read test script: %v", err)
+		}
+		runner, err := willow.LoadTestScript(scriptData)
+		if err != nil {
+			log.Fatalf("parse test script: %v", err)
+		}
+		scene.SetTestRunner(runner)
+		scene.ScreenshotDir = "screenshots"
+		scene.SetUpdateFunc(func() error {
+			if err := updateFunc(); err != nil {
+				return err
+			}
+			if runner.Done() {
+				fmt.Println("Autotest complete.")
+				return ebiten.Termination
+			}
+			return nil
+		})
+	} else {
+		scene.SetUpdateFunc(updateFunc)
+	}
 
 	if err := willow.Run(scene, willow.RunConfig{
 		Title:   "Willow  -  Physics Shapes",
