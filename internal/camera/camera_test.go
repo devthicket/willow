@@ -407,6 +407,30 @@ func TestCameraShakeAffectsViewMatrix(t *testing.T) {
 	}
 }
 
+func TestCameraViewMatrix(t *testing.T) {
+	cam := NewCamera(types.Rect{X: 0, Y: 0, Width: 800, Height: 600})
+	vm := cam.ViewMatrix()
+	expected := cam.ComputeViewMatrix()
+	if vm != expected {
+		t.Error("ViewMatrix should match ComputeViewMatrix")
+	}
+}
+
+func TestCameraInverseViewMatrix(t *testing.T) {
+	cam := NewCamera(types.Rect{X: 0, Y: 0, Width: 800, Height: 600})
+	cam.X = 100
+	cam.Y = 200
+	cam.dirty = true
+	ivm := cam.InverseViewMatrix()
+	// Verify roundtrip: transform a point through view then inverse
+	vm := cam.ViewMatrix()
+	sx, sy := node.TransformPoint(vm, 100, 200)
+	wx, wy := node.TransformPoint(ivm, sx, sy)
+	if !approxEqual(wx, 100, 1e-6) || !approxEqual(wy, 200, 1e-6) {
+		t.Errorf("inverse roundtrip: got (%f, %f), want (100, 200)", wx, wy)
+	}
+}
+
 func BenchmarkWorldAABB(b *testing.B) {
 	transform := [6]float64{0.866, 0.5, -0.5, 0.866, 100, 200}
 	b.ReportAllocs()

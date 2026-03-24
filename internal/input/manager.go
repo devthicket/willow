@@ -209,6 +209,22 @@ func NewManager() *Manager {
 	}
 }
 
+// --- Pointer state queries ---
+
+// PointerPosition returns the last known pointer position in screen space
+// for the mouse pointer (pointer 0).
+func (m *Manager) PointerPosition() (x, y float64) {
+	ps := &m.Pointers[0]
+	return ps.lastScreenX, ps.lastScreenY
+}
+
+// IsPointerDown reports whether the given mouse button is currently pressed.
+// This checks the mouse pointer (pointer 0) state.
+func (m *Manager) IsPointerDown(button types.MouseButton) bool {
+	ps := &m.Pointers[0]
+	return ps.down && ps.button == button
+}
+
 // --- Event registration ---
 
 func (m *Manager) OnPointerDown(fn func(node.PointerContext)) CallbackHandle {

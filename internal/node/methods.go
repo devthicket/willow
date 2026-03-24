@@ -523,6 +523,93 @@ func (n *Node) Scene() any {
 	return n.Scene_
 }
 
+// --- World-space queries ---
+
+// WorldPosition returns the node's position in world space.
+// This reads directly from the cached WorldTransform.
+func (n *Node) WorldPosition() (x, y float64) {
+	return n.WorldTransform[4], n.WorldTransform[5]
+}
+
+// WorldBounds returns the node's axis-aligned bounding box in world space.
+// For containers or nodes with no measurable dimensions, returns a zero-size
+// rect at the world position.
+func (n *Node) WorldBounds() types.Rect {
+	w, h := nodeDimensions(n)
+	if w == 0 && h == 0 {
+		x, y := n.WorldTransform[4], n.WorldTransform[5]
+		return types.Rect{X: x, Y: y}
+	}
+	return worldAABB(n.WorldTransform, w, h)
+}
+
+// GetWorldAlpha returns the node's computed world alpha.
+func (n *Node) GetWorldAlpha() float64 {
+	return n.WorldAlpha
+}
+
+// nodeDimensions returns the unscaled width and height for AABB computation.
+func nodeDimensions(n *Node) (w, h float64) {
+	switch n.Type {
+	case types.NodeTypeSprite:
+		if n.CustomImage_ != nil {
+			b := n.CustomImage_.Bounds()
+			return float64(b.Dx()), float64(b.Dy())
+		}
+		return float64(n.TextureRegion_.OriginalW), float64(n.TextureRegion_.OriginalH)
+	case types.NodeTypeText:
+		if n.TextBlock != nil {
+			n.TextBlock.Layout()
+			return n.TextBlock.MeasuredW, n.TextBlock.MeasuredH
+		}
+	}
+	return 0, 0
+}
+
+// worldAABB computes the axis-aligned bounding box for a rectangle of size
+// (w, h) transformed by the given affine matrix.
+func worldAABB(transform [6]float64, w, h float64) types.Rect {
+	a, b, cc, d, tx, ty := transform[0], transform[2], transform[1], transform[3], transform[4], transform[5]
+	x0, y0 := tx, ty
+	x1, y1 := a*w+tx, cc*w+ty
+	x2, y2 := a*w+b*h+tx, cc*w+d*h+ty
+	x3, y3 := b*h+tx, d*h+ty
+
+	minX := min4f(x0, x1, x2, x3)
+	minY := min4f(y0, y1, y2, y3)
+	maxX := max4f(x0, x1, x2, x3)
+	maxY := max4f(y0, y1, y2, y3)
+	return types.Rect{X: minX, Y: minY, Width: maxX - minX, Height: maxY - minY}
+}
+
+func min4f(a, b, c, d float64) float64 {
+	m := a
+	if b < m {
+		m = b
+	}
+	if c < m {
+		m = c
+	}
+	if d < m {
+		m = d
+	}
+	return m
+}
+
+func max4f(a, b, c, d float64) float64 {
+	m := a
+	if b > m {
+		m = b
+	}
+	if c > m {
+		m = c
+	}
+	if d > m {
+		m = d
+	}
+	return m
+}
+
 // --- Helpers ---
 
 func invalidateAncestorCache(n *Node) {

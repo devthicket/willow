@@ -242,6 +242,17 @@ func (c *Camera) ComputeViewMatrix() [6]float64 {
 	return c.viewMatrix
 }
 
+// ViewMatrix returns the current view matrix, recomputing if dirty.
+func (c *Camera) ViewMatrix() [6]float64 {
+	return c.ComputeViewMatrix()
+}
+
+// InverseViewMatrix returns the inverse view matrix, recomputing if dirty.
+func (c *Camera) InverseViewMatrix() [6]float64 {
+	c.ComputeViewMatrix() // ensure computed
+	return c.invViewMatrix
+}
+
 // WorldToScreen converts world coordinates to screen coordinates.
 func (c *Camera) WorldToScreen(wx, wy float64) (sx, sy float64) {
 	c.ComputeViewMatrix()
