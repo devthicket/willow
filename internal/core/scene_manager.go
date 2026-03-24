@@ -200,6 +200,8 @@ type FadeTransition struct {
 	elapsed float32
 	col     color.Color
 	done    bool
+	overlay *ebiten.Image // lazily allocated, reused across frames
+	overlayW, overlayH int
 }
 
 // NewFadeTransition creates a fade transition with the given duration and color.
@@ -231,15 +233,20 @@ func (f *FadeTransition) Draw(screen *ebiten.Image, progress float32) {
 		alpha = 1
 	}
 
-	r, g, b, _ := f.col.RGBA()
-	r8 := uint8(r >> 8)
-	g8 := uint8(g >> 8)
-	b8 := uint8(b >> 8)
-	a8 := uint8(float32(255) * alpha)
+	sw, sh := screen.Bounds().Dx(), screen.Bounds().Dy()
+	if f.overlay == nil || f.overlayW != sw || f.overlayH != sh {
+		f.overlay = ebiten.NewImage(sw, sh)
+		f.overlayW, f.overlayH = sw, sh
+	}
 
-	overlay := ebiten.NewImage(screen.Bounds().Dx(), screen.Bounds().Dy())
-	overlay.Fill(color.RGBA{R: r8, G: g8, B: b8, A: a8})
-	screen.DrawImage(overlay, nil)
+	r, g, b, _ := f.col.RGBA()
+	f.overlay.Fill(color.RGBA{
+		R: uint8(r >> 8),
+		G: uint8(g >> 8),
+		B: uint8(b >> 8),
+		A: uint8(float32(255) * alpha),
+	})
+	screen.DrawImage(f.overlay, nil)
 }
 
 func (f *FadeTransition) Done() bool { return f.done }
