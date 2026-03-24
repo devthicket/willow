@@ -49,6 +49,14 @@ type Camera struct {
 	dirty         bool
 
 	scrollTween *scrollAnim
+
+	trauma         float64
+	traumaDecay    float64
+	shakeIntensity float64
+	shakeTime      float64
+	shakeOffsetX   float64
+	shakeOffsetY   float64
+	shakeElapsed   float64
 }
 
 // NewCamera creates a Camera with default values and the given viewport.
@@ -143,6 +151,32 @@ func (c *Camera) Update(dt float32) {
 		}
 	}
 
+	// Shake
+	if c.trauma > 0 || c.shakeTime > 0 {
+		c.shakeElapsed += float64(dt)
+		var mag float64
+		if c.trauma > 0 {
+			c.trauma -= c.traumaDecay * float64(dt)
+			if c.trauma < 0 {
+				c.trauma = 0
+			}
+			mag = c.trauma * c.trauma * c.shakeIntensity
+		} else {
+			c.shakeTime -= float64(dt)
+			if c.shakeTime < 0 {
+				c.shakeTime = 0
+			}
+			mag = c.shakeIntensity * (c.shakeTime / max(c.shakeTime+float64(dt), 0.001))
+		}
+		// Dual-frequency sine for organic-looking displacement
+		c.shakeOffsetX = mag * math.Sin(c.shakeElapsed*37.0)
+		c.shakeOffsetY = mag * math.Sin(c.shakeElapsed*53.0)
+	} else if c.shakeOffsetX != 0 || c.shakeOffsetY != 0 {
+		c.shakeOffsetX = 0
+		c.shakeOffsetY = 0
+		c.shakeElapsed = 0
+	}
+
 	// Bounds clamping
 	if c.BoundsEnabled {
 		c.clampToBounds()
@@ -200,8 +234,8 @@ func (c *Camera) ComputeViewMatrix() [6]float64 {
 	b := -z * sin
 	cc := z * sin
 	d := z * cos
-	tx := cx + z*(-cos*c.X+sin*c.Y)
-	ty := cy + z*(-sin*c.X-cos*c.Y)
+	tx := cx + z*(-cos*(c.X+c.shakeOffsetX)+sin*(c.Y+c.shakeOffsetY))
+	ty := cy + z*(-sin*(c.X+c.shakeOffsetX)-cos*(c.Y+c.shakeOffsetY))
 
 	c.viewMatrix = [6]float64{a, cc, b, d, tx, ty}
 	c.invViewMatrix = node.InvertAffine(c.viewMatrix)
@@ -255,6 +289,31 @@ func (c *Camera) Invalidate() {
 // IsDirty reports whether the view matrix needs recomputation.
 func (c *Camera) IsDirty() bool {
 	return c.dirty
+}
+
+// Shake applies a one-shot shake with the given intensity (max pixel displacement) and duration (seconds).
+func (c *Camera) Shake(intensity float64, duration float64) {
+	c.shakeIntensity = intensity
+	c.shakeTime = duration
+	c.dirty = true
+}
+
+// SetTrauma adds trauma (0–1) that decays over time. Shake magnitude = trauma².
+// Repeated hits accumulate naturally. traumaDecay defaults to 1.0 if not set.
+func (c *Camera) SetTrauma(amount float64) {
+	c.trauma += amount
+	if c.trauma > 1.0 {
+		c.trauma = 1.0
+	}
+	if c.traumaDecay == 0 {
+		c.traumaDecay = 1.0
+	}
+	c.dirty = true
+}
+
+// SetTraumaDecay sets the rate at which trauma decays per second (default 1.0).
+func (c *Camera) SetTraumaDecay(rate float64) {
+	c.traumaDecay = rate
 }
 
 // ScrollTweenActive reports whether a scroll animation is in progress.

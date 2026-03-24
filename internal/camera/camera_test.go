@@ -329,6 +329,84 @@ func TestCulling_SpriteOutsideViewport(t *testing.T) {
 
 // --- Benchmarks ---
 
+func TestCameraShake(t *testing.T) {
+	cam := NewCamera(types.Rect{X: 0, Y: 0, Width: 800, Height: 600})
+	cam.Shake(10.0, 0.5)
+	cam.Update(1.0 / 60.0)
+	// shakeTime should have decreased
+	if cam.shakeTime >= 0.5 {
+		t.Error("shakeTime did not decrease")
+	}
+	// Shake offset should be non-zero
+	if cam.shakeOffsetX == 0 && cam.shakeOffsetY == 0 {
+		t.Error("shake offsets are both zero during active shake")
+	}
+	// Camera position should not be modified
+	if cam.X != 0 || cam.Y != 0 {
+		t.Error("shake should not modify camera X/Y")
+	}
+}
+
+func TestCameraShakeDecay(t *testing.T) {
+	cam := NewCamera(types.Rect{X: 0, Y: 0, Width: 800, Height: 600})
+	cam.Shake(10.0, 0.1)
+	// Advance past shake duration
+	for i := 0; i < 20; i++ {
+		cam.Update(1.0 / 60.0)
+	}
+	if cam.shakeOffsetX != 0 || cam.shakeOffsetY != 0 {
+		t.Errorf("shake offsets should be zero after decay, got (%f, %f)", cam.shakeOffsetX, cam.shakeOffsetY)
+	}
+}
+
+func TestCameraTrauma(t *testing.T) {
+	cam := NewCamera(types.Rect{X: 0, Y: 0, Width: 800, Height: 600})
+	cam.shakeIntensity = 20.0
+	cam.SetTrauma(0.5)
+	if cam.trauma != 0.5 {
+		t.Errorf("trauma = %f, want 0.5", cam.trauma)
+	}
+	if cam.traumaDecay != 1.0 {
+		t.Errorf("traumaDecay = %f, want 1.0 (default)", cam.traumaDecay)
+	}
+	cam.Update(1.0 / 60.0)
+	if cam.trauma >= 0.5 {
+		t.Error("trauma did not decay")
+	}
+}
+
+func TestCameraTraumaClampsAt1(t *testing.T) {
+	cam := NewCamera(types.Rect{X: 0, Y: 0, Width: 800, Height: 600})
+	cam.SetTrauma(0.8)
+	cam.SetTrauma(0.5)
+	if cam.trauma != 1.0 {
+		t.Errorf("trauma = %f, want 1.0 (clamped)", cam.trauma)
+	}
+}
+
+func TestCameraShakeDoesNotAffectPosition(t *testing.T) {
+	cam := NewCamera(types.Rect{X: 0, Y: 0, Width: 800, Height: 600})
+	cam.X = 100
+	cam.Y = 200
+	cam.Shake(15.0, 1.0)
+	cam.Update(1.0 / 60.0)
+	if cam.X != 100 || cam.Y != 200 {
+		t.Errorf("shake modified position: (%f, %f), want (100, 200)", cam.X, cam.Y)
+	}
+}
+
+func TestCameraShakeAffectsViewMatrix(t *testing.T) {
+	cam := NewCamera(types.Rect{X: 0, Y: 0, Width: 800, Height: 600})
+	vmBefore := cam.ComputeViewMatrix()
+	cam.Shake(20.0, 1.0)
+	cam.Update(1.0 / 60.0)
+	vmAfter := cam.ComputeViewMatrix()
+	// View matrix should differ due to shake offset
+	if vmBefore == vmAfter {
+		t.Error("view matrix unchanged during shake")
+	}
+}
+
 func BenchmarkWorldAABB(b *testing.B) {
 	transform := [6]float64{0.866, 0.5, -0.5, 0.866, 100, 200}
 	b.ReportAllocs()
