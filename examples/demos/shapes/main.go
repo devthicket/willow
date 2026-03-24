@@ -3,10 +3,14 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"log"
 	"math/rand/v2"
+	"os"
 
 	"github.com/devthicket/willow"
+	"github.com/hajimehoshi/ebiten/v2"
 )
 
 const (
@@ -32,6 +36,9 @@ func (r *rotator) update() error {
 }
 
 func main() {
+	autotest := flag.String("autotest", "", "path to test script JSON (run and exit)")
+	flag.Parse()
+
 	scene := willow.NewScene()
 	scene.ClearColor = willow.RGB(0.098, 0.098, 0.137)
 
@@ -49,7 +56,31 @@ func main() {
 	})
 
 	r := &rotator{container: container}
-	scene.SetUpdateFunc(r.update)
+
+	if *autotest != "" {
+		scriptData, err := os.ReadFile(*autotest)
+		if err != nil {
+			log.Fatalf("read test script: %v", err)
+		}
+		runner, err := willow.LoadTestScript(scriptData)
+		if err != nil {
+			log.Fatalf("parse test script: %v", err)
+		}
+		scene.SetTestRunner(runner)
+		scene.ScreenshotDir = "screenshots"
+		scene.SetUpdateFunc(func() error {
+			if err := r.update(); err != nil {
+				return err
+			}
+			if runner.Done() {
+				fmt.Println("Autotest complete.")
+				return ebiten.Termination
+			}
+			return nil
+		})
+	} else {
+		scene.SetUpdateFunc(r.update)
+	}
 
 	if err := willow.Run(scene, willow.RunConfig{
 		Title:   windowTitle,

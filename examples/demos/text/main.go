@@ -5,6 +5,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -36,6 +37,9 @@ type demo struct {
 }
 
 func main() {
+	autotest := flag.String("autotest", "", "path to test script JSON (run and exit)")
+	flag.Parse()
+
 	scene := willow.NewScene()
 	scene.ClearColor = willow.RGB(0.08, 0.08, 0.1)
 
@@ -208,14 +212,14 @@ func main() {
 	root.AddChild(counter)
 
 	d := &demo{scene: scene, counter: counter}
-	if os.Getenv("WILLOW_AUTOTEST") == "1" {
-		runner, err := willow.LoadTestScript([]byte(`{"steps":[
-			{"action":"wait","frames":5},
-			{"action":"screenshot","label":"text"},
-			{"action":"wait","frames":1}
-		]}`))
+	if *autotest != "" {
+		scriptData, err := os.ReadFile(*autotest)
 		if err != nil {
-			log.Fatalf("test script: %v", err)
+			log.Fatalf("read test script: %v", err)
+		}
+		runner, err := willow.LoadTestScript(scriptData)
+		if err != nil {
+			log.Fatalf("parse test script: %v", err)
 		}
 		d.testRunner = runner
 		scene.SetTestRunner(runner)

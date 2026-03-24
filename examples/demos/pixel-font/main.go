@@ -4,6 +4,7 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"os"
 
@@ -24,6 +25,9 @@ const (
 const pixelFontChars = "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~"
 
 func main() {
+	autotest := flag.String("autotest", "", "path to test script JSON (run and exit)")
+	flag.Parse()
+
 	fontImg, _, err := ebitenutil.NewImageFromFile("examples/_assets/pixelfont1.png")
 	if err != nil {
 		log.Fatalf("load pixelfont1.png: %v", err)
@@ -172,12 +176,15 @@ func main() {
 	allChars.SetPosition(20, y)
 	scene.Root.AddChild(allChars)
 
-	if os.Getenv("WILLOW_AUTOTEST") == "1" {
-		runner, _ := willow.LoadTestScript([]byte(`{"steps":[
-			{"action":"wait","frames":5},
-			{"action":"screenshot","label":"text-pixelfont"},
-			{"action":"wait","frames":1}
-		]}`))
+	if *autotest != "" {
+		scriptData, err := os.ReadFile(*autotest)
+		if err != nil {
+			log.Fatalf("read test script: %v", err)
+		}
+		runner, err := willow.LoadTestScript(scriptData)
+		if err != nil {
+			log.Fatalf("parse test script: %v", err)
+		}
 		scene.SetTestRunner(runner)
 		scene.ScreenshotDir = "screenshots"
 		scene.SetUpdateFunc(func() error {

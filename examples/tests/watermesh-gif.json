@@ -1,0 +1,8 @@
+{
+  "steps": [
+    {"action": "wait", "frames": 10},
+    {"action": "start_gif", "label": "watermesh", "x": 160, "y": 120, "width": 320, "height": 240, "fps": 20, "maxColors": 64, "noDownscale": true},
+    {"action": "wait", "frames": 180},
+    {"action": "stop_gif"}
+  ]
+}

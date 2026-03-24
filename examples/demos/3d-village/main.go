@@ -17,6 +17,7 @@ package main
 import (
 	"bufio"
 	"embed"
+	"flag"
 	"fmt"
 	"io/fs"
 	"log"
@@ -339,6 +340,10 @@ type game struct {
 
 	// F5 dump
 	f5WasDown bool
+
+	// Autotest autopilot
+	autopilot    bool
+	autopilotTick int
 }
 
 func newGame() *game {
@@ -399,6 +404,32 @@ func (g *game) update() error {
 		g.dumpCamera()
 	}
 	g.f5WasDown = ebiten.IsKeyPressed(ebiten.KeyF5)
+
+	// ── Autopilot: walk forward, switch scene at 1 second ────────────────────
+	if g.autopilot {
+		g.autopilotTick++
+
+		// Walk forward continuously
+		cp, sp := math.Cos(g.camPitch), math.Sin(g.camPitch)
+		sy, cy := math.Sin(g.camYaw), math.Cos(g.camYaw)
+		g.camPos.x += sy * cp * moveSpeed
+		g.camPos.y += sp * moveSpeed
+		g.camPos.z += cy * cp * moveSpeed
+
+		// Switch to village scene at ~1 second
+		if g.autopilotTick == 60 {
+			g.loadNamedScene("village.scene")
+		}
+
+		// Exit after ~3 seconds
+		if g.autopilotTick >= 180 {
+			g.willow.StopGif()
+			return ebiten.Termination
+		}
+
+		g.render()
+		return nil
+	}
 
 	// ── Right-click drag: look (WoW style) ───────────────────────────────────
 	mx, my := ebiten.CursorPosition()
@@ -989,7 +1020,36 @@ func parseHexColor(s string) (col3, error) {
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 func main() {
+	autotest := flag.String("autotest", "", "path to test script JSON (run and exit)")
+	flag.Parse()
+
 	g := newGame()
+
+	if *autotest != "" {
+		g.autopilot = true
+		scriptData, err := os.ReadFile(*autotest)
+		if err != nil {
+			log.Fatalf("read test script: %v", err)
+		}
+		runner, err := willow.LoadTestScript(scriptData)
+		if err != nil {
+			log.Fatalf("parse test script: %v", err)
+		}
+		g.willow.SetTestRunner(runner)
+		g.willow.ScreenshotDir = "screenshots"
+		origUpdate := g.update
+		g.willow.SetUpdateFunc(func() error {
+			if err := origUpdate(); err != nil {
+				return err
+			}
+			if runner.Done() {
+				fmt.Println("Autotest complete.")
+				return ebiten.Termination
+			}
+			return nil
+		})
+	}
+
 	if err := willow.Run(g.willow, willow.RunConfig{
 		Title:   "Village — Willow Testbed",
 		Width:   screenW,
