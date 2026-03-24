@@ -311,16 +311,24 @@ func (c *Camera) Shake(intensity float64, duration float64) {
 }
 
 // SetTrauma adds trauma (0–1) that decays over time. Shake magnitude = trauma².
-// Repeated hits accumulate naturally. traumaDecay defaults to 1.0 if not set.
+// Repeated hits accumulate naturally. Defaults: intensity 10px, decay 1.0/s.
 func (c *Camera) SetTrauma(amount float64) {
 	c.trauma += amount
 	if c.trauma > 1.0 {
 		c.trauma = 1.0
 	}
+	if c.shakeIntensity == 0 {
+		c.shakeIntensity = 10.0
+	}
 	if c.traumaDecay == 0 {
 		c.traumaDecay = 1.0
 	}
 	c.dirty = true
+}
+
+// SetShakeIntensity sets the maximum pixel displacement for trauma-based shake.
+func (c *Camera) SetShakeIntensity(pixels float64) {
+	c.shakeIntensity = pixels
 }
 
 // SetTraumaDecay sets the rate at which trauma decays per second (default 1.0).
