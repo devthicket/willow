@@ -1092,3 +1092,147 @@ func TestLayer_LateRebuildCheck_NilProviderReturn(t *testing.T) {
 	// Should not panic when CameraBoundsFn returns nil
 	l.LateRebuildCheck()
 }
+
+func TestLayerTileAt(t *testing.T) {
+	// Create a simple 3x3 layer with some tile data
+	data := []uint32{
+		1, 2, 3,
+		0, 5, 0,
+		7, 0, 9,
+	}
+	v := &Viewport{TileWidth: 32, TileHeight: 32}
+	l := &Layer{Data: data, Width: 3, Height: 3, Viewport_: v}
+
+	if got := l.TileAt(0, 0); got != 1 {
+		t.Errorf("TileAt(0,0) = %d, want 1", got)
+	}
+	if got := l.TileAt(1, 1); got != 5 {
+		t.Errorf("TileAt(1,1) = %d, want 5", got)
+	}
+	if got := l.TileAt(1, 0); got != 2 {
+		t.Errorf("TileAt(1,0) = %d, want 2", got)
+	}
+	// Empty tile
+	if got := l.TileAt(0, 1); got != 0 {
+		t.Errorf("TileAt(0,1) = %d, want 0", got)
+	}
+	// Out of bounds
+	if got := l.TileAt(-1, 0); got != 0 {
+		t.Errorf("TileAt(-1,0) = %d, want 0", got)
+	}
+	if got := l.TileAt(3, 0); got != 0 {
+		t.Errorf("TileAt(3,0) = %d, want 0", got)
+	}
+}
+
+func TestLayerTileAtStripsFlags(t *testing.T) {
+	data := []uint32{5 | TileFlipH | TileFlipV}
+	v := &Viewport{TileWidth: 16, TileHeight: 16}
+	l := &Layer{Data: data, Width: 1, Height: 1, Viewport_: v}
+	if got := l.TileAt(0, 0); got != 5 {
+		t.Errorf("TileAt with flags = %d, want 5", got)
+	}
+}
+
+func TestLayerRawTileAt(t *testing.T) {
+	raw := uint32(5 | TileFlipH)
+	data := []uint32{raw}
+	v := &Viewport{TileWidth: 16, TileHeight: 16}
+	l := &Layer{Data: data, Width: 1, Height: 1, Viewport_: v}
+	if got := l.RawTileAt(0, 0); got != raw {
+		t.Errorf("RawTileAt = %d, want %d", got, raw)
+	}
+}
+
+func TestLayerDimensions(t *testing.T) {
+	v := &Viewport{TileWidth: 32, TileHeight: 32}
+	l := &Layer{Width: 10, Height: 20, Viewport_: v}
+	cols, rows := l.Dimensions()
+	if cols != 10 || rows != 20 {
+		t.Errorf("Dimensions = (%d, %d), want (10, 20)", cols, rows)
+	}
+}
+
+func TestLayerTileSize(t *testing.T) {
+	v := &Viewport{TileWidth: 32, TileHeight: 16}
+	l := &Layer{Viewport_: v}
+	w, h := l.TileSize()
+	if w != 32 || h != 16 {
+		t.Errorf("TileSize = (%d, %d), want (32, 16)", w, h)
+	}
+}
+
+func TestViewportLayerCount(t *testing.T) {
+	v := &Viewport{layers: make([]*Layer, 3)}
+	if got := v.LayerCount(); got != 3 {
+		t.Errorf("LayerCount = %d, want 3", got)
+	}
+}
+
+func TestViewportLayer(t *testing.T) {
+	l0 := &Layer{Width: 1}
+	l1 := &Layer{Width: 2}
+	v := &Viewport{layers: []*Layer{l0, l1}}
+	if v.Layer(0) != l0 {
+		t.Error("Layer(0) wrong")
+	}
+	if v.Layer(1) != l1 {
+		t.Error("Layer(1) wrong")
+	}
+	if v.Layer(2) != nil {
+		t.Error("Layer(2) should be nil")
+	}
+	if v.Layer(-1) != nil {
+		t.Error("Layer(-1) should be nil")
+	}
+}
+
+func TestViewportTileToWorld(t *testing.T) {
+	v := &Viewport{TileWidth: 32, TileHeight: 16}
+	x, y := v.TileToWorld(3, 5)
+	if x != 96 || y != 80 {
+		t.Errorf("TileToWorld(3,5) = (%f, %f), want (96, 80)", x, y)
+	}
+}
+
+func TestViewportWorldToTile(t *testing.T) {
+	v := &Viewport{TileWidth: 32, TileHeight: 16}
+	col, row := v.WorldToTile(100, 50)
+	if col != 3 || row != 3 {
+		t.Errorf("WorldToTile(100,50) = (%d, %d), want (3, 3)", col, row)
+	}
+}
+
+func TestViewportWorldToTileNegative(t *testing.T) {
+	v := &Viewport{TileWidth: 32, TileHeight: 32}
+	col, row := v.WorldToTile(-1, -1)
+	if col != -1 || row != -1 {
+		t.Errorf("WorldToTile(-1,-1) = (%d, %d), want (-1, -1)", col, row)
+	}
+}
+
+func TestViewportQuery(t *testing.T) {
+	data := []uint32{1, 2, 3, 4}
+	v := &Viewport{TileWidth: 16, TileHeight: 16}
+	l := &Layer{Data: data, Width: 2, Height: 2, Viewport_: v}
+	v.layers = []*Layer{l}
+
+	q := v.Query(0)
+	if q.Cols != 2 || q.Rows != 2 {
+		t.Errorf("Query dims = (%d, %d), want (2, 2)", q.Cols, q.Rows)
+	}
+	if q.TileW != 16 || q.TileH != 16 {
+		t.Errorf("Query tile size = (%d, %d), want (16, 16)", q.TileW, q.TileH)
+	}
+	if got := q.TileAt(1, 0); got != 2 {
+		t.Errorf("Query.TileAt(1,0) = %d, want 2", got)
+	}
+}
+
+func TestViewportQueryOutOfRange(t *testing.T) {
+	v := &Viewport{}
+	q := v.Query(99)
+	if q.TileAt != nil {
+		t.Error("Query on invalid index should have nil TileAt")
+	}
+}

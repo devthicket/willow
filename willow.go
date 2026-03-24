@@ -92,6 +92,12 @@ type PinchContext = node.PinchContext
 // NodeIndex is an opt-in registry for looking up nodes by name or tag.
 type NodeIndex = node.NodeIndex
 
+// AnimationSequence defines a single named animation.
+type AnimationSequence = node.AnimationSequence
+
+// AnimationPlayer manages multiple named animation sequences on a node.
+type AnimationPlayer = node.AnimationPlayer
+
 // ---------------------------------------------------------------------------
 // Scene, Camera, Tweens (internal/core, camera)
 // ---------------------------------------------------------------------------
@@ -253,6 +259,9 @@ type TileLayerConfig = tilemap.LayerConfig
 
 // AnimFrame describes a single frame in a tile animation sequence.
 type AnimFrame = tilemap.AnimFrame
+
+// TileQuery provides a read-only view of tilemap data for external systems.
+type TileQuery = tilemap.TileQuery
 
 // ---------------------------------------------------------------------------
 // Mesh (internal/mesh)
@@ -457,6 +466,9 @@ var NewRenderTexture = render.NewRenderTexture
 
 // Node index.
 var NewNodeIndex = node.NewNodeIndex
+
+// Animation player.
+var NewAnimationPlayer = node.NewAnimationPlayer
 
 // Tweens.
 var (

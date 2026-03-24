@@ -410,6 +410,85 @@ func (l *Layer) LateRebuildCheck() {
 	}
 }
 
+// TileAt returns the GID at (col, row) with flip flags stripped.
+// Returns 0 for out-of-bounds or empty tiles.
+func (l *Layer) TileAt(col, row int) uint32 {
+	if col < 0 || col >= l.Width || row < 0 || row >= l.Height {
+		return 0
+	}
+	gid := l.Data[row*l.Width+col]
+	return gid &^ TileFlagMask
+}
+
+// RawTileAt returns the raw GID at (col, row) including flip flags.
+// Returns 0 for out-of-bounds or empty tiles.
+func (l *Layer) RawTileAt(col, row int) uint32 {
+	if col < 0 || col >= l.Width || row < 0 || row >= l.Height {
+		return 0
+	}
+	return l.Data[row*l.Width+col]
+}
+
+// Dimensions returns the layer size in tiles (cols, rows).
+func (l *Layer) Dimensions() (cols, rows int) {
+	return l.Width, l.Height
+}
+
+// TileSize returns the pixel dimensions of a single tile.
+func (l *Layer) TileSize() (w, h int) {
+	return l.Viewport_.TileWidth, l.Viewport_.TileHeight
+}
+
+// LayerCount returns the number of tile layers.
+func (v *Viewport) LayerCount() int {
+	return len(v.layers)
+}
+
+// Layer returns the tile layer at the given index, or nil if out of range.
+func (v *Viewport) Layer(index int) *Layer {
+	if index < 0 || index >= len(v.layers) {
+		return nil
+	}
+	return v.layers[index]
+}
+
+// TileToWorld converts tile coordinates to world-space pixel coordinates
+// (top-left corner of the tile).
+func (v *Viewport) TileToWorld(col, row int) (x, y float64) {
+	return float64(col) * float64(v.TileWidth), float64(row) * float64(v.TileHeight)
+}
+
+// WorldToTile converts world-space coordinates to tile coordinates.
+func (v *Viewport) WorldToTile(x, y float64) (col, row int) {
+	col = int(math.Floor(x / float64(v.TileWidth)))
+	row = int(math.Floor(y / float64(v.TileHeight)))
+	return
+}
+
+// TileQuery provides a read-only view of tilemap data suitable for
+// external systems like pathfinding or collision. No Willow imports needed.
+type TileQuery struct {
+	Cols, Rows   int
+	TileW, TileH int
+	TileAt       func(col, row int) uint32
+}
+
+// Query returns a TileQuery for the given layer index, usable by external packages.
+// Returns a zero TileQuery if the index is out of range.
+func (v *Viewport) Query(layerIndex int) TileQuery {
+	l := v.Layer(layerIndex)
+	if l == nil {
+		return TileQuery{}
+	}
+	return TileQuery{
+		Cols:   l.Width,
+		Rows:   l.Height,
+		TileW:  v.TileWidth,
+		TileH:  v.TileHeight,
+		TileAt: l.TileAt,
+	}
+}
+
 // UpdateAnimations scans layers for animated tiles and updates their UVs.
 func (v *Viewport) UpdateAnimations() {
 	for _, layer := range v.layers {
