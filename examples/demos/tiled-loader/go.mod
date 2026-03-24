@@ -1,11 +1,11 @@
-module github.com/devthicket/willow
+module github.com/devthicket/willow/examples/demos/tiled-loader
 
 go 1.24.0
 
 require (
+	github.com/devthicket/willow v0.2.2
 	github.com/hajimehoshi/ebiten/v2 v2.9.8
-	github.com/tanema/gween v0.0.0-20250522035225-e874ee3ae01a
-	golang.org/x/image v0.31.0
+	github.com/lafriks/go-tiled v0.14.0
 )
 
 require (
@@ -13,7 +13,11 @@ require (
 	github.com/ebitengine/hideconsole v1.0.0 // indirect
 	github.com/ebitengine/purego v0.9.0 // indirect
 	github.com/jezek/xgb v1.1.1 // indirect
+	github.com/tanema/gween v0.0.0-20250522035225-e874ee3ae01a // indirect
+	golang.org/x/image v0.31.0 // indirect
 	golang.org/x/sync v0.17.0 // indirect
 	golang.org/x/sys v0.36.0 // indirect
 	golang.org/x/text v0.29.0 // indirect
 )
+
+replace github.com/devthicket/willow => ../../../
