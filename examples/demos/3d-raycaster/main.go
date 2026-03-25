@@ -1,10 +1,13 @@
-// Wolfenstein-style dungeon crawler testbed for the Willow engine.
+// 2.5D raycaster — GPU-accelerated variant of the 3d-raycaster demo.
 //
-// The 3D view is a classic DDA raycaster that writes directly into an
-// ebiten.Image pixel buffer, displayed via SetCustomImage on a full-screen
-// sprite. Everything else – the HUD, weapon sprite, damage flash, and text –
-// are Willow nodes, demonstrating that the engine handles the game layer while
-// the raycaster owns the pixel work.
+// Instead of CPU pixel-fill + WritePixels, this version builds wall geometry
+// as screen-space quads and submits them in a single Willow mesh node
+// (one DrawTriangles call). A Kage shader applied as a CustomShaderFilter
+// handles distance fog on the GPU: wall distance is encoded into vertex
+// alpha, and the shader un-premultiplies to recover the base colour and
+// blends toward a fog colour. Ceiling and floor are mesh quads with
+// vertex-color gradients, so the entire 3D viewport is rendered through
+// DrawTriangles with zero pixel-buffer uploads.
 //
 // Controls:
 //
@@ -39,15 +42,11 @@ const (
 	mapH      = 20
 	moveSpeed = 0.07
 	rotSpeed  = 0.045
+
+	maxCols = screenW // one quad per column worst case
 )
 
 // ── Map ──────────────────────────────────────────────────────────────────────
-//
-// 0 = open floor
-// 1 = stone wall (grey)
-// 2 = brick wall (red-brown)
-// 3 = dungeon wall (green-black)
-// 4 = iron door frame (yellow-grey)
 
 var worldMap = [mapH][mapW]int{
 	{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
@@ -73,42 +72,73 @@ var worldMap = [mapH][mapW]int{
 }
 
 // ── Wall colours ─────────────────────────────────────────────────────────────
-// Each wall type has two faces: [0] = N/S face (brighter), [1] = E/W face (darker).
 
-type rgb struct{ r, g, b uint8 }
+type rgb struct{ r, g, b float32 }
 
 var wallColors = [5][2]rgb{
-	{},                              // 0: unused
-	{{110, 110, 110}, {75, 75, 75}}, // 1: stone grey
-	{{130, 70, 50}, {90, 50, 35}},   // 2: brick red-brown
-	{{50, 80, 50}, {35, 55, 35}},    // 3: dungeon moss-green
-	{{150, 140, 80}, {100, 95, 55}}, // 4: iron door frame
+	{}, // 0: unused
+	{{110.0 / 255, 110.0 / 255, 110.0 / 255}, {75.0 / 255, 75.0 / 255, 75.0 / 255}}, // 1: stone
+	{{130.0 / 255, 70.0 / 255, 50.0 / 255}, {90.0 / 255, 50.0 / 255, 35.0 / 255}},   // 2: brick
+	{{50.0 / 255, 80.0 / 255, 50.0 / 255}, {35.0 / 255, 55.0 / 255, 35.0 / 255}},    // 3: moss
+	{{150.0 / 255, 140.0 / 255, 80.0 / 255}, {100.0 / 255, 95.0 / 255, 55.0 / 255}}, // 4: iron
 }
+
+// ── Fog shader (Kage) ────────────────────────────────────────────────────────
+//
+// Wall distance is encoded in vertex alpha: 1.0 = close, low values = far.
+// Because DrawTriangles writes premultiplied colour, the shader
+// un-premultiplies to recover the base wall colour, then blends toward the
+// fog colour proportionally.
+
+const fogShaderSrc = `
+//kage:unit pixels
+package main
+
+func Fragment(dst vec4, src vec2, clr vec4) vec4 {
+	c := imageSrc0At(src)
+	if c.a < 0.001 {
+		return vec4(0)
+	}
+
+	// Un-premultiply to recover the original wall colour.
+	wall := c.rgb / c.a
+
+	// Alpha encodes closeness: 1 = nearest, ~0.08 = farthest.
+	// Invert to get fog strength.
+	fog := 1.0 - c.a
+
+	// Blend toward black (dungeon fog).
+	fogged := wall * (1.0 - fog * 0.92)
+	return vec4(fogged, 1)
+}
+`
 
 // ── Game struct ───────────────────────────────────────────────────────────────
 
 type game struct {
-	// Player state
-	posX, posY     float64 // world position (in tile units)
-	dirX, dirY     float64 // unit direction vector
-	planeX, planeY float64 // camera plane (perpendicular, length ≈ tan(FOV/2))
+	posX, posY     float64
+	dirX, dirY     float64
+	planeX, planeY float64
 
-	// Health / ammo
 	health, ammo int
-	fired        bool               // did we fire this frame?
-	kickTween    *willow.TweenGroup // tracks weapon recoil so we can chain the return
+	fired        bool
+	kickTween    *willow.TweenGroup
 
-	// Pixel buffer for the raycaster view
-	pixels   []byte
-	framebuf *ebiten.Image
-
-	// Willow scene and nodes
 	scene       *willow.Scene
-	viewport    *willow.Node // full-screen sprite showing framebuf
-	weaponNode  *willow.Node // coloured rectangle standing in for a gun sprite
+	bgMesh      *willow.Node // ceiling + floor gradient
+	wallMesh    *willow.Node // all wall columns, single DrawTriangles
+	weaponNode  *willow.Node
 	healthText  *willow.Node
 	ammoText    *willow.Node
-	damageFlash *willow.Node // full-screen red overlay, alpha-tweened on hit
+	damageFlash *willow.Node
+
+	// Pre-allocated vertex/index buffers for wall mesh (reused each frame).
+	wallVerts []ebiten.Vertex
+	wallInds  []uint16
+
+	// Pre-built minimap tiles (static geometry never changes).
+	minimapBG  *ebiten.Image // static tile grid, built once
+	minimapDot *ebiten.Image // player dot, built once
 }
 
 // ── Constructor ───────────────────────────────────────────────────────────────
@@ -120,33 +150,39 @@ func newGame() *game {
 		dirX:   1.0,
 		dirY:   0.0,
 		planeX: 0.0,
-		planeY: 0.66, // ~66° horizontal FOV
+		planeY: 0.66,
 		health: 100,
 		ammo:   30,
-		pixels: make([]byte, screenW*screenH*4),
+
+		wallVerts: make([]ebiten.Vertex, 0, maxCols*4),
+		wallInds:  make([]uint16, 0, maxCols*6),
 	}
 
-	// --- pixel buffer ---------------------------------------------------------
-	g.framebuf = ebiten.NewImage(screenW, screenH)
-
-	// --- scene ----------------------------------------------------------------
 	g.scene = willow.NewScene()
 	g.scene.ClearColor = willow.RGB(0, 0, 0)
 
-	// Full-screen viewport sprite (z = 0, rendered first)
-	g.viewport = willow.NewSprite("viewport", willow.TextureRegion{})
-	g.viewport.SetCustomImage(g.framebuf)
-	g.scene.Root.AddChild(g.viewport)
+	// ── Background mesh: ceiling + floor gradients ───────────────────────
+	g.bgMesh = buildBackgroundMesh()
+	g.scene.Root.AddChild(g.bgMesh)
 
-	// Damage flash overlay (rendered above viewport, below weapon/text)
+	// ── Wall mesh: rebuilt each frame ────────────────────────────────────
+	g.wallMesh = willow.NewMesh("walls", willow.WhitePixel, nil, nil)
+	g.scene.Root.AddChild(g.wallMesh)
+
+	// Compile and attach the fog shader as a post-process filter.
+	fogShader, err := ebiten.NewShader([]byte(fogShaderSrc))
+	if err != nil {
+		log.Fatalf("compile fog shader: %v", err)
+	}
+	g.wallMesh.Filters = []any{willow.NewCustomShaderFilter(fogShader, 0)}
+
+	// ── HUD (identical to 3d-raycaster) ──────────────────────────────────
 	g.damageFlash = willow.NewSprite("flash", willow.TextureRegion{})
 	g.damageFlash.SetSize(screenW, screenH)
 	g.damageFlash.SetColor(willow.RGBA(1, 0, 0, 0.7))
 	g.damageFlash.SetAlpha(0)
 	g.scene.Root.AddChild(g.damageFlash)
 
-	// Weapon placeholder: a simple dark grey rectangle at screen centre-bottom.
-	// In a real game this would be a sprite sheet animated via SetTextureRegion.
 	gunW, gunH := 120.0, 90.0
 	g.weaponNode = willow.NewSprite("gun", willow.TextureRegion{})
 	g.weaponNode.SetSize(gunW, gunH)
@@ -154,7 +190,6 @@ func newGame() *game {
 	g.weaponNode.SetPosition(screenW/2-gunW/2, screenH-gunH)
 	g.scene.Root.AddChild(g.weaponNode)
 
-	// Crosshair (two tiny overlapping sprites)
 	chH := willow.NewSprite("ch-h", willow.TextureRegion{})
 	chH.SetSize(14, 2)
 	chH.SetColor(willow.RGBA(1, 1, 1, 0.7))
@@ -167,15 +202,12 @@ func newGame() *game {
 	chV.SetPosition(screenW/2-1, screenH/2-7)
 	g.scene.Root.AddChild(chV)
 
-	// HUD bar at bottom
 	hudBar := willow.NewSprite("hud-bar", willow.TextureRegion{})
 	hudBar.SetSize(screenW, 32)
 	hudBar.SetColor(willow.RGBA(0, 0, 0, 0.75))
 	hudBar.SetPosition(0, screenH-32)
 	g.scene.Root.AddChild(hudBar)
 
-	// Health and ammo text – these are willow.Node objects that live in the scene
-	// graph and are tweened / updated just like any other node.
 	g.healthText = willow.NewText("health", "HP: 100", nil)
 	g.healthText.SetFontSize(18)
 	g.healthText.SetTextColor(willow.RGB(0.2, 1, 0.3))
@@ -188,17 +220,53 @@ func newGame() *game {
 	g.ammoText.SetPosition(screenW-110, screenH-26)
 	g.scene.Root.AddChild(g.ammoText)
 
-	// Per-frame update
+	g.buildMinimapImages()
+
 	g.scene.SetUpdateFunc(g.update)
 
-	// Debug / controls overlay drawn after the scene via SetPostDrawFunc.
 	g.scene.SetPostDrawFunc(func(screen *ebiten.Image) {
-		ebitenutil.DebugPrint(screen,
-			"W/S: move   A/D: strafe   Q/E or ←/→: turn   SPACE: fire")
+		ebitenutil.DebugPrintAt(screen,
+			"W/S: move   A/D: strafe   Q/E or ←/→: turn   SPACE: fire",
+			screenW-380, 8)
 		g.drawMinimap(screen)
 	})
 
 	return g
+}
+
+// ── Background mesh ──────────────────────────────────────────────────────────
+//
+// Two quads: ceiling (top of screen → horizon) and floor (horizon → bottom).
+// Vertex colours create a smooth gradient without any pixel-buffer work.
+
+func buildBackgroundMesh() *willow.Node {
+	half := float32(screenH / 2)
+
+	// Ceiling: darker at top, lighter at horizon.
+	ceilTop := rgb{15.0 / 255, 15.0 / 255, 18.0 / 255}
+	ceilBot := rgb{40.0 / 255, 40.0 / 255, 44.0 / 255}
+
+	// Floor: dark at horizon, slightly lighter (reddish tint) at bottom.
+	floorTop := rgb{20.0 / 255, 20.0 / 255, 20.0 / 255}
+	floorBot := rgb{36.0 / 255, 35.0 / 255, 35.0 / 255}
+
+	verts := []ebiten.Vertex{
+		// Ceiling quad (indices 0-3)
+		{DstX: 0, DstY: 0, SrcX: 0.5, SrcY: 0.5, ColorR: ceilTop.r, ColorG: ceilTop.g, ColorB: ceilTop.b, ColorA: 1},
+		{DstX: screenW, DstY: 0, SrcX: 0.5, SrcY: 0.5, ColorR: ceilTop.r, ColorG: ceilTop.g, ColorB: ceilTop.b, ColorA: 1},
+		{DstX: screenW, DstY: half, SrcX: 0.5, SrcY: 0.5, ColorR: ceilBot.r, ColorG: ceilBot.g, ColorB: ceilBot.b, ColorA: 1},
+		{DstX: 0, DstY: half, SrcX: 0.5, SrcY: 0.5, ColorR: ceilBot.r, ColorG: ceilBot.g, ColorB: ceilBot.b, ColorA: 1},
+		// Floor quad (indices 4-7)
+		{DstX: 0, DstY: half, SrcX: 0.5, SrcY: 0.5, ColorR: floorTop.r, ColorG: floorTop.g, ColorB: floorTop.b, ColorA: 1},
+		{DstX: screenW, DstY: half, SrcX: 0.5, SrcY: 0.5, ColorR: floorTop.r, ColorG: floorTop.g, ColorB: floorTop.b, ColorA: 1},
+		{DstX: screenW, DstY: screenH, SrcX: 0.5, SrcY: 0.5, ColorR: floorBot.r, ColorG: floorBot.g, ColorB: floorBot.b, ColorA: 1},
+		{DstX: 0, DstY: screenH, SrcX: 0.5, SrcY: 0.5, ColorR: floorBot.r, ColorG: floorBot.g, ColorB: floorBot.b, ColorA: 1},
+	}
+	inds := []uint16{
+		0, 1, 2, 0, 2, 3, // ceiling
+		4, 5, 6, 4, 6, 7, // floor
+	}
+	return willow.NewMesh("background", willow.WhitePixel, verts, inds)
 }
 
 // ── Update ────────────────────────────────────────────────────────────────────
@@ -206,12 +274,11 @@ func newGame() *game {
 func (g *game) update() error {
 	g.handleInput()
 	g.checkWeaponReturn()
-	g.renderFrame()
+	g.buildWalls()
 	g.updateHUD()
 	return nil
 }
 
-// checkWeaponReturn starts the weapon return tween once the kick tween finishes.
 func (g *game) checkWeaponReturn() {
 	if g.kickTween != nil && g.kickTween.Done {
 		g.kickTween = nil
@@ -238,14 +305,12 @@ func (g *game) handleInput() {
 		g.tryMove(g.dirX, g.dirY, -moveSpeed)
 	}
 	if g.scene.IsKeyPressed(ebiten.KeyA) {
-		// strafe: perpendicular = (-dirY, dirX)
 		g.tryMove(-g.dirY, g.dirX, moveSpeed*0.75)
 	}
 	if g.scene.IsKeyPressed(ebiten.KeyD) {
 		g.tryMove(g.dirY, -g.dirX, moveSpeed*0.75)
 	}
 
-	// Fire: trigger recoil tween on weapon node + flash on damage overlay.
 	if g.scene.IsKeyPressed(ebiten.KeySpace) && !g.fired {
 		g.fired = true
 		if g.ammo > 0 {
@@ -255,17 +320,12 @@ func (g *game) handleInput() {
 	}
 }
 
-// triggerShot fires weapon animations using Willow tweens.
-// TweenConfig has no OnComplete, so we track the kick tween and start the
-// return tween in update() once it finishes.
 func (g *game) triggerShot() {
 	restY := screenH - 90.0
-	// Kick down.
 	g.kickTween = willow.TweenPosition(g.weaponNode,
 		g.weaponNode.X(), restY+30,
 		willow.TweenConfig{Duration: 0.07, Ease: ease.OutQuad})
 
-	// Muzzle flash: briefly show the damage overlay.
 	g.damageFlash.SetAlpha(0.25)
 	willow.TweenAlpha(g.damageFlash, 0,
 		willow.TweenConfig{Duration: 0.12, Ease: ease.OutQuad})
@@ -284,8 +344,6 @@ func (g *game) tryMove(mx, my, speed float64) {
 	nx := g.posX + mx*speed
 	ny := g.posY + my*speed
 
-	// Axis-separated collision with a small padding so the player
-	// doesn't clip inside wall geometry.
 	const pad = 0.25
 
 	checkX := nx
@@ -319,42 +377,28 @@ func inBounds(x, y int) bool {
 	return x >= 0 && x < mapW && y >= 0 && y < mapH
 }
 
-// ── Raycaster ─────────────────────────────────────────────────────────────────
+// ── Wall mesh builder ────────────────────────────────────────────────────────
+//
+// DDA raycasting is identical to the original, but instead of writing pixels
+// into a byte buffer, each visible column becomes a screen-space quad (4
+// vertices, 6 indices). All columns share a single vertex/index buffer,
+// submitted as one DrawTriangles call through the Willow mesh node.
+//
+// Distance fog is baked into vertex RGB (same formula as the original).
 
-func (g *game) renderFrame() {
-	px := g.pixels
-	half := screenH / 2
+func (g *game) buildWalls() {
+	verts := g.wallVerts[:0]
+	inds := g.wallInds[:0]
 
-	// Ceiling (dark stone overhead) and floor (darker ground).
-	for y := 0; y < screenH; y++ {
-		var r, gr, b uint8
-		if y < half {
-			// Ceiling: subtle gradient from lighter at horizon to dark overhead.
-			t := float64(half-y) / float64(half)
-			v := uint8(40 - uint8(t*25))
-			r, gr, b = v, v, uint8(float64(v)*1.1)
-		} else {
-			// Floor: very dark with a faint reddish tint.
-			t := float64(y-half) / float64(half)
-			v := uint8(20 + uint8(t*15))
-			r, gr, b = uint8(float64(v)*1.05), v, v
-		}
-		for x := 0; x < screenW; x++ {
-			i := (y*screenW + x) * 4
-			px[i], px[i+1], px[i+2], px[i+3] = r, gr, b, 255
-		}
-	}
+	half := float64(screenH) / 2
 
-	// One ray per screen column.
 	for col := 0; col < screenW; col++ {
-		// Camera-space x: −1 (left edge) … +1 (right edge).
 		camX := 2.0*float64(col)/float64(screenW) - 1.0
 		rayDirX := g.dirX + g.planeX*camX
 		rayDirY := g.dirY + g.planeY*camX
 
 		mx, my := int(g.posX), int(g.posY)
 
-		// Step sizes (distance between consecutive grid intersections).
 		var ddx, ddy float64
 		if rayDirX == 0 {
 			ddx = 1e18
@@ -367,7 +411,6 @@ func (g *game) renderFrame() {
 			ddy = math.Abs(1.0 / rayDirY)
 		}
 
-		// Initial side-distances and step directions.
 		var stepX, stepY int
 		var sdx, sdy float64
 		if rayDirX < 0 {
@@ -381,7 +424,6 @@ func (g *game) renderFrame() {
 			stepY, sdy = 1, (float64(my)+1.0-g.posY)*ddy
 		}
 
-		// DDA march.
 		hit, side := 0, 0
 		for hit == 0 {
 			if sdx < sdy {
@@ -402,7 +444,6 @@ func (g *game) renderFrame() {
 			continue
 		}
 
-		// Perpendicular (fish-eye-free) distance to wall.
 		var dist float64
 		if side == 0 {
 			dist = sdx - ddx
@@ -413,86 +454,95 @@ func (g *game) renderFrame() {
 			dist = 0.01
 		}
 
-		lineH := int(float64(screenH) / dist)
+		lineH := screenH / dist
 		y0 := half - lineH/2
 		y1 := half + lineH/2
-		if y0 < 0 {
-			y0 = 0
-		}
-		if y1 >= screenH {
-			y1 = screenH - 1
-		}
 
-		// Colour with distance fog and face shading.
+		// Wall colour (face-shaded, no fog). Distance encoded in alpha
+		// for the fog shader: 1.0 = close, low = far.
 		wt := hit
 		if wt >= len(wallColors) {
 			wt = 1
 		}
 		c := wallColors[wt][side]
-		fog := 1.0 - math.Min(dist/16.0, 0.92)
-		wr := uint8(float64(c.r) * fog)
-		wg := uint8(float64(c.g) * fog)
-		wb := uint8(float64(c.b) * fog)
+		alpha := float32(1.0 - math.Min(dist/16.0, 0.92))
 
-		for y := y0; y <= y1; y++ {
-			i := (y*screenW + col) * 4
-			px[i], px[i+1], px[i+2], px[i+3] = wr, wg, wb, 255
-		}
+		x := float32(col)
+		fy0 := float32(y0)
+		fy1 := float32(y1)
+
+		base := uint16(len(verts))
+		verts = append(verts,
+			ebiten.Vertex{DstX: x, DstY: fy0, SrcX: 0.5, SrcY: 0.5, ColorR: c.r, ColorG: c.g, ColorB: c.b, ColorA: alpha},
+			ebiten.Vertex{DstX: x + 1, DstY: fy0, SrcX: 0.5, SrcY: 0.5, ColorR: c.r, ColorG: c.g, ColorB: c.b, ColorA: alpha},
+			ebiten.Vertex{DstX: x + 1, DstY: fy1, SrcX: 0.5, SrcY: 0.5, ColorR: c.r, ColorG: c.g, ColorB: c.b, ColorA: alpha},
+			ebiten.Vertex{DstX: x, DstY: fy1, SrcX: 0.5, SrcY: 0.5, ColorR: c.r, ColorG: c.g, ColorB: c.b, ColorA: alpha},
+		)
+		inds = append(inds, base, base+1, base+2, base, base+2, base+3)
 	}
 
-	g.framebuf.WritePixels(px)
+	g.wallVerts = verts
+	g.wallInds = inds
+	g.wallMesh.SetMeshVertices(verts)
+	g.wallMesh.SetMeshIndices(inds)
 }
 
 // ── Minimap ───────────────────────────────────────────────────────────────────
-//
-// Drawn in SetPostDrawFunc so it floats above the scene without needing a
-// dedicated node hierarchy.
 
-func (g *game) drawMinimap(screen *ebiten.Image) {
-	const (
-		cell   = 7
-		offX   = 8
-		offY   = 20 // below the debug text line
-		radius = 2  // player dot half-size
-	)
+const (
+	mmCell   = 7
+	mmOffX   = screenW - mapW*mmCell - 8
+	mmOffY   = 28
+	mmRadius = 2
+)
 
-	// Scratch image for each cell (reuse via Fill + DrawImage).
-	tile := ebiten.NewImage(cell-1, cell-1)
+// buildMinimapImages pre-renders the static tile grid and player dot once.
+func (g *game) buildMinimapImages() {
+	w := mapW * mmCell
+	h := mapH * mmCell
+	g.minimapBG = ebiten.NewImage(w, h)
 
+	tile := ebiten.NewImage(mmCell-1, mmCell-1)
 	for my := 0; my < mapH; my++ {
 		for mx := 0; mx < mapW; mx++ {
-			x0 := float64(offX + mx*cell)
-			y0 := float64(offY + my*cell)
-
 			v := worldMap[my][mx]
 			if v > 0 {
 				c := wallColors[v][0]
-				tile.Fill(color.RGBA{R: c.r, G: c.g, B: c.b, A: 217})
+				tile.Fill(color.RGBA{
+					R: uint8(c.r * 255), G: uint8(c.g * 255), B: uint8(c.b * 255), A: 217,
+				})
 			} else {
 				tile.Fill(color.RGBA{R: 25, G: 25, B: 25, A: 178})
 			}
-
 			op := &ebiten.DrawImageOptions{}
-			op.GeoM.Translate(x0, y0)
-			screen.DrawImage(tile, op)
+			op.GeoM.Translate(float64(mx*mmCell), float64(my*mmCell))
+			g.minimapBG.DrawImage(tile, op)
 		}
 	}
 
-	// Player dot.
-	dot := ebiten.NewImage(radius*2+1, radius*2+1)
-	dot.Fill(color.RGBA{R: 255, G: 255, B: 0, A: 255})
+	g.minimapDot = ebiten.NewImage(mmRadius*2+1, mmRadius*2+1)
+	g.minimapDot.Fill(color.RGBA{R: 255, G: 255, B: 0, A: 255})
+}
+
+func (g *game) drawMinimap(screen *ebiten.Image) {
+	// Blit the pre-built static grid.
 	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(
-		float64(offX)+g.posX*cell-radius,
-		float64(offY)+g.posY*cell-radius,
+	op.GeoM.Translate(mmOffX, mmOffY)
+	screen.DrawImage(g.minimapBG, op)
+
+	// Player dot (only this moves each frame).
+	op2 := &ebiten.DrawImageOptions{}
+	op2.GeoM.Translate(
+		float64(mmOffX)+g.posX*mmCell-mmRadius,
+		float64(mmOffY)+g.posY*mmCell-mmRadius,
 	)
-	screen.DrawImage(dot, op)
+	screen.DrawImage(g.minimapDot, op2)
 
 	// Direction indicator.
-	ex := float64(offX) + (g.posX+g.dirX*2)*cell
-	ey := float64(offY) + (g.posY+g.dirY*2)*cell
+	ex := float64(mmOffX) + (g.posX+g.dirX*2)*mmCell
+	ey := float64(mmOffY) + (g.posY+g.dirY*2)*mmCell
 	ebitenutil.DrawLine(screen,
-		float64(offX)+g.posX*cell, float64(offY)+g.posY*cell,
+		float64(mmOffX)+g.posX*mmCell, float64(mmOffY)+g.posY*mmCell,
 		ex, ey,
 		color.RGBA{R: 255, G: 255, B: 0, A: 255},
 	)
@@ -531,7 +581,7 @@ func main() {
 	}
 
 	if err := willow.Run(g.scene, willow.RunConfig{
-		Title:   "Dungeon Crawler — Willow Testbed",
+		Title:   "2.5D Raycaster — DrawTriangles + Fog Shader",
 		Width:   screenW,
 		Height:  screenH,
 		ShowFPS: true,
