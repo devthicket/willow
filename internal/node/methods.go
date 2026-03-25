@@ -74,7 +74,7 @@ func (n *Node) SetGlobalOrder(o int) {
 
 func (n *Node) SetContent(s string) {
 	n.TextBlock.Content = s
-	n.TextBlock.LayoutDirty = true
+	n.TextBlock.Invalidate()
 	invalidateAncestorCache(n)
 }
 
