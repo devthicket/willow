@@ -71,10 +71,11 @@ func main() {
 	}
 
 	if err := willow.Run(scene, willow.RunConfig{
-		Title:   "Willow  -  100k Particle Stress Test",
-		Width:   screenW,
-		Height:  screenH,
-		ShowFPS: true,
+		Title:     "Willow  -  100k Particle Stress Test",
+		Width:     screenW,
+		Height:    screenH,
+		ShowFPS:   true,
+		Resizable: true,
 	}); err != nil {
 		log.Fatal(err)
 	}

@@ -155,6 +155,22 @@ type RunConfig struct {
 	// FXAA enables full-screen fast approximate anti-aliasing as a post-process
 	// pass. Nil disables FXAA. Use DefaultFXAAConfig() for sensible defaults.
 	FXAA *FXAAConfig
+
+	// Resizable enables window resizing.
+	Resizable bool
+	// Decorated controls window chrome (title bar, borders). Nil keeps the
+	// default (decorated). Set to a *bool to override.
+	Decorated *bool
+	// Fullscreen starts the window in fullscreen mode.
+	Fullscreen bool
+	// VSync controls vertical sync. Nil keeps the default (enabled).
+	// Set to a *bool to override.
+	VSync *bool
+	// TPS overrides the target ticks per second. Zero keeps the default (60).
+	TPS int
+	// PreDrawFunc is called each frame after the screen is cleared but before
+	// the scene is drawn. Use it to render custom content underneath the scene.
+	PreDrawFunc func(screen *ebiten.Image)
 }
 
 // ---------------------------------------------------------------------------
@@ -884,12 +900,27 @@ func Run(scene *Scene, cfg RunConfig) error {
 	if cfg.Title != "" {
 		ebiten.SetWindowTitle(cfg.Title)
 	}
+	if cfg.Resizable {
+		ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
+	}
+	if cfg.Decorated != nil {
+		ebiten.SetWindowDecorated(*cfg.Decorated)
+	}
+	if cfg.Fullscreen {
+		ebiten.SetFullscreen(true)
+	}
+	if cfg.VSync != nil {
+		ebiten.SetVsyncEnabled(*cfg.VSync)
+	}
+	if cfg.TPS > 0 {
+		ebiten.SetTPS(cfg.TPS)
+	}
 	if cfg.Background.A() > 0 {
 		scene.ClearColor = cfg.Background
 	} else if scene.ClearColor.A() == 0 {
 		scene.ClearColor = types.RGBA(0.18, 0.20, 0.25, 1)
 	}
-	g := &gameShell{scene: scene, w: w, h: h, fxaa: cfg.FXAA}
+	g := &gameShell{scene: scene, w: w, h: h, fxaa: cfg.FXAA, preDraw: cfg.PreDrawFunc}
 	if cfg.FXAA != nil {
 		render.EnsureFXAAShader() // compile eagerly so first frame has no stall
 	}
@@ -901,10 +932,11 @@ func Run(scene *Scene, cfg RunConfig) error {
 }
 
 type gameShell struct {
-	scene  *Scene
-	w, h   int
-	fpsWid *Node
-	fxaa   *FXAAConfig
+	scene   *Scene
+	w, h    int
+	fpsWid  *Node
+	fxaa    *FXAAConfig
+	preDraw func(*ebiten.Image)
 }
 
 func (g *gameShell) Update() error {
@@ -923,6 +955,9 @@ func (g *gameShell) Update() error {
 func (g *gameShell) Draw(screen *ebiten.Image) {
 	if g.scene.ClearColor.A() > 0 {
 		screen.Fill(render.ColorToRGBA(g.scene.ClearColor))
+	}
+	if g.preDraw != nil {
+		g.preDraw(screen)
 	}
 	g.scene.Draw(screen)
 	if g.fpsWid != nil && g.fpsWid.CustomImage() != nil {
@@ -970,13 +1005,28 @@ func RunWithManager(sm *SceneManager, cfg RunConfig) error {
 	if cfg.Title != "" {
 		ebiten.SetWindowTitle(cfg.Title)
 	}
+	if cfg.Resizable {
+		ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
+	}
+	if cfg.Decorated != nil {
+		ebiten.SetWindowDecorated(*cfg.Decorated)
+	}
+	if cfg.Fullscreen {
+		ebiten.SetFullscreen(true)
+	}
+	if cfg.VSync != nil {
+		ebiten.SetVsyncEnabled(*cfg.VSync)
+	}
+	if cfg.TPS > 0 {
+		ebiten.SetTPS(cfg.TPS)
+	}
 	cur := sm.Current()
 	if cfg.Background.A() > 0 {
 		cur.ClearColor = cfg.Background
 	} else if cur.ClearColor.A() == 0 {
 		cur.ClearColor = types.RGBA(0.18, 0.20, 0.25, 1)
 	}
-	g := &managerShell{sm: sm, w: w, h: h, fxaa: cfg.FXAA}
+	g := &managerShell{sm: sm, w: w, h: h, fxaa: cfg.FXAA, preDraw: cfg.PreDrawFunc}
 	if cfg.FXAA != nil {
 		render.EnsureFXAAShader()
 	}
@@ -988,10 +1038,11 @@ func RunWithManager(sm *SceneManager, cfg RunConfig) error {
 }
 
 type managerShell struct {
-	sm     *SceneManager
-	w, h   int
-	fpsWid *Node
-	fxaa   *FXAAConfig
+	sm      *SceneManager
+	w, h    int
+	fpsWid  *Node
+	fxaa    *FXAAConfig
+	preDraw func(*ebiten.Image)
 }
 
 func (g *managerShell) Update() error {
@@ -1012,6 +1063,9 @@ func (g *managerShell) Draw(screen *ebiten.Image) {
 	cur := g.sm.Current()
 	if cur != nil && cur.ClearColor.A() > 0 {
 		screen.Fill(render.ColorToRGBA(cur.ClearColor))
+	}
+	if g.preDraw != nil {
+		g.preDraw(screen)
 	}
 	g.sm.Draw(screen)
 	if g.fpsWid != nil && g.fpsWid.CustomImage() != nil {
