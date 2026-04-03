@@ -198,7 +198,7 @@ func TestSubtreeBounds_SingleSprite(t *testing.T) {
 
 func TestWorldAABB_Identity(t *testing.T) {
 	id := node.IdentityTransform
-	aabb := WorldAABB(id, 100, 50)
+	aabb := types.WorldAABB(id, 100, 50)
 	if aabb.X != 0 || aabb.Y != 0 || aabb.Width != 100 || aabb.Height != 50 {
 		t.Errorf("WorldAABB = %+v, want (0,0,100,50)", aabb)
 	}
@@ -247,13 +247,13 @@ func TestCommandGeoM(t *testing.T) {
 }
 
 func TestClamp01(t *testing.T) {
-	if Clamp01(-0.5) != 0 {
+	if types.Clamp01(-0.5) != 0 {
 		t.Error("Clamp01(-0.5) should be 0")
 	}
-	if Clamp01(0.5) != 0.5 {
+	if types.Clamp01(0.5) != 0.5 {
 		t.Error("Clamp01(0.5) should be 0.5")
 	}
-	if Clamp01(1.5) != 1 {
+	if types.Clamp01(1.5) != 1 {
 		t.Error("Clamp01(1.5) should be 1")
 	}
 }
@@ -682,14 +682,14 @@ func TestTraverse_SimpleSprites(t *testing.T) {
 	s1.Renderable_ = true
 	s1.WorldTransform = node.IdentityTransform
 	s1.WorldAlpha = 1.0
-	s1.TextureRegion_ = types.TextureRegion{Width: 16, Height: 16, OriginalW: 16, OriginalH: 16, Page: MagentaPlaceholderPage}
+	s1.TextureRegion_ = types.TextureRegion{Width: 16, Height: 16, OriginalW: 16, OriginalH: 16, Page: types.MagentaPlaceholderPage}
 
 	s2 := node.NewNode("s2", types.NodeTypeSprite)
 	s2.Visible_ = true
 	s2.Renderable_ = true
 	s2.WorldTransform = node.IdentityTransform
 	s2.WorldAlpha = 1.0
-	s2.TextureRegion_ = types.TextureRegion{Width: 32, Height: 32, OriginalW: 32, OriginalH: 32, Page: MagentaPlaceholderPage}
+	s2.TextureRegion_ = types.TextureRegion{Width: 32, Height: 32, OriginalW: 32, OriginalH: 32, Page: types.MagentaPlaceholderPage}
 
 	root.AddChild(s1)
 	root.AddChild(s2)
@@ -756,7 +756,7 @@ func TestTraverse_ZIndexOrdering(t *testing.T) {
 	s1.WorldTransform = node.IdentityTransform
 	s1.WorldAlpha = 1.0
 	s1.ZIndex_ = 10
-	s1.TextureRegion_ = types.TextureRegion{Width: 8, Height: 8, OriginalW: 8, OriginalH: 8, Page: MagentaPlaceholderPage}
+	s1.TextureRegion_ = types.TextureRegion{Width: 8, Height: 8, OriginalW: 8, OriginalH: 8, Page: types.MagentaPlaceholderPage}
 
 	s2 := node.NewNode("s2", types.NodeTypeSprite)
 	s2.Visible_ = true
@@ -764,7 +764,7 @@ func TestTraverse_ZIndexOrdering(t *testing.T) {
 	s2.WorldTransform = node.IdentityTransform
 	s2.WorldAlpha = 1.0
 	s2.ZIndex_ = 1
-	s2.TextureRegion_ = types.TextureRegion{Width: 8, Height: 8, OriginalW: 8, OriginalH: 8, Page: MagentaPlaceholderPage}
+	s2.TextureRegion_ = types.TextureRegion{Width: 8, Height: 8, OriginalW: 8, OriginalH: 8, Page: types.MagentaPlaceholderPage}
 
 	root.AddChild(s1)
 	root.AddChild(s2)
@@ -1025,7 +1025,7 @@ func TestInvalidateAncestorCache_ParentDirtied(t *testing.T) {
 
 func TestWorldAABB_Translated(t *testing.T) {
 	t32 := [6]float64{1, 0, 0, 1, 50, 100}
-	aabb := WorldAABB(t32, 10, 20)
+	aabb := types.WorldAABB(t32, 10, 20)
 	if aabb.X != 50 || aabb.Y != 100 || aabb.Width != 10 || aabb.Height != 20 {
 		t.Errorf("WorldAABB translated = %+v, want (50,100,10,20)", aabb)
 	}
@@ -1033,7 +1033,7 @@ func TestWorldAABB_Translated(t *testing.T) {
 
 func TestWorldAABB_Scaled(t *testing.T) {
 	t32 := [6]float64{2, 0, 0, 3, 0, 0}
-	aabb := WorldAABB(t32, 10, 10)
+	aabb := types.WorldAABB(t32, 10, 10)
 	if aabb.Width != 20 || aabb.Height != 30 {
 		t.Errorf("WorldAABB scaled = (%f, %f), want (20, 30)", aabb.Width, aabb.Height)
 	}
@@ -1334,7 +1334,7 @@ func TestResolvePage_MagentaSentinel(t *testing.T) {
 	sentinel := ebiten.NewImage(2, 2)
 	MagentaImageFn = func() *ebiten.Image { return sentinel }
 
-	result := ResolvePage(MagentaPlaceholderPage)
+	result := ResolvePage(types.MagentaPlaceholderPage)
 	if result != sentinel {
 		t.Error("ResolvePage with magenta sentinel should return magenta image")
 	}
@@ -1354,7 +1354,7 @@ func TestResolvePage_NilFunctions(t *testing.T) {
 	if result != nil {
 		t.Error("ResolvePage with nil PageFn should return nil")
 	}
-	result = ResolvePage(MagentaPlaceholderPage)
+	result = ResolvePage(types.MagentaPlaceholderPage)
 	if result != nil {
 		t.Error("ResolvePage magenta with nil MagentaImageFn should return nil")
 	}

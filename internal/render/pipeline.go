@@ -608,7 +608,7 @@ func subtreeBoundsWalk(n *node.Node, localTransform [6]float64, bounds *types.Re
 	var hasAABB bool
 
 	if n.Type == types.NodeTypeMesh && n.Mesh != nil {
-		aabb = mesh.MeshWorldAABB(n, localTransform, WorldAABB)
+		aabb = mesh.MeshWorldAABB(n, localTransform, types.WorldAABB)
 		hasAABB = aabb.Width > 0 || aabb.Height > 0
 	} else if n.Type == types.NodeTypeParticleEmitter && n.Emitter != nil && n.Emitter.AliveCount() > 0 {
 		pb := n.Emitter.Bounds()
@@ -623,7 +623,7 @@ func subtreeBoundsWalk(n *node.Node, localTransform [6]float64, bounds *types.Re
 	} else {
 		w, h := NodeDimensions(n)
 		if w > 0 && h > 0 {
-			aabb = WorldAABB(localTransform, w, h)
+			aabb = types.WorldAABB(localTransform, w, h)
 			hasAABB = true
 		}
 	}
@@ -694,21 +694,6 @@ func ApplyFiltersAny(filters []any, src *ebiten.Image, pool *RenderTexturePool) 
 	}
 
 	return current
-}
-
-// WorldAABB computes the axis-aligned bounding box for a rectangle of size
-// (w, h) at the origin, transformed by the given affine matrix.
-func WorldAABB(transform [6]float64, w, h float64) types.Rect {
-	a, b, c, d, tx, ty := transform[0], transform[1], transform[2], transform[3], transform[4], transform[5]
-	x0, y0 := tx, ty
-	x1, y1 := a*w+tx, b*w+ty
-	x2, y2 := c*h+tx, d*h+ty
-	x3, y3 := a*w+c*h+tx, b*w+d*h+ty
-	minX := math.Min(math.Min(x0, x1), math.Min(x2, x3))
-	minY := math.Min(math.Min(y0, y1), math.Min(y2, y3))
-	maxX := math.Max(math.Max(x0, x1), math.Max(x2, x3))
-	maxY := math.Max(math.Max(y0, y1), math.Max(y2, y3))
-	return types.Rect{X: minX, Y: minY, Width: maxX - minX, Height: maxY - minY}
 }
 
 // NodeDimensions returns the width and height used for bounds/culling.

@@ -200,6 +200,19 @@ type Manager struct {
 	PrevTouchIDs []ebiten.TouchID
 	Pinch        pinchState
 	InjectQueue  []SyntheticPointerEvent
+
+	// VirtualCursor replaces real mouse input when Active is true. The test
+	// runner sets position and button state; the input manager reads it each
+	// frame in place of ebiten's mouse.
+	VirtualCursor VirtualCursorState
+}
+
+// VirtualCursorState is a persistent synthetic mouse that the test runner
+// drives. When Active, ProcessInput reads this instead of the real mouse.
+type VirtualCursorState struct {
+	Active  bool
+	X, Y    float64
+	Pressed bool
 }
 
 // NewManager creates a Manager with default settings.
@@ -357,10 +370,32 @@ func (m *Manager) ProcessInput(root *node.Node) {
 	mods := ReadModifiers()
 
 	if !m.processInjectedInput(root, mods) {
-		m.processMousePointer(root, mods)
+		if m.VirtualCursor.Active {
+			m.processVirtualCursor(root, mods)
+		} else {
+			m.processMousePointer(root, mods)
+		}
 	}
 	m.processTouchPointers(root, mods)
 	m.detectPinch(mods)
+}
+
+func (m *Manager) processVirtualCursor(root *node.Node, mods types.KeyModifiers) {
+	vc := &m.VirtualCursor
+	// Feed through the same inject path so pointer processing is identical.
+	if vc.Pressed {
+		m.InjectQueue = append(m.InjectQueue, SyntheticPointerEvent{
+			ScreenX: vc.X, ScreenY: vc.Y,
+			Pressed: true,
+			Button:  types.MouseButtonLeft,
+		})
+	} else {
+		m.InjectQueue = append(m.InjectQueue, SyntheticPointerEvent{
+			ScreenX: vc.X, ScreenY: vc.Y,
+			Pressed: false,
+		})
+	}
+	m.processInjectedInput(root, mods)
 }
 
 func (m *Manager) processMousePointer(root *node.Node, mods types.KeyModifiers) {

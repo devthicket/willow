@@ -654,7 +654,6 @@ func init() {
 		rt.(*render.RenderTexture).Dispose()
 	}
 	lighting.EnsureMagentaImageFn = atlas.EnsureMagentaImage
-	lighting.Clamp01Fn = render.Clamp01
 
 	// Tilemap wiring
 	tilemap.NewContainerFn = func(name string) *node.Node {
@@ -920,7 +919,10 @@ func Run(scene *Scene, cfg RunConfig) error {
 	} else if scene.ClearColor.A() == 0 {
 		scene.ClearColor = types.RGBA(0.18, 0.20, 0.25, 1)
 	}
-	g := &gameShell{scene: scene, w: w, h: h, fxaa: cfg.FXAA, preDraw: cfg.PreDrawFunc}
+	g := &gameShell{scene: scene}
+	g.w, g.h = w, h
+	g.fxaa = cfg.FXAA
+	g.preDraw = cfg.PreDrawFunc
 	if cfg.FXAA != nil {
 		render.EnsureFXAAShader() // compile eagerly so first frame has no stall
 	}
@@ -931,12 +933,39 @@ func Run(scene *Scene, cfg RunConfig) error {
 	return ebiten.RunGame(g)
 }
 
-type gameShell struct {
-	scene   *Scene
+// gameBase holds shared fields and methods for both gameShell and managerShell.
+type gameBase struct {
 	w, h    int
 	fpsWid  *Node
 	fxaa    *FXAAConfig
 	preDraw func(*ebiten.Image)
+}
+
+func (b *gameBase) tickFPS() {
+	if b.fpsWid != nil && b.fpsWid.OnUpdate != nil {
+		b.fpsWid.OnUpdate(1.0 / float64(ebiten.TPS()))
+	}
+}
+
+func (b *gameBase) drawFPS(screen *ebiten.Image) {
+	if b.fpsWid != nil && b.fpsWid.CustomImage() != nil {
+		var op ebiten.DrawImageOptions
+		op.GeoM.Translate(b.fpsWid.X_, b.fpsWid.Y_)
+		screen.DrawImage(b.fpsWid.CustomImage(), &op)
+	}
+}
+
+func (b *gameBase) DrawFinalScreen(screen ebiten.FinalScreen, offscreen *ebiten.Image, geoM ebiten.GeoM) {
+	if b.fxaa != nil {
+		render.DrawFinalScreenFXAA(screen, offscreen, geoM, *b.fxaa)
+		return
+	}
+	ebiten.DefaultDrawFinalScreen(screen, offscreen, geoM)
+}
+
+type gameShell struct {
+	gameBase
+	scene *Scene
 }
 
 func (g *gameShell) Update() error {
@@ -946,9 +975,7 @@ func (g *gameShell) Update() error {
 		}
 	}
 	g.scene.Update()
-	if g.fpsWid != nil && g.fpsWid.OnUpdate != nil {
-		g.fpsWid.OnUpdate(1.0 / float64(ebiten.TPS()))
-	}
+	g.tickFPS()
 	return nil
 }
 
@@ -960,11 +987,7 @@ func (g *gameShell) Draw(screen *ebiten.Image) {
 		g.preDraw(screen)
 	}
 	g.scene.Draw(screen)
-	if g.fpsWid != nil && g.fpsWid.CustomImage() != nil {
-		var op ebiten.DrawImageOptions
-		op.GeoM.Translate(g.fpsWid.X_, g.fpsWid.Y_)
-		screen.DrawImage(g.fpsWid.CustomImage(), &op)
-	}
+	g.drawFPS(screen)
 	if g.scene.PostDrawFunc != nil {
 		g.scene.PostDrawFunc(screen)
 	}
@@ -978,14 +1001,6 @@ func (g *gameShell) Layout(outsideWidth, outsideHeight int) (int, int) {
 		}
 	}
 	return g.w, g.h
-}
-
-func (g *gameShell) DrawFinalScreen(screen ebiten.FinalScreen, offscreen *ebiten.Image, geoM ebiten.GeoM) {
-	if g.fxaa != nil {
-		render.DrawFinalScreenFXAA(screen, offscreen, geoM, *g.fxaa)
-		return
-	}
-	ebiten.DefaultDrawFinalScreen(screen, offscreen, geoM)
 }
 
 // ---------------------------------------------------------------------------
@@ -1026,7 +1041,10 @@ func RunWithManager(sm *SceneManager, cfg RunConfig) error {
 	} else if cur.ClearColor.A() == 0 {
 		cur.ClearColor = types.RGBA(0.18, 0.20, 0.25, 1)
 	}
-	g := &managerShell{sm: sm, w: w, h: h, fxaa: cfg.FXAA, preDraw: cfg.PreDrawFunc}
+	g := &managerShell{sm: sm}
+	g.w, g.h = w, h
+	g.fxaa = cfg.FXAA
+	g.preDraw = cfg.PreDrawFunc
 	if cfg.FXAA != nil {
 		render.EnsureFXAAShader()
 	}
@@ -1038,11 +1056,8 @@ func RunWithManager(sm *SceneManager, cfg RunConfig) error {
 }
 
 type managerShell struct {
-	sm      *SceneManager
-	w, h    int
-	fpsWid  *Node
-	fxaa    *FXAAConfig
-	preDraw func(*ebiten.Image)
+	gameBase
+	sm *SceneManager
 }
 
 func (g *managerShell) Update() error {
@@ -1053,9 +1068,7 @@ func (g *managerShell) Update() error {
 		}
 	}
 	g.sm.Update()
-	if g.fpsWid != nil && g.fpsWid.OnUpdate != nil {
-		g.fpsWid.OnUpdate(1.0 / float64(ebiten.TPS()))
-	}
+	g.tickFPS()
 	return nil
 }
 
@@ -1068,11 +1081,7 @@ func (g *managerShell) Draw(screen *ebiten.Image) {
 		g.preDraw(screen)
 	}
 	g.sm.Draw(screen)
-	if g.fpsWid != nil && g.fpsWid.CustomImage() != nil {
-		var op ebiten.DrawImageOptions
-		op.GeoM.Translate(g.fpsWid.X_, g.fpsWid.Y_)
-		screen.DrawImage(g.fpsWid.CustomImage(), &op)
-	}
+	g.drawFPS(screen)
 	if cur != nil && cur.PostDrawFunc != nil {
 		cur.PostDrawFunc(screen)
 	}
@@ -1087,12 +1096,4 @@ func (g *managerShell) Layout(outsideWidth, outsideHeight int) (int, int) {
 		}
 	}
 	return g.w, g.h
-}
-
-func (g *managerShell) DrawFinalScreen(screen ebiten.FinalScreen, offscreen *ebiten.Image, geoM ebiten.GeoM) {
-	if g.fxaa != nil {
-		render.DrawFinalScreenFXAA(screen, offscreen, geoM, *g.fxaa)
-		return
-	}
-	ebiten.DefaultDrawFinalScreen(screen, offscreen, geoM)
 }

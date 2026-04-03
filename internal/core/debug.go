@@ -174,6 +174,90 @@ func FlushScreenshots(screen *ebiten.Image, queue []string, dir string) {
 	}
 }
 
+// FlushPixelChecks reads pixels from the rendered screen and checks each
+// pending assertion. Colors are matched loosely (dominant channel).
+func FlushPixelChecks(screen *ebiten.Image, checks []PendingPixelCheck) {
+	if len(checks) == 0 {
+		return
+	}
+	bounds := screen.Bounds()
+	w, h := bounds.Dx(), bounds.Dy()
+	pixels := make([]byte, 4*w*h)
+	screen.ReadPixels(pixels)
+
+	for _, pc := range checks {
+		if pc.X < 0 || pc.X >= w || pc.Y < 0 || pc.Y >= h {
+			fmt.Fprintf(os.Stderr, "[pixelcheck] FAIL (%d,%d): out of bounds (%dx%d)\n", pc.X, pc.Y, w, h)
+			continue
+		}
+		off := (pc.Y*w + pc.X) * 4
+		r, g, b := pixels[off], pixels[off+1], pixels[off+2]
+		actual := classifyColor(r, g, b)
+		expected := pc.Color
+		if matchColor(actual, r, g, b, expected) {
+			fmt.Fprintf(os.Stderr, "[pixelcheck] OK   (%d,%d): expected=%s actual=%s rgb(%d,%d,%d)\n", pc.X, pc.Y, expected, actual, r, g, b)
+		} else {
+			fmt.Fprintf(os.Stderr, "[pixelcheck] FAIL (%d,%d): expected=%s actual=%s rgb(%d,%d,%d)\n", pc.X, pc.Y, expected, actual, r, g, b)
+		}
+	}
+}
+
+// classifyColor returns a human-readable name for the dominant color channel.
+func classifyColor(r, g, b uint8) string {
+	if r > 150 && r > g+20 && r > b+20 {
+		return "red"
+	}
+	if g > 150 && r < 100 && b < 100 {
+		return "green"
+	}
+	if b > 150 && r < 100 && g < 100 {
+		return "blue"
+	}
+	if r > 200 && g > 200 && b > 200 {
+		return "white"
+	}
+	if r < 50 && g < 50 && b < 50 {
+		return "black"
+	}
+	if r > 150 && g > 150 && b < 100 {
+		return "yellow"
+	}
+	avg := (int(r) + int(g) + int(b)) / 3
+	diff := abs(int(r)-avg) + abs(int(g)-avg) + abs(int(b)-avg)
+	if diff < 30 {
+		return "grey"
+	}
+	return fmt.Sprintf("rgb(%d,%d,%d)", r, g, b)
+}
+
+func matchColor(actual string, r, g, b uint8, expected string) bool {
+	// Exact match on classified name
+	if actual == expected {
+		return true
+	}
+	// "reddish", "bluish", etc. — check dominant channel loosely
+	switch expected {
+	case "reddish":
+		return r > g+30 && r > b+30
+	case "bluish":
+		return b > r+30 && b > g+30
+	case "greenish":
+		return g > r+30 && g > b+30
+	case "dark":
+		return r < 80 && g < 80 && b < 80
+	case "light":
+		return r > 170 && g > 170 && b > 170
+	}
+	return false
+}
+
+func abs(x int) int {
+	if x < 0 {
+		return -x
+	}
+	return x
+}
+
 func writePNG(path string, img *image.NRGBA) error {
 	f, err := os.Create(path)
 	if err != nil {

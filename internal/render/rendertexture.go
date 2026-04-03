@@ -17,16 +17,13 @@ var (
 	// MagentaImageFn returns the magenta placeholder image.
 	MagentaImageFn func() *ebiten.Image
 
-	// MagentaPlaceholderPage is the sentinel page index for the magenta placeholder.
-	MagentaPlaceholderPage uint16 = 0xFFFF
-
 	// NewSpriteFn creates a new sprite node (wired by root constructors).
 	NewSpriteFn func(name string, region types.TextureRegion) *node.Node
 )
 
 // ResolvePage returns the atlas page image for a page index.
 func ResolvePage(pageIdx uint16) *ebiten.Image {
-	if pageIdx == MagentaPlaceholderPage {
+	if pageIdx == types.MagentaPlaceholderPage {
 		if MagentaImageFn != nil {
 			return MagentaImageFn()
 		}
@@ -195,7 +192,7 @@ func (rt *RenderTexture) Dispose() {
 // resolvePageImage returns the atlas page image for a region, handling the
 // magenta placeholder sentinel.
 func resolvePageImage(region types.TextureRegion, pages []*ebiten.Image) *ebiten.Image {
-	if region.Page == MagentaPlaceholderPage {
+	if region.Page == types.MagentaPlaceholderPage {
 		if MagentaImageFn != nil {
 			return MagentaImageFn()
 		}
@@ -244,10 +241,10 @@ func ApplyDrawOpts(op *ebiten.DrawImageOptions, opts RenderTextureDrawOpts, offs
 // ColorToRGBA converts a types.Color to a color.Color (premultiplied) for image.Fill.
 func ColorToRGBA(c types.Color) colorRGBA {
 	return colorRGBA{
-		R: uint8(Clamp01(c.R()*c.A()) * 255),
-		G: uint8(Clamp01(c.G()*c.A()) * 255),
-		B: uint8(Clamp01(c.B()*c.A()) * 255),
-		A: uint8(Clamp01(c.A()) * 255),
+		R: uint8(types.Clamp01(c.R()*c.A()) * 255),
+		G: uint8(types.Clamp01(c.G()*c.A()) * 255),
+		B: uint8(types.Clamp01(c.B()*c.A()) * 255),
+		A: uint8(types.Clamp01(c.A()) * 255),
 	}
 }
 
@@ -261,15 +258,4 @@ func (c colorRGBA) RGBA() (r, g, b, a uint32) {
 	b = uint32(c.B) * 0x101
 	a = uint32(c.A) * 0x101
 	return
-}
-
-// Clamp01 clamps a float64 to [0, 1].
-func Clamp01(v float64) float64 {
-	if v < 0 {
-		return 0
-	}
-	if v > 1 {
-		return 1
-	}
-	return v
 }

@@ -3,22 +3,7 @@ package core
 import (
 	"github.com/devthicket/willow/internal/node"
 	"github.com/tanema/gween"
-	"github.com/tanema/gween/ease"
 )
-
-// TweenConfig holds the duration and easing function for a tween.
-type TweenConfig struct {
-	Duration float32
-	Ease     ease.TweenFunc
-}
-
-// TweenEase returns cfg.Ease if non-nil, otherwise ease.Linear.
-func TweenEase(cfg TweenConfig) ease.TweenFunc {
-	if cfg.Ease != nil {
-		return cfg.Ease
-	}
-	return ease.Linear
-}
 
 // TweenGroup animates up to 4 float64 fields on a Node simultaneously.
 // Create via root convenience constructors (TweenPosition, TweenScale, etc.).

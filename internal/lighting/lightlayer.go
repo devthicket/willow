@@ -24,28 +24,9 @@ var (
 	// RenderTextureDisposeFn disposes a RenderTexture.
 	RenderTextureDisposeFn func(rt any)
 
-	// MagentaPlaceholderPage is the sentinel page index.
-	MagentaPlaceholderPage uint16 = 0xFFFF
-
 	// EnsureMagentaImageFn returns the 1x1 magenta placeholder image.
 	EnsureMagentaImageFn func() *ebiten.Image
-
-	// Clamp01Fn clamps a value to [0, 1].
-	Clamp01Fn func(v float64) float64
 )
-
-func clamp01(v float64) float64 {
-	if Clamp01Fn != nil {
-		return Clamp01Fn(v)
-	}
-	if v < 0 {
-		return 0
-	}
-	if v > 1 {
-		return 1
-	}
-	return v
-}
 
 // Light represents a light source in a LightLayer.
 type Light struct {
@@ -190,7 +171,7 @@ func (ll *LightLayer) Redraw() {
 
 	target := RenderTextureImageFn(ll.rt)
 
-	a := clamp01(ll.ambientAlpha)
+	a := types.Clamp01(ll.ambientAlpha)
 	target.Fill(color.NRGBA{R: 0, G: 0, B: 0, A: uint8(a * 255)})
 
 	n := len(ll.lights)
@@ -213,7 +194,7 @@ func (ll *LightLayer) Redraw() {
 		if img == nil {
 			continue
 		}
-		intensity := clamp01(l.Intensity)
+		intensity := types.Clamp01(l.Intensity)
 		ll.setupLightGeoM(op, l, srcW, srcH)
 
 		info.img = img
@@ -253,7 +234,7 @@ func (ll *LightLayer) resolveLightImage(l *Light) (img *ebiten.Image, srcW, srcH
 	r := &l.TextureRegion
 	if r.Width > 0 && r.Height > 0 {
 		var page *ebiten.Image
-		if r.Page == MagentaPlaceholderPage && EnsureMagentaImageFn != nil {
+		if r.Page == types.MagentaPlaceholderPage && EnsureMagentaImageFn != nil {
 			page = EnsureMagentaImageFn()
 		} else if int(r.Page) < len(ll.pages) {
 			page = ll.pages[r.Page]

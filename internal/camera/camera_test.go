@@ -265,7 +265,7 @@ func TestCameraInvalidate(t *testing.T) {
 
 func TestWorldAABB(t *testing.T) {
 	identity := [6]float64{1, 0, 0, 1, 0, 0}
-	aabb := WorldAABB(identity, 64, 64)
+	aabb := types.WorldAABB(identity, 64, 64)
 	if !approxEqual(aabb.X, 0, epsilon) || !approxEqual(aabb.Y, 0, epsilon) {
 		t.Errorf("AABB origin = (%f,%f), want (0,0)", aabb.X, aabb.Y)
 	}
@@ -276,7 +276,7 @@ func TestWorldAABB(t *testing.T) {
 
 func TestWorldAABB_Translated(t *testing.T) {
 	transform := [6]float64{1, 0, 0, 1, 100, 200}
-	aabb := WorldAABB(transform, 32, 32)
+	aabb := types.WorldAABB(transform, 32, 32)
 	if !approxEqual(aabb.X, 100, epsilon) || !approxEqual(aabb.Y, 200, epsilon) {
 		t.Errorf("translated AABB origin = (%f,%f), want (100,200)", aabb.X, aabb.Y)
 	}
@@ -287,7 +287,7 @@ func TestWorldAABB_Rotated(t *testing.T) {
 	cos45 := math.Cos(math.Pi / 4)
 	sin45 := math.Sin(math.Pi / 4)
 	transform := [6]float64{cos45, sin45, -sin45, cos45, 0, 0}
-	aabb := WorldAABB(transform, 100, 100)
+	aabb := types.WorldAABB(transform, 100, 100)
 	// A 100x100 square rotated 45° has AABB approximately 141x141
 	expectedSize := 100 * math.Sqrt(2)
 	if !approxEqual(aabb.Width, expectedSize, 0.01) || !approxEqual(aabb.Height, expectedSize, 0.01) {
@@ -436,6 +436,6 @@ func BenchmarkWorldAABB(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = WorldAABB(transform, 64, 64)
+		_ = types.WorldAABB(transform, 64, 64)
 	}
 }

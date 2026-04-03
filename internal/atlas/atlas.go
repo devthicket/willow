@@ -92,9 +92,9 @@ func EnsureMagentaImage() *ebiten.Image {
 	return magentaImage
 }
 
-// MagentaPlaceholderPage is a sentinel page index used for magenta placeholders.
-// It's high enough to never collide with real atlas pages.
-const MagentaPlaceholderPage = 0xFFFF
+// MagentaPlaceholderPage is the sentinel page index from types, re-exported
+// for convenience within the atlas package.
+const MagentaPlaceholderPage = types.MagentaPlaceholderPage
 
 // MagentaRegion returns a 1×1 placeholder region on the sentinel page.
 func MagentaRegion() types.TextureRegion {

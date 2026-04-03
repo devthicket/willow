@@ -83,20 +83,15 @@ func TestLight_Color(t *testing.T) {
 	}
 }
 
-func TestClamp01_Fallback(t *testing.T) {
-	// Without Clamp01Fn set, should use built-in fallback
-	old := Clamp01Fn
-	Clamp01Fn = nil
-	defer func() { Clamp01Fn = old }()
-
-	if clamp01(-0.5) != 0 {
-		t.Error("clamp01(-0.5) should be 0")
+func TestClamp01_Behavior(t *testing.T) {
+	if types.Clamp01(-0.5) != 0 {
+		t.Error("Clamp01(-0.5) should be 0")
 	}
-	if clamp01(1.5) != 1 {
-		t.Error("clamp01(1.5) should be 1")
+	if types.Clamp01(1.5) != 1 {
+		t.Error("Clamp01(1.5) should be 1")
 	}
-	if clamp01(0.5) != 0.5 {
-		t.Error("clamp01(0.5) should be 0.5")
+	if types.Clamp01(0.5) != 0.5 {
+		t.Error("Clamp01(0.5) should be 0.5")
 	}
 }
 
@@ -135,7 +130,6 @@ func setupLightingFns() func() {
 	oldSprite := RenderTextureNewSpriteFn
 	oldDispose := RenderTextureDisposeFn
 	oldMagenta := EnsureMagentaImageFn
-	oldClamp := Clamp01Fn
 
 	NewRenderTextureFn = func(w, h int) any {
 		return ebiten.NewImage(w, h)
@@ -154,15 +148,6 @@ func setupLightingFns() func() {
 	EnsureMagentaImageFn = func() *ebiten.Image {
 		return ebiten.NewImage(1, 1)
 	}
-	Clamp01Fn = func(v float64) float64 {
-		if v < 0 {
-			return 0
-		}
-		if v > 1 {
-			return 1
-		}
-		return v
-	}
 
 	return func() {
 		NewRenderTextureFn = oldNew
@@ -170,7 +155,6 @@ func setupLightingFns() func() {
 		RenderTextureNewSpriteFn = oldSprite
 		RenderTextureDisposeFn = oldDispose
 		EnsureMagentaImageFn = oldMagenta
-		Clamp01Fn = oldClamp
 	}
 }
 

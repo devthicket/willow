@@ -71,6 +71,10 @@ const (
 	CacheTreeAuto
 )
 
+// MagentaPlaceholderPage is a sentinel page index used for magenta placeholders.
+// It's high enough to never collide with real atlas pages.
+const MagentaPlaceholderPage uint16 = 0xFFFF
+
 // HitShape is implemented by custom hit-test shapes attached to a Node.
 type HitShape interface {
 	// Contains reports whether the local-space point (x, y) is inside the shape.

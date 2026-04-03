@@ -569,7 +569,7 @@ func (p *Pipeline) submitParticlesBatched(target *ebiten.Image, cmd *RenderComma
 // --- Atlas page resolution helper ---
 
 func resolveAtlasPage(pageIdx uint16) *ebiten.Image {
-	if pageIdx == MagentaPlaceholderPage {
+	if pageIdx == types.MagentaPlaceholderPage {
 		if EnsureMagentaImageFn != nil {
 			return EnsureMagentaImageFn()
 		}

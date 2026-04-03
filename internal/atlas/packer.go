@@ -21,7 +21,7 @@ import (
 
 // MaxPackerPageIdx is the highest page index the packer may allocate.
 // Page 0xFFFF is reserved as the magenta placeholder sentinel.
-const MaxPackerPageIdx = MagentaPlaceholderPage - 1
+const MaxPackerPageIdx = int(MagentaPlaceholderPage) - 1
 
 // shelf is a horizontal strip within an atlas page used by the shelf packer.
 type shelf struct {

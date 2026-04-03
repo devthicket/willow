@@ -3,6 +3,7 @@ package core
 import (
 	"fmt"
 	"image"
+	"math"
 	"os"
 	"time"
 
@@ -53,14 +54,19 @@ type Scene struct {
 	Tweens []*TweenGroup
 
 	// Screenshot capture
-	ScreenshotQueue []string
-	ScreenshotDir   string
+	ScreenshotQueue    []string
+	ScreenshotDir      string
+	PendingPixelChecks []PendingPixelCheck
 
 	// GIF recording
 	GifRecorder *GifRecorder
 
 	// Test runner
 	TestRunnerRef *TestRunner
+	cursorImage   *ebiten.Image // visible cursor dot during autotests
+	cursorX       float64
+	cursorY       float64
+	cursorVisible bool
 
 	// Injected keyboard input for test automation.
 	InjectedChars []rune       // synthetic characters consumed by AppendInjectedChars
@@ -217,6 +223,12 @@ func (s *Scene) RegisterPage(index int, img *ebiten.Image) {
 // --- Screenshot ---
 
 // Screenshot queues a labeled screenshot to be captured at the end of Draw.
+// PendingPixelCheck holds a queued pixel color assertion.
+type PendingPixelCheck struct {
+	X, Y  int
+	Color string
+}
+
 func (s *Scene) Screenshot(label string) {
 	s.ScreenshotQueue = append(s.ScreenshotQueue, label)
 }
@@ -253,6 +265,45 @@ func (s *Scene) StopGif() {
 // SetTestRunner attaches a TestRunner to the scene.
 func (s *Scene) SetTestRunner(runner *TestRunner) {
 	s.TestRunnerRef = runner
+	if runner.ShowCursor {
+		s.createVirtualCursorNode()
+	}
+}
+
+// createVirtualCursorNode builds a small filled circle image that is drawn
+// directly on top of the rendered frame (not part of the scene tree).
+func (s *Scene) createVirtualCursorNode() {
+	const (
+		radius   = 5
+		diameter = radius * 2
+	)
+	img := ebiten.NewImage(diameter, diameter)
+	// Draw a filled circle with anti-aliased edges.
+	for y := 0; y < diameter; y++ {
+		for x := 0; x < diameter; x++ {
+			dx := float64(x) - radius + 0.5
+			dy := float64(y) - radius + 0.5
+			dist := math.Sqrt(dx*dx + dy*dy)
+			if dist <= float64(radius)-0.5 {
+				img.Set(x, y, colorRGBA(255, 255, 255, 200))
+			} else if dist <= float64(radius)+0.5 {
+				// Anti-alias edge.
+				a := uint8(200 * (float64(radius) + 0.5 - dist))
+				img.Set(x, y, colorRGBA(255, 255, 255, a))
+			}
+		}
+	}
+	s.cursorImage = img
+}
+
+func colorRGBA(r, g, b, a uint8) colorStd {
+	return colorStd{r, g, b, a}
+}
+
+type colorStd struct{ R, G, B, A uint8 }
+
+func (c colorStd) RGBA() (r, g, b, a uint32) {
+	return uint32(c.R) * 257, uint32(c.G) * 257, uint32(c.B) * 257, uint32(c.A) * 257
 }
 
 // --- ECS entity store ---
@@ -527,7 +578,27 @@ func (s *Scene) Update() {
 			QueueLen: func() int {
 				return len(s.Input.InjectQueue) + len(s.InjectedChars) + len(s.InjectedKeys)
 			},
+			PixelCheck: func(x, y int, color string) {
+				s.PendingPixelChecks = append(s.PendingPixelChecks, PendingPixelCheck{X: x, Y: y, Color: color})
+			},
 		})
+
+		// When a test runner is active, always use the virtual cursor so real
+		// mouse input never interferes with the test.
+		p := s.TestRunnerRef.Pointer
+		s.Input.VirtualCursor = input.VirtualCursorState{
+			Active:  true,
+			X:       p.X,
+			Y:       p.Y,
+			Pressed: p.Pressed,
+		}
+
+		// Update visible cursor position.
+		if s.cursorImage != nil {
+			s.cursorX = p.X
+			s.cursorY = p.Y
+			s.cursorVisible = true
+		}
 	}
 
 	s.Input.ProcessInput(s.Root)
@@ -555,12 +626,24 @@ func (s *Scene) Draw(screen *ebiten.Image) {
 		}
 	}
 
+	// Draw virtual cursor on top of everything.
+	if s.cursorVisible && s.cursorImage != nil {
+		op := &ebiten.DrawImageOptions{}
+		op.GeoM.Translate(s.cursorX-5, s.cursorY-5)
+		screen.DrawImage(s.cursorImage, op)
+	}
+
 	if s.GifRecorder != nil {
 		s.GifRecorder.CaptureFrame(screen)
 	}
 
 	FlushScreenshots(screen, s.ScreenshotQueue, s.ScreenshotDir)
 	s.ScreenshotQueue = s.ScreenshotQueue[:0]
+
+	if len(s.PendingPixelChecks) > 0 {
+		FlushPixelChecks(screen, s.PendingPixelChecks)
+		s.PendingPixelChecks = s.PendingPixelChecks[:0]
+	}
 }
 
 func (s *Scene) drawWithCamera(target *ebiten.Image, cam *camera.Camera) {
