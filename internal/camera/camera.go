@@ -353,6 +353,17 @@ func (c *Camera) SetTrauma(amount float64) {
 	c.dirty = true
 }
 
+// ResetShake immediately cancels any active shake or trauma and resets all
+// shake state. The camera snaps back to its unshaken position on the next frame.
+func (c *Camera) ResetShake() {
+	c.trauma = 0
+	c.shakeTime = 0
+	c.shakeOffsetX = 0
+	c.shakeOffsetY = 0
+	c.shakeElapsed = 0
+	c.dirty = true
+}
+
 // SetShakeIntensity sets the maximum pixel displacement for trauma-based shake.
 func (c *Camera) SetShakeIntensity(pixels float64) {
 	c.shakeIntensity = pixels
