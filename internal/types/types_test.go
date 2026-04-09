@@ -45,6 +45,150 @@ func TestColorFromHSV(t *testing.T) {
 	}
 }
 
+func TestColor_AdjustHue(t *testing.T) {
+	// Red (hue 0) shifted by 120 degrees should be green
+	red := ColorFromHSV(0, 1, 1)
+	green := red.AdjustHue(120)
+	if green.G() < 0.99 || green.R() > 0.01 {
+		t.Errorf("AdjustHue(120) on red: got r=%f g=%f b=%f, want green", green.R(), green.G(), green.B())
+	}
+	// Wrap: shifting by 360 returns the same hue
+	same := red.AdjustHue(360)
+	if same.R() < 0.99 {
+		t.Errorf("AdjustHue(360) should wrap back to red, got r=%f", same.R())
+	}
+	// Alpha is preserved
+	c := RGBA(1, 0, 0, 0.5)
+	out := c.AdjustHue(180)
+	if out.A() != 0.5 {
+		t.Errorf("AdjustHue should preserve alpha, got %f", out.A())
+	}
+}
+
+func TestColor_AdjustSaturation(t *testing.T) {
+	c := ColorFromHSV(0, 0.5, 1)
+	// Double saturation
+	doubled := c.AdjustSaturation(2.0)
+	_, s1, _ := doubled.toHSV()
+	if s1 < 0.99 {
+		t.Errorf("AdjustSaturation(2.0): s=%f, want ~1", s1)
+	}
+	// Zero saturation = grayscale
+	gray := c.AdjustSaturation(0)
+	_, s2, _ := gray.toHSV()
+	if s2 > 0.01 {
+		t.Errorf("AdjustSaturation(0): s=%f, want ~0", s2)
+	}
+	// 1.0 = no change
+	same := c.AdjustSaturation(1.0)
+	_, s3, _ := same.toHSV()
+	if s3 < 0.49 || s3 > 0.51 {
+		t.Errorf("AdjustSaturation(1.0): s=%f, want ~0.5", s3)
+	}
+}
+
+func TestColor_AdjustValue(t *testing.T) {
+	c := ColorFromHSV(0, 1, 0.5)
+	// Double value
+	doubled := c.AdjustValue(2.0)
+	_, _, v := doubled.toHSV()
+	if v < 0.99 {
+		t.Errorf("AdjustValue(2.0): v=%f, want ~1", v)
+	}
+	// 1.0 = no change
+	same := c.AdjustValue(1.0)
+	_, _, v2 := same.toHSV()
+	if v2 < 0.49 || v2 > 0.51 {
+		t.Errorf("AdjustValue(1.0): v=%f, want ~0.5", v2)
+	}
+}
+
+func TestColor_AdjustAlpha(t *testing.T) {
+	c := RGBA(1, 0, 0, 0.8)
+	// Halve alpha
+	out := c.AdjustAlpha(0.5)
+	if out.A() < 0.39 || out.A() > 0.41 {
+		t.Errorf("AdjustAlpha(0.5): got %f, want ~0.4", out.A())
+	}
+	// 1.0 = no change
+	if c.AdjustAlpha(1.0).A() != 0.8 {
+		t.Error("AdjustAlpha(1.0) should not change alpha")
+	}
+	// Clamp at 1
+	if c.AdjustAlpha(999).A() != 1 {
+		t.Error("AdjustAlpha should clamp to 1")
+	}
+}
+
+func TestColor_AdjustChannels(t *testing.T) {
+	c := RGB(0.5, 0.5, 0.5)
+	// Double red
+	if r := c.AdjustRed(2.0).R(); r < 0.99 {
+		t.Errorf("AdjustRed(2.0): got %f, want ~1", r)
+	}
+	// Halve green
+	if g := c.AdjustGreen(0.5).G(); g < 0.24 || g > 0.26 {
+		t.Errorf("AdjustGreen(0.5): got %f, want ~0.25", g)
+	}
+	// Zero blue
+	if b := c.AdjustBlue(0).B(); b != 0 {
+		t.Errorf("AdjustBlue(0): got %f, want 0", b)
+	}
+	// 1.0 = no change, other channels untouched
+	out := c.AdjustRed(1.0)
+	if out.R() != 0.5 || out.G() != 0.5 || out.B() != 0.5 {
+		t.Errorf("AdjustRed(1.0) should be identity")
+	}
+}
+
+func TestColor_AdjustBrightness(t *testing.T) {
+	c := RGB(0.5, 0.5, 0.5)
+	// 1.4x brighter
+	brighter := c.AdjustBrightness(1.4)
+	if brighter.R() < 0.69 || brighter.R() > 0.71 {
+		t.Errorf("AdjustBrightness(1.4): R=%f, want ~0.7", brighter.R())
+	}
+	// 1.0 = no change
+	same := c.AdjustBrightness(1.0)
+	if same.R() != 0.5 {
+		t.Errorf("AdjustBrightness(1.0): R=%f, want 0.5", same.R())
+	}
+	// Alpha unchanged
+	ca := RGBA(0.5, 0.5, 0.5, 0.5)
+	if ca.AdjustBrightness(1.4).A() != 0.5 {
+		t.Error("AdjustBrightness should not affect alpha")
+	}
+	// Clamp
+	if RGB(0.9, 0.9, 0.9).AdjustBrightness(2.0).R() != 1 {
+		t.Error("AdjustBrightness should clamp at 1")
+	}
+}
+
+func TestColor_AdjustContrast(t *testing.T) {
+	// Midpoint (0.5) should be unaffected regardless of factor
+	c := RGB(0.5, 0.5, 0.5)
+	out := c.AdjustContrast(2.0)
+	if out.R() < 0.49 || out.R() > 0.51 {
+		t.Errorf("AdjustContrast: midpoint should stay ~0.5, got %f", out.R())
+	}
+	// 1.0 = no change
+	bright := RGB(0.8, 0.5, 0.2)
+	same := bright.AdjustContrast(1.0)
+	if same.R() < 0.79 || same.R() > 0.81 {
+		t.Errorf("AdjustContrast(1.0): R=%f, want ~0.8", same.R())
+	}
+	// Factor > 1 pushes values away from midpoint
+	out2 := bright.AdjustContrast(2.0)
+	if out2.R() <= 0.8 {
+		t.Errorf("AdjustContrast(2.0): R should increase above 0.8, got %f", out2.R())
+	}
+	// Clamp
+	clamped := RGB(1, 0, 0).AdjustContrast(100)
+	if clamped.R() != 1 || clamped.G() != 0 {
+		t.Errorf("AdjustContrast should clamp channels")
+	}
+}
+
 func TestRect_Contains(t *testing.T) {
 	r := Rect{X: 10, Y: 10, Width: 100, Height: 50}
 	if !r.Contains(50, 30) {

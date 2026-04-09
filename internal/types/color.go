@@ -1,5 +1,7 @@
 package types
 
+import "math"
+
 // Color represents an RGBA color with components in [0, 1]. Not premultiplied.
 // Premultiplication occurs at render submission time.
 //
@@ -95,6 +97,123 @@ var ColorBlack = Color{0, 0, 0, 1}
 
 // ColorTransparent is fully transparent black.
 var ColorTransparent = Color{0, 0, 0, 0}
+
+// toHSV converts the color to HSV components. Hue is in [0, 1].
+func (c Color) toHSV() (h, s, v float64) {
+	r, g, b := c.r, c.g, c.b
+	max := r
+	if g > max {
+		max = g
+	}
+	if b > max {
+		max = b
+	}
+	min := r
+	if g < min {
+		min = g
+	}
+	if b < min {
+		min = b
+	}
+	v = max
+	if max == 0 {
+		return 0, 0, v
+	}
+	s = (max - min) / max
+	if max == min {
+		return 0, s, v
+	}
+	d := max - min
+	switch max {
+	case r:
+		h = (g - b) / d
+		if g < b {
+			h += 6
+		}
+	case g:
+		h = (b-r)/d + 2
+	case b:
+		h = (r-g)/d + 4
+	}
+	h /= 6
+	return
+}
+
+// AdjustHue rotates the hue by degrees (0-360). Wraps around.
+// Returns a new Color with the same saturation, value, and alpha.
+func (c Color) AdjustHue(degrees float64) Color {
+	h, s, v := c.toHSV()
+	h += degrees / 360
+	h -= math.Floor(h)
+	out := ColorFromHSV(h, s, v)
+	out.a = c.a
+	return out
+}
+
+// AdjustSaturation multiplies the HSV saturation by factor, clamped to [0, 1].
+// 1.0 = no change, 0.0 = grayscale, 2.0 = double saturation.
+func (c Color) AdjustSaturation(factor float64) Color {
+	h, s, v := c.toHSV()
+	out := ColorFromHSV(h, Clamp01(s*factor), v)
+	out.a = c.a
+	return out
+}
+
+// AdjustValue multiplies the HSV value by factor, clamped to [0, 1].
+// 1.0 = no change, 0.0 = black, 2.0 = double brightness.
+func (c Color) AdjustValue(factor float64) Color {
+	h, s, v := c.toHSV()
+	out := ColorFromHSV(h, s, Clamp01(v*factor))
+	out.a = c.a
+	return out
+}
+
+// AdjustAlpha multiplies the alpha by factor, clamped to [0, 1].
+// 1.0 = no change, 0.0 = fully transparent, 0.5 = half opacity.
+func (c Color) AdjustAlpha(factor float64) Color {
+	return Color{r: c.r, g: c.g, b: c.b, a: Clamp01(c.a * factor)}
+}
+
+// AdjustRed multiplies the red channel by factor, clamped to [0, 1].
+// 1.0 = no change, 0.0 = no red, 2.0 = double red.
+func (c Color) AdjustRed(factor float64) Color {
+	return Color{r: Clamp01(c.r * factor), g: c.g, b: c.b, a: c.a}
+}
+
+// AdjustGreen multiplies the green channel by factor, clamped to [0, 1].
+// 1.0 = no change, 0.0 = no green, 2.0 = double green.
+func (c Color) AdjustGreen(factor float64) Color {
+	return Color{r: c.r, g: Clamp01(c.g * factor), b: c.b, a: c.a}
+}
+
+// AdjustBlue multiplies the blue channel by factor, clamped to [0, 1].
+// 1.0 = no change, 0.0 = no blue, 2.0 = double blue.
+func (c Color) AdjustBlue(factor float64) Color {
+	return Color{r: c.r, g: c.g, b: Clamp01(c.b * factor), a: c.a}
+}
+
+// AdjustBrightness multiplies all RGB channels by factor, clamped to [0, 1].
+// 1.0 = no change, 0.0 = black, 1.5 = 50% brighter. Alpha is not affected.
+func (c Color) AdjustBrightness(factor float64) Color {
+	return Color{
+		r: Clamp01(c.r * factor),
+		g: Clamp01(c.g * factor),
+		b: Clamp01(c.b * factor),
+		a: c.a,
+	}
+}
+
+// AdjustContrast scales each RGB channel's distance from the midpoint (0.5)
+// by factor. Values above 1 increase contrast; values below 1 reduce it.
+// 1.0 = no change. Alpha is not affected.
+func (c Color) AdjustContrast(factor float64) Color {
+	return Color{
+		r: Clamp01((c.r-0.5)*factor + 0.5),
+		g: Clamp01((c.g-0.5)*factor + 0.5),
+		b: Clamp01((c.b-0.5)*factor + 0.5),
+		a: c.a,
+	}
+}
 
 // ColorFieldPtrs returns pointers to the individual color component fields.
 // Used by tween code that needs to mutate color fields via pointer.
