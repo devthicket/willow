@@ -9,6 +9,18 @@ import (
 	"github.com/devthicket/willow/internal/types"
 )
 
+// CameraMode describes the camera's active movement state.
+type CameraMode int
+
+const (
+	// CameraModeIdle means the camera is not moving automatically.
+	CameraModeIdle CameraMode = iota
+	// CameraModeFollow means the camera is tracking a target node each frame.
+	CameraModeFollow
+	// CameraModeScroll means the camera is animating toward a fixed world position.
+	CameraModeScroll
+)
+
 // scrollAnim holds active scroll-to tweens for camera X and Y.
 type scrollAnim struct {
 	tweenX *gween.Tween
@@ -32,6 +44,7 @@ type Camera struct {
 	// camera's visible bounds.
 	CullEnabled bool
 
+	mode          CameraMode
 	followTarget  *node.Node
 	followOffsetX float64
 	followOffsetY float64
@@ -59,6 +72,11 @@ type Camera struct {
 	shakeElapsed   float64
 }
 
+// Mode returns the camera's current movement state.
+func (c *Camera) Mode() CameraMode {
+	return c.mode
+}
+
 // NewCamera creates a Camera with default values and the given viewport.
 func NewCamera(viewport types.Rect) *Camera {
 	return &Camera{
@@ -69,24 +87,29 @@ func NewCamera(viewport types.Rect) *Camera {
 	}
 }
 
-// Follow makes the camera track a target node with the given offset and lerp factor.
+// Follow transitions the camera to CameraModeFollow, tracking the given node
+// each frame. offsetX/offsetY shift the target point in world space.
 // A lerp of 1.0 snaps immediately; lower values give smoother following.
 func (c *Camera) Follow(n *node.Node, offsetX, offsetY, lerp float64) {
+	c.mode = CameraModeFollow
 	c.followTarget = n
 	c.followOffsetX = offsetX
 	c.followOffsetY = offsetY
 	c.followLerp = lerp
+	c.scrollTween = nil
 }
 
-// Unfollow stops tracking the current target node.
+// Unfollow transitions the camera to CameraModeIdle.
 func (c *Camera) Unfollow() {
+	c.mode = CameraModeIdle
 	c.followTarget = nil
 }
 
-// ScrollTo animates the camera to the given world position using the provided
-// TweenConfig for duration and easing. Calling ScrollTo exits follow mode; call
-// Follow again afterward if you want the camera to resume tracking a target.
+// ScrollTo transitions the camera to CameraModeScroll, animating to the given
+// world position using the provided TweenConfig. When the animation completes
+// the camera enters CameraModeIdle. Call Follow again to resume tracking a target.
 func (c *Camera) ScrollTo(x, y float64, cfg types.TweenConfig) {
+	c.mode = CameraModeScroll
 	c.followTarget = nil
 	fn := types.TweenEase(cfg)
 	c.scrollTween = &scrollAnim{
@@ -128,28 +151,30 @@ func (c *Camera) Update(dt float32) {
 	prevX, prevY := c.X, c.Y
 	prevZoom, prevRot := c.Zoom, c.Rotation
 
-	// Follow target
-	if c.followTarget != nil && !c.followTarget.IsDisposed() {
-		targetX := c.followTarget.WorldTransform[4] + c.followOffsetX
-		targetY := c.followTarget.WorldTransform[5] + c.followOffsetY
-		c.X += (targetX - c.X) * c.followLerp
-		c.Y += (targetY - c.Y) * c.followLerp
-	}
-
-	// Scroll animation
-	if c.scrollTween != nil {
-		if !c.scrollTween.doneX {
-			val, done := c.scrollTween.tweenX.Update(dt)
-			c.X = float64(val)
-			c.scrollTween.doneX = done
+	switch c.mode {
+	case CameraModeFollow:
+		if c.followTarget != nil && !c.followTarget.IsDisposed() {
+			targetX := c.followTarget.WorldTransform[4] + c.followOffsetX
+			targetY := c.followTarget.WorldTransform[5] + c.followOffsetY
+			c.X += (targetX - c.X) * c.followLerp
+			c.Y += (targetY - c.Y) * c.followLerp
 		}
-		if !c.scrollTween.doneY {
-			val, done := c.scrollTween.tweenY.Update(dt)
-			c.Y = float64(val)
-			c.scrollTween.doneY = done
-		}
-		if c.scrollTween.doneX && c.scrollTween.doneY {
-			c.scrollTween = nil
+	case CameraModeScroll:
+		if c.scrollTween != nil {
+			if !c.scrollTween.doneX {
+				val, done := c.scrollTween.tweenX.Update(dt)
+				c.X = float64(val)
+				c.scrollTween.doneX = done
+			}
+			if !c.scrollTween.doneY {
+				val, done := c.scrollTween.tweenY.Update(dt)
+				c.Y = float64(val)
+				c.scrollTween.doneY = done
+			}
+			if c.scrollTween.doneX && c.scrollTween.doneY {
+				c.scrollTween = nil
+				c.mode = CameraModeIdle
+			}
 		}
 	}
 
@@ -340,5 +365,5 @@ func (c *Camera) SetTraumaDecay(rate float64) {
 
 // ScrollTweenActive reports whether a scroll animation is in progress.
 func (c *Camera) ScrollTweenActive() bool {
-	return c.scrollTween != nil
+	return c.mode == CameraModeScroll
 }

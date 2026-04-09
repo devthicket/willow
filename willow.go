@@ -109,6 +109,15 @@ type Scene = core.Scene
 // Camera controls the view into the scene: position, zoom, rotation, viewport.
 type Camera = camera.Camera
 
+// CameraMode describes the camera's active movement state.
+type CameraMode = camera.CameraMode
+
+const (
+	CameraModeIdle   = camera.CameraModeIdle
+	CameraModeFollow = camera.CameraModeFollow
+	CameraModeScroll = camera.CameraModeScroll
+)
+
 // TweenGroup animates up to 4 float64 fields on a Node simultaneously.
 type TweenGroup = core.TweenGroup
 
@@ -844,6 +853,20 @@ func NewFontFamilyFromPixelFont(img *ebiten.Image, cellW, cellH int, chars strin
 // NewFontFamilyFromFontBundle loads a pre-baked .fontbundle archive and returns a FontFamily.
 func NewFontFamilyFromFontBundle(data []byte) (*FontFamily, error) {
 	return text.NewFontFamilyFromFontBundle(data)
+}
+
+// ---------------------------------------------------------------------------
+// Math helpers
+// ---------------------------------------------------------------------------
+
+// Deg converts degrees to radians.
+func Deg(degrees float64) float64 {
+	return degrees * math.Pi / 180
+}
+
+// Rad converts radians to degrees.
+func Rad(radians float64) float64 {
+	return radians * 180 / math.Pi
 }
 
 // ---------------------------------------------------------------------------
