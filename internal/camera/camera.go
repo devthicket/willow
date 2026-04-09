@@ -84,8 +84,10 @@ func (c *Camera) Unfollow() {
 }
 
 // ScrollTo animates the camera to the given world position using the provided
-// TweenConfig for duration and easing.
+// TweenConfig for duration and easing. Calling ScrollTo exits follow mode; call
+// Follow again afterward if you want the camera to resume tracking a target.
 func (c *Camera) ScrollTo(x, y float64, cfg types.TweenConfig) {
+	c.followTarget = nil
 	fn := types.TweenEase(cfg)
 	c.scrollTween = &scrollAnim{
 		tweenX: gween.New(float32(c.X), float32(x), cfg.Duration, fn),
