@@ -161,6 +161,10 @@ func (n *Node) SetPivot(px, py float64) {
 	invalidateAncestorCache(n)
 }
 
+func (n *Node) Pivot() (float64, float64) {
+	return n.PivotX_, n.PivotY_
+}
+
 func (n *Node) SetAlpha(a float64) {
 	n.Alpha_ = a
 	n.AlphaDirty = true

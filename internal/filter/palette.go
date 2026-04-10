@@ -74,7 +74,7 @@ func NewPaletteFilter() *PaletteFilter {
 	// Initialize with a grayscale palette.
 	for i := 0; i < 256; i++ {
 		v := float64(i) / 255.0
-		f.Palette[i] = types.RGBA(v, v, v, 1)
+		f.Palette[i] = types.RGBAf(v, v, v, 1)
 	}
 	return f
 }

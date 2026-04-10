@@ -96,6 +96,21 @@ func (ll *LightLayer) RenderTextureImage() *ebiten.Image {
 	return RenderTextureImageFn(ll.rt)
 }
 
+// AttachTo makes the light track n in world space, with an optional pixel
+// offset applied after the world→layer coordinate conversion. Call Detach to
+// stop tracking.
+func (l *Light) AttachTo(n *node.Node, offsetX, offsetY float64) {
+	l.Target = n
+	l.OffsetX = offsetX
+	l.OffsetY = offsetY
+}
+
+// Detach stops the light from following any node. The light stays at its
+// current X, Y position.
+func (l *Light) Detach() {
+	l.Target = nil
+}
+
 // AddLight adds a light to the layer.
 func (ll *LightLayer) AddLight(l *Light) {
 	ll.lights = append(ll.lights, l)

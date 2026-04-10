@@ -164,3 +164,44 @@ func TestExtrudeTileset(t *testing.T) {
 		t.Errorf("tile3 center (5,5): got %v, want %v", got, white)
 	}
 }
+
+func TestExtrudeTilesetWithSpacing(t *testing.T) {
+	// 2x2 grid of 2x2 tiles with 1px spacing = 5x5 input, no margin.
+	// Layout: [RR.GG]
+	//         [RR.GG]
+	//         [.....]
+	//         [BB.WW]
+	//         [BB.WW]
+	red := px(255, 0, 0, 255)
+	green := px(0, 255, 0, 255)
+	blue := px(0, 0, 255, 255)
+	white := px(255, 255, 255, 255)
+
+	src := image.NewNRGBA(image.Rect(0, 0, 5, 5))
+	for y := 0; y < 2; y++ {
+		for x := 0; x < 2; x++ {
+			setPixel(src, x, y, red)
+			setPixel(src, x+3, y, green)
+			setPixel(src, x, y+3, blue)
+			setPixel(src, x+3, y+3, white)
+		}
+	}
+
+	dst := extrudeTileset(src, 2, 2, 2, 2, 1, 0)
+
+	// Output should still be spacing=2, margin=1 regardless of input spacing.
+	// outW = 2*1 + 2*2 + 1*2 = 8
+	wantW, wantH := 8, 8
+	if dst.Bounds().Dx() != wantW || dst.Bounds().Dy() != wantH {
+		t.Fatalf("output size: got %dx%d, want %dx%d", dst.Bounds().Dx(), dst.Bounds().Dy(), wantW, wantH)
+	}
+
+	// Tile 0 (red) at (1,1).
+	if got := getPixel(dst, 1, 1); got != red {
+		t.Errorf("tile0 center (1,1): got %v, want %v", got, red)
+	}
+	// Tile 1 (green) at (5,1).
+	if got := getPixel(dst, 5, 1); got != green {
+		t.Errorf("tile1 center (5,1): got %v, want %v", got, green)
+	}
+}

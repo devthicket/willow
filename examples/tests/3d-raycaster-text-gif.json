@@ -1,0 +1,8 @@
+{
+  "steps": [
+    {"action": "wait", "frames": 300},
+    {"action": "start_gif", "label": "3d-raycaster-text", "fps": 20, "maxColors": 64, "maxWidth": 320, "maxHeight": 240},
+    {"action": "wait", "frames": 300},
+    {"action": "stop_gif"}
+  ]
+}
