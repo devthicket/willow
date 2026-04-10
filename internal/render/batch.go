@@ -612,7 +612,7 @@ func EmitNodeCommand(p *Pipeline, n *node.Node, transform [6]float64, alpha floa
 		if n.Mesh == nil || len(n.Mesh.Vertices) == 0 || len(n.Mesh.Indices) == 0 {
 			return
 		}
-		tintColor := types.RGBAf(n.Color_.R(), n.Color_.G(), n.Color_.B(), n.Color_.A()*alpha)
+		tintColor := types.RGBA(n.Color_.R(), n.Color_.G(), n.Color_.B(), n.Color_.A()*alpha)
 		dst := mesh.EnsureTransformedVerts(n)
 		mesh.TransformVertices(n.Mesh.Vertices, dst, transform, tintColor)
 		*treeOrder++

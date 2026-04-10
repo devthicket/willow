@@ -151,7 +151,7 @@ func (p *Pipeline) emitNodeInline(n *node.Node, viewWorld [6]float64, treeOrder 
 		if n.Mesh == nil || len(n.Mesh.Vertices) == 0 || len(n.Mesh.Indices) == 0 {
 			break
 		}
-		tintColor := types.RGBAf(n.Color_.R(), n.Color_.G(), n.Color_.B(), n.Color_.A()*n.WorldAlpha)
+		tintColor := types.RGBA(n.Color_.R(), n.Color_.G(), n.Color_.B(), n.Color_.A()*n.WorldAlpha)
 		dst := mesh.EnsureTransformedVerts(n)
 		mesh.TransformVertices(n.Mesh.Vertices, dst, viewWorld, tintColor)
 		*treeOrder++
