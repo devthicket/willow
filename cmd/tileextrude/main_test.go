@@ -131,7 +131,7 @@ func TestExtrudeTileset(t *testing.T) {
 
 	dst := extrudeTileset(src, 2, 2, 2, 2, 0, 0)
 
-	// Output: newMargin=1, newSpacing=2, tileW=2, tileH=2, cols=2, rows=2
+	// Output: margin=1, spacing=2 (always), tileW=2, tileH=2, cols=2, rows=2
 	// outW = 2*1 + 2*2 + 1*2 = 8
 	// outH = 2*1 + 2*2 + 1*2 = 8
 	wantW, wantH := 8, 8

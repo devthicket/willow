@@ -23,8 +23,8 @@ func main() {
 	tileW := flag.Int("w", 0, "tile width in pixels (required)")
 	tileH := flag.Int("h", 0, "tile height in pixels (required)")
 	out := flag.String("out", "", "output file path (default: <input>-extruded.png)")
-	spacing := flag.Int("spacing", 0, "existing spacing between tiles")
-	margin := flag.Int("margin", 0, "margin around the tileset edge")
+	spacing := flag.Int("spacing", 0, "existing spacing between tiles in the input")
+	margin := flag.Int("margin", 0, "existing margin around the input tileset edge")
 	flag.Parse()
 
 	if *tileW <= 0 || *tileH <= 0 {
@@ -65,11 +65,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	newSpacing := *spacing + 2
-	newMargin := *margin + 1
 	fmt.Printf("tile size: %dx%d (unchanged)\n", *tileW, *tileH)
-	fmt.Printf("spacing:   %d (was %d)\n", newSpacing, *spacing)
-	fmt.Printf("margin:    %d (was %d)\n", newMargin, *margin)
+	fmt.Printf("spacing:   2\n")
+	fmt.Printf("margin:    1\n")
 	fmt.Printf("image:     %s (%dx%d, was %dx%d)\n", outPath, dst.Bounds().Dx(), dst.Bounds().Dy(), src.Bounds().Dx(), src.Bounds().Dy())
 }
 
@@ -104,11 +102,12 @@ func validateGrid(imgW, imgH, tileW, tileH, spacing, margin int) (int, int, erro
 }
 
 func extrudeTileset(src *image.NRGBA, cols, rows, tileW, tileH, spacing, margin int) *image.NRGBA {
-	newMargin := margin + 1
-	newSpacing := spacing + 2
+	// Output layout: 1px margin, 2px spacing (extrusion only, input spacing/margin discarded).
+	const outMargin = 1
+	const outSpacing = 2
 
-	outW := 2*newMargin + cols*tileW + (cols-1)*newSpacing
-	outH := 2*newMargin + rows*tileH + (rows-1)*newSpacing
+	outW := 2*outMargin + cols*tileW + (cols-1)*outSpacing
+	outH := 2*outMargin + rows*tileH + (rows-1)*outSpacing
 
 	dst := image.NewNRGBA(image.Rect(0, 0, outW, outH))
 
@@ -116,8 +115,8 @@ func extrudeTileset(src *image.NRGBA, cols, rows, tileW, tileH, spacing, margin 
 		for col := 0; col < cols; col++ {
 			srcX := margin + col*(tileW+spacing)
 			srcY := margin + row*(tileH+spacing)
-			dstX := newMargin + col*(tileW+newSpacing)
-			dstY := newMargin + row*(tileH+newSpacing)
+			dstX := outMargin + col*(tileW+outSpacing)
+			dstY := outMargin + row*(tileH+outSpacing)
 
 			extrudeTile(dst, src, dstX, dstY, srcX, srcY, tileW, tileH)
 		}
@@ -126,59 +125,36 @@ func extrudeTileset(src *image.NRGBA, cols, rows, tileW, tileH, spacing, margin 
 	return dst
 }
 
+// copyPx copies a single 4-byte NRGBA pixel within an image.
+func copyPx(img *image.NRGBA, dstX, dstY, srcX, srcY int) {
+	s := img.PixOffset(srcX, srcY)
+	d := img.PixOffset(dstX, dstY)
+	copy(img.Pix[d:d+4], img.Pix[s:s+4])
+}
+
 func extrudeTile(dst, src *image.NRGBA, dstX, dstY, srcX, srcY, tileW, tileH int) {
-	// Phase 1: Copy tile center.
+	// Copy tile pixels into dst.
 	for y := 0; y < tileH; y++ {
-		sOff := src.PixOffset(srcX, srcY+y)
-		dOff := dst.PixOffset(dstX, dstY+y)
-		copy(dst.Pix[dOff:dOff+tileW*4], src.Pix[sOff:sOff+tileW*4])
+		s := src.PixOffset(srcX, srcY+y)
+		d := dst.PixOffset(dstX, dstY+y)
+		copy(dst.Pix[d:d+tileW*4], src.Pix[s:s+tileW*4])
 	}
 
-	// Phase 2: Extrude edges.
-	// Top edge: copy row dstY to dstY-1.
-	sOff := dst.PixOffset(dstX, dstY)
-	dOff := dst.PixOffset(dstX, dstY-1)
-	copy(dst.Pix[dOff:dOff+tileW*4], dst.Pix[sOff:sOff+tileW*4])
-
-	// Bottom edge: copy row dstY+tileH-1 to dstY+tileH.
-	sOff = dst.PixOffset(dstX, dstY+tileH-1)
-	dOff = dst.PixOffset(dstX, dstY+tileH)
-	copy(dst.Pix[dOff:dOff+tileW*4], dst.Pix[sOff:sOff+tileW*4])
-
-	// Left edge: copy column dstX to dstX-1.
+	// Extrude edges: duplicate each border row/column outward by 1px.
+	for x := 0; x < tileW; x++ {
+		copyPx(dst, dstX+x, dstY-1, dstX+x, dstY)           // top
+		copyPx(dst, dstX+x, dstY+tileH, dstX+x, dstY+tileH-1) // bottom
+	}
 	for y := 0; y < tileH; y++ {
-		sOff = dst.PixOffset(dstX, dstY+y)
-		dOff = dst.PixOffset(dstX-1, dstY+y)
-		copy(dst.Pix[dOff:dOff+4], dst.Pix[sOff:sOff+4])
+		copyPx(dst, dstX-1, dstY+y, dstX, dstY+y)            // left
+		copyPx(dst, dstX+tileW, dstY+y, dstX+tileW-1, dstY+y) // right
 	}
 
-	// Right edge: copy column dstX+tileW-1 to dstX+tileW.
-	for y := 0; y < tileH; y++ {
-		sOff = dst.PixOffset(dstX+tileW-1, dstY+y)
-		dOff = dst.PixOffset(dstX+tileW, dstY+y)
-		copy(dst.Pix[dOff:dOff+4], dst.Pix[sOff:sOff+4])
-	}
-
-	// Phase 3: Fill corners.
-	// Top-left.
-	sOff = dst.PixOffset(dstX, dstY)
-	dOff = dst.PixOffset(dstX-1, dstY-1)
-	copy(dst.Pix[dOff:dOff+4], dst.Pix[sOff:sOff+4])
-
-	// Top-right.
-	sOff = dst.PixOffset(dstX+tileW-1, dstY)
-	dOff = dst.PixOffset(dstX+tileW, dstY-1)
-	copy(dst.Pix[dOff:dOff+4], dst.Pix[sOff:sOff+4])
-
-	// Bottom-left.
-	sOff = dst.PixOffset(dstX, dstY+tileH-1)
-	dOff = dst.PixOffset(dstX-1, dstY+tileH)
-	copy(dst.Pix[dOff:dOff+4], dst.Pix[sOff:sOff+4])
-
-	// Bottom-right.
-	sOff = dst.PixOffset(dstX+tileW-1, dstY+tileH-1)
-	dOff = dst.PixOffset(dstX+tileW, dstY+tileH)
-	copy(dst.Pix[dOff:dOff+4], dst.Pix[sOff:sOff+4])
+	// Fill corners from nearest corner pixel.
+	copyPx(dst, dstX-1, dstY-1, dstX, dstY)                         // top-left
+	copyPx(dst, dstX+tileW, dstY-1, dstX+tileW-1, dstY)             // top-right
+	copyPx(dst, dstX-1, dstY+tileH, dstX, dstY+tileH-1)             // bottom-left
+	copyPx(dst, dstX+tileW, dstY+tileH, dstX+tileW-1, dstY+tileH-1) // bottom-right
 }
 
 func loadPNG(path string) (*image.NRGBA, error) {
