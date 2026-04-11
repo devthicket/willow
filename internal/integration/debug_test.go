@@ -515,9 +515,29 @@ func TestRunnerStep_Drag(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// Drag uses a tween: first Step starts the pointer at fromX/fromY pressed,
+	// then subsequent Steps interpolate toward toX/toY and release on completion.
 	runner.Step(stepActionFor(s))
-	if len(s.Input.InjectQueue) != 4 {
-		t.Fatalf("expected 4 queued events for drag, got %d", len(s.Input.InjectQueue))
+	if !runner.Pointer.Active {
+		t.Fatal("pointer should be active after drag starts")
+	}
+	if !runner.Pointer.Pressed {
+		t.Fatal("pointer should be pressed during drag")
+	}
+	if runner.Pointer.X != 10 || runner.Pointer.Y != 10 {
+		t.Fatalf("pointer should start at (10, 10), got (%v, %v)", runner.Pointer.X, runner.Pointer.Y)
+	}
+
+	// Step through the tween frames.
+	for i := 0; i < 4; i++ {
+		runner.Step(stepActionFor(s))
+	}
+	// After tween completes, pointer snaps to destination and releases.
+	if runner.Pointer.X != 200 || runner.Pointer.Y != 200 {
+		t.Fatalf("pointer should end at (200, 200), got (%v, %v)", runner.Pointer.X, runner.Pointer.Y)
+	}
+	if runner.Pointer.Pressed {
+		t.Fatal("pointer should be released after drag completes")
 	}
 }
 
