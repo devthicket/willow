@@ -90,7 +90,7 @@ func Fragment(dst vec4, src vec2, color vec4) vec4 {
 		}
 	}
 	if bestDist <= t {
-		edge := clamp(t - bestDist + 1.0, 0.0, 1.0)
+		edge := clamp(t - bestDist + 0.5, 0.0, 1.0)
 		return OutlineColor * edge
 	}
 	return vec4(0)
@@ -122,7 +122,7 @@ func Fragment(dst vec4, src vec2, color vec4) vec4 {
 		}
 	}
 	if bestDist <= t {
-		edge := clamp(t - bestDist + 1.0, 0.0, 1.0)
+		edge := clamp(t - bestDist + 0.5, 0.0, 1.0)
 		return OutlineColor * edge
 	}
 	return vec4(0)

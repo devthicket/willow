@@ -56,11 +56,13 @@ type PaletteFilter struct {
 	Palette      [256]types.Color
 	CycleOffset  float64
 	paletteTex   *ebiten.Image
-	paletteDirty bool
-	texW, texH   int // current palette texture dimensions
-	uniforms     map[string]any
-	shaderOp     ebiten.DrawRectShaderOptions
-	pixBuf       []byte // grows to match texture dimensions
+	paletteDirty  bool
+	texW, texH    int // current palette texture dimensions
+	uniforms      map[string]any
+	cycleBuf      [1]float32 // persistent buffer for CycleOffset uniform
+	cycleSlice    []float32  // persistent slice header into cycleBuf
+	shaderOp      ebiten.DrawRectShaderOptions
+	pixBuf        []byte // grows to match texture dimensions
 }
 
 // NewPaletteFilter creates a palette filter with a default grayscale palette.
@@ -69,6 +71,8 @@ func NewPaletteFilter() *PaletteFilter {
 		paletteDirty: true,
 		uniforms:     make(map[string]any, 1),
 	}
+	f.cycleSlice = f.cycleBuf[:]
+	f.uniforms["CycleOffset"] = f.cycleSlice
 	// Initialize with a grayscale palette.
 	for i := 0; i < 256; i++ {
 		v := float64(i) / 255.0
@@ -134,7 +138,7 @@ func (f *PaletteFilter) Apply(src, dst *ebiten.Image) {
 	bounds := src.Bounds()
 	w, h := bounds.Dx(), bounds.Dy()
 	f.ensurePaletteTex(w, h)
-	f.uniforms["CycleOffset"] = float32(f.CycleOffset)
+	f.cycleBuf[0] = float32(f.CycleOffset)
 	f.shaderOp.Images[0] = src
 	f.shaderOp.Images[1] = f.paletteTex
 	f.shaderOp.Uniforms = f.uniforms

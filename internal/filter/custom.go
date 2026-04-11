@@ -55,6 +55,8 @@ type CustomDrawShaderFilter struct {
 
 // NewCustomDrawShaderFilter creates a draw-time custom shader filter.
 // The shader must be a per-pixel effect (no neighbor reads, zero padding).
+// If extra Images are used, they must match the atlas page size or the
+// filter will fall back to the offscreen RT path on non-leaf nodes.
 func NewCustomDrawShaderFilter(shader *ebiten.Shader) *CustomDrawShaderFilter {
 	return &CustomDrawShaderFilter{
 		Shader:   shader,

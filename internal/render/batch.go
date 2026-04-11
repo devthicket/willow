@@ -31,7 +31,7 @@ func (p *Pipeline) SubmitBatches(target *ebiten.Image) {
 		switch cmd.Type {
 		case CommandSprite:
 			if cmd.FilterShader != nil {
-				if shaderBatchCmd != nil && !shaderBatchCompatible(shaderBatchCmd, cmd) {
+				if shaderBatchCmd != nil && (!shaderBatchCompatible(shaderBatchCmd, cmd) || len(p.ShaderVerts) >= 65532) {
 					p.flushShaderBatch(target, shaderBatchCmd)
 				}
 				shaderBatchCmd = cmd
@@ -219,7 +219,8 @@ func (p *Pipeline) SubmitBatchesCoalesced(target *ebiten.Image) {
 				p.flushSpriteBatch(target, currentKey)
 				inRun = false
 				// Coalesce with current shader batch if compatible.
-				if shaderBatchCmd != nil && !shaderBatchCompatible(shaderBatchCmd, cmd) {
+				// Flush at 65532 verts to prevent uint16 index overflow.
+				if shaderBatchCmd != nil && (!shaderBatchCompatible(shaderBatchCmd, cmd) || len(p.ShaderVerts) >= 65532) {
 					p.flushShaderBatch(target, shaderBatchCmd)
 				}
 				shaderBatchCmd = cmd
