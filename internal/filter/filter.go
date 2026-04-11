@@ -42,6 +42,8 @@ type MultiPass interface {
 func InitShaders() {
 	ensureKawaseBlurShader()
 	ensureOutlineShader()
+	ensureOutlineHorzShader()
+	ensureOutlineVertShader()
 	ensureColorMatrixShader()
 	ensurePPOutlineShader()
 	ensurePPInlineShader()
