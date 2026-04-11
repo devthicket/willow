@@ -22,23 +22,48 @@ func (p *Pipeline) SubmitBatches(target *ebiten.Image) {
 		return
 	}
 
+	p.ShaderVerts = p.ShaderVerts[:0]
+	p.ShaderInds = p.ShaderInds[:0]
+	var shaderBatchCmd *RenderCommand
 	var op ebiten.DrawImageOptions
 	for i := range p.Commands {
 		cmd := &p.Commands[i]
 		switch cmd.Type {
 		case CommandSprite:
+			if cmd.FilterShader != nil {
+				if shaderBatchCmd != nil && !shaderBatchCompatible(shaderBatchCmd, cmd) {
+					p.flushShaderBatch(target, shaderBatchCmd)
+				}
+				shaderBatchCmd = cmd
+				p.appendShaderQuad(cmd)
+				continue
+			}
+			if shaderBatchCmd != nil {
+				p.flushShaderBatch(target, shaderBatchCmd)
+				shaderBatchCmd = nil
+			}
 			submitSprite(target, cmd, &op)
-		case CommandParticle:
-			submitParticles(target, cmd, &op)
-		case CommandMesh:
-			p.submitMesh(target, cmd)
-		case CommandTilemap:
-			p.submitTilemap(target, cmd)
-		case CommandSDF:
-			p.submitSDF(target, cmd)
-		case CommandBitmapText:
-			p.submitBitmapText(target, cmd)
+		default:
+			if shaderBatchCmd != nil {
+				p.flushShaderBatch(target, shaderBatchCmd)
+				shaderBatchCmd = nil
+			}
+			switch cmd.Type {
+			case CommandParticle:
+				submitParticles(target, cmd, &op)
+			case CommandMesh:
+				p.submitMesh(target, cmd)
+			case CommandTilemap:
+				p.submitTilemap(target, cmd)
+			case CommandSDF:
+				p.submitSDF(target, cmd)
+			case CommandBitmapText:
+				p.submitBitmapText(target, cmd)
+			}
 		}
+	}
+	if shaderBatchCmd != nil {
+		p.flushShaderBatch(target, shaderBatchCmd)
 	}
 }
 
@@ -176,8 +201,11 @@ func (p *Pipeline) submitMesh(target *ebiten.Image, cmd *RenderCommand) {
 func (p *Pipeline) SubmitBatchesCoalesced(target *ebiten.Image) {
 	p.BatchVerts = p.BatchVerts[:0]
 	p.BatchInds = p.BatchInds[:0]
+	p.ShaderVerts = p.ShaderVerts[:0]
+	p.ShaderInds = p.ShaderInds[:0]
 
 	var currentKey BatchKey
+	var shaderBatchCmd *RenderCommand // tracks the "template" for the current shader batch
 	inRun := false
 	var op ebiten.DrawImageOptions
 
@@ -186,6 +214,23 @@ func (p *Pipeline) SubmitBatchesCoalesced(target *ebiten.Image) {
 
 		switch cmd.Type {
 		case CommandSprite:
+			if cmd.FilterShader != nil {
+				// Flush any regular sprite batch.
+				p.flushSpriteBatch(target, currentKey)
+				inRun = false
+				// Coalesce with current shader batch if compatible.
+				if shaderBatchCmd != nil && !shaderBatchCompatible(shaderBatchCmd, cmd) {
+					p.flushShaderBatch(target, shaderBatchCmd)
+				}
+				shaderBatchCmd = cmd
+				p.appendShaderQuad(cmd)
+				continue
+			}
+			// Flush any shader batch before regular sprites.
+			if shaderBatchCmd != nil {
+				p.flushShaderBatch(target, shaderBatchCmd)
+				shaderBatchCmd = nil
+			}
 			if cmd.DirectImage != nil {
 				p.flushSpriteBatch(target, currentKey)
 				inRun = false
@@ -200,34 +245,32 @@ func (p *Pipeline) SubmitBatchesCoalesced(target *ebiten.Image) {
 			inRun = true
 			p.AppendSpriteQuad(cmd)
 
-		case CommandParticle:
+		default:
 			p.flushSpriteBatch(target, currentKey)
 			inRun = false
-			p.submitParticlesBatched(target, cmd)
-
-		case CommandMesh:
-			p.flushSpriteBatch(target, currentKey)
-			inRun = false
-			p.submitMesh(target, cmd)
-
-		case CommandTilemap:
-			p.flushSpriteBatch(target, currentKey)
-			inRun = false
-			p.submitTilemap(target, cmd)
-
-		case CommandSDF:
-			p.flushSpriteBatch(target, currentKey)
-			inRun = false
-			p.submitSDF(target, cmd)
-
-		case CommandBitmapText:
-			p.flushSpriteBatch(target, currentKey)
-			inRun = false
-			p.submitBitmapText(target, cmd)
+			if shaderBatchCmd != nil {
+				p.flushShaderBatch(target, shaderBatchCmd)
+				shaderBatchCmd = nil
+			}
+			switch cmd.Type {
+			case CommandParticle:
+				p.submitParticlesBatched(target, cmd)
+			case CommandMesh:
+				p.submitMesh(target, cmd)
+			case CommandTilemap:
+				p.submitTilemap(target, cmd)
+			case CommandSDF:
+				p.submitSDF(target, cmd)
+			case CommandBitmapText:
+				p.submitBitmapText(target, cmd)
+			}
 		}
 	}
 
 	p.flushSpriteBatch(target, currentKey)
+	if shaderBatchCmd != nil {
+		p.flushShaderBatch(target, shaderBatchCmd)
+	}
 }
 
 // AppendSpriteQuad appends 4 vertices and 6 indices for a single atlas sprite.
@@ -330,6 +373,112 @@ func (p *Pipeline) flushSpriteBatch(target *ebiten.Image, key BatchKey) {
 
 	p.BatchVerts = p.BatchVerts[:0]
 	p.BatchInds = p.BatchInds[:0]
+}
+
+// --- Shader sprite batching ---
+//
+// Shader sprites use a separate vertex/index buffer (ShaderVerts/ShaderInds)
+// so they don't interfere with the main sprite batch. Consecutive shader
+// sprites sharing the same shader, atlas page, blend mode, uniforms, and
+// extra images are coalesced into a single DrawTrianglesShader call.
+
+// appendShaderQuad appends 4 vertices and 6 uint16 indices for a shader sprite.
+func (p *Pipeline) appendShaderQuad(cmd *RenderCommand) {
+	r := &cmd.TextureRegion
+	t := &cmd.Transform
+
+	ox := float32(r.OffsetX)
+	oy := float32(r.OffsetY)
+	w := float32(r.Width)
+	h := float32(r.Height)
+
+	a, b, c, d, tx, ty := t[0], t[1], t[2], t[3], t[4], t[5]
+
+	x0, y0 := ox, oy
+	x1, y1 := ox+w, oy
+	x2, y2 := ox, oy+h
+	x3, y3 := ox+w, oy+h
+
+	var sx0, sy0, sx1, sy1, sx2, sy2, sx3, sy3 float32
+	if r.Rotated {
+		rx, ry := float32(r.X), float32(r.Y)
+		rh, rw := float32(r.Height), float32(r.Width)
+		sx0, sy0 = rx+rh, ry
+		sx1, sy1 = rx+rh, ry+rw
+		sx2, sy2 = rx, ry
+		sx3, sy3 = rx, ry+rw
+	} else {
+		rx, ry := float32(r.X), float32(r.Y)
+		rw, rh := float32(r.Width), float32(r.Height)
+		sx0, sy0 = rx, ry
+		sx1, sy1 = rx+rw, ry
+		sx2, sy2 = rx, ry+rh
+		sx3, sy3 = rx+rw, ry+rh
+	}
+
+	ca := cmd.Color.A
+	var cr, cg, cb float32
+	if ca == 0 && cmd.Color.R == 0 && cmd.Color.G == 0 && cmd.Color.B == 0 {
+		cr, cg, cb, ca = 1, 1, 1, 1
+	} else {
+		cr = cmd.Color.R * ca
+		cg = cmd.Color.G * ca
+		cb = cmd.Color.B * ca
+	}
+
+	base := uint16(len(p.ShaderVerts))
+
+	p.ShaderVerts = append(p.ShaderVerts,
+		ebiten.Vertex{DstX: a*x0 + c*y0 + tx, DstY: b*x0 + d*y0 + ty, SrcX: sx0, SrcY: sy0, ColorR: cr, ColorG: cg, ColorB: cb, ColorA: ca},
+		ebiten.Vertex{DstX: a*x1 + c*y1 + tx, DstY: b*x1 + d*y1 + ty, SrcX: sx1, SrcY: sy1, ColorR: cr, ColorG: cg, ColorB: cb, ColorA: ca},
+		ebiten.Vertex{DstX: a*x2 + c*y2 + tx, DstY: b*x2 + d*y2 + ty, SrcX: sx2, SrcY: sy2, ColorR: cr, ColorG: cg, ColorB: cb, ColorA: ca},
+		ebiten.Vertex{DstX: a*x3 + c*y3 + tx, DstY: b*x3 + d*y3 + ty, SrcX: sx3, SrcY: sy3, ColorR: cr, ColorG: cg, ColorB: cb, ColorA: ca},
+	)
+	p.ShaderInds = append(p.ShaderInds, base+0, base+1, base+2, base+1, base+3, base+2)
+}
+
+// flushShaderBatch submits accumulated shader sprite vertices.
+func (p *Pipeline) flushShaderBatch(target *ebiten.Image, cmd *RenderCommand) {
+	if len(p.ShaderVerts) == 0 || cmd == nil {
+		return
+	}
+
+	var srcImg *ebiten.Image
+	if cmd.DirectImage != nil {
+		srcImg = cmd.DirectImage
+	} else {
+		srcImg = resolveAtlasPage(cmd.TextureRegion.Page)
+	}
+	if srcImg == nil {
+		p.ShaderVerts = p.ShaderVerts[:0]
+		p.ShaderInds = p.ShaderInds[:0]
+		return
+	}
+
+	opts := &ebiten.DrawTrianglesShaderOptions{
+		Uniforms: cmd.FilterUniforms,
+		Images: [4]*ebiten.Image{
+			srcImg,
+			cmd.FilterImages[0],
+			cmd.FilterImages[1],
+			cmd.FilterImages[2],
+		},
+		Blend: cmd.BlendMode.EbitenBlend(),
+	}
+	target.DrawTrianglesShader(p.ShaderVerts, p.ShaderInds, cmd.FilterShader, opts)
+
+	p.ShaderVerts = p.ShaderVerts[:0]
+	p.ShaderInds = p.ShaderInds[:0]
+}
+
+// shaderBatchCompatible returns true if cmd can be appended to the current
+// shader sprite batch. FilterID identifies the filter instance so that
+// sprites sharing the same DrawFilter coalesce while different instances
+// (with potentially different uniforms) break the batch.
+func shaderBatchCompatible(a, b *RenderCommand) bool {
+	return a.FilterSource == b.FilterSource &&
+		a.TextureRegion.Page == b.TextureRegion.Page &&
+		a.BlendMode == b.BlendMode
 }
 
 // submitSDF draws SDF text glyphs by transforming local-space vertices to screen

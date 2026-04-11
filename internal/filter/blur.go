@@ -6,12 +6,60 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-// BlurFilter applies a Kawase iterative blur using downscale/upscale passes.
-// No Kage shader needed — bilinear filtering during DrawImage does the work.
+// Kawase blur shader: samples 4 bilinear-filtered diagonal taps per pass.
+// Each pass uses an increasing Offset (iteration + 0.5), leveraging the
+// bilinear interpolation to effectively sample a 2×2 region per tap.
+// Multiple passes at full resolution replace the old downscale/upscale
+// approach, eliminating image-size churn that thrashes Ebitengine's atlas.
+const kawaseBlurShaderSrc = `//kage:unit pixels
+package main
+
+var Offset float
+
+// bilinear does manual bilinear sampling so we get sub-texel interpolation
+// from point-sampled imageSrc0At.
+func bilinear(pos vec2) vec4 {
+	p := pos - 0.5
+	f := fract(p)
+	i := floor(p) + 0.5
+	return mix(
+		mix(imageSrc0At(i), imageSrc0At(i+vec2(1, 0)), f.x),
+		mix(imageSrc0At(i+vec2(0, 1)), imageSrc0At(i+vec2(1, 1)), f.x),
+		f.y,
+	)
+}
+
+func Fragment(dst vec4, src vec2, color vec4) vec4 {
+	s := bilinear(src + vec2(-Offset, -Offset))
+	s += bilinear(src + vec2(Offset, -Offset))
+	s += bilinear(src + vec2(-Offset, Offset))
+	s += bilinear(src + vec2(Offset, Offset))
+	return s / 4.0
+}
+`
+
+var kawaseBlurShader *ebiten.Shader
+
+func ensureKawaseBlurShader() *ebiten.Shader {
+	if kawaseBlurShader == nil {
+		s, err := ebiten.NewShader([]byte(kawaseBlurShaderSrc))
+		if err != nil {
+			panic("willow: failed to compile kawase blur shader: " + err.Error())
+		}
+		kawaseBlurShader = s
+	}
+	return kawaseBlurShader
+}
+
+// BlurFilter applies a Kawase iterative blur using a Kage shader.
+// It implements MultiPass so the render pipeline drives the ping-pong
+// externally — the filter owns zero temporary images.
 type BlurFilter struct {
-	Radius int
-	temps  []*ebiten.Image
-	imgOp  ebiten.DrawImageOptions
+	Radius      int
+	uniforms    map[string]any
+	offsetBuf   [1]float32  // persistent buffer for the Offset uniform
+	offsetSlice []float32   // persistent slice header into offsetBuf
+	shaderOp    ebiten.DrawRectShaderOptions
 }
 
 // NewBlurFilter creates a blur filter with the given radius (in pixels).
@@ -19,89 +67,46 @@ func NewBlurFilter(radius int) *BlurFilter {
 	if radius < 0 {
 		radius = 0
 	}
-	return &BlurFilter{Radius: radius}
+	f := &BlurFilter{
+		Radius:   radius,
+		uniforms: make(map[string]any, 1),
+	}
+	f.offsetSlice = f.offsetBuf[:]
+	f.uniforms["Offset"] = f.offsetSlice
+	return f
 }
 
-// Apply renders a Kawase blur from src into dst using iterative downscale/upscale.
+// blurPasses returns the number of shader passes for the given radius.
+// Each pass with offset i+0.5 blurs by roughly i+1 pixels, so cumulative
+// blur grows quadratically. passes ≈ ceil(sqrt(2·radius)) gives a good fit.
+func blurPasses(radius int) int {
+	if radius <= 0 {
+		return 0
+	}
+	p := int(math.Ceil(math.Sqrt(2.0 * float64(radius))))
+	if p < 1 {
+		return 1
+	}
+	return p
+}
+
+// Passes returns the number of shader iterations needed for this blur radius.
+// Zero means the filter is a no-op (radius ≤ 0).
+func (f *BlurFilter) Passes() int { return blurPasses(f.Radius) }
+
+// SetPass configures the Kawase offset for the given pass index.
+func (f *BlurFilter) SetPass(pass int) {
+	f.offsetBuf[0] = float32(pass) + 0.5
+}
+
+// Apply runs a single Kawase blur pass from src into dst.
+// The render pipeline calls this once per pass via the MultiPass interface.
 func (f *BlurFilter) Apply(src, dst *ebiten.Image) {
-	if f.Radius <= 0 {
-		f.imgOp.GeoM.Reset()
-		f.imgOp.ColorScale.Reset()
-		f.imgOp.Filter = ebiten.FilterNearest
-		dst.DrawImage(src, &f.imgOp)
-		return
-	}
-
-	passes := int(math.Ceil(math.Log2(float64(f.Radius))))
-	if passes < 1 {
-		passes = 1
-	}
-
-	srcBounds := src.Bounds()
-	w, h := srcBounds.Dx(), srcBounds.Dy()
-
-	needed := passes
-	for len(f.temps) < needed {
-		f.temps = append(f.temps, nil)
-	}
-	for i := needed; i < len(f.temps); i++ {
-		if f.temps[i] != nil {
-			f.temps[i].Deallocate()
-			f.temps[i] = nil
-		}
-	}
-	f.temps = f.temps[:needed]
-
-	op := &f.imgOp
-
-	// Downscale passes: each half-size
-	current := src
-	for i := 0; i < passes; i++ {
-		w = max(w/2, 1)
-		h = max(h/2, 1)
-		if f.temps[i] == nil || f.temps[i].Bounds().Dx() != w || f.temps[i].Bounds().Dy() != h {
-			if f.temps[i] != nil {
-				f.temps[i].Deallocate()
-			}
-			f.temps[i] = ebiten.NewImage(w, h)
-		} else {
-			f.temps[i].Clear()
-		}
-		op.GeoM.Reset()
-		op.ColorScale.Reset()
-		sw := float64(current.Bounds().Dx())
-		sh := float64(current.Bounds().Dy())
-		op.GeoM.Scale(float64(w)/sw, float64(h)/sh)
-		op.Filter = ebiten.FilterLinear
-		f.temps[i].DrawImage(current, op)
-		current = f.temps[i]
-	}
-
-	// Upscale passes: draw each back up
-	for i := passes - 2; i >= 0; i-- {
-		f.temps[i].Clear()
-		op.GeoM.Reset()
-		op.ColorScale.Reset()
-		sw := float64(current.Bounds().Dx())
-		sh := float64(current.Bounds().Dy())
-		tw := float64(f.temps[i].Bounds().Dx())
-		th := float64(f.temps[i].Bounds().Dy())
-		op.GeoM.Scale(tw/sw, th/sh)
-		op.Filter = ebiten.FilterLinear
-		f.temps[i].DrawImage(current, op)
-		current = f.temps[i]
-	}
-
-	// Final upscale to dst.
-	op.GeoM.Reset()
-	op.ColorScale.Reset()
-	sw := float64(current.Bounds().Dx())
-	sh := float64(current.Bounds().Dy())
-	tw := float64(dst.Bounds().Dx())
-	th := float64(dst.Bounds().Dy())
-	op.GeoM.Scale(tw/sw, th/sh)
-	op.Filter = ebiten.FilterLinear
-	dst.DrawImage(current, op)
+	shader := ensureKawaseBlurShader()
+	bounds := src.Bounds()
+	f.shaderOp.Images[0] = src
+	f.shaderOp.Uniforms = f.uniforms
+	dst.DrawRectShader(bounds.Dx(), bounds.Dy(), shader, &f.shaderOp)
 }
 
 // Padding returns the blur radius; the offscreen buffer is expanded to avoid clipping.

@@ -5,47 +5,122 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-// OutlineFilter draws the source in 8 cardinal/diagonal offsets with the outline
-// color, then draws the original on top. Works at any thickness.
+// Outline shader: searches a circular area of radius Thickness for any
+// opaque neighbor. Returns the original pixel if opaque, the outline color
+// if a nearby opaque pixel exists, or transparent otherwise.
+// One DrawRectShader call replaces the old 9-DrawImage stamp approach,
+// producing a true circular outline with optional anti-aliased edges.
+const outlineShaderSrc = `//kage:unit pixels
+package main
+
+var OutlineColor vec4
+var Thickness float
+
+func Fragment(dst vec4, src vec2, color vec4) vec4 {
+	c := imageSrc0At(src)
+	if c.a > 0 {
+		return c
+	}
+	// Search a circular area for any opaque neighbor.
+	// Kage requires constant loop bounds, so we use a const max and break.
+	const MaxThickness = 32.0
+	t := Thickness
+	t2 := t * t
+	minDist2 := t2 + 1.0
+	for iy := 0; iy < int(MaxThickness*2+1); iy++ {
+		y := float(iy) - MaxThickness
+		if y < -t || y > t {
+			continue
+		}
+		for ix := 0; ix < int(MaxThickness*2+1); ix++ {
+			x := float(ix) - MaxThickness
+			if x < -t || x > t {
+				continue
+			}
+			d2 := x*x + y*y
+			if d2 > t2 {
+				continue
+			}
+			if imageSrc0At(src + vec2(x, y)).a > 0 {
+				if d2 < minDist2 {
+					minDist2 = d2
+					if d2 <= 1.0 {
+						// Adjacent pixel — can't get closer; skip remaining samples.
+						return OutlineColor
+					}
+				}
+			}
+		}
+	}
+	if minDist2 <= t2 {
+		// Smooth edge: anti-alias the last pixel of the outline.
+		edge := clamp(t - sqrt(minDist2) + 0.5, 0.0, 1.0)
+		return OutlineColor * edge
+	}
+	return vec4(0)
+}
+`
+
+var outlineShader *ebiten.Shader
+
+func ensureOutlineShader() *ebiten.Shader {
+	if outlineShader == nil {
+		s, err := ebiten.NewShader([]byte(outlineShaderSrc))
+		if err != nil {
+			panic("willow: failed to compile outline shader: " + err.Error())
+		}
+		outlineShader = s
+	}
+	return outlineShader
+}
+
+// OutlineFilter uses a Kage shader to draw a circular outline of arbitrary
+// thickness around non-transparent pixels. One DrawRectShader call replaces
+// the old 9-DrawImage stamp approach.
 type OutlineFilter struct {
-	Thickness int
-	Color     types.Color
-	imgOp     ebiten.DrawImageOptions
+	Thickness  int
+	Color      types.Color
+	uniforms   map[string]any
+	colorF32   [4]float32
+	colorSlice []float32
+	thickF32   [1]float32
+	thickSlice []float32
+	shaderOp   ebiten.DrawRectShaderOptions
 }
 
-// NewOutlineFilter creates an outline filter.
+// NewOutlineFilter creates an outline filter. Thickness is clamped to [0, 32];
+// for 1px outlines prefer PixelPerfectOutlineFilter which avoids the loop.
 func NewOutlineFilter(thickness int, c types.Color) *OutlineFilter {
-	return &OutlineFilter{Thickness: thickness, Color: c}
+	if thickness < 0 {
+		thickness = 0
+	} else if thickness > 32 {
+		thickness = 32
+	}
+	f := &OutlineFilter{
+		Thickness: thickness,
+		Color:     c,
+		uniforms:  make(map[string]any, 2),
+	}
+	f.colorSlice = f.colorF32[:]
+	f.thickSlice = f.thickF32[:]
+	f.uniforms["OutlineColor"] = f.colorSlice
+	f.uniforms["Thickness"] = f.thickSlice
+	return f
 }
 
-// Apply draws an 8-direction offset outline behind the source image.
+// Apply draws a circular outline via a Kage shader.
 func (f *OutlineFilter) Apply(src, dst *ebiten.Image) {
-	t := float64(f.Thickness)
-	offsets := [8][2]float64{
-		{-t, 0}, {t, 0}, {0, -t}, {0, t},
-		{-t, -t}, {t, -t}, {-t, t}, {t, t},
-	}
-
-	op := &f.imgOp
+	shader := ensureOutlineShader()
 	r, g, b, a := f.Color.R(), f.Color.G(), f.Color.B(), f.Color.A()
-
-	for _, off := range offsets {
-		op.GeoM.Reset()
-		op.ColorScale.Reset()
-		op.GeoM.Translate(off[0], off[1])
-		op.ColorScale.Scale(
-			float32(r*a),
-			float32(g*a),
-			float32(b*a),
-			float32(a),
-		)
-		dst.DrawImage(src, op)
-	}
-
-	// Draw original on top
-	op.GeoM.Reset()
-	op.ColorScale.Reset()
-	dst.DrawImage(src, op)
+	f.colorF32[0] = float32(r * a)
+	f.colorF32[1] = float32(g * a)
+	f.colorF32[2] = float32(b * a)
+	f.colorF32[3] = float32(a)
+	f.thickF32[0] = float32(f.Thickness)
+	bounds := src.Bounds()
+	f.shaderOp.Images[0] = src
+	f.shaderOp.Uniforms = f.uniforms
+	dst.DrawRectShader(bounds.Dx(), bounds.Dy(), shader, &f.shaderOp)
 }
 
 // Padding returns the outline thickness; the offscreen buffer is expanded by this amount.

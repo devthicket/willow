@@ -84,12 +84,14 @@ func TestSpecialNodeWithFilterSkipsNormalEmission(t *testing.T) {
 
 	traverseScene(s)
 
-	// Should emit exactly 1 command (the directImage command from renderSpecialNode).
+	// Leaf sprite with a single DrawFilter uses the draw-time fast path:
+	// FilterShader is set, no offscreen RT needed.
 	if len(s.Pipeline.Commands) != 1 {
 		t.Fatalf("commands = %d, want 1", len(s.Pipeline.Commands))
 	}
-	if s.Pipeline.Commands[0].DirectImage == nil {
-		t.Error("command should have directImage set for filtered node")
+	cmd := &s.Pipeline.Commands[0]
+	if cmd.FilterShader == nil {
+		t.Error("command should have FilterShader set for draw-time filter")
 	}
 }
 

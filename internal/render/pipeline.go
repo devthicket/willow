@@ -19,6 +19,8 @@ type Pipeline struct {
 	SortBuf                []RenderCommand
 	BatchVerts             []ebiten.Vertex
 	BatchInds              []uint32
+	ShaderVerts            []ebiten.Vertex // shader sprite batch (uint16 indices)
+	ShaderInds             []uint16
 	RtPool                 RenderTexturePool
 	RtDeferred             []*ebiten.Image
 	OffscreenCmds          []RenderCommand
@@ -82,6 +84,11 @@ func (p *Pipeline) Traverse(n *node.Node, treeOrder *int) {
 
 	// Special path: nodes with masks, cache, or filters.
 	if !culled && (n.MaskNode != nil || n.CacheEnabled || len(n.Filters) > 0) {
+		// Draw-time filter fast path: leaf sprite with a single DrawFilter
+		// skips the offscreen RT entirely.
+		if p.tryEmitDrawFilter(n, viewWorld, treeOrder) {
+			return
+		}
 		p.renderSpecialNode(n, treeOrder)
 		return
 	}
@@ -517,6 +524,10 @@ func (p *Pipeline) renderSubtreeWalk(n *node.Node, parentTransform [6]float64, p
 	alpha := parentAlpha * n.Alpha_
 
 	if n.MaskNode != nil || n.CacheEnabled || len(n.Filters) > 0 {
+		// Draw-time filter fast path for subtree walk.
+		if p.tryEmitDrawFilterSubtree(n, transform, alpha, treeOrder) {
+			return
+		}
 		p.renderSpecialSubtreeNode(n, transform, alpha, treeOrder)
 		return
 	}
@@ -667,7 +678,8 @@ func filterChainPaddingAny(filters []any) int {
 }
 
 // ApplyFiltersAny runs a filter chain on src using []any filters,
-// ping-ponging between two images.
+// ping-ponging between two images. Filters that implement filter.MultiPass
+// are called once per pass, with SetPass invoked before each Apply.
 func ApplyFiltersAny(filters []any, src *ebiten.Image, pool *RenderTexturePool) *ebiten.Image {
 	if len(filters) == 0 {
 		return src
@@ -684,13 +696,35 @@ func ApplyFiltersAny(filters []any, src *ebiten.Image, pool *RenderTexturePool) 
 		if !ok {
 			continue
 		}
+
+		passes := 1
+		mp, isMulti := ff.(filter.MultiPass)
+		if isMulti {
+			passes = mp.Passes()
+			if passes <= 0 {
+				continue // no-op filter (e.g. zero-radius blur)
+			}
+		}
+
 		if scratch == nil {
 			scratch = pool.Acquire(w, h)
-		} else {
-			scratch.Clear()
 		}
-		ff.Apply(current, scratch)
-		current, scratch = scratch, current
+
+		for p := 0; p < passes; p++ {
+			if isMulti {
+				mp.SetPass(p)
+			}
+			scratch.Clear()
+			ff.Apply(current, scratch)
+			current, scratch = scratch, current
+		}
+	}
+
+	// After ping-ponging, scratch holds whichever image current doesn't.
+	// If current landed back on src, the pooled image is in scratch — release it.
+	// If current is the pooled image, scratch is src — caller releases src.
+	if scratch != nil && scratch != src {
+		pool.Release(scratch)
 	}
 
 	return current
@@ -746,6 +780,73 @@ func TransformRect(t [6]float64, r types.Rect) types.Rect {
 	maxX := math.Max(math.Max(x0, x1), math.Max(x2, x3))
 	maxY := math.Max(math.Max(y0, y1), math.Max(y2, y3))
 	return types.Rect{X: minX, Y: minY, Width: maxX - minX, Height: maxY - minY}
+}
+
+// drawFilterEligible checks if a node qualifies for the draw-time filter fast
+// path: leaf sprite, no mask, no cache, exactly one DrawFilter with zero padding.
+func drawFilterEligible(n *node.Node) (filter.DrawFilter, bool) {
+	if n.Type != types.NodeTypeSprite || len(n.Children_) > 0 {
+		return nil, false
+	}
+	if n.MaskNode != nil || n.CacheEnabled || len(n.Filters) != 1 {
+		return nil, false
+	}
+	ff, ok := n.Filters[0].(filter.Filter)
+	if !ok || ff.Padding() != 0 {
+		return nil, false
+	}
+	df, ok := n.Filters[0].(filter.DrawFilter)
+	return df, ok
+}
+
+// tryEmitDrawFilter emits a draw-time filtered sprite command if the node is
+// eligible. Returns true if the command was emitted (caller should return).
+func (p *Pipeline) tryEmitDrawFilter(n *node.Node, viewWorld [6]float64, treeOrder *int) bool {
+	df, ok := drawFilterEligible(n)
+	if !ok {
+		return false
+	}
+	p.emitDrawFilterCmd(n, Affine32(viewWorld), nodeColor32(n), df, n.Filters[0], treeOrder)
+	p.CommandsDirtyThisFrame = true
+	return true
+}
+
+// tryEmitDrawFilterSubtree is the subtree-walk variant of tryEmitDrawFilter.
+func (p *Pipeline) tryEmitDrawFilterSubtree(n *node.Node, transform [6]float64, alpha float64, treeOrder *int) bool {
+	df, ok := drawFilterEligible(n)
+	if !ok {
+		return false
+	}
+	color := Color32{float32(n.Color_.R()), float32(n.Color_.G()), float32(n.Color_.B()), float32(n.Color_.A() * alpha)}
+	p.emitDrawFilterCmd(n, Affine32(transform), color, df, n.Filters[0], treeOrder)
+	return true
+}
+
+// emitDrawFilterCmd appends a sprite command with draw-time filter fields set.
+func (p *Pipeline) emitDrawFilterCmd(n *node.Node, transform [6]float32, color Color32, df filter.DrawFilter, source any, treeOrder *int) {
+	*treeOrder++
+	cmd := RenderCommand{
+		Type:           CommandSprite,
+		Transform:      transform,
+		Color:          color,
+		BlendMode:      n.BlendMode_,
+		RenderLayer:    n.RenderLayer,
+		GlobalOrder:    n.GlobalOrder,
+		TreeOrder:      *treeOrder,
+		FilterShader:   df.DrawShader(),
+		FilterUniforms: df.DrawUniforms(),
+		FilterImages:   df.DrawImages(),
+		FilterSource:   source,
+	}
+	if n.CustomImage_ != nil {
+		cmd.DirectImage = n.CustomImage_
+	} else {
+		cmd.TextureRegion = n.TextureRegion_
+	}
+	if p.BuildingCacheFor != nil {
+		cmd.EmittingNodeID = n.ID
+	}
+	p.Commands = append(p.Commands, cmd)
 }
 
 // RectUnion returns the smallest Rect containing both a and b.

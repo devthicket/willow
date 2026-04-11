@@ -268,6 +268,10 @@ type ParticleEmitter = particle.Emitter
 // Filter is the interface for visual effects applied to a node.
 type Filter = filter.Filter
 
+// DrawFilter is an optional interface for per-pixel filters that can be
+// applied at draw time without an offscreen render target.
+type DrawFilter = filter.DrawFilter
+
 // ColorMatrixFilter applies a 4x5 color matrix transformation.
 type ColorMatrixFilter = filter.ColorMatrixFilter
 
