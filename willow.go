@@ -290,8 +290,12 @@ type PixelPerfectInlineFilter = filter.PixelPerfectInlineFilter
 // PaletteFilter remaps pixel colors through a palette based on luminance.
 type PaletteFilter = filter.PaletteFilter
 
-// CustomShaderFilter wraps a user-provided Kage shader.
+// CustomShaderFilter wraps a user-provided Kage shader (offscreen RT path).
 type CustomShaderFilter = filter.CustomShaderFilter
+
+// CustomDrawShaderFilter wraps a user-provided per-pixel Kage shader
+// that can be applied at draw time without an offscreen render target.
+type CustomDrawShaderFilter = filter.CustomDrawShaderFilter
 
 // ---------------------------------------------------------------------------
 // Tilemap (internal/tilemap)
@@ -510,6 +514,7 @@ var (
 	NewPixelPerfectInlineFilter  = filter.NewPixelPerfectInlineFilter
 	NewPaletteFilter             = filter.NewPaletteFilter
 	NewCustomShaderFilter        = filter.NewCustomShaderFilter
+	NewCustomDrawShaderFilter    = filter.NewCustomDrawShaderFilter
 )
 
 // Mesh constructors.
