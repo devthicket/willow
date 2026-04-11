@@ -25,7 +25,6 @@ import (
 	"image/color"
 	"log"
 	"math"
-	"os"
 
 	"github.com/devthicket/willow"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -556,35 +555,12 @@ func main() {
 
 	g := newGame()
 
-	if *autotest != "" {
-		scriptData, err := os.ReadFile(*autotest)
-		if err != nil {
-			log.Fatalf("read test script: %v", err)
-		}
-		runner, err := willow.LoadTestScript(scriptData)
-		if err != nil {
-			log.Fatalf("parse test script: %v", err)
-		}
-		g.scene.SetTestRunner(runner)
-		g.scene.ScreenshotDir = "screenshots"
-		origUpdate := g.update
-		g.scene.SetUpdateFunc(func() error {
-			if err := origUpdate(); err != nil {
-				return err
-			}
-			if runner.Done() {
-				fmt.Println("Autotest complete.")
-				return ebiten.Termination
-			}
-			return nil
-		})
-	}
-
 	if err := willow.Run(g.scene, willow.RunConfig{
-		Title:   "2.5D Raycaster — DrawTriangles + Fog Shader",
-		Width:   screenW,
-		Height:  screenH,
-		ShowFPS: true,
+		Title:        "2.5D Raycaster — DrawTriangles + Fog Shader",
+		Width:        screenW,
+		Height:       screenH,
+		ShowFPS:      true,
+		AutoTestPath: *autotest,
 	}); err != nil {
 		log.Fatal(err)
 	}

@@ -4,14 +4,11 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"math"
 	"math/rand/v2"
-	"os"
 
 	"github.com/devthicket/willow"
-	"github.com/hajimehoshi/ebiten/v2"
 )
 
 const (
@@ -217,36 +214,14 @@ func main() {
 		return nil
 	}
 
-	if *autotest != "" {
-		scriptData, err := os.ReadFile(*autotest)
-		if err != nil {
-			log.Fatalf("read test script: %v", err)
-		}
-		runner, err := willow.LoadTestScript(scriptData)
-		if err != nil {
-			log.Fatalf("parse test script: %v", err)
-		}
-		scene.SetTestRunner(runner)
-		scene.ScreenshotDir = "screenshots"
-		scene.SetUpdateFunc(func() error {
-			if err := updateFunc(); err != nil {
-				return err
-			}
-			if runner.Done() {
-				fmt.Println("Autotest complete.")
-				return ebiten.Termination
-			}
-			return nil
-		})
-	} else {
-		scene.SetUpdateFunc(updateFunc)
-	}
+	scene.SetUpdateFunc(updateFunc)
 
 	if err := willow.Run(scene, willow.RunConfig{
-		Title:   "Willow  -  Physics Shapes",
-		Width:   screenW,
-		Height:  screenH,
-		ShowFPS: true,
+		Title:        "Willow  -  Physics Shapes",
+		Width:        screenW,
+		Height:       screenH,
+		ShowFPS:      true,
+		AutoTestPath: *autotest,
 	}); err != nil {
 		log.Fatal(err)
 	}

@@ -8,7 +8,6 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"os"
 
 	"github.com/devthicket/willow"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -30,10 +29,9 @@ const (
 )
 
 type demo struct {
-	scene      *willow.Scene
-	counter    *willow.Node
-	frameNum   int
-	testRunner *willow.TestRunner
+	scene    *willow.Scene
+	counter  *willow.Node
+	frameNum int
 }
 
 func main() {
@@ -212,26 +210,14 @@ func main() {
 	root.AddChild(counter)
 
 	d := &demo{scene: scene, counter: counter}
-	if *autotest != "" {
-		scriptData, err := os.ReadFile(*autotest)
-		if err != nil {
-			log.Fatalf("read test script: %v", err)
-		}
-		runner, err := willow.LoadTestScript(scriptData)
-		if err != nil {
-			log.Fatalf("parse test script: %v", err)
-		}
-		d.testRunner = runner
-		scene.SetTestRunner(runner)
-		scene.ScreenshotDir = "screenshots"
-	}
 	scene.SetUpdateFunc(d.update)
 
 	if err := willow.Run(scene, willow.RunConfig{
-		Title:   windowTitle,
-		Width:   screenW,
-		Height:  screenH,
-		ShowFPS: showFPS,
+		Title:        windowTitle,
+		Width:        screenW,
+		Height:       screenH,
+		ShowFPS:      showFPS,
+		AutoTestPath: *autotest,
 	}); err != nil {
 		log.Fatal(err)
 	}
@@ -240,9 +226,6 @@ func main() {
 func (d *demo) update() error {
 	d.frameNum++
 	d.counter.SetContent(fmt.Sprintf("Frame: %d", d.frameNum))
-	if d.testRunner != nil && d.testRunner.Done() {
-		return ebiten.Termination
-	}
 	return nil
 }
 

@@ -1,8 +1,10 @@
 package willow
 
 import (
+	"fmt"
 	"image/color"
 	"math"
+	"os"
 
 	"github.com/devthicket/willow/internal/atlas"
 	"github.com/devthicket/willow/internal/camera"
@@ -180,6 +182,12 @@ type RunConfig struct {
 	// PreDrawFunc is called each frame after the screen is cleared but before
 	// the scene is drawn. Use it to render custom content underneath the scene.
 	PreDrawFunc func(screen *ebiten.Image)
+
+	// AutoTestPath is an optional path to a JSON autotest script. If empty,
+	// Run checks the WILLOW_AUTOTEST environment variable as a fallback.
+	// When a script is loaded the test runner is registered on the scene and
+	// the process exits automatically once all steps complete.
+	AutoTestPath string
 }
 
 // ---------------------------------------------------------------------------
@@ -953,6 +961,28 @@ func Run(scene *Scene, cfg RunConfig) error {
 		g.fpsWid = core.NewFPSWidget()
 		g.fpsWid.X_, g.fpsWid.Y_ = 8, 8
 	}
+
+	// Autotest: load from RunConfig or WILLOW_AUTOTEST env var.
+	atPath := cfg.AutoTestPath
+	if atPath == "" {
+		atPath = os.Getenv("WILLOW_AUTOTEST")
+	}
+	if atPath != "" {
+		data, err := os.ReadFile(atPath)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "autotest: read %s: %v\n", atPath, err)
+			os.Exit(1)
+		}
+		runner, err := LoadTestScript(data)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "autotest: load script: %v\n", err)
+			os.Exit(1)
+		}
+		scene.SetTestRunner(runner)
+		scene.ScreenshotDir = "screenshots"
+		g.testRunner = runner
+	}
+
 	return ebiten.RunGame(g)
 }
 
@@ -988,7 +1018,8 @@ func (b *gameBase) DrawFinalScreen(screen ebiten.FinalScreen, offscreen *ebiten.
 
 type gameShell struct {
 	gameBase
-	scene *Scene
+	scene      *Scene
+	testRunner *TestRunner
 }
 
 func (g *gameShell) Update() error {
@@ -999,6 +1030,10 @@ func (g *gameShell) Update() error {
 	}
 	g.scene.Update()
 	g.tickFPS()
+	if g.testRunner != nil && g.testRunner.Done() {
+		fmt.Println("autotest complete")
+		return ebiten.Termination
+	}
 	return nil
 }
 

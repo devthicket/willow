@@ -6,10 +6,8 @@ package main
 import (
 	"flag"
 	"log"
-	"os"
 
 	"github.com/devthicket/willow"
-	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
@@ -176,30 +174,12 @@ func main() {
 	allChars.SetPosition(20, y)
 	scene.Root.AddChild(allChars)
 
-	if *autotest != "" {
-		scriptData, err := os.ReadFile(*autotest)
-		if err != nil {
-			log.Fatalf("read test script: %v", err)
-		}
-		runner, err := willow.LoadTestScript(scriptData)
-		if err != nil {
-			log.Fatalf("parse test script: %v", err)
-		}
-		scene.SetTestRunner(runner)
-		scene.ScreenshotDir = "screenshots"
-		scene.SetUpdateFunc(func() error {
-			if runner.Done() {
-				return ebiten.Termination
-			}
-			return nil
-		})
-	}
-
 	if err := willow.Run(scene, willow.RunConfig{
-		Title:   windowTitle,
-		Width:   screenW,
-		Height:  screenH,
-		ShowFPS: showFPS,
+		Title:        windowTitle,
+		Width:        screenW,
+		Height:       screenH,
+		ShowFPS:      showFPS,
+		AutoTestPath: *autotest,
 	}); err != nil {
 		log.Fatal(err)
 	}

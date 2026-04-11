@@ -996,35 +996,12 @@ func main() {
 
 	g := newGame()
 
-	if *autotest != "" {
-		scriptData, err := os.ReadFile(*autotest)
-		if err != nil {
-			log.Fatalf("read test script: %v", err)
-		}
-		runner, err := willow.LoadTestScript(scriptData)
-		if err != nil {
-			log.Fatalf("parse test script: %v", err)
-		}
-		g.willow.SetTestRunner(runner)
-		g.willow.ScreenshotDir = "screenshots"
-		origUpdate := g.update
-		g.willow.SetUpdateFunc(func() error {
-			if err := origUpdate(); err != nil {
-				return err
-			}
-			if runner.Done() {
-				fmt.Println("Autotest complete.")
-				return ebiten.Termination
-			}
-			return nil
-		})
-	}
-
 	if err := willow.Run(g.willow, willow.RunConfig{
-		Title:   "Village — Willow Testbed",
-		Width:   screenW,
-		Height:  screenH,
-		ShowFPS: true,
+		Title:        "Village — Willow Testbed",
+		Width:        screenW,
+		Height:       screenH,
+		ShowFPS:      true,
+		AutoTestPath: *autotest,
 	}); err != nil {
 		log.Fatal(err)
 	}

@@ -69,34 +69,13 @@ func main() {
 		fmt.Printf("  layer %q: %d×%d\n", tmxLayer.Name, gameMap.Width, gameMap.Height)
 	}
 
-	// Attach test runner if --autotest is specified.
-	if *autotest != "" {
-		scriptData, err := os.ReadFile(*autotest)
-		if err != nil {
-			log.Fatalf("read test script: %v", err)
-		}
-		runner, err := willow.LoadTestScript(scriptData)
-		if err != nil {
-			log.Fatalf("parse test script: %v", err)
-		}
-		scene.SetTestRunner(runner)
-		scene.ScreenshotDir = "screenshots"
-
-		scene.SetUpdateFunc(func() error {
-			if runner.Done() {
-				fmt.Println("Autotest complete.")
-				return ebiten.Termination
-			}
-			return nil
-		})
-	}
-
 	fmt.Println("Running demo — close window to exit.")
 
 	if err := willow.Run(scene, willow.RunConfig{
-		Title:  "Tiled Loader Demo",
-		Width:  gameMap.Width * gameMap.TileWidth,
-		Height: gameMap.Height * gameMap.TileHeight,
+		Title:        "Tiled Loader Demo",
+		Width:        gameMap.Width * gameMap.TileWidth,
+		Height:       gameMap.Height * gameMap.TileHeight,
+		AutoTestPath: *autotest,
 	}); err != nil {
 		log.Fatal(err)
 	}

@@ -7,7 +7,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"image"
 	"log"
 	"math"
@@ -435,36 +434,14 @@ func main() {
 	hint.SetZIndex(70)
 	scene.Root.AddChild(hint)
 
-	if *autotest != "" {
-		scriptData, err := os.ReadFile(*autotest)
-		if err != nil {
-			log.Fatalf("read test script: %v", err)
-		}
-		runner, err := willow.LoadTestScript(scriptData)
-		if err != nil {
-			log.Fatalf("parse test script: %v", err)
-		}
-		scene.SetTestRunner(runner)
-		scene.ScreenshotDir = "screenshots"
-		scene.SetUpdateFunc(func() error {
-			if err := d.update(); err != nil {
-				return err
-			}
-			if runner.Done() {
-				fmt.Println("Autotest complete.")
-				return ebiten.Termination
-			}
-			return nil
-		})
-	} else {
-		scene.SetUpdateFunc(d.update)
-	}
+	scene.SetUpdateFunc(d.update)
 
 	if err := willow.Run(scene, willow.RunConfig{
-		Title:   windowTitle,
-		Width:   screenW,
-		Height:  screenH,
-		ShowFPS: showFPS,
+		Title:        windowTitle,
+		Width:        screenW,
+		Height:       screenH,
+		ShowFPS:      showFPS,
+		AutoTestPath: *autotest,
 	}); err != nil {
 		log.Fatal(err)
 	}

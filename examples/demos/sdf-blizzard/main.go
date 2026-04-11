@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"math"
-	"os"
 
 	"github.com/devthicket/willow"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -55,33 +54,13 @@ func main() {
 	d := &demo{scene: scene, font: font}
 	d.build()
 
-	if *autotest != "" {
-		scriptData, err := os.ReadFile(*autotest)
-		if err != nil {
-			log.Fatalf("read test script: %v", err)
-		}
-		runner, err := willow.LoadTestScript(scriptData)
-		if err != nil {
-			log.Fatalf("parse test script: %v", err)
-		}
-		scene.SetTestRunner(runner)
-		scene.ScreenshotDir = "screenshots"
-		scene.SetUpdateFunc(func() error {
-			d.update()
-			if runner.Done() {
-				fmt.Println("Autotest complete.")
-				return ebiten.Termination
-			}
-			return nil
-		})
-	} else {
-		scene.SetUpdateFunc(d.update)
-	}
+	scene.SetUpdateFunc(d.update)
 
 	if err := willow.Run(scene, willow.RunConfig{
-		Title:  windowTitle,
-		Width:  screenW,
-		Height: screenH,
+		Title:        windowTitle,
+		Width:        screenW,
+		Height:       screenH,
+		AutoTestPath: *autotest,
 	}); err != nil {
 		log.Fatal(err)
 	}
