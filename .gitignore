@@ -16,4 +16,4 @@ dist/
 bench_baseline.txt
 CLAUDE.md
 /screenshots/
-/gifs/
+/gifs/cmd/blurcompare/
