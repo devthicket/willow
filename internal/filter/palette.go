@@ -8,9 +8,7 @@ import (
 const paletteShaderSrc = `//kage:unit pixels
 package main
 
-var PaletteSize float
 var CycleOffset float
-var TexWidth float
 
 func Fragment(dst vec4, src vec2, color vec4) vec4 {
 	c := imageSrc0At(src)
@@ -21,14 +19,15 @@ func Fragment(dst vec4, src vec2, color vec4) vec4 {
 	if c.a > 0 {
 		c.rgb /= c.a
 	}
-	// Luminance.
+	// Luminance → palette index with cycle offset.
 	lum := 0.299*c.r + 0.587*c.g + 0.114*c.b
-	// Map lum [0,1] to index [0,255] with cycle offset.
-	idx := lum*(PaletteSize-1.0) + CycleOffset
-	idx = mod(idx, PaletteSize)
-	// Look up in palette texture (scaled to match source dimensions).
-	u := (idx + 0.5) / PaletteSize * TexWidth
-	pal := imageSrc1At(vec2(u, 0.5))
+	idx := lum*255.0 + CycleOffset
+	idx = mod(idx, 256.0)
+	// Sample palette texture (scaled to match source dimensions).
+	origin := imageSrc1Origin()
+	size := imageSrc1Size()
+	u := origin.x + (idx+0.5)/256.0*size.x
+	pal := imageSrc1At(vec2(u, origin.y+0.5))
 	// Un-premultiply palette color.
 	if pal.a > 0 {
 		pal.rgb /= pal.a
@@ -61,16 +60,15 @@ type PaletteFilter struct {
 	texW, texH   int // current palette texture dimensions
 	uniforms     map[string]any
 	shaderOp     ebiten.DrawRectShaderOptions
-	pixBuf       []byte // grows to match source dimensions
+	pixBuf       []byte // grows to match texture dimensions
 }
 
 // NewPaletteFilter creates a palette filter with a default grayscale palette.
 func NewPaletteFilter() *PaletteFilter {
 	f := &PaletteFilter{
 		paletteDirty: true,
-		uniforms:     make(map[string]any, 3),
+		uniforms:     make(map[string]any, 1),
 	}
-	f.uniforms["PaletteSize"] = float32(256)
 	// Initialize with a grayscale palette.
 	for i := 0; i < 256; i++ {
 		v := float64(i) / 255.0
@@ -85,7 +83,9 @@ func (f *PaletteFilter) SetPalette(palette [256]types.Color) {
 	f.paletteDirty = true
 }
 
-// ensurePaletteTex rebuilds the palette texture to match the given dimensions.
+// ensurePaletteTex rebuilds the palette texture if dirty or if the
+// dimensions changed. The texture must match the source image size
+// (Ebitengine requires all DrawRectShader source images to be the same size).
 func (f *PaletteFilter) ensurePaletteTex(w, h int) {
 	sizeChanged := f.texW != w || f.texH != h
 	if !f.paletteDirty && !sizeChanged && f.paletteTex != nil {
@@ -105,20 +105,24 @@ func (f *PaletteFilter) ensurePaletteTex(w, h int) {
 	} else {
 		f.pixBuf = f.pixBuf[:needed]
 	}
-	for row := 0; row < h; row++ {
-		for x := 0; x < w; x++ {
-			idx := int((float64(x) + 0.5) * 256.0 / float64(w))
-			if idx > 255 {
-				idx = 255
-			}
-			c := f.Palette[idx]
-			r, g, b, a := c.R(), c.G(), c.B(), c.A()
-			off := (row*w + x) * 4
-			f.pixBuf[off+0] = byte(r*a*255 + 0.5)
-			f.pixBuf[off+1] = byte(g*a*255 + 0.5)
-			f.pixBuf[off+2] = byte(b*a*255 + 0.5)
-			f.pixBuf[off+3] = byte(a*255 + 0.5)
+	// Write palette entries across row 0, scaled to texture width.
+	for x := 0; x < w; x++ {
+		idx := int((float64(x) + 0.5) * 256.0 / float64(w))
+		if idx > 255 {
+			idx = 255
 		}
+		c := f.Palette[idx]
+		r, g, b, a := c.R(), c.G(), c.B(), c.A()
+		off := x * 4
+		f.pixBuf[off+0] = byte(r*a*255 + 0.5)
+		f.pixBuf[off+1] = byte(g*a*255 + 0.5)
+		f.pixBuf[off+2] = byte(b*a*255 + 0.5)
+		f.pixBuf[off+3] = byte(a*255 + 0.5)
+	}
+	// Copy row 0 to all subsequent rows.
+	rowBytes := w * 4
+	for row := 1; row < h; row++ {
+		copy(f.pixBuf[row*rowBytes:(row+1)*rowBytes], f.pixBuf[:rowBytes])
 	}
 	f.paletteTex.WritePixels(f.pixBuf)
 	f.paletteDirty = false
@@ -131,7 +135,6 @@ func (f *PaletteFilter) Apply(src, dst *ebiten.Image) {
 	w, h := bounds.Dx(), bounds.Dy()
 	f.ensurePaletteTex(w, h)
 	f.uniforms["CycleOffset"] = float32(f.CycleOffset)
-	f.uniforms["TexWidth"] = float32(w)
 	f.shaderOp.Images[0] = src
 	f.shaderOp.Images[1] = f.paletteTex
 	f.shaderOp.Uniforms = f.uniforms
