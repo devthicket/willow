@@ -1,5 +1,6 @@
 # Willow
 
+[![CI](https://github.com/devthicket/willow/actions/workflows/ci.yml/badge.svg)](https://github.com/devthicket/willow/actions/workflows/ci.yml)
 [![Go Reference](https://pkg.go.dev/badge/github.com/devthicket/willow.svg)](https://pkg.go.dev/github.com/devthicket/willow)
 [![Go Report Card](https://goreportcard.com/badge/github.com/devthicket/willow)](https://goreportcard.com/report/github.com/devthicket/willow)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
