@@ -783,12 +783,19 @@ func TransformRect(t [6]float64, r types.Rect) types.Rect {
 }
 
 // drawFilterEligible checks if a node qualifies for the draw-time filter fast
-// path: leaf sprite, no mask, no cache, exactly one DrawFilter with zero padding.
+// path: leaf sprite, no mask, no cache, exactly one DrawFilter with zero padding,
+// and no color tint. Tinted sprites must go through the offscreen RT so the tint
+// is baked in before the filter processes the pixels.
 func drawFilterEligible(n *node.Node) (filter.DrawFilter, bool) {
 	if n.Type != types.NodeTypeSprite || len(n.Children_) > 0 {
 		return nil, false
 	}
 	if n.MaskNode != nil || n.CacheEnabled || len(n.Filters) != 1 {
+		return nil, false
+	}
+	// Tinted or semi-transparent nodes must use the offscreen RT path so
+	// the tint is applied before the filter shader sees the pixels.
+	if n.Color_ != types.ColorWhite || n.WorldAlpha != 1.0 {
 		return nil, false
 	}
 	ff, ok := n.Filters[0].(filter.Filter)
