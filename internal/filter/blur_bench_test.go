@@ -76,7 +76,7 @@ func oldBlurApply(radius int, src, dst *ebiten.Image) {
 	}
 }
 
-// newBlurApply runs the new Kawase shader blur the same way the pipeline does:
+// newBlurApply runs the new iterative shader blur the same way the pipeline does:
 // external ping-pong with SetPass + Apply per iteration.
 func newBlurApply(f *BlurFilter, src *ebiten.Image, a, b *ebiten.Image) {
 	passes := f.Passes()

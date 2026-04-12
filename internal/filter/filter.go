@@ -40,7 +40,7 @@ type MultiPass interface {
 // InitShaders eagerly compiles all built-in filter shaders so that any
 // compilation failure panics at startup rather than at an unpredictable frame.
 func InitShaders() {
-	ensureKawaseBlurShader()
+	ensureBlurShader()
 	ensureOutlineShader()
 	ensureOutlineHorzShader()
 	ensureOutlineVertShader()

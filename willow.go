@@ -275,7 +275,7 @@ type DrawFilter = filter.DrawFilter
 // ColorMatrixFilter applies a 4x5 color matrix transformation.
 type ColorMatrixFilter = filter.ColorMatrixFilter
 
-// BlurFilter applies a Kawase iterative blur.
+// BlurFilter applies an iterative multi-pass blur.
 type BlurFilter = filter.BlurFilter
 
 // OutlineFilter draws a multi-pixel outline around the source.

@@ -6,12 +6,13 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-// Kawase blur shader: samples 4 bilinear-filtered diagonal taps per pass.
-// Each pass uses an increasing Offset (iteration + 0.5), leveraging the
-// bilinear interpolation to effectively sample a 2×2 region per tap.
-// Multiple passes at full resolution replace the old downscale/upscale
-// approach, eliminating image-size churn that thrashes Ebitengine's atlas.
-const kawaseBlurShaderSrc = `//kage:unit pixels
+// Iterative blur shader: samples 4 diagonal taps per pass with manual
+// bilinear interpolation (Ebitengine's imageSrc0At is point-sampled).
+// Each pass uses an increasing Offset (iteration + 0.5), and multiple
+// passes at full resolution produce a progressive blur. This replaces
+// the old downscale/upscale approach that thrashed Ebitengine's atlas
+// with varying-size temporary images.
+const blurShaderSrc = `//kage:unit pixels
 package main
 
 var Offset float
@@ -38,20 +39,21 @@ func Fragment(dst vec4, src vec2, color vec4) vec4 {
 }
 `
 
-var kawaseBlurShader *ebiten.Shader
+var blurShader *ebiten.Shader
 
-func ensureKawaseBlurShader() *ebiten.Shader {
-	if kawaseBlurShader == nil {
-		s, err := ebiten.NewShader([]byte(kawaseBlurShaderSrc))
+func ensureBlurShader() *ebiten.Shader {
+	if blurShader == nil {
+		s, err := ebiten.NewShader([]byte(blurShaderSrc))
 		if err != nil {
-			panic("willow: failed to compile kawase blur shader: " + err.Error())
+			panic("willow: failed to compile blur shader: " + err.Error())
 		}
-		kawaseBlurShader = s
+		blurShader = s
 	}
-	return kawaseBlurShader
+	return blurShader
 }
 
-// BlurFilter applies a Kawase iterative blur using a Kage shader.
+// BlurFilter applies an iterative multi-pass blur using a Kage shader.
+// Each pass samples 4 diagonal taps with manual bilinear interpolation.
 // It implements MultiPass so the render pipeline drives the ping-pong
 // externally — the filter owns zero temporary images.
 type BlurFilter struct {
@@ -94,15 +96,15 @@ func blurPasses(radius int) int {
 // Zero means the filter is a no-op (radius ≤ 0).
 func (f *BlurFilter) Passes() int { return blurPasses(f.Radius) }
 
-// SetPass configures the Kawase offset for the given pass index.
+// SetPass configures the diagonal offset for the given pass index.
 func (f *BlurFilter) SetPass(pass int) {
 	f.offsetBuf[0] = float32(pass) + 0.5
 }
 
-// Apply runs a single Kawase blur pass from src into dst.
+// Apply runs a single blur pass from src into dst.
 // The render pipeline calls this once per pass via the MultiPass interface.
 func (f *BlurFilter) Apply(src, dst *ebiten.Image) {
-	shader := ensureKawaseBlurShader()
+	shader := ensureBlurShader()
 	bounds := src.Bounds()
 	f.shaderOp.Images[0] = src
 	f.shaderOp.Uniforms = f.uniforms
