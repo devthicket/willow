@@ -4,6 +4,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"image/color"
 	"log"
@@ -15,6 +16,8 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
+
+var autotest = flag.String("autotest", "", "path to autotest JSON script")
 
 const (
 	windowTitle = "Willow  -  Filter Gallery"
@@ -38,6 +41,7 @@ type filterEntry struct {
 }
 
 func main() {
+	flag.Parse()
 	f, err := os.Open("examples/_assets/whelp.png")
 	if err != nil {
 		log.Fatalf("open whelp.png: %v", err)
@@ -110,7 +114,7 @@ func main() {
 	// Define all 10 filter entries.
 	entries := []*filterEntry{
 		{label: "Blur", filter: blur},
-		{label: "Sepia", filter: sepia},
+		{label: "Sepia", filter: sepia, active: true},
 		{label: "Outline", filter: outline},
 		{label: "Inline", filter: inline},
 		{label: "PP Outline", filter: ppOutline},
@@ -229,6 +233,17 @@ func main() {
 		})
 	}
 
+	// Apply default-active filters and sync checkbox UI.
+	for _, e := range entries {
+		if e.active {
+			e.bg.SetColor(willow.RGB(0.15, 0.4, 0.2))
+			e.checkSp.SetCustomImage(e.checkImg[1])
+			e.bg.Invalidate()
+			e.checkSp.Invalidate()
+		}
+	}
+	rebuildFilters()
+
 	// Animate filters that support it.
 	elapsed := 0.0
 	scene.SetUpdateFunc(func() error {
@@ -249,10 +264,11 @@ func main() {
 	})
 
 	if err := willow.Run(scene, willow.RunConfig{
-		Title:   windowTitle,
-		Width:   screenW,
-		Height:  screenH,
-		ShowFPS: showFPS,
+		Title:        windowTitle,
+		Width:        screenW,
+		Height:       screenH,
+		ShowFPS:      showFPS,
+		AutoTestPath: *autotest,
 	}); err != nil {
 		log.Fatal(err)
 	}

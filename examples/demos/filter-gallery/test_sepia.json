@@ -1,0 +1,55 @@
+{
+  "steps": [
+    {"action": "wait", "frames": 30},
+    {"action": "screenshot", "label": "01-sepia-only"},
+
+    {"action": "click", "x": 120, "y": 435},
+    {"action": "wait", "frames": 10},
+    {"action": "screenshot", "label": "02-blur-plus-sepia"},
+
+    {"action": "click", "x": 120, "y": 435},
+    {"action": "wait", "frames": 5},
+    {"action": "click", "x": 260, "y": 435},
+    {"action": "wait", "frames": 5},
+    {"action": "click", "x": 400, "y": 435},
+    {"action": "wait", "frames": 10},
+    {"action": "screenshot", "label": "03-outline-only"},
+
+    {"action": "click", "x": 400, "y": 435},
+    {"action": "wait", "frames": 5},
+    {"action": "click", "x": 260, "y": 475},
+    {"action": "wait", "frames": 10},
+    {"action": "screenshot", "label": "04-grayscale-only"},
+
+    {"action": "click", "x": 260, "y": 475},
+    {"action": "wait", "frames": 5},
+    {"action": "click", "x": 400, "y": 475},
+    {"action": "wait", "frames": 10},
+    {"action": "screenshot", "label": "05-contrast-only"},
+
+    {"action": "click", "x": 400, "y": 475},
+    {"action": "wait", "frames": 5},
+    {"action": "click", "x": 540, "y": 435},
+    {"action": "wait", "frames": 10},
+    {"action": "screenshot", "label": "06-inline-only"},
+
+    {"action": "click", "x": 540, "y": 435},
+    {"action": "wait", "frames": 5},
+    {"action": "click", "x": 680, "y": 435},
+    {"action": "wait", "frames": 10},
+    {"action": "screenshot", "label": "07-pp-outline-only"},
+
+    {"action": "click", "x": 680, "y": 435},
+    {"action": "wait", "frames": 5},
+    {"action": "click", "x": 680, "y": 475},
+    {"action": "wait", "frames": 10},
+    {"action": "screenshot", "label": "08-palette-only"},
+
+    {"action": "click", "x": 260, "y": 435},
+    {"action": "click", "x": 400, "y": 435},
+    {"action": "wait", "frames": 10},
+    {"action": "screenshot", "label": "09-sepia-plus-outline-plus-palette"},
+
+    {"action": "wait", "frames": 2}
+  ]
+}
