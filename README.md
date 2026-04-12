@@ -51,7 +51,7 @@ Inspired by [Starling](https://gamua.com/starling/), Flash display lists, and [P
 ## What Willow Is Not
 
 - Not a full game engine. No built-in physics, networking, or asset pipelines
-- Not a UI layout framework (a companion `willowui` library is planned)
+- Not a UI layout framework (see [Willow UI](https://github.com/devthicket/willowui), a companion widget library)
 - Not a replacement for Ebitengine. It builds on top of it
 
 Willow focuses on structured rendering and scene composition. You bring the gameplay and domain logic.
@@ -103,7 +103,7 @@ func main() {
 	sprite.SetSize(40, 40)
 	sprite.SetColor(willow.RGBA(0.3, 0.7, 1, 1))
 	sprite.SetPosition(300, 220)
-	scene.Root().AddChild(sprite)
+	scene.Root.AddChild(sprite)
 
 	if err := willow.Run(scene, willow.RunConfig{
 		Title:  "My Game",
@@ -119,14 +119,12 @@ func main() {
 
 ## Examples
 
-20+ runnable examples are included in the [willow-examples](https://github.com/devthicket/willow-examples) repository, covering everything from basic sprites to full scenes combining lighting, meshes, particles, and masks. Several are also available as [live WASM demos](https://www.devthicket.org/willow/examples) to play directly in your browser.
+20+ runnable examples are included in the `examples/` directory, covering everything from basic sprites to full scenes combining lighting, meshes, particles, and masks. Several are also available as [live WASM demos](https://www.devthicket.org/willow/examples) to play directly in your browser.
 
 ```bash
-git clone https://github.com/devthicket/willow-examples.git
-cd willow-examples
-go run ./examples/basic    # simplest possible Willow app
-go run ./examples/shapes   # parent/child transforms
-go run ./examples/lighting # dungeon scene with torches and wisps
+go run ./examples/demos/shapes       # parent/child transforms
+go run ./examples/demos/lighting     # dungeon scene with torches and wisps
+go run ./examples/demos/filter-gallery  # all built-in filters
 ```
 
 ---
@@ -185,12 +183,8 @@ Benchmark suite included: `go test -bench . -benchmem`
 
 ## Roadmap
 
-- UI widget layer (buttons, text input, layout, focus traversal) as a separate companion library (willowui)
-- Example projects and starter templates
-- Comprehensive API documentation and guides
-- Tutorials and integration walkthroughs
 - Performance profiling across mobile and WebAssembly targets
-- Community feedback and API stabilization
+- Community feedback and API stabilization toward `v1.0.0`
 
 ---
 
