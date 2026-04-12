@@ -385,13 +385,43 @@ func (p *Pipeline) flushSpriteBatch(target *ebiten.Image, key BatchKey) {
 
 // appendShaderQuad appends 4 vertices and 6 uint16 indices for a shader sprite.
 func (p *Pipeline) appendShaderQuad(cmd *RenderCommand) {
-	r := &cmd.TextureRegion
 	t := &cmd.Transform
 
-	ox := float32(r.OffsetX)
-	oy := float32(r.OffsetY)
-	w := float32(r.Width)
-	h := float32(r.Height)
+	var ox, oy, w, h float32
+	var sx0, sy0, sx1, sy1, sx2, sy2, sx3, sy3 float32
+
+	if cmd.DirectImage != nil {
+		// DirectImage sprite: use image bounds for source coordinates.
+		b := cmd.DirectImage.Bounds()
+		w = float32(b.Dx())
+		h = float32(b.Dy())
+		sx0, sy0 = float32(b.Min.X), float32(b.Min.Y)
+		sx1, sy1 = float32(b.Max.X), float32(b.Min.Y)
+		sx2, sy2 = float32(b.Min.X), float32(b.Max.Y)
+		sx3, sy3 = float32(b.Max.X), float32(b.Max.Y)
+	} else {
+		// Atlas sprite: use TextureRegion for source coordinates.
+		r := &cmd.TextureRegion
+		ox = float32(r.OffsetX)
+		oy = float32(r.OffsetY)
+		w = float32(r.Width)
+		h = float32(r.Height)
+		if r.Rotated {
+			rx, ry := float32(r.X), float32(r.Y)
+			rh, rw := float32(r.Height), float32(r.Width)
+			sx0, sy0 = rx+rh, ry
+			sx1, sy1 = rx+rh, ry+rw
+			sx2, sy2 = rx, ry
+			sx3, sy3 = rx, ry+rw
+		} else {
+			rx, ry := float32(r.X), float32(r.Y)
+			rw, rh := float32(r.Width), float32(r.Height)
+			sx0, sy0 = rx, ry
+			sx1, sy1 = rx+rw, ry
+			sx2, sy2 = rx, ry+rh
+			sx3, sy3 = rx+rw, ry+rh
+		}
+	}
 
 	a, b, c, d, tx, ty := t[0], t[1], t[2], t[3], t[4], t[5]
 
@@ -399,23 +429,6 @@ func (p *Pipeline) appendShaderQuad(cmd *RenderCommand) {
 	x1, y1 := ox+w, oy
 	x2, y2 := ox, oy+h
 	x3, y3 := ox+w, oy+h
-
-	var sx0, sy0, sx1, sy1, sx2, sy2, sx3, sy3 float32
-	if r.Rotated {
-		rx, ry := float32(r.X), float32(r.Y)
-		rh, rw := float32(r.Height), float32(r.Width)
-		sx0, sy0 = rx+rh, ry
-		sx1, sy1 = rx+rh, ry+rw
-		sx2, sy2 = rx, ry
-		sx3, sy3 = rx, ry+rw
-	} else {
-		rx, ry := float32(r.X), float32(r.Y)
-		rw, rh := float32(r.Width), float32(r.Height)
-		sx0, sy0 = rx, ry
-		sx1, sy1 = rx+rw, ry
-		sx2, sy2 = rx, ry+rh
-		sx3, sy3 = rx+rw, ry+rh
-	}
 
 	ca := cmd.Color.A
 	var cr, cg, cb float32
