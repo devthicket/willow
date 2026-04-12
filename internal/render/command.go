@@ -87,6 +87,14 @@ type RenderCommand struct {
 	BmpVertCount int
 	BmpIndCount  int
 	BmpImage     *ebiten.Image
+
+	// Draw-time filter fields (CommandSprite only). When FilterShader is
+	// non-nil, the sprite is drawn via DrawTrianglesShader instead of
+	// DrawTriangles, applying the filter in a single pass with no offscreen RT.
+	FilterShader   *ebiten.Shader
+	FilterUniforms map[string]any
+	FilterImages   [3]*ebiten.Image // extra textures for the filter shader
+	FilterSource   any              // the filter instance; used for batch grouping via ==
 }
 
 // BatchKey groups render commands that can be submitted in a single draw call.

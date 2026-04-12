@@ -150,3 +150,21 @@ func (f *ColorMatrixFilter) Apply(src, dst *ebiten.Image) {
 
 // Padding returns 0; color matrix transforms don't expand the image bounds.
 func (f *ColorMatrixFilter) Padding() int { return 0 }
+
+// DrawShader returns the compiled color matrix shader.
+func (f *ColorMatrixFilter) DrawShader() *ebiten.Shader {
+	return ensureColorMatrixShader()
+}
+
+// DrawUniforms returns the uniforms map with the current matrix values.
+func (f *ColorMatrixFilter) DrawUniforms() map[string]any {
+	for i, v := range f.Matrix {
+		f.matrixF32[i] = float32(v)
+	}
+	return f.uniforms
+}
+
+// DrawImages returns empty images; color matrix only uses the source.
+func (f *ColorMatrixFilter) DrawImages() [3]*ebiten.Image {
+	return [3]*ebiten.Image{}
+}

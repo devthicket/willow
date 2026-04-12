@@ -137,43 +137,48 @@ func newTestImage(w, h int) *ebiten.Image {
 	return ebiten.NewImage(w, h)
 }
 
-func TestBlurFilter_Apply_ZeroRadius(t *testing.T) {
-	f := NewBlurFilter(0)
-	src := newTestImage(32, 32)
-	dst := newTestImage(32, 32)
-	f.Apply(src, dst) // should not panic, just copies
-}
-
-func TestBlurFilter_Apply_Positive(t *testing.T) {
+func TestBlurFilter_Apply_SinglePass(t *testing.T) {
 	f := NewBlurFilter(4)
 	src := newTestImage(64, 64)
 	dst := newTestImage(64, 64)
+	f.SetPass(0)
 	f.Apply(src, dst) // should not panic
-
-	// Verify temp images were allocated
-	if len(f.temps) == 0 {
-		t.Error("expected temp images to be allocated for blur passes")
-	}
 }
 
 func TestBlurFilter_Apply_LargeRadius(t *testing.T) {
 	f := NewBlurFilter(32)
 	src := newTestImage(64, 64)
 	dst := newTestImage(64, 64)
+	f.SetPass(0)
 	f.Apply(src, dst) // should not panic with large radius
 }
 
-func TestBlurFilter_Apply_Reuse(t *testing.T) {
-	f := NewBlurFilter(4)
+func TestBlurFilter_MultiPass(t *testing.T) {
+	f := NewBlurFilter(8)
+	passes := f.Passes()
+	if passes <= 0 {
+		t.Fatal("expected >0 passes for radius 8")
+	}
 	src := newTestImage(64, 64)
-	dst := newTestImage(64, 64)
-	f.Apply(src, dst)
-	tempCount := len(f.temps)
-	// Apply again — should reuse temp images
-	dst.Clear()
-	f.Apply(src, dst)
-	if len(f.temps) != tempCount {
-		t.Errorf("temp count changed on reuse: %d → %d", tempCount, len(f.temps))
+	a := newTestImage(64, 64)
+	b := newTestImage(64, 64)
+
+	current, scratch := src, a
+	for i := 0; i < passes; i++ {
+		f.SetPass(i)
+		scratch.Clear()
+		f.Apply(current, scratch)
+		current, scratch = scratch, current
+	}
+	// Final result is in current; verify we didn't panic
+	_ = current
+	_ = b // b unused in this test, just matching pool pattern
+}
+
+func TestBlurFilter_ZeroRadius_NoPasses(t *testing.T) {
+	f := NewBlurFilter(0)
+	if f.Passes() != 0 {
+		t.Errorf("zero-radius blur should have 0 passes, got %d", f.Passes())
 	}
 }
 
