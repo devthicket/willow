@@ -204,6 +204,15 @@ type RenderCommand = render.RenderCommand
 // custom-emit handler. Use SetCustomEmit to install one.
 type Emitter = render.Emitter
 
+// Pipeline is the engine's render pipeline. Exposed for advanced
+// integrations (custom emit hooks, low-level renderer extensions), but
+// treat it as engine-internal: any field, method, or behavior may change
+// between minor versions without notice. Prefer the Emitter facade for
+// stable access; reach for Pipeline only when Emitter is missing what you
+// need (and please file an issue describing the gap so it can become part
+// of the stable surface).
+type Pipeline = render.Pipeline
+
 // TrianglesEmit describes a single batch of textured triangles for
 // Emitter.AppendTriangles.
 type TrianglesEmit = render.TrianglesEmit

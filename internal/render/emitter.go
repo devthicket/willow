@@ -18,7 +18,10 @@ type Emitter struct {
 	building  bool
 }
 
-// Pipeline returns the underlying pipeline. Internal use only.
+// Pipeline returns the underlying render pipeline. The Pipeline type is
+// re-exported as willow.Pipeline but is engine-internal — its fields and
+// methods may change between minor versions. Prefer the other Emitter
+// methods unless you need something they don't expose.
 func (e *Emitter) Pipeline() *Pipeline { return e.p }
 
 // Node returns the node whose custom-emit handler is currently executing.
