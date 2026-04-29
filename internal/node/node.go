@@ -188,8 +188,14 @@ type Node struct {
 	Filters  []any // opaque []filter.Filter — node/ never inspects
 
 	// ---- COLD: functions ----
-	OnUpdate   func(dt float64)
-	CustomEmit func(s any, treeOrder *int)
+	OnUpdate func(dt float64)
+	// CustomEmit, when set, is invoked instead of the node's normal render
+	// emit. The first argument is an *Emitter (defined in internal/render and
+	// re-exported as willow.Emitter); use willow.SetCustomEmit for a typed
+	// setter that handles the assertion. Callbacks may also call
+	// Emitter.EmitDefault to opt back into the node's standard rendering
+	// alongside any custom commands they append.
+	CustomEmit func(e any, treeOrder *int)
 	EmitFn     EmitFn
 
 	// ---- COLD: int-sized ----

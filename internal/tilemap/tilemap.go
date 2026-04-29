@@ -92,8 +92,8 @@ type VisibleBoundsProvider interface {
 }
 
 // EmitCommandsFn is the callback type for emitting tilemap render commands.
-// The any parameter is the opaque *Scene, matching Node.CustomEmit signature.
-type EmitCommandsFn func(layer *Layer, sceneAny any, treeOrder *int)
+// The any parameter is the opaque *render.Emitter passed to Node.CustomEmit.
+type EmitCommandsFn func(layer *Layer, emitterAny any, treeOrder *int)
 
 // Viewport is a scene graph node that manages a viewport into a tilemap.
 type Viewport struct {

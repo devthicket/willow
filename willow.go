@@ -200,6 +200,14 @@ type CommandType = render.CommandType
 // RenderCommand is a single draw instruction emitted during scene traversal.
 type RenderCommand = render.RenderCommand
 
+// Emitter is the typed view onto the render pipeline passed to a Node's
+// custom-emit handler. Use SetCustomEmit to install one.
+type Emitter = render.Emitter
+
+// TrianglesEmit describes a single batch of textured triangles for
+// Emitter.AppendTriangles.
+type TrianglesEmit = render.TrianglesEmit
+
 // RenderTexture is a persistent offscreen canvas.
 type RenderTexture = render.RenderTexture
 
@@ -686,11 +694,12 @@ func init() {
 		return NewContainer(name)
 	}
 	tilemap.NewLayerEmitFn = func(layer *tilemap.Layer) {
-		layer.EmitFn = func(l *tilemap.Layer, pAny any, treeOrder *int) {
-			p, ok := pAny.(*render.Pipeline)
+		layer.EmitFn = func(l *tilemap.Layer, eAny any, treeOrder *int) {
+			e, ok := eAny.(*render.Emitter)
 			if !ok {
 				return
 			}
+			p := e.Pipeline()
 			tilemap.EmitTilemapCommands(l, &p.Commands, p.ViewTransform, treeOrder)
 		}
 	}
@@ -810,6 +819,22 @@ func NewMesh(name string, img *ebiten.Image, vertices []ebiten.Vertex, indices [
 		AabbDirty: true,
 	}
 	return n
+}
+
+// SetCustomEmit installs a typed custom-emit handler on n. The handler runs
+// in place of the node's normal render emit; call e.EmitDefault inside the
+// handler to opt back into the default rendering alongside any custom
+// commands you append.
+//
+// Passing fn == nil clears any previously installed handler.
+func SetCustomEmit(n *Node, fn func(e *Emitter, treeOrder *int)) {
+	if fn == nil {
+		n.CustomEmit = nil
+		return
+	}
+	n.CustomEmit = func(eAny any, treeOrder *int) {
+		fn(eAny.(*Emitter), treeOrder)
+	}
 }
 
 // NewParticleEmitter creates a particle emitter node with a preallocated pool.
