@@ -200,22 +200,22 @@ type CommandType = render.CommandType
 // RenderCommand is a single draw instruction emitted during scene traversal.
 type RenderCommand = render.RenderCommand
 
-// Emitter is the typed view onto the render pipeline passed to a Node's
-// custom-emit handler. Use SetCustomEmit to install one.
-type Emitter = render.Emitter
+// Painter is the typed view onto the render pipeline passed to a Node's
+// custom-paint handler. Use SetCustomPaint to install one.
+type Painter = render.Painter
 
 // Pipeline is the engine's render pipeline. Exposed for advanced
-// integrations (custom emit hooks, low-level renderer extensions), but
+// integrations (custom paint hooks, low-level renderer extensions), but
 // treat it as engine-internal: any field, method, or behavior may change
-// between minor versions without notice. Prefer the Emitter facade for
-// stable access; reach for Pipeline only when Emitter is missing what you
+// between minor versions without notice. Prefer the Painter facade for
+// stable access; reach for Pipeline only when Painter is missing what you
 // need (and please file an issue describing the gap so it can become part
 // of the stable surface).
 type Pipeline = render.Pipeline
 
-// TrianglesEmit describes a single batch of textured triangles for
-// Emitter.AppendTriangles.
-type TrianglesEmit = render.TrianglesEmit
+// TrianglesPaint describes a single batch of textured triangles for
+// Painter.AppendTriangles.
+type TrianglesPaint = render.TrianglesPaint
 
 // RenderTexture is a persistent offscreen canvas.
 type RenderTexture = render.RenderTexture
@@ -703,13 +703,13 @@ func init() {
 		return NewContainer(name)
 	}
 	tilemap.NewLayerEmitFn = func(layer *tilemap.Layer) {
-		layer.EmitFn = func(l *tilemap.Layer, eAny any, treeOrder *int) {
-			e, ok := eAny.(*render.Emitter)
+		layer.EmitFn = func(l *tilemap.Layer, pAny any, treeOrder *int) {
+			painter, ok := pAny.(*render.Painter)
 			if !ok {
 				return
 			}
-			p := e.Pipeline()
-			tilemap.EmitTilemapCommands(l, &p.Commands, p.ViewTransform, treeOrder)
+			pl := painter.Pipeline()
+			tilemap.EmitTilemapCommands(l, &pl.Commands, pl.ViewTransform, treeOrder)
 		}
 	}
 
@@ -830,22 +830,22 @@ func NewMesh(name string, img *ebiten.Image, vertices []ebiten.Vertex, indices [
 	return n
 }
 
-// SetCustomEmit installs a typed custom-emit handler on n. The handler runs
-// in place of the node's normal render emit; call e.EmitDefault inside the
-// handler to opt back into the default rendering alongside any custom
+// SetCustomPaint installs a typed custom-paint handler on n. The handler
+// runs in place of the node's normal render emit; call p.PaintDefault inside
+// the handler to opt back into the default rendering alongside any custom
 // commands you append.
 //
 // Passing fn == nil clears any previously installed handler.
 //
-// The installed callback panics if invoked with anything other than an
-// *Emitter — only the engine's render pipeline should call it.
-func SetCustomEmit(n *Node, fn func(e *Emitter, treeOrder *int)) {
+// The installed callback panics if invoked with anything other than a
+// *Painter; only the engine's render pipeline should call it.
+func SetCustomPaint(n *Node, fn func(p *Painter, treeOrder *int)) {
 	if fn == nil {
-		n.CustomEmit = nil
+		n.CustomPaint = nil
 		return
 	}
-	n.CustomEmit = func(eAny any, treeOrder *int) {
-		fn(eAny.(*Emitter), treeOrder)
+	n.CustomPaint = func(pAny any, treeOrder *int) {
+		fn(pAny.(*Painter), treeOrder)
 	}
 }
 

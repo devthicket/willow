@@ -504,7 +504,7 @@ func (n *Node) dispose() {
 	n.MaskNode = nil
 	n.CacheData = nil
 	n.CustomImage_ = nil
-	n.CustomEmit = nil
+	n.CustomPaint = nil
 	n.Mesh = nil
 	n.Emitter = nil
 	n.TextBlock = nil

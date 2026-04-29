@@ -93,10 +93,10 @@ func (p *Pipeline) Traverse(n *node.Node, treeOrder *int) {
 		return
 	}
 
-	// Custom emit hook.
-	if n.CustomEmit != nil && !culled {
-		emitter := Emitter{p: p, n: n, viewWorld: viewWorld, building: p.BuildingCacheFor != nil}
-		n.CustomEmit(&emitter, treeOrder)
+	// Custom paint hook.
+	if n.CustomPaint != nil && !culled {
+		painter := Painter{p: p, n: n, viewWorld: viewWorld, building: p.BuildingCacheFor != nil}
+		n.CustomPaint(&painter, treeOrder)
 		p.CommandsDirtyThisFrame = true
 		if len(n.Children_) > 0 {
 			children := p.sortedChildren(n)

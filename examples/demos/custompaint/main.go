@@ -1,4 +1,4 @@
-// CustomEmit demonstrates Node.CustomEmit and the Emitter facade. A single
+// CustomPaint demonstrates Node.CustomPaint and the Painter facade. A single
 // host node emits a procedural starburst as one batched mesh: N triangular
 // spokes radiating from the node's origin, rotating over time. Because the
 // whole shape is submitted as one CommandMesh, adding more spokes does not
@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	windowTitle = "Willow  -  CustomEmit Example"
+	windowTitle = "Willow  -  CustomPaint Example"
 	screenW     = 640
 	screenH     = 480
 	numSpokes   = 24
@@ -48,9 +48,9 @@ func main() {
 		angle += dt * 1.2
 	}
 
-	willow.SetCustomEmit(host, func(e *willow.Emitter, treeOrder *int) {
+	willow.SetCustomPaint(host, func(p *willow.Painter, treeOrder *int) {
 		// Pre-transform vertices to screen space using the host's world transform.
-		wt := e.WorldTransform()
+		wt := p.WorldTransform()
 		a, b := float32(wt[0]), float32(wt[1])
 		c, d := float32(wt[2]), float32(wt[3])
 		ox, oy := float32(wt[4]), float32(wt[5])
@@ -83,7 +83,7 @@ func main() {
 			}
 		}
 
-		e.AppendTriangles(willow.TrianglesEmit{
+		p.AppendTriangles(willow.TrianglesPaint{
 			Verts: verts,
 			Inds:  inds,
 			Image: willow.WhitePixel,

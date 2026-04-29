@@ -189,14 +189,14 @@ type Node struct {
 
 	// ---- COLD: functions ----
 	OnUpdate func(dt float64)
-	// CustomEmit, when set, is invoked instead of the node's normal render
-	// emit. The first argument is an *Emitter (defined in internal/render and
-	// re-exported as willow.Emitter); use willow.SetCustomEmit for a typed
+	// CustomPaint, when set, is invoked instead of the node's normal render
+	// emit. The first argument is a *Painter (defined in internal/render and
+	// re-exported as willow.Painter); use willow.SetCustomPaint for a typed
 	// setter that handles the assertion. Callbacks may also call
-	// Emitter.EmitDefault to opt back into the node's standard rendering
+	// Painter.PaintDefault to opt back into the node's standard rendering
 	// alongside any custom commands they append.
-	CustomEmit func(e any, treeOrder *int)
-	EmitFn     EmitFn
+	CustomPaint func(p any, treeOrder *int)
+	EmitFn      EmitFn
 
 	// ---- COLD: int-sized ----
 	ZIndex_  int

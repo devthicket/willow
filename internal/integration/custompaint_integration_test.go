@@ -8,10 +8,10 @@ import (
 	. "github.com/devthicket/willow"
 )
 
-// TestCustomEmit_ReplacesDefault verifies that when a handler does NOT call
-// EmitDefault, the host node's default render command is suppressed and only
+// TestCustomPaint_ReplacesDefault verifies that when a handler does NOT call
+// PaintDefault, the host node's default render command is suppressed and only
 // the user-appended commands remain.
-func TestCustomEmit_ReplacesDefault(t *testing.T) {
+func TestCustomPaint_ReplacesDefault(t *testing.T) {
 	s := NewScene()
 	host := NewSprite("host", TextureRegion{Width: 32, Height: 32})
 	s.Root.AddChild(host)
@@ -22,9 +22,9 @@ func TestCustomEmit_ReplacesDefault(t *testing.T) {
 	inds := []uint16{0, 1, 2}
 
 	called := 0
-	SetCustomEmit(host, func(e *Emitter, treeOrder *int) {
+	SetCustomPaint(host, func(p *Painter, treeOrder *int) {
 		called++
-		e.AppendTriangles(TrianglesEmit{Verts: verts, Inds: inds, Image: WhitePixel}, treeOrder)
+		p.AppendTriangles(TrianglesPaint{Verts: verts, Inds: inds, Image: WhitePixel}, treeOrder)
 	})
 
 	traverseScene(s)
@@ -40,9 +40,9 @@ func TestCustomEmit_ReplacesDefault(t *testing.T) {
 	}
 }
 
-// TestCustomEmit_EmitDefaultAppends verifies EmitDefault triggers the host's
+// TestCustomPaint_PaintDefaultAppends verifies PaintDefault triggers the host's
 // normal render emit alongside any custom-appended commands.
-func TestCustomEmit_EmitDefaultAppends(t *testing.T) {
+func TestCustomPaint_PaintDefaultAppends(t *testing.T) {
 	s := NewScene()
 	host := NewSprite("host", TextureRegion{Width: 32, Height: 32})
 	s.Root.AddChild(host)
@@ -52,9 +52,9 @@ func TestCustomEmit_EmitDefaultAppends(t *testing.T) {
 	}
 	inds := []uint16{0, 1, 2}
 
-	SetCustomEmit(host, func(e *Emitter, treeOrder *int) {
-		e.EmitDefault(treeOrder)
-		e.AppendTriangles(TrianglesEmit{Verts: verts, Inds: inds, Image: WhitePixel}, treeOrder)
+	SetCustomPaint(host, func(p *Painter, treeOrder *int) {
+		p.PaintDefault(treeOrder)
+		p.AppendTriangles(TrianglesPaint{Verts: verts, Inds: inds, Image: WhitePixel}, treeOrder)
 	})
 
 	traverseScene(s)
@@ -74,14 +74,14 @@ func TestCustomEmit_EmitDefaultAppends(t *testing.T) {
 	}
 }
 
-// TestSetCustomEmit_NilClearsHandler verifies passing fn==nil removes a
+// TestSetCustomPaint_NilClearsHandler verifies passing fn==nil removes a
 // previously installed handler so default emit resumes.
-func TestSetCustomEmit_NilClearsHandler(t *testing.T) {
+func TestSetCustomPaint_NilClearsHandler(t *testing.T) {
 	s := NewScene()
 	host := NewSprite("host", TextureRegion{Width: 32, Height: 32})
 	s.Root.AddChild(host)
 
-	SetCustomEmit(host, func(e *Emitter, treeOrder *int) {
+	SetCustomPaint(host, func(p *Painter, treeOrder *int) {
 		// Replace the default with nothing.
 	})
 	traverseScene(s)
@@ -89,19 +89,19 @@ func TestSetCustomEmit_NilClearsHandler(t *testing.T) {
 		t.Fatalf("with handler: commands = %d, want 0", len(s.Pipeline.Commands))
 	}
 
-	SetCustomEmit(host, nil)
+	SetCustomPaint(host, nil)
 	traverseScene(s)
 	if len(s.Pipeline.Commands) != 1 {
 		t.Fatalf("after clear: commands = %d, want 1 (default sprite restored)", len(s.Pipeline.Commands))
 	}
 }
 
-// TestCustomEmit_IsBuildingCache_TrueInCacheBuild guards against the regression
-// where Emitter.IsBuildingCache always returned false inside a CacheAsTree
-// build. The custom-emit child runs underneath a cached container; on the
+// TestCustomPaint_IsBuildingCache_TrueInCacheBuild guards against the regression
+// where Painter.IsBuildingCache always returned false inside a CacheAsTree
+// build. The custom-paint child runs underneath a cached container; on the
 // build pass IsBuildingCache must be true so handlers can skip animated
 // content. On a normal pass it must be false.
-func TestCustomEmit_IsBuildingCache_TrueInCacheBuild(t *testing.T) {
+func TestCustomPaint_IsBuildingCache_TrueInCacheBuild(t *testing.T) {
 	s := NewScene()
 	container := NewContainer("c")
 	host := NewSprite("host", TextureRegion{Width: 32, Height: 32})
@@ -109,9 +109,9 @@ func TestCustomEmit_IsBuildingCache_TrueInCacheBuild(t *testing.T) {
 	s.Root.AddChild(container)
 
 	var seen []bool
-	SetCustomEmit(host, func(e *Emitter, treeOrder *int) {
-		seen = append(seen, e.IsBuildingCache())
-		e.EmitDefault(treeOrder)
+	SetCustomPaint(host, func(p *Painter, treeOrder *int) {
+		seen = append(seen, p.IsBuildingCache())
+		p.PaintDefault(treeOrder)
 	})
 
 	// First traverse with cache enabled triggers the build pass.
@@ -134,11 +134,11 @@ func TestCustomEmit_IsBuildingCache_TrueInCacheBuild(t *testing.T) {
 	}
 }
 
-// TestCustomEmit_AppendTrianglesStampsNodeIDInCacheBuild verifies that when a
+// TestCustomPaint_AppendTrianglesStampsNodeIDInCacheBuild verifies that when a
 // handler appends triangles inside a CacheAsTree build pass, the resulting
-// command has EmittingNodeID set to the host node's ID — so the cache
+// command has EmittingNodeID set to the host node's ID, so the cache
 // invalidator can attribute the command back to its source node.
-func TestCustomEmit_AppendTrianglesStampsNodeIDInCacheBuild(t *testing.T) {
+func TestCustomPaint_AppendTrianglesStampsNodeIDInCacheBuild(t *testing.T) {
 	s := NewScene()
 	container := NewContainer("c")
 	host := NewSprite("host", TextureRegion{Width: 32, Height: 32})
@@ -150,8 +150,8 @@ func TestCustomEmit_AppendTrianglesStampsNodeIDInCacheBuild(t *testing.T) {
 	}
 	inds := []uint16{0, 1, 2}
 
-	SetCustomEmit(host, func(e *Emitter, treeOrder *int) {
-		e.AppendTriangles(TrianglesEmit{Verts: verts, Inds: inds, Image: WhitePixel}, treeOrder)
+	SetCustomPaint(host, func(p *Painter, treeOrder *int) {
+		p.AppendTriangles(TrianglesPaint{Verts: verts, Inds: inds, Image: WhitePixel}, treeOrder)
 	})
 
 	container.SetCacheAsTree(true, CacheTreeManual)
@@ -172,11 +172,11 @@ func TestCustomEmit_AppendTrianglesStampsNodeIDInCacheBuild(t *testing.T) {
 	}
 }
 
-// TestCustomEmit_AppendTrianglesNoNodeIDOutsideBuild verifies the inverse:
+// TestCustomPaint_AppendTrianglesNoNodeIDOutsideBuild verifies the inverse:
 // commands appended outside a cache build do NOT get EmittingNodeID stamped.
 // (Only cache-build emissions need attribution; stamping otherwise would be
 // noise.)
-func TestCustomEmit_AppendTrianglesNoNodeIDOutsideBuild(t *testing.T) {
+func TestCustomPaint_AppendTrianglesNoNodeIDOutsideBuild(t *testing.T) {
 	s := NewScene()
 	host := NewSprite("host", TextureRegion{Width: 32, Height: 32})
 	s.Root.AddChild(host)
@@ -186,8 +186,8 @@ func TestCustomEmit_AppendTrianglesNoNodeIDOutsideBuild(t *testing.T) {
 	}
 	inds := []uint16{0, 1, 2}
 
-	SetCustomEmit(host, func(e *Emitter, treeOrder *int) {
-		e.AppendTriangles(TrianglesEmit{Verts: verts, Inds: inds, Image: WhitePixel}, treeOrder)
+	SetCustomPaint(host, func(p *Painter, treeOrder *int) {
+		p.AppendTriangles(TrianglesPaint{Verts: verts, Inds: inds, Image: WhitePixel}, treeOrder)
 	})
 
 	traverseScene(s)
