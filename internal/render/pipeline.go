@@ -95,7 +95,7 @@ func (p *Pipeline) Traverse(n *node.Node, treeOrder *int) {
 
 	// Custom emit hook.
 	if n.CustomEmit != nil && !culled {
-		emitter := Emitter{p: p, n: n, viewWorld: viewWorld, building: false}
+		emitter := Emitter{p: p, n: n, viewWorld: viewWorld, building: p.BuildingCacheFor != nil}
 		n.CustomEmit(&emitter, treeOrder)
 		p.CommandsDirtyThisFrame = true
 		if len(n.Children_) > 0 {

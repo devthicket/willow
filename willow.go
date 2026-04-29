@@ -836,6 +836,9 @@ func NewMesh(name string, img *ebiten.Image, vertices []ebiten.Vertex, indices [
 // commands you append.
 //
 // Passing fn == nil clears any previously installed handler.
+//
+// The installed callback panics if invoked with anything other than an
+// *Emitter — only the engine's render pipeline should call it.
 func SetCustomEmit(n *Node, fn func(e *Emitter, treeOrder *int)) {
 	if fn == nil {
 		n.CustomEmit = nil

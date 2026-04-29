@@ -47,7 +47,14 @@ func (e *Emitter) IsBuildingCache() bool { return e.building }
 
 // AppendCommand pushes a raw RenderCommand. The caller is responsible for
 // incrementing *treeOrder and assigning cmd.TreeOrder before calling.
+//
+// During a CacheAsTree build (see IsBuildingCache), the host node's ID is
+// stamped onto cmd.EmittingNodeID so the cache invalidator can attribute
+// the command back to its source.
 func (e *Emitter) AppendCommand(cmd RenderCommand) {
+	if e.building {
+		cmd.EmittingNodeID = e.n.ID
+	}
 	e.p.Commands = append(e.p.Commands, cmd)
 }
 
@@ -64,7 +71,6 @@ func (e *Emitter) EmitDefault(treeOrder *int) {
 
 // TrianglesEmit describes a single batch of textured triangles for AppendTriangles.
 type TrianglesEmit struct {
-	Transform   [6]float32
 	Verts       []ebiten.Vertex
 	Inds        []uint16
 	Image       *ebiten.Image
@@ -78,9 +84,8 @@ type TrianglesEmit struct {
 // WorldTransform yourself when writing them).
 func (e *Emitter) AppendTriangles(t TrianglesEmit, treeOrder *int) {
 	*treeOrder++
-	e.p.Commands = append(e.p.Commands, RenderCommand{
+	cmd := RenderCommand{
 		Type:        CommandMesh,
-		Transform:   t.Transform,
 		BlendMode:   t.BlendMode,
 		RenderLayer: t.RenderLayer,
 		GlobalOrder: t.GlobalOrder,
@@ -88,5 +93,9 @@ func (e *Emitter) AppendTriangles(t TrianglesEmit, treeOrder *int) {
 		MeshVerts:   t.Verts,
 		MeshInds:    t.Inds,
 		MeshImage:   t.Image,
-	})
+	}
+	if e.building {
+		cmd.EmittingNodeID = e.n.ID
+	}
+	e.p.Commands = append(e.p.Commands, cmd)
 }
