@@ -766,6 +766,8 @@ func NewSprite(name string, region TextureRegion) *Node {
 	n.TextureRegion_ = region
 	if region == (TextureRegion{}) {
 		n.CustomImage_ = WhitePixel
+		n.WhitePixelW_ = 1
+		n.WhitePixelH_ = 1
 	}
 	return n
 }
@@ -857,6 +859,8 @@ func NewParticleEmitter(name string, cfg EmitterConfig) *Node {
 	n.Emitter = particle.NewEmitter(cfg)
 	if cfg.Region == (TextureRegion{}) {
 		n.CustomImage_ = WhitePixel
+		n.WhitePixelW_ = 1
+		n.WhitePixelH_ = 1
 	}
 	return n
 }

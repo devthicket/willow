@@ -71,6 +71,12 @@ func (p *Pipeline) SubmitBatches(target *ebiten.Image) {
 func submitSprite(target *ebiten.Image, cmd *RenderCommand, op *ebiten.DrawImageOptions) {
 	if cmd.DirectImage != nil {
 		op.GeoM.Reset()
+		// White-pixel sprites have a 1×1 source image but a logical W×H quad.
+		// Pre-scale before applying the world transform so pivot stays in
+		// display-pixel space.
+		if cmd.WhitePixelW > 0 || cmd.WhitePixelH > 0 {
+			op.GeoM.Scale(float64(cmd.WhitePixelW), float64(cmd.WhitePixelH))
+		}
 		op.GeoM.Concat(CommandGeoM(cmd))
 		op.ColorScale.Reset()
 		a := cmd.Color.A
@@ -393,8 +399,15 @@ func (p *Pipeline) appendShaderQuad(cmd *RenderCommand) {
 	if cmd.DirectImage != nil {
 		// DirectImage sprite: use image bounds for source coordinates.
 		b := cmd.DirectImage.Bounds()
-		w = float32(b.Dx())
-		h = float32(b.Dy())
+		// White-pixel sprites set WhitePixelW/H to override the destination
+		// quad size while still sampling the 1×1 source.
+		if cmd.WhitePixelW > 0 || cmd.WhitePixelH > 0 {
+			w = cmd.WhitePixelW
+			h = cmd.WhitePixelH
+		} else {
+			w = float32(b.Dx())
+			h = float32(b.Dy())
+		}
 		sx0, sy0 = float32(b.Min.X), float32(b.Min.Y)
 		sx1, sy1 = float32(b.Max.X), float32(b.Min.Y)
 		sx2, sy2 = float32(b.Min.X), float32(b.Max.Y)
@@ -766,6 +779,10 @@ func EmitNodeCommand(p *Pipeline, n *node.Node, transform [6]float64, alpha floa
 		}
 		if n.CustomImage_ != nil {
 			cmd.DirectImage = n.CustomImage_
+			if node.IsWhitePixel(n) {
+				cmd.WhitePixelW = float32(n.WhitePixelW_)
+				cmd.WhitePixelH = float32(n.WhitePixelH_)
+			}
 		} else {
 			cmd.TextureRegion = n.TextureRegion_
 		}

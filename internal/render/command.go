@@ -55,6 +55,14 @@ type RenderCommand struct {
 	// atlas page. Used for cached/filtered/masked node output.
 	DirectImage *ebiten.Image
 
+	// WhitePixelW/H carry the destination quad size for white-pixel sprites,
+	// where the source image is the shared 1×1 WhitePixelImage but the
+	// rendered quad is W×H. Zero on every other DirectImage path (cache
+	// textures, RTs, user CustomImage), where the renderer falls back to
+	// the source image's bounds.
+	WhitePixelW float32
+	WhitePixelH float32
+
 	// Emitter references the particle emitter for CommandParticle commands.
 	Emitter            *particle.Emitter
 	WorldSpaceParticle bool // particles store world positions; Transform is view-only

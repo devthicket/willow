@@ -169,6 +169,15 @@ type Node struct {
 	PivotX_        float64
 	PivotY_        float64
 
+	// WhitePixelW_/H_ carry the intrinsic display size for sprites that use
+	// the 1×1 WhitePixelImage as their CustomImage_. Size lives in geometry
+	// (not Scale) so SetPivot is interpreted in display-pixel space — calling
+	// SetPivot(W/2, H/2) centers the sprite as one would expect. Zero on any
+	// non-white-pixel sprite; defaults to 1×1 in NewSprite when the white
+	// pixel is auto-assigned.
+	WhitePixelW_ float64
+	WhitePixelH_ float64
+
 	// ---- COLD: hierarchy, identity, metadata ----
 	Parent   *Node
 	Scene_   any // opaque *Scene — node/ never inspects

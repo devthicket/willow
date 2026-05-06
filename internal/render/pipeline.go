@@ -147,6 +147,10 @@ func (p *Pipeline) emitNodeInline(n *node.Node, viewWorld [6]float64, treeOrder 
 		}
 		if n.CustomImage_ != nil {
 			cmd.DirectImage = n.CustomImage_
+			if node.IsWhitePixel(n) {
+				cmd.WhitePixelW = float32(n.WhitePixelW_)
+				cmd.WhitePixelH = float32(n.WhitePixelH_)
+			}
 		} else {
 			cmd.TextureRegion = n.TextureRegion_
 		}
@@ -370,6 +374,10 @@ func (p *Pipeline) emitNodeCommandInline(n *node.Node, treeOrder *int) {
 		}
 		if n.CustomImage_ != nil {
 			cmd.DirectImage = n.CustomImage_
+			if node.IsWhitePixel(n) {
+				cmd.WhitePixelW = float32(n.WhitePixelW_)
+				cmd.WhitePixelH = float32(n.WhitePixelH_)
+			}
 		} else {
 			cmd.TextureRegion = n.TextureRegion_
 		}
@@ -735,6 +743,9 @@ func ApplyFiltersAny(filters []any, src *ebiten.Image, pool *RenderTexturePool) 
 func NodeDimensions(n *node.Node) (w, h float64) {
 	switch n.Type {
 	case types.NodeTypeSprite:
+		if node.IsWhitePixel(n) {
+			return n.WhitePixelW_, n.WhitePixelH_
+		}
 		if n.CustomImage_ != nil {
 			b := n.CustomImage_.Bounds()
 			return float64(b.Dx()), float64(b.Dy())
@@ -848,6 +859,10 @@ func (p *Pipeline) emitDrawFilterCmd(n *node.Node, transform [6]float32, color C
 	}
 	if n.CustomImage_ != nil {
 		cmd.DirectImage = n.CustomImage_
+		if node.IsWhitePixel(n) {
+			cmd.WhitePixelW = float32(n.WhitePixelW_)
+			cmd.WhitePixelH = float32(n.WhitePixelH_)
+		}
 	} else {
 		cmd.TextureRegion = n.TextureRegion_
 	}

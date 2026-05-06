@@ -10,6 +10,9 @@ import (
 func NodeDimensions(n *node.Node) (w, h float64) {
 	switch n.Type {
 	case types.NodeTypeSprite:
+		if node.IsWhitePixel(n) {
+			return n.WhitePixelW_, n.WhitePixelH_
+		}
 		if n.CustomImage_ != nil {
 			b := n.CustomImage_.Bounds()
 			return float64(b.Dx()), float64(b.Dy())

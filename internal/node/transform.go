@@ -161,6 +161,31 @@ func (n *Node) SetPivot(px, py float64) {
 	invalidateAncestorCache(n)
 }
 
+// SetPivotPercent sets the pivot as a fraction of the node's intrinsic
+// display size — fx and fy are in [0, 1] (despite the name; "percent" here
+// is shorthand for "fractional"). SetPivotPercent(0.5, 0.5) centers the
+// sprite around its position; (0, 0) is the top-left, (1, 1) the
+// bottom-right. Works uniformly for white-pixel sprites, textured sprites,
+// and sprites backed by a CustomImage.
+//
+// No-op for nodes without a measurable intrinsic size (containers, sprites
+// with no image and an empty TextureRegion). Use SetPivot directly if you
+// need an absolute pixel offset on such a node.
+//
+// One-shot: this writes into PivotX_/PivotY_ at call time and does not
+// track the fraction. If the node is resized later, call SetPivotPercent
+// again to re-center.
+func (n *Node) SetPivotPercent(fx, fy float64) {
+	w, h := nodeDimensions(n)
+	if w == 0 && h == 0 {
+		return
+	}
+	n.PivotX_ = fx * w
+	n.PivotY_ = fy * h
+	n.TransformDirty = true
+	invalidateAncestorCache(n)
+}
+
 func (n *Node) Pivot() (float64, float64) {
 	return n.PivotX_, n.PivotY_
 }

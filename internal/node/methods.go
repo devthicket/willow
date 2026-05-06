@@ -192,6 +192,9 @@ func (n *Node) Width() float64 {
 	if n.Type != types.NodeTypeSprite {
 		return 0
 	}
+	if IsWhitePixel(n) {
+		return n.ScaleX_ * n.WhitePixelW_
+	}
 	if n.CustomImage_ != nil {
 		return n.ScaleX_ * float64(n.CustomImage_.Bounds().Dx())
 	}
@@ -205,6 +208,9 @@ func (n *Node) Height() float64 {
 	if n.Type != types.NodeTypeSprite {
 		return 0
 	}
+	if IsWhitePixel(n) {
+		return n.ScaleY_ * n.WhitePixelH_
+	}
 	if n.CustomImage_ != nil {
 		return n.ScaleY_ * float64(n.CustomImage_.Bounds().Dy())
 	}
@@ -215,7 +221,13 @@ func (n *Node) Height() float64 {
 }
 
 func (n *Node) SetSize(w, h float64) {
-	if n.CustomImage_ != nil && n.CustomImage_ != WhitePixelImage {
+	if IsWhitePixel(n) {
+		// White-pixel sprite: size lives in geometry (WhitePixelW_/H_), not
+		// Scale. This keeps Pivot in display-pixel space so SetPivot(w/2, h/2)
+		// centers the sprite as expected.
+		n.WhitePixelW_ = w
+		n.WhitePixelH_ = h
+	} else if n.CustomImage_ != nil {
 		// Custom image: divide by native dimensions to convert desired pixel size → scale.
 		b := n.CustomImage_.Bounds()
 		if b.Dx() > 0 {
@@ -224,8 +236,8 @@ func (n *Node) SetSize(w, h float64) {
 		if b.Dy() > 0 {
 			n.ScaleY_ = h / float64(b.Dy())
 		}
-	} else if n.CustomImage_ == WhitePixelImage || n.TextureRegion_ == (types.TextureRegion{}) {
-		// White pixel or blank texture region: scale = absolute pixel size.
+	} else if n.TextureRegion_ == (types.TextureRegion{}) {
+		// Blank region with no image (rare; mostly emitter pre-config): treat as raw size.
 		n.ScaleX_ = w
 		n.ScaleY_ = h
 	} else if n.TextureRegion_.OriginalW > 0 && n.TextureRegion_.OriginalH > 0 {
@@ -552,6 +564,9 @@ func (n *Node) GetWorldAlpha() float64 {
 func nodeDimensions(n *Node) (w, h float64) {
 	switch n.Type {
 	case types.NodeTypeSprite:
+		if IsWhitePixel(n) {
+			return n.WhitePixelW_, n.WhitePixelH_
+		}
 		if n.CustomImage_ != nil {
 			b := n.CustomImage_.Bounds()
 			return float64(b.Dx()), float64(b.Dy())
@@ -611,6 +626,13 @@ func max4f(a, b, c, d float64) float64 {
 }
 
 // --- Helpers ---
+
+// IsWhitePixel reports whether the node's CustomImage_ is the shared
+// WhitePixelImage. Guards against nil==nil matching when WhitePixelImage
+// hasn't been initialized (e.g. in unit tests that bypass willow.Run).
+func IsWhitePixel(n *Node) bool {
+	return WhitePixelImage != nil && n.CustomImage_ == WhitePixelImage
+}
 
 func invalidateAncestorCache(n *Node) {
 	AnyTransformDirty = true
