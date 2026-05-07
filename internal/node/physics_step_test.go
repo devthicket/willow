@@ -1,3 +1,5 @@
+//go:build !nophysics
+
 package node
 
 import (
@@ -29,6 +31,49 @@ func TestStep_GravityFall(t *testing.T) {
 	got := by["ball"].Y_
 	if math.Abs(got-want) > 1.0 {
 		t.Fatalf("Y after %d steps = %v, want ~%v", steps, got, want)
+	}
+}
+
+func TestStep_DynamicRestsOnStaticSegment(t *testing.T) {
+	// Integration: a dynamic circle dropped above a horizontal static segment
+	// must fall, collide, and come to rest within radius distance of the
+	// segment. Exercises the full SetBody→Step→write-back path with two
+	// bodies of different kinds in the same space.
+	root, by := buildTree("root", "ball", "floor")
+	root.EnablePhysics(physics.Config{Gravity: cp.Vector{X: 0, Y: 900}})
+	defer root.DisablePhysics()
+
+	const radius = 10.0
+	const floorY = 400.0
+	by["ball"].SetPosition(0, 0)
+	by["ball"].SetBody(physics.Dynamic{
+		Shape:      physics.Circle{Radius: radius},
+		Mass:       1,
+		Friction:   0.9,
+		Elasticity: 0, // inelastic so the ball doesn't bounce indefinitely
+	})
+	by["floor"].SetBody(physics.Static{
+		Shape: physics.Segment{
+			A:      cp.Vector{X: -1000, Y: floorY},
+			B:      cp.Vector{X: 1000, Y: floorY},
+			Radius: 1,
+		},
+		Friction: 0.9,
+	})
+
+	// 5 simulated seconds at 60Hz is plenty for the ball to settle.
+	for i := 0; i < 300; i++ {
+		root.stepPhysicsRoot(stepDT)
+	}
+
+	got := by["ball"].Y_
+	want := floorY - radius
+	if math.Abs(got-want) > 2.0 {
+		t.Fatalf("ball Y at rest = %v, want ~%v (within radius of floor)", got, want)
+	}
+	// Velocity should be near zero — body is at rest, not still falling.
+	if v := by["ball"].Body.Velocity().Y; math.Abs(v) > 1.0 {
+		t.Fatalf("ball Y velocity at rest = %v, want ~0", v)
 	}
 }
 

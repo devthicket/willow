@@ -1,3 +1,5 @@
+//go:build !nophysics
+
 package physics
 
 import "github.com/jakecoffman/cp/v2"

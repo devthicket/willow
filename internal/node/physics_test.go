@@ -1,3 +1,5 @@
+//go:build !nophysics
+
 package node
 
 import (
@@ -59,6 +61,24 @@ func TestSetBody_AddsToSpace(t *testing.T) {
 	}
 	if by["a"].Body == nil {
 		t.Fatal("Body field should be set after SetBody")
+	}
+}
+
+func TestSetBody_Replaces_DetachesPrevious(t *testing.T) {
+	// Calling SetBody on a node that already has a body must detach and
+	// release the old one — otherwise the previous body stays orphaned in
+	// the cp space and continues to be stepped without ever being synced
+	// back to a node.
+	root, by := buildTree("root", "a")
+	root.EnablePhysics(physics.Config{})
+	defer root.DisablePhysics()
+	attachBody(by["a"], physics.Dynamic{Shape: physics.Circle{Radius: 1}, Mass: 1})
+	attachBody(by["a"], physics.Dynamic{Shape: physics.Circle{Radius: 2}, Mass: 1})
+	if got := countBodies(root.PhysicsRoot.Parent); got != 1 {
+		t.Fatalf("post-replace body count = %d, want 1 (old body should be removed)", got)
+	}
+	if by["a"].Body == nil {
+		t.Fatal("Body field should be populated after replace")
 	}
 }
 

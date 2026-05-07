@@ -1,3 +1,5 @@
+//go:build !nophysics
+
 package willow_test
 
 import (

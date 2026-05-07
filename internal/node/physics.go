@@ -1,3 +1,5 @@
+//go:build !nophysics
+
 package node
 
 import (
@@ -60,10 +62,18 @@ func (n *Node) DisablePhysics() {
 
 // SetBody attaches a physics body+shape (built from def) to n and registers
 // it with the enclosing physics space. Panics if n has no physics ancestor.
+// If n already has a body, the existing one is detached and released first
+// so SetBody can be used to swap a node's shape/kind without leaking the
+// previous body in cp's space.
 func (n *Node) SetBody(def physics.BodyDef) {
 	root := n.findPhysicsRoot()
 	if root == nil {
 		panic("willow: SetBody called on a node with no physics ancestor")
+	}
+	if n.Body != nil {
+		root.Parent.RemoveBody(n.Body)
+		physics.ReleaseBody(n.Body)
+		n.Body = nil
 	}
 	body := physics.AcquireBody(def, n.X_, n.Y_, n.Rotation_)
 	root.Parent.AddBody(body)

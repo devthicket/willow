@@ -1,3 +1,5 @@
+//go:build !nophysics
+
 package physics
 
 import (

@@ -7,6 +7,9 @@
 // the shim, as a reference and visual-parity regression target.
 //
 // Click a shape to fling it with a radial blast.
+
+//go:build !nophysics
+
 package main
 
 import (
