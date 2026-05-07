@@ -38,8 +38,8 @@
 //
 //	type Game struct{ scene *willow.Scene }
 //
-//	func (g *Game) Update() error         { g.Scene_.Update(); return nil }
-//	func (g *Game) Draw(s *ebiten.Image)  { g.Scene_.Draw(s) }
+//	func (g *Game) Update() error         { g.scene.Update(); return nil }
+//	func (g *Game) Draw(s *ebiten.Image)  { g.scene.Draw(s) }
 //	func (g *Game) Layout(w, h int) (int, int) { return w, h }
 //
 // # Scene graph
@@ -51,7 +51,7 @@
 // [NewText], [NewParticleEmitter], [NewMesh], [NewPolygon], and others.
 //
 //	container := willow.NewContainer("ui")
-//	scene.Root().AddChild(container)
+//	scene.Root.AddChild(container)
 //
 //	sprite := willow.NewSprite("hero", atlas.Region("hero_idle"))
 //	sprite.SetPosition(100, 50)
@@ -70,7 +70,7 @@
 // [Node.FindDescendant] (recursive depth-first). Both support % wildcards:
 //
 //	bar := enemy.FindChild("health_bar")
-//	boss := scene.Root().FindDescendant("boss%")  // starts with "boss"
+//	boss := scene.Root.FindDescendant("boss%")  // starts with "boss"
 //
 // For repeated lookups or tag-based grouping, use [NodeIndex]:
 //
@@ -92,6 +92,33 @@
 // [EaseOutCubic], [EaseOutBounce], etc. for autocomplete discoverability
 // without an extra import.
 //
+// # Physics
+//
+// Optional 2D rigid-body physics is integrated via [Chipmunk]. Enable
+// physics on a subtree with [Node.EnablePhysics], then attach bodies to
+// descendants with [Node.SetBody]. Per-frame world transforms write back
+// to nodes automatically after [Scene.Update]. The public surface is
+// re-exported under the Physics* prefix: [PhysicsConfig], [PhysicsBodyDef],
+// [PhysicsCircle], [PhysicsBox], [PhysicsSegment], [PhysicsPolygon], with
+// body kinds [PhysicsDynamic], [PhysicsStatic], and [PhysicsKinematic].
+//
+//	import "github.com/jakecoffman/cp/v2"
+//
+//	root := willow.NewContainer("world")
+//	root.EnablePhysics(willow.PhysicsConfig{Gravity: cp.Vector{X: 0, Y: 900}})
+//	scene.Root.AddChild(root)
+//
+//	ball := willow.NewSprite("ball", willow.TextureRegion{})
+//	ball.SetSize(20, 20)
+//	root.AddChild(ball)
+//	ball.SetBody(willow.PhysicsDynamic{
+//		Shape: willow.PhysicsCircle{Radius: 10},
+//		Mass:  1,
+//	})
+//
+// Build with -tags nophysics to strip the cp dependency from the binary
+// for projects that do not use physics.
+//
 // See the full docs for guides on each feature:
 // https://www.devthicket.org/willow
 //
@@ -99,4 +126,5 @@
 // [Starling]: https://gamua.com/starling/
 // [PixiJS]: https://pixijs.com/
 // [gween]: https://github.com/tanema/gween
+// [Chipmunk]: https://github.com/jakecoffman/cp
 package willow
