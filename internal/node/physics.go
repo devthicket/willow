@@ -1,6 +1,7 @@
 package node
 
 import (
+	"math"
 	"sync/atomic"
 
 	"github.com/devthicket/willow/internal/physics"
@@ -14,6 +15,7 @@ import (
 type physicsRoot struct {
 	Parent           *physics.PhysicsParent
 	BodiedNodes      []*Node
+	FastPaths        []bool // parallel to BodiedNodes; true ⇒ skip world↔local conversion
 	ListDirty        bool
 	SteppedThisFrame bool
 }
@@ -161,5 +163,123 @@ func walkSubtree(n *Node, fn func(*Node)) {
 	fn(n)
 	for _, c := range n.Children_ {
 		walkSubtree(c, fn)
+	}
+}
+
+// findPhysicsRootNode walks up from n (inclusive) and returns the nearest
+// node carrying a PhysicsRoot, or nil.
+func (n *Node) findPhysicsRootNode() *Node {
+	for cur := n; cur != nil; cur = cur.Parent {
+		if cur.PhysicsRoot != nil {
+			return cur
+		}
+	}
+	return nil
+}
+
+// TickPhysicsTree advances every physics root in the subtree rooted at n by
+// dt seconds. No-op on subtrees with no physics root. Cost when physics is
+// off: one nil check per node visited.
+func (n *Node) TickPhysicsTree(dt float64) {
+	if n.PhysicsRoot != nil {
+		n.tickPhysicsRoot(dt)
+	}
+	for _, c := range n.Children_ {
+		c.TickPhysicsTree(dt)
+	}
+}
+
+// tickPhysicsRoot is the per-frame entry point for a single physics root.
+// Skips the step when StepPhysics was called manually this frame.
+func (n *Node) tickPhysicsRoot(dt float64) {
+	p := n.PhysicsRoot
+	if p.SteppedThisFrame {
+		p.SteppedThisFrame = false
+		return
+	}
+	n.stepPhysicsRoot(dt)
+}
+
+// stepPhysicsRoot rebuilds the bodied-node list if dirty, advances the
+// simulation, and writes body state back to node transforms.
+func (n *Node) stepPhysicsRoot(dt float64) {
+	p := n.PhysicsRoot
+	if p.ListDirty {
+		n.rebuildBodiedNodes()
+	}
+	p.Parent.Step(dt)
+	n.syncBodiedNodes()
+}
+
+// StepPhysics advances the enclosing physics root by dt and suppresses the
+// auto-tick for that root this frame. Panics if n has no physics ancestor.
+// Multiple manual calls in one frame all step; only the auto-tick is
+// suppressed.
+func (n *Node) StepPhysics(dt float64) {
+	rootNode := n.findPhysicsRootNode()
+	if rootNode == nil {
+		panic("willow: StepPhysics called on a node with no physics ancestor")
+	}
+	rootNode.PhysicsRoot.SteppedThisFrame = true
+	rootNode.stepPhysicsRoot(dt)
+}
+
+// rebuildBodiedNodes scans the subtree rooted at n, refreshes the bodied
+// list, recomputes fast-path flags, and reconciles bodies that escaped the
+// subtree (re-parented out without being explicitly removed).
+func (n *Node) rebuildBodiedNodes() {
+	p := n.PhysicsRoot
+	oldList := p.BodiedNodes
+	seen := make(map[*Node]struct{}, len(oldList))
+	newList := make([]*Node, 0, len(oldList))
+	newFastPaths := make([]bool, 0, len(oldList))
+	rootIdentity := n.WorldTransform == IdentityTransform
+	walkSubtree(n, func(c *Node) {
+		if c.Body == nil {
+			return
+		}
+		seen[c] = struct{}{}
+		newList = append(newList, c)
+		newFastPaths = append(newFastPaths, c.Parent == n && rootIdentity)
+	})
+	for _, old := range oldList {
+		if _, ok := seen[old]; ok {
+			continue
+		}
+		if old.Body != nil {
+			p.Parent.RemoveBody(old.Body)
+			old.Body = nil
+		}
+	}
+	p.BodiedNodes = newList
+	p.FastPaths = newFastPaths
+	p.ListDirty = false
+}
+
+// syncBodiedNodes copies cp body state back into node transforms. Writes
+// fields directly (no setter) to avoid per-body ancestor cache walks; the
+// transform pass picks up TransformDirty next frame.
+func (n *Node) syncBodiedNodes() {
+	p := n.PhysicsRoot
+	for i, bn := range p.BodiedNodes {
+		pos := bn.Body.Position()
+		if p.FastPaths[i] {
+			bn.X_ = pos.X
+			bn.Y_ = pos.Y
+			bn.Rotation_ = bn.Body.Angle()
+			bn.TransformDirty = true
+			AnyTransformDirty = true
+			continue
+		}
+		if bn.Parent == nil {
+			continue
+		}
+		inv := InvertAffine(bn.Parent.WorldTransform)
+		lx, ly := TransformPoint(inv, pos.X, pos.Y)
+		bn.X_, bn.Y_ = lx, ly
+		parentAngle := math.Atan2(bn.Parent.WorldTransform[1], bn.Parent.WorldTransform[0])
+		bn.Rotation_ = bn.Body.Angle() - parentAngle
+		bn.TransformDirty = true
+		AnyTransformDirty = true
 	}
 }

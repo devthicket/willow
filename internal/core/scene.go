@@ -605,7 +605,14 @@ func (s *Scene) Update() {
 
 	if node.AnyTransformDirty {
 		node.UpdateWorldTransform(s.Root, node.IdentityTransform, 1.0, false, false)
+		node.AnyTransformDirty = false
 	}
+
+	// Physics runs after the transform pass so the world transforms it reads
+	// (for fast-path detection and parent-inverse conversion) are fresh.
+	// Body→node writeback sets TransformDirty; next frame's transform pass
+	// picks it up — one frame of latency by design.
+	s.Root.TickPhysicsTree(float64(dt))
 }
 
 // --- Draw ---
