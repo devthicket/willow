@@ -90,10 +90,9 @@ func TestStep_RebuildReconciles_Reparent(t *testing.T) {
 		t.Fatalf("setup body count = %d, want 1", got)
 	}
 
-	// Re-parent ball out of the physics tree. RemoveFromParent dirties the
-	// source root before detaching so reconciliation runs on the next tick.
+	// Re-parent ball out of the physics tree. AddChild dirties the source
+	// root before detach, so reconciliation runs on the next tick.
 	outside := NewNode("outside", types.NodeTypeContainer)
-	by["ball"].RemoveFromParent()
 	outside.AddChild(by["ball"])
 
 	root.stepPhysicsRoot(stepDT)
@@ -119,7 +118,6 @@ func TestStep_RebuildReconciles_ReparentMiddleOfList(t *testing.T) {
 	root.stepPhysicsRoot(stepDT)
 
 	outside := NewNode("outside", types.NodeTypeContainer)
-	by["b"].RemoveFromParent()
 	outside.AddChild(by["b"])
 
 	root.stepPhysicsRoot(stepDT)

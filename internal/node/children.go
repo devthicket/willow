@@ -16,6 +16,10 @@ func (n *Node) AddChild(child *Node) {
 		panic("node: adding child would create a cycle")
 	}
 	if child.Parent != nil {
+		// Mark the source physics root dirty before detach — once Parent is
+		// reassigned, findPhysicsRoot can't see the old ancestry, and the
+		// escaped body would leak in the old space until next Disable.
+		markPhysicsListDirty(child)
 		child.Parent.removeChildByPtr(child)
 	}
 	child.Parent = n
@@ -55,6 +59,7 @@ func (n *Node) AddChildAt(child *Node, index int) {
 		panic("node: child index out of range")
 	}
 	if child.Parent != nil {
+		markPhysicsListDirty(child)
 		child.Parent.removeChildByPtr(child)
 	}
 	child.Parent = n
