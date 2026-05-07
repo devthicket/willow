@@ -73,14 +73,14 @@ func main() {
 	worst := 0.0
 	missing := 0
 	for _, label := range labels {
-		bp := baseMap[label]
-		cp, ok := candMap[label]
+		basePath := baseMap[label]
+		candPath, ok := candMap[label]
 		if !ok {
 			fmt.Printf("[MISS]  %s: no matching candidate\n", label)
 			missing++
 			continue
 		}
-		pct, err := diffPNG(bp, cp)
+		pct, err := diffPNG(basePath, candPath)
 		if err != nil {
 			fmt.Printf("[ERR ]  %s: %v\n", label, err)
 			missing++
