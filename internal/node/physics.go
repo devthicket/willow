@@ -5,7 +5,6 @@ import (
 	"sync/atomic"
 
 	"github.com/devthicket/willow/internal/physics"
-	"github.com/jakecoffman/cp/v2"
 )
 
 // physicsRoot bundles the cp-side PhysicsParent with node-side bookkeeping
@@ -51,6 +50,7 @@ func (n *Node) DisablePhysics() {
 	walkSubtree(n, func(c *Node) {
 		if c.Body != nil {
 			n.PhysicsRoot.Parent.RemoveBody(c.Body)
+			physics.ReleaseBody(c.Body)
 			c.Body = nil
 		}
 	})
@@ -65,9 +65,7 @@ func (n *Node) SetBody(def physics.BodyDef) {
 	if root == nil {
 		panic("willow: SetBody called on a node with no physics ancestor")
 	}
-	body := physics.NewBody(def)
-	body.SetPosition(cp.Vector{X: n.X_, Y: n.Y_})
-	body.SetAngle(n.Rotation_)
+	body := physics.AcquireBody(def, n.X_, n.Y_, n.Rotation_)
 	root.Parent.AddBody(body)
 	n.Body = body
 	root.ListDirty = true
@@ -89,6 +87,7 @@ func (n *Node) RemoveBody() {
 		root.Parent.RemoveBody(n.Body)
 		root.ListDirty = true
 	}
+	physics.ReleaseBody(n.Body)
 	n.Body = nil
 }
 
@@ -248,6 +247,7 @@ func (n *Node) rebuildBodiedNodes() {
 		}
 		if old.Body != nil {
 			p.Parent.RemoveBody(old.Body)
+			physics.ReleaseBody(old.Body)
 			old.Body = nil
 		}
 	}
