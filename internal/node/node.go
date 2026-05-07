@@ -2,6 +2,7 @@ package node
 
 import (
 	"github.com/devthicket/willow/internal/particle"
+	"github.com/devthicket/willow/internal/physics"
 	"github.com/devthicket/willow/internal/text"
 	"github.com/devthicket/willow/internal/types"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -191,6 +192,8 @@ type Node struct {
 	Callbacks    *NodeCallbacks
 	MaskNode     *Node
 	CacheTexture *ebiten.Image
+	PhysicsRoot  *physicsRoot  // non-nil only on the physics root
+	Body         *physics.Body // non-nil only on bodied nodes
 
 	// ---- COLD: interfaces and slices ----
 	HitShape types.HitShape

@@ -26,6 +26,7 @@ func (n *Node) AddChild(child *Node) {
 	}
 	MarkSubtreeDirty(child)
 	invalidateAncestorCache(n)
+	markPhysicsListDirty(child)
 	if Debug {
 		if DebugCheckTreeDepth != nil {
 			DebugCheckTreeDepth(child)
@@ -66,6 +67,7 @@ func (n *Node) AddChildAt(child *Node, index int) {
 	}
 	MarkSubtreeDirty(child)
 	invalidateAncestorCache(n)
+	markPhysicsListDirty(child)
 	if Debug {
 		if DebugCheckTreeDepth != nil {
 			DebugCheckTreeDepth(child)
@@ -85,6 +87,7 @@ func (n *Node) RemoveChild(child *Node) {
 	if child.Parent != n {
 		panic("node: child's parent is not this node")
 	}
+	markPhysicsListDirty(child)
 	n.removeChildByPtr(child)
 	child.Parent = nil
 	if PropagateSceneFn != nil {
@@ -104,6 +107,7 @@ func (n *Node) RemoveChildAt(index int) *Node {
 		panic("node: child index out of range")
 	}
 	child := n.Children_[index]
+	markPhysicsListDirty(child)
 	copy(n.Children_[index:], n.Children_[index+1:])
 	n.Children_[len(n.Children_)-1] = nil
 	n.Children_ = n.Children_[:len(n.Children_)-1]
@@ -128,6 +132,7 @@ func (n *Node) RemoveFromParent() {
 // RemoveChildren detaches all children from this node.
 func (n *Node) RemoveChildren() {
 	for i, child := range n.Children_ {
+		markPhysicsListDirty(child)
 		child.Parent = nil
 		if PropagateSceneFn != nil {
 			PropagateSceneFn(child, nil)

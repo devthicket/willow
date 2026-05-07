@@ -1,6 +1,8 @@
 package node
 
 import (
+	"sync/atomic"
+
 	"github.com/devthicket/willow/internal/text"
 	"github.com/devthicket/willow/internal/types"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -489,6 +491,9 @@ func (n *Node) GetOnPointerLeave() func(PointerContext) {
 func (n *Node) Dispose() {
 	if n.Disposed {
 		return
+	}
+	if atomic.LoadInt32(&physicsRootsActive) > 0 {
+		n.disposePhysicsSubtree()
 	}
 	n.RemoveFromParent()
 	n.dispose()
