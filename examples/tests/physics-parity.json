@@ -1,0 +1,11 @@
+{
+  "steps": [
+    {"action": "wait", "frames": 60},
+    {"action": "screenshot", "label": "settle"},
+    {"action": "click", "x": 640, "y": 360},
+    {"action": "wait", "frames": 30},
+    {"action": "screenshot", "label": "post-blast"},
+    {"action": "wait", "frames": 60},
+    {"action": "screenshot", "label": "rest"}
+  ]
+}

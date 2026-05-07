@@ -1,5 +1,12 @@
-// physics2 spawns shapes that fall and collide using the Chipmunk2D-based
-// jakecoffman/cp/v2 library. Click a shape to fling it with a radial blast.
+// physics_handrolled is the pre-shim reference demo: shapes fall and collide
+// via direct use of jakecoffman/cp/v2, with manual space stepping and
+// per-body SetPosition/SetRotation write-back.
+//
+// This is what a user would write without the willow.Physics* API. It exists
+// alongside examples/demos/physics (which uses the willow shim) so the two
+// can be compared side-by-side and used as a visual-parity regression target.
+//
+// Click a shape to fling it with a radial blast.
 package main
 
 import (
@@ -21,6 +28,10 @@ const (
 	blastForce  = 1200.0
 
 	flashFrames = 12
+
+	// Shared seed: physics_handrolled and physics use the same PCG seed so
+	// their initial configurations match for visual-parity comparison.
+	rngSeed = 0x57494c4c4f57000d
 )
 
 type body struct {
@@ -35,6 +46,8 @@ func main() {
 	autotest := flag.String("autotest", "", "path to test script JSON (run and exit)")
 	flag.Parse()
 
+	rng := rand.New(rand.NewPCG(rngSeed, rngSeed))
+
 	scene := willow.NewScene()
 	scene.ClearColor = willow.RGB(0.06, 0.06, 0.09)
 	root := scene.Root
@@ -43,7 +56,6 @@ func main() {
 	space.SetGravity(cp.Vector{X: 0, Y: 900})
 	space.Iterations = 10
 
-	// Static walls: floor, ceiling, left, right.
 	walls := [][2]cp.Vector{
 		{{X: 0, Y: 0}, {X: screenW, Y: 0}},
 		{{X: 0, Y: screenH}, {X: screenW, Y: screenH}},
@@ -59,17 +71,17 @@ func main() {
 
 	bodies := make([]body, shapeCount)
 	for i := range bodies {
-		radius := 25.0 + rand.Float64()*15.0
+		radius := 25.0 + rng.Float64()*15.0
 		mass := radius * radius * 0.005
 
 		color := willow.RGB(
-			0.3+rand.Float64()*0.7,
-			0.3+rand.Float64()*0.7,
-			0.3+rand.Float64()*0.7,
+			0.3+rng.Float64()*0.7,
+			0.3+rng.Float64()*0.7,
+			0.3+rng.Float64()*0.7,
 		)
 
 		var node *willow.Node
-		switch rand.IntN(5) {
+		switch rng.IntN(5) {
 		case 0:
 			node = willow.NewRegularPolygon("circle", 24, radius)
 		case 1:
@@ -84,13 +96,13 @@ func main() {
 		node.SetColor(color)
 		node.HitShape = willow.HitCircle{Radius: radius}
 
-		x := radius + rand.Float64()*(screenW-2*radius)
-		y := radius + rand.Float64()*(screenH/2-radius)
+		x := radius + rng.Float64()*(screenW-2*radius)
+		y := radius + rng.Float64()*(screenH/2-radius)
 		node.SetPosition(x, y)
 
 		cpBody := cp.NewBody(mass, cp.MomentForCircle(mass, 0, radius, cp.Vector{}))
 		cpBody.SetPosition(cp.Vector{X: x, Y: y})
-		cpBody.SetVelocityVector(cp.Vector{X: (rand.Float64() - 0.5) * 80, Y: 0})
+		cpBody.SetVelocityVector(cp.Vector{X: (rng.Float64() - 0.5) * 80, Y: 0})
 		space.AddBody(cpBody)
 
 		shape := cp.NewCircle(cpBody, radius, cp.Vector{})
@@ -100,7 +112,7 @@ func main() {
 
 		idx := i
 		node.OnClick(func(ctx willow.ClickContext) {
-			explode(bodies[:], idx)
+			explode(bodies[:], idx, rng)
 		})
 		root.AddChild(node)
 
@@ -138,7 +150,7 @@ func main() {
 	})
 
 	if err := willow.Run(scene, willow.RunConfig{
-		Title:        "Willow  -  Physics (cp/Chipmunk2D)",
+		Title:        "Willow  -  Physics (hand-rolled cp/Chipmunk2D)",
 		Width:        screenW,
 		Height:       screenH,
 		ShowFPS:      true,
@@ -148,11 +160,11 @@ func main() {
 	}
 }
 
-func explode(bodies []body, src int) {
+func explode(bodies []body, src int, rng *rand.Rand) {
 	srcPos := bodies[src].body.Position()
 
 	bodies[src].body.ApplyImpulseAtLocalPoint(
-		cp.Vector{X: (rand.Float64() - 0.5) * 200, Y: -blastForce},
+		cp.Vector{X: (rng.Float64() - 0.5) * 200, Y: -blastForce},
 		cp.Vector{},
 	)
 	bodies[src].flashTimer = flashFrames

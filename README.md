@@ -125,6 +125,8 @@ func main() {
 go run ./examples/demos/shapes       # parent/child transforms
 go run ./examples/demos/lighting     # dungeon scene with torches and wisps
 go run ./examples/demos/filter-gallery  # all built-in filters
+go run ./examples/demos/physics      # rigid-body shapes via the willow.Physics* API
+go run ./examples/demos/physics_handrolled  # same scene without the shim, for comparison
 ```
 
 ---
