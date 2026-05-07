@@ -50,7 +50,7 @@ Inspired by [Starling](https://gamua.com/starling/), Flash display lists, and [P
 
 ## What Willow Is Not
 
-- Not a full game engine. No built-in physics, networking, or asset pipelines
+- Not a full game engine. No built-in networking or asset pipelines
 - Not a UI layout framework (see [Willow UI](https://github.com/devthicket/willowui), a companion widget library)
 - Not a replacement for Ebitengine. It builds on top of it
 
@@ -150,6 +150,7 @@ go run ./examples/demos/filter-gallery  # all built-in filters
 - **Filters and effects** - Composable filter chains via Kage shaders. Built-in: color matrix, blur, outline, pixel-perfect outline, pixel-perfect inline, palette swap. Render-target masking and `CacheAsTexture`.
 - **Lighting** - Dedicated lighting layer using erase-blend render targets with automatic compositing.
 - **Node index** - Opt-in `NodeIndex` registry for tag-based grouping and O(1) lookups by name or tag. Supports `%` wildcards, multi-tag intersection queries, and zero-allocation iteration. No overhead for nodes that aren't indexed.
+- **Physics** - Optional 2D rigid-body physics via [Chipmunk](https://github.com/jakecoffman/cp). Enable on a subtree with `node.EnablePhysics`, attach bodies to descendants with `node.SetBody`, and per-frame world transforms write back automatically. Shape descriptors for circle, box, segment, and polygon; body kinds for dynamic, static, and kinematic.
 - **Animation** - Tweening via [gween](https://github.com/tanema/gween) with 45+ easing functions re-exported as `willow.Ease*` for autocomplete discoverability. Convenience wrappers for position, scale, rotation, alpha, and color. Auto-stops on node disposal.
 - **Debug mode** - Performance timers, batch counting, tree depth warnings, and disposed-node assertions via `scene.SetDebugMode(true)`.
 
