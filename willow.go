@@ -159,7 +159,11 @@ var DefaultFXAAConfig = render.DefaultFXAAConfig
 
 // RunConfig holds optional configuration for [Run].
 type RunConfig struct {
-	Title         string
+	Title string
+	// Width, Height define the logical screen size in Willow coordinates.
+	// Render output is letterboxed/scaled to fill the actual window or
+	// fullscreen monitor; coordinates passed to nodes, cameras, input, and
+	// PreDrawFunc/PostDrawFunc are always in this logical space.
 	Width, Height int
 	Background    Color
 	ShowFPS       bool
@@ -167,12 +171,15 @@ type RunConfig struct {
 	// pass. Nil disables FXAA. Use DefaultFXAAConfig() for sensible defaults.
 	FXAA *FXAAConfig
 
-	// Resizable enables window resizing.
+	// Resizable enables window resizing. The logical screen stays at
+	// Width×Height; the offscreen image is letterboxed/scaled to the new
+	// window size.
 	Resizable bool
 	// Decorated controls window chrome (title bar, borders). Nil keeps the
 	// default (decorated). Set to a *bool to override.
 	Decorated *bool
-	// Fullscreen starts the window in fullscreen mode.
+	// Fullscreen starts the window in fullscreen mode. Content renders at
+	// Width×Height and is letterboxed onto the monitor's native resolution.
 	Fullscreen bool
 	// VSync controls vertical sync. Nil keeps the default (enabled).
 	// Set to a *bool to override.
@@ -1001,7 +1008,8 @@ func Run(scene *Scene, cfg RunConfig) error {
 		scene.ClearColor = types.RGBA(0.18, 0.20, 0.25, 1)
 	}
 	g := &gameShell{scene: scene}
-	g.w, g.h = w, h
+	g.cfgW, g.cfgH = w, h
+	g.currentScene = func() *Scene { return scene }
 	g.fxaa = cfg.FXAA
 	g.preDraw = cfg.PreDrawFunc
 	if cfg.FXAA != nil {
@@ -1038,10 +1046,39 @@ func Run(scene *Scene, cfg RunConfig) error {
 
 // gameBase holds shared fields and methods for both gameShell and managerShell.
 type gameBase struct {
-	w, h    int
-	fpsWid  *Node
-	fxaa    *FXAAConfig
-	preDraw func(*ebiten.Image)
+	// cfgW, cfgH are the requested logical screen size — never overwritten
+	// by Layout. Returned to Ebitengine, which letterboxes/scales the
+	// offscreen image to fill the actual window or fullscreen monitor.
+	cfgW, cfgH int
+	// logicalW, logicalH track the last logical size returned, used to
+	// detect changes and fire Scene.OnResize. With the current contract
+	// (cfg.Width/Height fixed for the run) this differs from cfgW/cfgH
+	// only on the first Layout call (zero -> cfgW/cfgH).
+	logicalW, logicalH int
+	// currentScene resolves the active Scene at OnResize-fire time. The
+	// resolver indirection lets RunWithManager pick up scene changes
+	// between Layout calls.
+	currentScene func() *Scene
+	fpsWid       *Node
+	fxaa         *FXAAConfig
+	preDraw      func(*ebiten.Image)
+}
+
+// Layout returns the logical screen size, ignoring outsideWidth/Height.
+// Ebitengine handles window-to-logical scaling via DefaultDrawFinalScreen
+// (or the FXAA override in DrawFinalScreen). Scene.OnResize fires when the
+// logical size changes — under the current contract that means once, on
+// the first Layout call.
+func (b *gameBase) Layout(_, _ int) (int, int) {
+	if b.cfgW != b.logicalW || b.cfgH != b.logicalH {
+		b.logicalW, b.logicalH = b.cfgW, b.cfgH
+		if b.currentScene != nil {
+			if scn := b.currentScene(); scn != nil && scn.OnResize != nil {
+				scn.OnResize(b.cfgW, b.cfgH)
+			}
+		}
+	}
+	return b.cfgW, b.cfgH
 }
 
 func (b *gameBase) tickFPS() {
@@ -1101,16 +1138,6 @@ func (g *gameShell) Draw(screen *ebiten.Image) {
 	}
 }
 
-func (g *gameShell) Layout(outsideWidth, outsideHeight int) (int, int) {
-	if outsideWidth != g.w || outsideHeight != g.h {
-		g.w, g.h = outsideWidth, outsideHeight
-		if g.scene.OnResize != nil {
-			g.scene.OnResize(outsideWidth, outsideHeight)
-		}
-	}
-	return g.w, g.h
-}
-
 // ---------------------------------------------------------------------------
 // RunWithManager (SceneManager-based game loop)
 // ---------------------------------------------------------------------------
@@ -1150,7 +1177,8 @@ func RunWithManager(sm *SceneManager, cfg RunConfig) error {
 		cur.ClearColor = types.RGBA(0.18, 0.20, 0.25, 1)
 	}
 	g := &managerShell{sm: sm}
-	g.w, g.h = w, h
+	g.cfgW, g.cfgH = w, h
+	g.currentScene = func() *Scene { return sm.Current() }
 	g.fxaa = cfg.FXAA
 	g.preDraw = cfg.PreDrawFunc
 	if cfg.FXAA != nil {
@@ -1195,13 +1223,3 @@ func (g *managerShell) Draw(screen *ebiten.Image) {
 	}
 }
 
-func (g *managerShell) Layout(outsideWidth, outsideHeight int) (int, int) {
-	if outsideWidth != g.w || outsideHeight != g.h {
-		g.w, g.h = outsideWidth, outsideHeight
-		cur := g.sm.Current()
-		if cur != nil && cur.OnResize != nil {
-			cur.OnResize(outsideWidth, outsideHeight)
-		}
-	}
-	return g.w, g.h
-}

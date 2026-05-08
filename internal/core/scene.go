@@ -195,8 +195,13 @@ func (s *Scene) SetPostDrawFunc(fn func(*ebiten.Image)) {
 	s.PostDrawFunc = fn
 }
 
-// SetOnResize registers a callback that is called when the window is resized.
-// The callback receives the new logical width and height in pixels.
+// SetOnResize registers a callback that fires when the logical screen size
+// changes. The callback receives the new logical width and height in pixels.
+//
+// Under the current contract — Run/RunWithManager fix the logical size to
+// RunConfig.Width × RunConfig.Height for the lifetime of the run — this
+// fires once, on the first Layout call. The callback signature is preserved
+// so future runtime-resize support is API-compatible.
 func (s *Scene) SetOnResize(fn func(w, h int)) {
 	s.OnResize = fn
 }
