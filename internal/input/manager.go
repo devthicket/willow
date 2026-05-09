@@ -560,6 +560,8 @@ func (m *Manager) processPointer(root *node.Node, pointerID int, wx, wy, sx, sy 
 			ps.lastX = wx
 			ps.lastY = wy
 		}
+		ps.lastScreenX = sx
+		ps.lastScreenY = sy
 	}
 }
 
