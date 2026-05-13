@@ -123,7 +123,7 @@ func newParticleEmitter(cfg EmitterConfig) *ParticleEmitter {
 }
 
 func updateNodesAndParticles(n *Node, dt float64) {
-	core.UpdateNodesAndParticles(n, dt)
+	core.UpdateNodesAndParticles(n, dt, true)
 }
 
 func lerp(a, b, t float64) float64 {

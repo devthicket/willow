@@ -6,15 +6,20 @@ import (
 )
 
 // UpdateNodesAndParticles walks the tree depth-first, calling OnUpdate callbacks
-// and ticking particle emitters.
-func UpdateNodesAndParticles(n *node.Node, dt float64) {
-	if !n.Visible_ {
-		return
-	}
+// and ticking particle emitters. OnUpdate fires regardless of visibility (so
+// tweens, AI, and gameplay logic keep running on hidden subtrees). Particle
+// emitters pause when this node or any ancestor is invisible unless the
+// emitter opts in via EmitterConfig.SimulateWhileHidden.
+func UpdateNodesAndParticles(n *node.Node, dt float64, parentVisible bool) {
+	visible := parentVisible && n.Visible_
+
 	if n.OnUpdate != nil {
 		n.OnUpdate(dt)
 	}
-	if n.Type == types.NodeTypeParticleEmitter && n.Emitter != nil {
+
+	tickEmitter := n.Type == types.NodeTypeParticleEmitter && n.Emitter != nil &&
+		(visible || n.Emitter.Config.SimulateWhileHidden)
+	if tickEmitter {
 		if n.Emitter.Config.WorldSpace {
 			n.Emitter.WorldX = n.WorldTransform[4]
 			n.Emitter.WorldY = n.WorldTransform[5]
@@ -26,7 +31,8 @@ func UpdateNodesAndParticles(n *node.Node, dt float64) {
 			}
 		}
 	}
+
 	for _, child := range n.Children_ {
-		UpdateNodesAndParticles(child, dt)
+		UpdateNodesAndParticles(child, dt, visible)
 	}
 }

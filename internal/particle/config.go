@@ -35,4 +35,10 @@ type EmitterConfig struct {
 	// WorldSpace, when true, causes particles to keep their world position
 	// once emitted rather than following the emitter node.
 	WorldSpace bool
+	// SimulateWhileHidden, when true, keeps the emitter spawning and aging
+	// particles even when its node (or any ancestor) is invisible. The
+	// particles still aren't drawn — only the simulation continues. Use this
+	// for effects whose state must persist while briefly off-screen (e.g.
+	// a long smoke plume whose source is temporarily culled). Default false.
+	SimulateWhileHidden bool
 }

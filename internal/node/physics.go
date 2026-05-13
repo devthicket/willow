@@ -101,6 +101,47 @@ func (n *Node) RemoveBody() {
 	n.Body = nil
 }
 
+// SetBodyEnabled toggles whether n's body participates in the physics
+// simulation. When disabled, the body (and its shape) is removed from the
+// cp space, but the *physics.Body wrapper is preserved on n: position,
+// rotation, velocity, mass, moment, friction, elasticity, and shape geometry
+// all stay intact. Re-enabling adds the body back to the same space and it
+// resumes from its preserved state.
+//
+// No-op if n has no body, no physics ancestor, or the body is already in
+// the requested state. Use RemoveBody to fully release the body wrapper.
+//
+// SetBodyEnabled does not touch constraints. Willow does not currently
+// expose constraints to user code; if that changes, this function will need
+// to also detach/reattach constraints referencing the body.
+func (n *Node) SetBodyEnabled(enabled bool) {
+	if n.Body == nil {
+		return
+	}
+	if n.Body.Enabled == enabled {
+		return
+	}
+	root := n.findPhysicsRoot()
+	if root == nil {
+		return
+	}
+	if enabled {
+		root.Parent.AddBody(n.Body)
+	} else {
+		root.Parent.RemoveBody(n.Body)
+	}
+	root.ListDirty = true
+}
+
+// BodyEnabled reports whether n's body is currently registered with its
+// physics space. Returns false if n has no body.
+func (n *Node) BodyEnabled() bool {
+	if n.Body == nil {
+		return false
+	}
+	return n.Body.Enabled
+}
+
 // GetBody returns n.Body. Provided for surface symmetry with EnablePhysics
 // and SetBody; n.Body is also directly accessible.
 func (n *Node) GetBody() *physics.Body { return n.Body }

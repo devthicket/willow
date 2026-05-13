@@ -176,20 +176,22 @@ func TestUpdateNodesAndParticles_CallsOnUpdate(t *testing.T) {
 	root.Visible_ = true
 	called := false
 	root.OnUpdate = func(dt float64) { called = true }
-	UpdateNodesAndParticles(root, 0.016)
+	UpdateNodesAndParticles(root, 0.016, true)
 	if !called {
 		t.Error("OnUpdate should have been called")
 	}
 }
 
-func TestUpdateNodesAndParticles_SkipsInvisible(t *testing.T) {
+func TestUpdateNodesAndParticles_OnUpdateRunsWhenInvisible(t *testing.T) {
+	// SetVisible(false) does NOT pause OnUpdate — tweens, AI, and gameplay
+	// logic must keep ticking on hidden subtrees.
 	root := node.NewNode("root", types.NodeTypeContainer)
 	root.Visible_ = false
 	called := false
 	root.OnUpdate = func(dt float64) { called = true }
-	UpdateNodesAndParticles(root, 0.016)
-	if called {
-		t.Error("OnUpdate should not be called on invisible node")
+	UpdateNodesAndParticles(root, 0.016, true)
+	if !called {
+		t.Error("OnUpdate should run on invisible node")
 	}
 }
 
@@ -527,7 +529,7 @@ func TestUpdateNodesAndParticles_CorrectDt(t *testing.T) {
 	root := node.NewNode("root", types.NodeTypeContainer)
 	var receivedDt float64
 	root.OnUpdate = func(dt float64) { receivedDt = dt }
-	UpdateNodesAndParticles(root, 0.033)
+	UpdateNodesAndParticles(root, 0.033, true)
 	if !approx(receivedDt, 0.033, 0.0001) {
 		t.Errorf("dt = %f, want 0.033", receivedDt)
 	}
@@ -545,7 +547,7 @@ func TestUpdateNodesAndParticles_RecursesChildren(t *testing.T) {
 	child.OnUpdate = func(dt float64) { callOrder = append(callOrder, "child") }
 	grandchild.OnUpdate = func(dt float64) { callOrder = append(callOrder, "grandchild") }
 
-	UpdateNodesAndParticles(root, 0.016)
+	UpdateNodesAndParticles(root, 0.016, true)
 
 	if len(callOrder) != 3 {
 		t.Fatalf("expected 3 calls, got %d: %v", len(callOrder), callOrder)
@@ -555,7 +557,8 @@ func TestUpdateNodesAndParticles_RecursesChildren(t *testing.T) {
 	}
 }
 
-func TestUpdateNodesAndParticles_InvisibleChildBlocksSubtree(t *testing.T) {
+func TestUpdateNodesAndParticles_OnUpdateRunsOnDescendantOfInvisible(t *testing.T) {
+	// Invisibility does not gate OnUpdate at any level of the tree.
 	root := node.NewNode("root", types.NodeTypeContainer)
 	child := node.NewNode("child", types.NodeTypeContainer)
 	child.Visible_ = false
@@ -568,13 +571,13 @@ func TestUpdateNodesAndParticles_InvisibleChildBlocksSubtree(t *testing.T) {
 	root.OnUpdate = func(dt float64) { rootCalled = true }
 	grandchild.OnUpdate = func(dt float64) { grandchildCalled = true }
 
-	UpdateNodesAndParticles(root, 0.016)
+	UpdateNodesAndParticles(root, 0.016, true)
 
 	if !rootCalled {
 		t.Error("root OnUpdate should have been called")
 	}
-	if grandchildCalled {
-		t.Error("grandchild OnUpdate should not be called when parent is invisible")
+	if !grandchildCalled {
+		t.Error("grandchild OnUpdate should run even when parent is invisible")
 	}
 }
 

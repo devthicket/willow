@@ -40,6 +40,18 @@ func (n *Node) SetBlendMode(b types.BlendMode) {
 	invalidateAncestorCache(n)
 }
 
+// SetVisible toggles render visibility for this node and its subtree.
+//
+// When false: rendering, hit-testing, and particle emitter ticking pause
+// for the subtree. Everything else — OnUpdate callbacks, tweens, physics
+// simulation, and world-transform recomputation — continues to run, so
+// gameplay logic on hidden nodes still sees up-to-date world coordinates
+// and bodies keep simulating in their parent's space.
+//
+// Particle emitters can opt out of the visibility pause via
+// EmitterConfig.SimulateWhileHidden. To pause a single physics body without
+// destroying it, use SetBodyEnabled(false). To pause everything for a
+// subtree, detach it with RemoveFromParent().
 func (n *Node) SetVisible(v bool) {
 	n.Visible_ = v
 	invalidateAncestorCache(n)

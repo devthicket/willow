@@ -103,6 +103,115 @@ func TestRemoveBody_NilBody_Noop(t *testing.T) {
 	by["a"].RemoveBody() // no panic, no allocation
 }
 
+func TestSetBodyEnabled_RoundTrip(t *testing.T) {
+	root, by := buildTree("root", "a")
+	root.EnablePhysics(physics.Config{})
+	defer root.DisablePhysics()
+	attachBody(by["a"], nil)
+
+	if !by["a"].BodyEnabled() {
+		t.Fatal("body should be enabled after SetBody")
+	}
+	if got := countBodies(root.PhysicsRoot.Parent); got != 1 {
+		t.Fatalf("after SetBody: space count = %d, want 1", got)
+	}
+
+	// Mutate state, then disable; state must persist through the toggle.
+	by["a"].Body.SetVelocityVector(cp.Vector{X: 12, Y: -3})
+	by["a"].Body.SetPosition(cp.Vector{X: 50, Y: 60})
+
+	by["a"].SetBodyEnabled(false)
+	if by["a"].BodyEnabled() {
+		t.Fatal("BodyEnabled should be false after disable")
+	}
+	if by["a"].Body == nil {
+		t.Fatal("Body wrapper should survive SetBodyEnabled(false)")
+	}
+	if got := countBodies(root.PhysicsRoot.Parent); got != 0 {
+		t.Fatalf("after disable: space count = %d, want 0", got)
+	}
+	// Properties preserved on the wrapper while detached.
+	if v := by["a"].Body.Velocity(); v.X != 12 || v.Y != -3 {
+		t.Errorf("velocity not preserved while disabled: got %+v", v)
+	}
+	if p := by["a"].Body.Position(); p.X != 50 || p.Y != 60 {
+		t.Errorf("position not preserved while disabled: got %+v", p)
+	}
+
+	by["a"].SetBodyEnabled(true)
+	if !by["a"].BodyEnabled() {
+		t.Fatal("BodyEnabled should be true after re-enable")
+	}
+	if got := countBodies(root.PhysicsRoot.Parent); got != 1 {
+		t.Fatalf("after re-enable: space count = %d, want 1", got)
+	}
+	if v := by["a"].Body.Velocity(); v.X != 12 || v.Y != -3 {
+		t.Errorf("velocity not preserved across round-trip: got %+v", v)
+	}
+}
+
+func TestSetBodyEnabled_Idempotent(t *testing.T) {
+	root, by := buildTree("root", "a")
+	root.EnablePhysics(physics.Config{})
+	defer root.DisablePhysics()
+	attachBody(by["a"], nil)
+
+	by["a"].SetBodyEnabled(true) // already enabled
+	if got := countBodies(root.PhysicsRoot.Parent); got != 1 {
+		t.Fatalf("redundant enable: space count = %d, want 1", got)
+	}
+	by["a"].SetBodyEnabled(false)
+	by["a"].SetBodyEnabled(false) // already disabled
+	if got := countBodies(root.PhysicsRoot.Parent); got != 0 {
+		t.Fatalf("redundant disable: space count = %d, want 0", got)
+	}
+}
+
+func TestSetBodyEnabled_NilBody_Noop(t *testing.T) {
+	root, by := buildTree("root", "a")
+	root.EnablePhysics(physics.Config{})
+	defer root.DisablePhysics()
+	by["a"].SetBodyEnabled(false) // no body, no panic
+	if by["a"].BodyEnabled() {
+		t.Fatal("BodyEnabled with no body should be false")
+	}
+}
+
+func TestSetBodyEnabled_ThenRemoveBody(t *testing.T) {
+	// Disabling a body then calling RemoveBody must not double-remove from
+	// the cp space (which would panic). Pins the idempotency contract.
+	root, by := buildTree("root", "a")
+	root.EnablePhysics(physics.Config{})
+	defer root.DisablePhysics()
+	attachBody(by["a"], nil)
+
+	by["a"].SetBodyEnabled(false)
+	by["a"].RemoveBody()
+	if by["a"].Body != nil {
+		t.Fatal("Body should be nil after RemoveBody on a disabled body")
+	}
+	if got := countBodies(root.PhysicsRoot.Parent); got != 0 {
+		t.Fatalf("space count = %d, want 0", got)
+	}
+}
+
+func TestSetBodyEnabled_ThenDisablePhysicsSubtree(t *testing.T) {
+	// DisablePhysics walks the subtree and removes every body. Disabled
+	// bodies must not crash this walk (PhysicsParent.RemoveBody is
+	// idempotent for that reason).
+	root, by := buildTree("root", "a", "b")
+	root.EnablePhysics(physics.Config{})
+	attachBody(by["a"], nil)
+	attachBody(by["b"], nil)
+
+	by["a"].SetBodyEnabled(false) // mixed: a disabled, b enabled
+
+	root.DisablePhysics() // must not panic
+	if by["a"].Body != nil || by["b"].Body != nil {
+		t.Fatal("DisablePhysics should release all bodies regardless of enabled state")
+	}
+}
+
 func TestDisablePhysics_TearsDownSubtree(t *testing.T) {
 	root, by := buildTree("root", "a", "b")
 	root.EnablePhysics(physics.Config{})

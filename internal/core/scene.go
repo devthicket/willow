@@ -565,7 +565,7 @@ func (s *Scene) Update() {
 	for _, cam := range s.Cameras {
 		cam.Update(dt)
 	}
-	UpdateNodesAndParticles(s.Root, float64(dt))
+	UpdateNodesAndParticles(s.Root, float64(dt), true)
 	s.TickTweens(dt)
 
 	if s.TestRunnerRef != nil {

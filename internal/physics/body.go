@@ -17,6 +17,11 @@ import "github.com/jakecoffman/cp/v2"
 type Body struct {
 	*cp.Body
 	Shape *cp.Shape
+	// Enabled mirrors whether the body is currently registered with its cp
+	// space. AddBody / RemoveBody on PhysicsParent maintain it; the node
+	// layer reads it via BodyEnabled(). Newly acquired bodies are Enabled=false
+	// until AddBody runs (which SetBody does immediately).
+	Enabled bool
 }
 
 // NewBody builds a body+shape from a BodyDef.

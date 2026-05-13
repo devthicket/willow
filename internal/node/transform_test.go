@@ -344,6 +344,37 @@ func TestWorldToLocalZeroScale(t *testing.T) {
 	assertNear(t, "ly", ly, 200)
 }
 
+// --- Visibility does not gate the transform walk ---
+
+func TestUpdateWorldTransform_InvisibleNodeStillRecomputes(t *testing.T) {
+	n := NewNode("hidden", types.NodeTypeContainer)
+	n.Visible_ = false
+	n.X_ = 50
+	n.Y_ = 75
+	UpdateWorldTransform(n, IdentityTransform, 1.0, true, true)
+	assertNear(t, "world tx", n.WorldTransform[4], 50)
+	assertNear(t, "world ty", n.WorldTransform[5], 75)
+}
+
+func TestUpdateWorldTransform_RecursesThroughInvisibleParent(t *testing.T) {
+	parent := NewNode("parent", types.NodeTypeContainer)
+	parent.Visible_ = false
+	parent.X_ = 100
+	parent.Y_ = 200
+
+	child := NewNode("child", types.NodeTypeContainer)
+	child.X_ = 5
+	child.Y_ = 7
+	parent.AddChild(child)
+
+	UpdateWorldTransform(parent, IdentityTransform, 1.0, true, true)
+
+	// Child world position should reflect parent translation even though
+	// parent is invisible; this is the option-2 fix.
+	assertNear(t, "child world tx", child.WorldTransform[4], 105)
+	assertNear(t, "child world ty", child.WorldTransform[5], 207)
+}
+
 // --- Benchmarks ---
 
 func BenchmarkComputeLocalTransform(b *testing.B) {

@@ -41,3 +41,5 @@ func (n *Node) DisablePhysics()                  {}
 func (n *Node) RemoveBody()                      {}
 func (n *Node) GetBody() *physics.Body           { return nil }
 func (n *Node) TickPhysicsTree(dt float64)        {}
+func (n *Node) SetBodyEnabled(enabled bool)      {}
+func (n *Node) BodyEnabled() bool                { return false }

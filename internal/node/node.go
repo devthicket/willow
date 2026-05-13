@@ -236,6 +236,10 @@ func NewNode(name string, nodeType types.NodeType) *Node {
 		Color_:         types.ColorWhite,
 		Visible_:       true,
 		Renderable_:    true,
+		// Initialize to identity so spatial queries and WorldXY reads on a
+		// never-walked node return sensible values instead of a degenerate
+		// zero matrix.
+		WorldTransform: IdentityTransform,
 		TransformDirty: true,
 		AlphaDirty:     true,
 		ChildrenSorted: true,

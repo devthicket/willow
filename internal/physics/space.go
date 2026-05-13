@@ -32,18 +32,27 @@ func NewPhysicsParent(cfg Config) *PhysicsParent {
 // to Node transforms after Step returns.
 func (p *PhysicsParent) Step(dt float64) { p.Space.Step(dt) }
 
-// AddBody registers a body and its primary shape with the underlying space.
+// AddBody registers a body and its primary shape with the underlying space
+// and marks the wrapper Enabled.
 func (p *PhysicsParent) AddBody(b *Body) {
 	p.Space.AddBody(b.Body)
 	if b.Shape != nil {
 		p.Space.AddShape(b.Shape)
 	}
+	b.Enabled = true
 }
 
-// RemoveBody unregisters a body and its shape from the underlying space.
+// RemoveBody unregisters a body and its shape from the underlying space and
+// clears the Enabled flag. No-op when the body is already detached, so
+// callers may invoke this idempotently (e.g. during teardown of subtrees
+// containing a mix of enabled and disabled bodies).
 func (p *PhysicsParent) RemoveBody(b *Body) {
+	if !b.Enabled {
+		return
+	}
 	if b.Shape != nil {
 		p.Space.RemoveShape(b.Shape)
 	}
 	p.Space.RemoveBody(b.Body)
+	b.Enabled = false
 }

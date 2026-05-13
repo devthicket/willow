@@ -91,10 +91,11 @@ func TransformPoint(m [6]float64, x, y float64) (float64, float64) {
 }
 
 // UpdateWorldTransform recomputes a node's worldTransform and worldAlpha.
+// Visibility does NOT short-circuit this walk: invisible subtrees keep their
+// transforms current so physics, spatial queries, and OnUpdate logic that reads
+// world coordinates stay correct. The render and hit-test paths apply their
+// own Visible_ gate, so hidden nodes still don't draw or receive input.
 func UpdateWorldTransform(n *Node, parentTransform [6]float64, parentAlpha float64, parentRecomputed bool, parentAlphaChanged bool) {
-	if !n.Visible_ {
-		return
-	}
 	recompute := n.TransformDirty || parentRecomputed
 	alphaChanged := n.AlphaDirty || parentAlphaChanged
 	if recompute {

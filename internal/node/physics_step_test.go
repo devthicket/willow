@@ -243,6 +243,26 @@ func TestStep_NoAncestorWalkPerBody(t *testing.T) {
 	}
 }
 
+// TestTickPhysicsTree_ContinuesWhenInvisible pins the contract that
+// SetVisible(false) does not pause physics. A bodied node hidden mid-fall
+// must keep falling so the simulation stays consistent with what the user
+// expects to "still be happening" while the node is hidden.
+func TestTickPhysicsTree_ContinuesWhenInvisible(t *testing.T) {
+	root, by := buildTree("root", "ball")
+	root.EnablePhysics(physics.Config{Gravity: cp.Vector{X: 0, Y: 900}})
+	defer root.DisablePhysics()
+	attachBody(by["ball"], nil)
+
+	by["ball"].Visible_ = false
+	startY := by["ball"].Y_
+	for i := 0; i < 10; i++ {
+		root.TickPhysicsTree(stepDT)
+	}
+	if by["ball"].Y_ == startY {
+		t.Fatalf("physics did not advance on invisible bodied node (Y stayed at %v)", startY)
+	}
+}
+
 func BenchmarkStep_100Bodies_FastPath(b *testing.B) {
 	root := NewNode("root", types.NodeTypeContainer)
 	root.EnablePhysics(physics.Config{Gravity: cp.Vector{X: 0, Y: 900}})
