@@ -207,6 +207,10 @@ type CommandType = render.CommandType
 // RenderCommand is a single draw instruction emitted during scene traversal.
 type RenderCommand = render.RenderCommand
 
+// Color32 is the float32 RGBA color carried on a RenderCommand. Exported so
+// custom-paint code can construct RenderCommands against the public API.
+type Color32 = render.Color32
+
 // Painter is the typed view onto the render pipeline passed to a Node's
 // custom-paint handler. Use SetCustomPaint to install one.
 type Painter = render.Painter

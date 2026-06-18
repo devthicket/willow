@@ -1,9 +1,10 @@
-//go:build nophysics
+//go:build !physics
 
-// Package physics — nophysics stub. This file provides empty types matching
-// the identifier set of the real package so the rest of Willow compiles
-// without a cp dependency. The stub is paired with internal/node/physics_stub.go,
-// which supplies panicking method bodies for the public verbs.
+// Package physics — default-build stub (no -tags physics). This file provides
+// empty types matching the identifier set of the real package so the rest of
+// Willow compiles without a cp dependency. The stub is paired with
+// internal/node/physics_stub.go, which supplies panicking method bodies for
+// the public verbs.
 //
 // No identifier here imports or depends on github.com/jakecoffman/cp/v2.
 package physics
@@ -13,14 +14,14 @@ package physics
 // has no stub here on purpose — pulling cp back in defeats the build tag).
 type Config struct{}
 
-// BodyDef and Shape are open empty interfaces under nophysics so that user
+// BodyDef and Shape are open empty interfaces in the default build so that user
 // code constructing descriptor values still type-checks at the call sites
 // (`SetBody(PhysicsDynamic{Shape: PhysicsCircle{Radius: 10}})`). The real
 // package's interfaces are closed (unexported methods); both compile.
 type BodyDef interface{}
 type Shape interface{}
 
-// Body is an opaque handle. Under nophysics it is never populated; the
+// Body is an opaque handle. In the default build it is never populated; the
 // stub node methods return nil and the field on Node stays nil for the
 // lifetime of the program.
 type Body struct{}
@@ -66,6 +67,6 @@ type Polygon struct {
 }
 
 // PhysicsParent is referenced by the real internal/node physicsRoot field,
-// which is excluded under nophysics. Defined here for symmetry with the
+// which is excluded in the default build. Defined here for symmetry with the
 // real identifier set in case external tooling lists package contents.
 type PhysicsParent struct{}

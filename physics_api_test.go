@@ -1,4 +1,4 @@
-//go:build !nophysics
+//go:build physics
 
 package willow_test
 

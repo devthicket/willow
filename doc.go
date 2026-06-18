@@ -94,8 +94,12 @@
 //
 // # Physics
 //
-// Optional 2D rigid-body physics is integrated via [Chipmunk]. Enable
-// physics on a subtree with [Node.EnablePhysics], then attach bodies to
+// Optional 2D rigid-body physics is integrated via [Chipmunk]. Physics is
+// opt-in: build with -tags physics to compile it in (this also pulls in the
+// cp dependency). Without the tag, the physics API is present but
+// EnablePhysics/SetBody/etc. panic with guidance to rebuild with -tags
+// physics. Enable physics on a subtree with [Node.EnablePhysics], then attach
+// bodies to
 // descendants with [Node.SetBody]. Per-frame world transforms write back
 // to nodes automatically after [Scene.Update]. The public surface is
 // re-exported under the Physics* prefix: [PhysicsConfig], [PhysicsBodyDef],
@@ -116,8 +120,8 @@
 //		Mass:  1,
 //	})
 //
-// Build with -tags nophysics to strip the cp dependency from the binary
-// for projects that do not use physics.
+// Build with -tags physics to compile physics in (and pull in the cp
+// dependency). Default builds omit cp entirely.
 //
 // See the full docs for guides on each feature:
 // https://www.devthicket.org/willow

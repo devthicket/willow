@@ -201,6 +201,14 @@ type Node struct {
 
 	// ---- COLD: functions ----
 	OnUpdate func(dt float64)
+	// Lifecycle hooks, fired during the scene-propagation walk on
+	// AddChild/RemoveChild. OnEnter fires when the node enters the live scene
+	// tree (and again each time it is re-added after removal); OnReady fires
+	// once, the first time it enters; OnExit fires when it leaves. Enter is
+	// top-down (parent before children); Exit is bottom-up (children first).
+	OnEnter func()
+	OnExit  func()
+	OnReady func()
 	// CustomPaint, when set, is invoked instead of the node's normal render
 	// emit. The first argument is a *Painter (defined in internal/render and
 	// re-exported as willow.Painter); use willow.SetCustomPaint for a typed
@@ -216,26 +224,49 @@ type Node struct {
 	EntityID uint32
 
 	// ---- COLD: bools (packed) ----
-	Interactable bool
-	Draggable    bool
-	Pinchable    bool
-	CacheEnabled bool
-	CacheDirty   bool
-	Disposed     bool
+	Interactable   bool
+	Draggable      bool
+	Pinchable      bool
+	CacheEnabled   bool
+	CacheDirty     bool
+	Disposed       bool
+	lifecycleReady bool // OnReady has already fired once
+}
+
+// FireEnter invokes a node's OnEnter hook, and OnReady the first time only.
+// Called by the scene-propagation walk when a node enters the live tree.
+func FireEnter(n *Node) {
+	if n.OnEnter != nil {
+		n.OnEnter()
+	}
+	if !n.lifecycleReady {
+		n.lifecycleReady = true
+		if n.OnReady != nil {
+			n.OnReady()
+		}
+	}
+}
+
+// FireExit invokes a node's OnExit hook. Called by the scene-propagation walk
+// when a node leaves the live tree.
+func FireExit(n *Node) {
+	if n.OnExit != nil {
+		n.OnExit()
+	}
 }
 
 // NewNode creates a Node with default field values.
 func NewNode(name string, nodeType types.NodeType) *Node {
 	n := &Node{
-		Name:           name,
-		Type:           nodeType,
-		ID:             nextNodeID(),
-		ScaleX_:        1,
-		ScaleY_:        1,
-		Alpha_:         1,
-		Color_:         types.ColorWhite,
-		Visible_:       true,
-		Renderable_:    true,
+		Name:        name,
+		Type:        nodeType,
+		ID:          nextNodeID(),
+		ScaleX_:     1,
+		ScaleY_:     1,
+		Alpha_:      1,
+		Color_:      types.ColorWhite,
+		Visible_:    true,
+		Renderable_: true,
 		// Initialize to identity so spatial queries and WorldXY reads on a
 		// never-walked node return sensible values instead of a degenerate
 		// zero matrix.

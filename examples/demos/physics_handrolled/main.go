@@ -8,7 +8,7 @@
 //
 // Click a shape to fling it with a radial blast.
 
-//go:build !nophysics
+//go:build physics
 
 package main
 
