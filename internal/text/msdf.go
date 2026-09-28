@@ -1500,7 +1500,7 @@ type msdfGlyphBitmap struct {
 	Img      *image.NRGBA
 	XOffset  int
 	YOffset  int
-	XAdvance int
+	XAdvance float64
 	atlasX   int
 	atlasY   int
 }
@@ -1546,7 +1546,8 @@ func generateMSDFAtlas(glyphs []msdfGlyphBitmap, opts SDFGenOptions) (*image.NRG
 	atlas := image.NewNRGBA(image.Rect(0, 0, atlasW, atlasH))
 
 	type jsonGlyph struct {
-		ID, X, Y, Width, Height, XOffset, YOffset, XAdvance int
+		ID, X, Y, Width, Height, XOffset, YOffset int
+		XAdvance                                  float64
 	}
 	jsonGlyphs := make([]jsonGlyph, 0, len(packed))
 	for i := range packed {
@@ -1731,7 +1732,7 @@ func LoadDistanceFieldFontFromTTFMSDF(ttfData []byte, opts SDFGenOptions) (*dist
 		if err != nil {
 			continue
 		}
-		xAdvance := int(math.Round(fixedToFloat64(adv)))
+		xAdvance := fixedToFloat64(adv)
 
 		segs, err := sFont.LoadGlyph(&buf, gi, ppem, nil)
 		if err != nil || len(segs) == 0 {

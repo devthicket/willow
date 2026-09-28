@@ -56,7 +56,7 @@ func (f *distanceFieldFont) MeasureString(s string) (width, height float64) {
 		if hasPrev {
 			cursorX += float64(f.Kern(prevRune, r))
 		}
-		cursorX += float64(g.XAdvance)
+		cursorX += g.XAdvance
 		prevRune = r
 		hasPrev = true
 	}
@@ -138,14 +138,14 @@ type sdfMetrics struct {
 }
 
 type sdfGlyphEntry struct {
-	ID       int `json:"id"`
-	X        int `json:"x"`
-	Y        int `json:"y"`
-	Width    int `json:"width"`
-	Height   int `json:"height"`
-	XOffset  int `json:"xOffset"`
-	YOffset  int `json:"yOffset"`
-	XAdvance int `json:"xAdvance"`
+	ID       int     `json:"id"`
+	X        int     `json:"x"`
+	Y        int     `json:"y"`
+	Width    int     `json:"width"`
+	Height   int     `json:"height"`
+	XOffset  int     `json:"xOffset"`
+	YOffset  int     `json:"yOffset"`
+	XAdvance float64 `json:"xAdvance"`
 }
 
 type sdfKernEntry struct {
@@ -190,7 +190,7 @@ func loadDistanceFieldFont(jsonData []byte, pageIndex uint16) (*distanceFieldFon
 			Height:   uint16(ge.Height),
 			XOffset:  int16(ge.XOffset),
 			YOffset:  int16(ge.YOffset),
-			XAdvance: int16(ge.XAdvance),
+			XAdvance: ge.XAdvance,
 			Page:     pageIndex,
 		}
 		if g.ID >= 0 && g.ID < AsciiGlyphCount {

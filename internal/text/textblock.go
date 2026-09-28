@@ -234,7 +234,7 @@ func (tb *TextBlock) LayoutSDF(glyphLookup func(r rune) *Glyph, kernLookup func(
 			Page: page,
 		}
 
-		advance := float64(g.XAdvance) + float64(kern)
+		advance := g.XAdvance + float64(kern)
 
 		if r == ' ' {
 			curLine.Glyphs = append(curLine.Glyphs, wordGlyphs...)

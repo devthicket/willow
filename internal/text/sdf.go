@@ -12,6 +12,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/opentype"
+	"golang.org/x/image/font/sfnt"
 	"golang.org/x/image/math/fixed"
 )
 
@@ -61,7 +62,7 @@ type GlyphBitmap struct {
 	Img      *image.Alpha // rasterized glyph (grayscale)
 	XOffset  int
 	YOffset  int
-	XAdvance int
+	XAdvance float64
 	// Atlas position (filled during packing)
 	atlasX, atlasY int
 }
@@ -135,14 +136,14 @@ func GenerateSDFFromBitmaps(glyphs []GlyphBitmap, opts SDFGenOptions) (*image.NR
 
 	// Build metrics
 	type jsonGlyph struct {
-		ID       int `json:"id"`
-		X        int `json:"x"`
-		Y        int `json:"y"`
-		Width    int `json:"width"`
-		Height   int `json:"height"`
-		XOffset  int `json:"xOffset"`
-		YOffset  int `json:"yOffset"`
-		XAdvance int `json:"xAdvance"`
+		ID       int     `json:"id"`
+		X        int     `json:"x"`
+		Y        int     `json:"y"`
+		Width    int     `json:"width"`
+		Height   int     `json:"height"`
+		XOffset  int     `json:"xOffset"`
+		YOffset  int     `json:"yOffset"`
+		XAdvance float64 `json:"xAdvance"`
 	}
 
 	jsonGlyphs := make([]jsonGlyph, 0, len(packed))
@@ -381,6 +382,16 @@ func fixedToFloat64(f fixed.Int26_6) float64 {
 // atlas as an *image.NRGBA (for saving to disk), and any error.
 func LoadDistanceFieldFontFromTTF(ttfData []byte, opts SDFGenOptions) (*distanceFieldFont, *ebiten.Image, *image.NRGBA, []byte, error) {
 	opts.Defaults()
+	sFont, err := sfnt.Parse(ttfData)
+	if err != nil {
+		return nil, nil, nil, nil, fmt.Errorf("text: failed to parse TTF data: %w", err)
+	}
+	var sfntBuf sfnt.Buffer
+	ppem := fixed.Int26_6(opts.Size * 64)
+	fontMetrics, err := sFont.Metrics(&sfntBuf, ppem, font.HintingNone)
+	if err != nil {
+		return nil, nil, nil, nil, fmt.Errorf("text: failed to read TTF metrics: %w", err)
+	}
 
 	// Parse font with golang.org/x/image/font/opentype (pure Go, no GPU needed).
 	otFont, err := opentype.Parse(ttfData)
@@ -398,10 +409,9 @@ func LoadDistanceFieldFontFromTTF(ttfData []byte, opts SDFGenOptions) (*distance
 	}
 	defer func() { _ = face.Close() }()
 
-	faceMetrics := face.Metrics()
-	ascent := fixedToFloat64(faceMetrics.Ascent)
-	descent := fixedToFloat64(faceMetrics.Descent)
-	lineHeight := fixedToFloat64(faceMetrics.Height)
+	ascent := fixedToFloat64(fontMetrics.Ascent)
+	descent := fixedToFloat64(fontMetrics.Descent)
+	lineHeight := fixedToFloat64(fontMetrics.Height)
 	if lineHeight <= 0 {
 		lineHeight = ascent + descent
 	}
@@ -412,8 +422,16 @@ func LoadDistanceFieldFontFromTTF(ttfData []byte, opts SDFGenOptions) (*distance
 		r, sz := utf8.DecodeRuneInString(opts.Chars[i:])
 		i += sz
 
-		bounds, advance, ok := face.GlyphBounds(r)
+		bounds, _, ok := face.GlyphBounds(r)
 		if !ok {
+			continue
+		}
+		glyphIndex, err := sFont.GlyphIndex(&sfntBuf, r)
+		if err != nil {
+			continue
+		}
+		advance, err := sFont.GlyphAdvance(&sfntBuf, glyphIndex, ppem, font.HintingNone)
+		if err != nil {
 			continue
 		}
 
@@ -431,7 +449,7 @@ func LoadDistanceFieldFontFromTTF(ttfData []byte, opts SDFGenOptions) (*distance
 				Img:      nil,
 				XOffset:  0,
 				YOffset:  0,
-				XAdvance: advance.Ceil(),
+				XAdvance: fixedToFloat64(advance),
 			})
 			continue
 		}
@@ -459,8 +477,8 @@ func LoadDistanceFieldFontFromTTF(ttfData []byte, opts SDFGenOptions) (*distance
 			ID:       r,
 			Img:      alphaImg,
 			XOffset:  x0,
-			YOffset:  y0 + faceMetrics.Ascent.Ceil(),
-			XAdvance: advance.Ceil(),
+			YOffset:  y0 + face.Metrics().Ascent.Ceil(),
+			XAdvance: fixedToFloat64(advance),
 		})
 	}
 

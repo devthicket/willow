@@ -8,7 +8,7 @@ type Glyph struct {
 	Height   uint16
 	XOffset  int16
 	YOffset  int16
-	XAdvance int16
+	XAdvance float64
 	Page     uint16
 }
 

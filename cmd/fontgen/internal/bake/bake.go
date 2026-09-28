@@ -49,14 +49,14 @@ type atlasMeta struct {
 }
 
 type glyphMeta struct {
-	ID       int `json:"id"`
-	X        int `json:"x"`
-	Y        int `json:"y"`
-	Width    int `json:"width"`
-	Height   int `json:"height"`
-	XOffset  int `json:"xOffset"`
-	YOffset  int `json:"yOffset"`
-	XAdvance int `json:"xAdvance"`
+	ID       int     `json:"id"`
+	X        int     `json:"x"`
+	Y        int     `json:"y"`
+	Width    int     `json:"width"`
+	Height   int     `json:"height"`
+	XOffset  int     `json:"xOffset"`
+	YOffset  int     `json:"yOffset"`
+	XAdvance float64 `json:"xAdvance"`
 }
 
 type kernPair struct {
@@ -151,7 +151,20 @@ func Bundle(styles []StyleData, opts Options) ([]byte, error) {
 // bakeOne rasterizes and SDF-encodes a single style at a single bake size.
 // Returns the atlas image and metrics JSON (with kerning injected).
 func bakeOne(ttfData []byte, size, distRange float64, chars string, atlasWidth int) (image.Image, []byte, error) {
-	// Parse the font for line metrics.
+	// Rasterization uses an opentype face, while layout metrics come from sfnt
+	// without hinting so accumulated advances retain the font's hmtx precision.
+	sFont, err := sfnt.Parse(ttfData)
+	if err != nil {
+		return nil, nil, err
+	}
+	var sfntBuf sfnt.Buffer
+	ppem := fixed.Int26_6(size * 64)
+	sfntMetrics, err := sFont.Metrics(&sfntBuf, ppem, xfont.HintingNone)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Parse the font for glyph rasterization.
 	otFont, err := opentype.Parse(ttfData)
 	if err != nil {
 		return nil, nil, err
@@ -167,14 +180,14 @@ func bakeOne(ttfData []byte, size, distRange float64, chars string, atlasWidth i
 	defer face.Close()
 
 	faceMetrics := face.Metrics()
-	ascent := fixedToFloat(faceMetrics.Ascent)
-	lineHeight := fixedToFloat(faceMetrics.Height)
+	ascent := fixedToFloat(sfntMetrics.Ascent)
+	lineHeight := fixedToFloat(sfntMetrics.Height)
 	if lineHeight <= 0 {
-		lineHeight = ascent + fixedToFloat(faceMetrics.Descent)
+		lineHeight = ascent + fixedToFloat(sfntMetrics.Descent)
 	}
 
 	// Rasterize glyphs.
-	glyphs := rasterizeGlyphs(face, chars, faceMetrics)
+	glyphs := rasterizeGlyphs(face, chars, faceMetrics, sFont, ppem)
 
 	// Generate SDF atlas (no kerning yet).
 	atlasNRGBA, rawJSON, err := willow.GenerateSDFFromBitmaps(glyphs, willow.SDFGenOptions{
@@ -223,14 +236,23 @@ func bakeOne(ttfData []byte, size, distRange float64, chars string, atlasWidth i
 }
 
 // rasterizeGlyphs renders each character using the font face and returns GlyphBitmaps.
-func rasterizeGlyphs(face xfont.Face, chars string, metrics xfont.Metrics) []willow.GlyphBitmap {
+func rasterizeGlyphs(face xfont.Face, chars string, metrics xfont.Metrics, sFont *sfnt.Font, ppem fixed.Int26_6) []willow.GlyphBitmap {
 	var glyphs []willow.GlyphBitmap
+	var sfntBuf sfnt.Buffer
 	for i := 0; i < len(chars); {
 		r, sz := utf8.DecodeRuneInString(chars[i:])
 		i += sz
 
-		bounds, advance, ok := face.GlyphBounds(r)
+		bounds, _, ok := face.GlyphBounds(r)
 		if !ok {
+			continue
+		}
+		glyphIndex, err := sFont.GlyphIndex(&sfntBuf, r)
+		if err != nil {
+			continue
+		}
+		advance, err := sFont.GlyphAdvance(&sfntBuf, glyphIndex, ppem, xfont.HintingNone)
+		if err != nil {
 			continue
 		}
 
@@ -242,7 +264,7 @@ func rasterizeGlyphs(face xfont.Face, chars string, metrics xfont.Metrics) []wil
 		if gw <= 0 || gh <= 0 {
 			glyphs = append(glyphs, willow.GlyphBitmap{
 				ID:       r,
-				XAdvance: advance.Ceil(),
+				XAdvance: fixedToFloat(advance),
 			})
 			continue
 		}
@@ -269,7 +291,7 @@ func rasterizeGlyphs(face xfont.Face, chars string, metrics xfont.Metrics) []wil
 			Img:      alpha,
 			XOffset:  x0,
 			YOffset:  y0 + metrics.Ascent.Ceil(),
-			XAdvance: advance.Ceil(),
+			XAdvance: fixedToFloat(advance),
 		})
 	}
 	return glyphs

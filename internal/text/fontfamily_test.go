@@ -7,10 +7,14 @@ import (
 	"fmt"
 	"image"
 	"image/png"
+	"math"
 	"os"
 	"testing"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"golang.org/x/image/font"
+	"golang.org/x/image/font/sfnt"
+	"golang.org/x/image/math/fixed"
 )
 
 // ---------------------------------------------------------------------------
@@ -320,6 +324,57 @@ func TestNewFontFamilyFromTTF_EmptyRegular_Error(t *testing.T) {
 	_, err := NewFontFamilyFromTTF(FontFamilyConfig{})
 	if err == nil {
 		t.Error("expected error for empty Regular")
+	}
+}
+
+func TestFontFamily_Roboto16AdvanceMatchesSFNTHmtx(t *testing.T) {
+	const content = "Roboto 16"
+	const fontSize = 16.0
+
+	data, err := os.ReadFile("testdata/roboto-regular.ttf")
+	if err != nil {
+		t.Fatalf("read Roboto fixture: %v", err)
+	}
+	ff, err := NewFontFamilyFromTTF(FontFamilyConfig{
+		Regular:   data,
+		BakeSizes: []float64{64, 256},
+	})
+	if err != nil {
+		t.Fatalf("NewFontFamilyFromTTF: %v", err)
+	}
+
+	fontData, err := sfnt.Parse(data)
+	if err != nil {
+		t.Fatalf("parse Roboto fixture: %v", err)
+	}
+	var buf sfnt.Buffer
+	ppem := fixed.Int26_6(fontSize * 64)
+	metrics, err := fontData.Metrics(&buf, ppem, font.HintingNone)
+	if err != nil {
+		t.Fatalf("Roboto metrics: %v", err)
+	}
+	var expected float64
+	for _, r := range content {
+		glyphIndex, err := fontData.GlyphIndex(&buf, r)
+		if err != nil {
+			t.Fatalf("glyph index for %q: %v", r, err)
+		}
+		advance, err := fontData.GlyphAdvance(&buf, glyphIndex, ppem, font.HintingNone)
+		if err != nil {
+			t.Fatalf("glyph advance for %q: %v", r, err)
+		}
+		expected += float64(advance) / 64
+	}
+	expected *= fontSize / (float64(metrics.Height) / 64)
+
+	tb := &TextBlock{Content: content, Font: ff, FontSize: fontSize, LayoutDirty: true}
+	lines := tb.Layout()
+	if len(lines) != 1 {
+		t.Fatalf("lines = %d, want 1", len(lines))
+	}
+	got := lines[0].Width * tb.FontScale()
+	if math.Abs(got-expected) > 0.5 {
+		t.Errorf("drawn advance = %.6f, sfnt hmtx advance = %.6f, diff = %.6f", got, expected, math.Abs(got-expected))
 	}
 }
 
